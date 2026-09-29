@@ -1,0 +1,199 @@
+@use "sass:math";
+
+@function rem($px) {
+  @return math.div($px, 16) * 1rem;
+}
+
+$breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px,
+  xxxl: 1600px
+);
+
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px,
+  xxl: 1320px,
+  xxxl: 1520px
+);
+
+.container {
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+
+  @each $breakpoint, $max-width in $container-max-widths {
+    @media (min-width: map-get($breakpoints, $breakpoint)) {
+      max-width: $max-width;
+    }
+  }
+}
+
+$heading-font-sizes: (
+  h1: (base: 36px,
+    sm: 40px,
+    md: 48px,
+    lg: rem(56),
+    xl: rem(64),
+    xxl: rem(50),
+    xxxl: rem(58)),
+  h2: (base: 30px,
+    sm: 32px,
+    md: 36px,
+    lg: rem(40),
+    xl: rem(44),
+    xxl: rem(48),
+    xxxl: rem(52)),
+  h3: (base: 26px,
+    sm: 28px,
+    md: 32px,
+    lg: rem(36),
+    xl: rem(40),
+    xxl: rem(44),
+    xxxl: rem(48)),
+  h4: (base: 22px,
+    sm: 24px,
+    md: 28px,
+    lg: rem(32),
+    xl: rem(36),
+    xxl: rem(40),
+    xxxl: rem(44)),
+  h5: (base: 18px,
+    sm: 20px,
+    md: 24px,
+    lg: rem(28),
+    xl: rem(32),
+    xxl: rem(18),
+    xxxl: rem(22)),
+  h6: (base: 16px,
+    sm: 18px,
+    md: 20px,
+    lg: rem(24),
+    xl: rem(28),
+    xxl: rem(32),
+    xxxl: rem(36))
+);
+
+.ttl,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  color: #000;
+}
+
+@each $heading, $sizes in $heading-font-sizes {
+
+  .#{$heading} {
+    @each $bp, $size in $sizes {
+      @if $bp ==base {
+        font-size: $size;
+      }
+
+      @else if map-has-key($breakpoints, $bp) {
+        @media (min-width: map-get($breakpoints, $bp)) {
+          font-size: $size;
+        }
+      }
+    }
+  }
+}
+
+button {
+  cursor: pointer;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 2rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  gap: 0.5rem;
+  border: none;
+  transition: all .3s ease-in-out;
+
+  &:hover {
+    gap: 0.75rem;
+  }
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: 1px solid var(--color-primary);
+  box-shadow: 0 10px 15px -3px rgba(10, 92, 72, 0.2);
+
+  &:hover {
+    background-color: transparent;
+    color: var(--color-primary);
+  }
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+  &:hover {
+    background-color: var(--color-primary);
+    color: #ffffff;
+  }
+}
+
+/* Phone Input Custom Styles */
+.auth-phone-input {
+  display: flex;
+  align-items: center;
+
+  .PhoneInputCountry {
+    margin-right: 0.75rem;
+    padding: 0.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background-color: #f9fafb;
+    position: relative;
+  }
+
+  .PhoneInputCountrySelect {
+    color: #111827;
+    background-color: #ffffff;
+
+    option {
+      color: #111827;
+      background-color: #ffffff;
+    }
+  }
+
+  .PhoneInputInput {
+    flex: 1;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    color: #111827;
+    outline: none;
+    transition: all 0.2s;
+
+    &:focus {
+      border-color: transparent;
+      box-shadow: 0 0 0 2px #0a5c48;
+    }
+  }
+}
