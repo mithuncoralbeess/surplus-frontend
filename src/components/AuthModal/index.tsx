@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { authService } from '../../services/authService';
 import { motion, AnimatePresence } from '../../lib/motion';
 import { X, ArrowRight, Loader2, CheckCircle2, ChevronDown, Search } from 'lucide-react';
@@ -44,6 +45,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
   const inputClass = "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-all outline-none text-gray-900";
   const selectClass = "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-all outline-none text-gray-900 appearance-none";
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Prevent Background Scroll and Sync Mode
   useEffect(() => {
     if (isOpen) {
@@ -65,7 +72,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isOpen, initialMode]);
 
   const toggleCategory = (cat: string) => {
     setCategories(prev => {
@@ -189,10 +196,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     setOtp('');
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div data-lenis-prevent className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -431,6 +440,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

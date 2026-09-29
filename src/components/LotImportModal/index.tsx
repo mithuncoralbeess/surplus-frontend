@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useSession } from 'next-auth/react';
 import { X, UploadCloud, FileSpreadsheet, ChevronRight, Check, ArrowLeft, Download, Tag, Plus, Percent, Trash2, Edit2, User, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
@@ -43,6 +44,11 @@ const STEPS = [
 const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [manifestData, setManifestData] = useState<any[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { data: session } = useSession();
   const [manifestFile, setManifestFile] = useState<File | null>(null);
@@ -265,8 +271,10 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  return (
-    <div data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  if (!mounted || !isOpen) return null;
+
+  return createPortal(
+    <div data-lenis-prevent className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl flex flex-col overflow-hidden max-h-[90vh]">
         {isSuccess ? (
           <div className="flex flex-col items-center justify-center p-12 text-center h-[500px]">
@@ -838,7 +846,8 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
         )}
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

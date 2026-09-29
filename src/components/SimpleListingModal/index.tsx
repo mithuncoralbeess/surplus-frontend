@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from '../../lib/motion';
 import { ChevronDown, ChevronRight, Check, X, UploadCloud, Trash2, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
@@ -119,6 +120,11 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -290,10 +296,12 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
     return formErrors[field] ? <p className={errorClass}>{formErrors[field]}</p> : null;
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-12 overflow-y-auto">
+        <div data-lenis-prevent className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 md:p-12 overflow-y-auto">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -675,6 +683,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
