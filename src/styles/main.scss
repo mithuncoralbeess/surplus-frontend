@@ -163,11 +163,37 @@ button {
 
   .PhoneInputCountry {
     margin-right: 0.75rem;
-    padding: 0.5rem;
+    padding: 0.5rem 0.65rem;
     border: 1px solid #e5e7eb;
     border-radius: 0.75rem;
     background-color: #f9fafb;
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .PhoneInputCountryIcon {
+    width: 1.6rem;
+    height: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+
+    svg, img, .PhoneInputCountryIconImg {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  .PhoneInputCountryIcon--border {
+    border: none;
+    box-shadow: none;
   }
 
   .PhoneInputCountrySelect {
@@ -195,5 +221,73 @@ button {
       border-color: transparent;
       box-shadow: 0 0 0 2px #0a5c48;
     }
+  }
+}
+
+/* intl-tel-input integration styling */
+:root {
+  --iti-path-flags-1x: url('/img/flags.webp');
+  --iti-path-flags-2x: url('/img/flags@2x.webp');
+}
+
+.intl-phone-container {
+  .iti {
+    width: 100%;
+  }
+
+  .iti__country-container {
+    padding: 0 2px;
+  }
+
+  .iti__selected-country {
+    background-color: #f9fafb;
+    border-radius: 0.75rem 0 0 0.75rem;
+    padding-left: 10px;
+    padding-right: 8px;
+  }
+
+  .iti__tel-input {
+    width: 100%;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    color: #111827;
+    outline: none;
+    transition: all 0.2s;
+
+    &:focus {
+      border-color: transparent;
+      box-shadow: 0 0 0 2px #0a5c48;
+    }
+  }
+
+  .iti__dropdown-content {
+    border-radius: 1rem;
+    box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.25), 0 10px 15px -5px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    z-index: 99999 !important;
+    max-height: 260px;
+    overflow-y: auto;
+    background-color: #ffffff;
+  }
+}
+
+.iti--container {
+  z-index: 99999 !important;
+
+  .iti__dropdown-content {
+    max-height: 260px;
+    overflow-y: auto;
+    border-radius: 1rem;
+    box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.25), 0 10px 15px -5px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    background-color: #ffffff;
+  }
+
+  .iti__country-list {
+    max-height: 220px;
+    overflow-y: auto;
   }
 }

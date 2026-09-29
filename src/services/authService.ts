@@ -22,7 +22,7 @@ export interface CompleteProfilePayload {
 
 export const authService = {
   async sendRegistrationOtp(payload: SendOtpPayload): Promise<ApiResponse> {
-    return apiClient('/send-registration-otp/', {
+    return apiClient('/api/auth/register/send-otp/', {
       method: 'POST',
       body: JSON.stringify({
         full_name: payload.full_name,
@@ -40,7 +40,7 @@ export const authService = {
   },
 
   async verifyRegistrationOtp(payload: VerifyOtpPayload): Promise<ApiResponse> {
-    return apiClient('/verify-registration-otp/', {
+    return apiClient('/api/auth/register/verify-otp/', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -54,7 +54,7 @@ export const authService = {
   },
 
   async completeProfile(payload: CompleteProfilePayload): Promise<ApiResponse> {
-    return apiClient('/complete-profile/', {
+    return apiClient('/api/auth/register/complete-profile/', {
       method: 'POST',
       body: JSON.stringify(payload),
     });

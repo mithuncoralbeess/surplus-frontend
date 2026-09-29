@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from '../../lib/motion';
 import { X, ArrowRight, Loader2, CheckCircle2, ChevronDown, Search } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import PhoneInput from 'react-phone-number-input';
+import flags from 'react-phone-number-input/flags';
 import 'react-phone-number-input/style.css';
 
 interface AuthModalProps {
@@ -88,6 +89,16 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     setError('');
     
     if (mode === 'register') {
+      if (!fullName || !fullName.trim()) {
+        setError('Please enter your full name.');
+        setLoading(false);
+        return;
+      }
+      if (!mobileNumber) {
+        setError('Please enter your mobile number.');
+        setLoading(false);
+        return;
+      }
       const res = await authService.sendRegistrationOtp({
         full_name: fullName,
         email: emailOrPhone,
@@ -196,31 +207,22 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     setOtp('');
   };
 
-  if (!mounted) return null;
+  if (!mounted || !isOpen) return null;
 
   return createPortal(
-    <AnimatePresence>
-      {isOpen && (
-        <div data-lenis-prevent className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm"
-          />
+    <div data-lenis-prevent className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+      />
 
-          {/* Modal Container */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", duration: 0.5, bounce: 0 }}
-            className={`relative w-full ${step === 3 ? 'max-w-2xl' : 'max-w-md'} bg-white rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[90vh] transition-all duration-500`}
-          >
+      {/* Modal Container */}
+      <div
+        className={`relative w-full ${step === 3 ? 'max-w-2xl overflow-hidden' : 'max-w-md overflow-visible'} bg-white rounded-3xl shadow-2xl z-10 flex flex-col max-h-[90vh]`}
+      >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white sticky top-0 z-20">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white sticky top-0 z-20 rounded-t-3xl">
               <div>
                 <h3 className="text-xl font-bold text-gray-900">
                   {mode === 'login' ? 'Sign In' : (step === 3 ? 'Complete Profile' : 'Create Account')}
@@ -232,17 +234,15 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
             </div>
 
             {/* Content */}
-            <div className="p-6 md:p-8 overflow-y-auto flex-1">
+            <div className={`p-6 md:p-8 ${step === 3 ? 'overflow-y-auto' : 'overflow-visible'} flex-1`}>
               {error && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="bg-red-50 text-red-600 text-sm font-medium p-3 rounded-xl mb-6 border border-red-100">
+                <div className="bg-red-50 text-red-600 text-sm font-medium p-3 rounded-xl mb-6 border border-red-100">
                   {error}
-                </motion.div>
+                </div>
               )}
-
-              <AnimatePresence mode="wait">
                 {/* LOGIN / REGISTER STEP 1 */}
                 {step === 1 && (
-                  <motion.form key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleGetCode} className="space-y-5">
+                  <form onSubmit={handleGetCode} className="space-y-5">
                     {mode === 'register' && (
                       <div>
                         <label className={labelClass}>Full Name</label>
@@ -261,6 +261,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                         <PhoneInput
                           international
                           defaultCountry="US"
+                          flags={flags}
                           value={mobileNumber}
                           onChange={setMobileNumber}
                           className="w-full auth-phone-input"
@@ -278,12 +279,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                         {mode === 'login' ? 'Sign up' : 'Sign in'}
                       </button>
                     </div>
-                  </motion.form>
+                  </form>
                 )}
 
                 {/* OTP VERIFICATION STEP 2 */}
                 {step === 2 && (
-                  <motion.form key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleVerifyOTP} className="space-y-5">
+                  <form onSubmit={handleVerifyOTP} className="space-y-5">
                     <div className="text-center mb-6">
                       <p className="text-sm text-gray-600 mb-2">We sent a 6-digit code to your {mode === 'login' ? 'email/phone' : 'email'}.</p>
                       <button type="button" onClick={() => setStep(1)} className="text-sm font-semibold text-[#0a5c48]">Change Contact Info</button>
@@ -302,12 +303,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                         </>
                       )}
                     </button>
-                  </motion.form>
+                  </form>
                 )}
 
                 {/* ONBOARDING STEP 3 (Register only) */}
                 {step === 3 && mode === 'register' && (
-                  <motion.form key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleCompleteOnboarding} className="space-y-5">
+                  <form onSubmit={handleCompleteOnboarding} className="space-y-5">
                     
                     <div>
                       <label className={labelClass}>Account Entity Type *</label>
@@ -433,14 +434,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                         </>
                       )}
                     </button>
-                  </motion.form>
+                  </form>
                 )}
-              </AnimatePresence>
             </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>,
-    document.body
-  );
+          </div>
+        </div>,
+        document.body
+      );
 }

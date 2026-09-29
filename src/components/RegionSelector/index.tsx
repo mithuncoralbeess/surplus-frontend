@@ -2,7 +2,17 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Globe, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import flags from 'react-phone-number-input/flags';
 import { useCurrency, REGIONS_LIST, getShortRegionName } from '../../context/CurrencyContext';
+
+const REGION_FLAG_MAP: Record<string, keyof typeof flags> = {
+  'United Arab Emirates': 'AE',
+  'Saudi Arabia': 'SA',
+  'Qatar': 'QA',
+  'India': 'IN',
+  'United Kingdom': 'GB',
+  'United States': 'US',
+};
 
 const RegionSelector = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,6 +30,8 @@ const RegionSelector = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const ActiveFlag = flags[REGION_FLAG_MAP[selectedRegion] || 'US'] as any;
+
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Toggle Button */}
@@ -28,7 +40,13 @@ const RegionSelector = () => {
         onClick={() => setIsOpen(!isOpen)}
         title="Change shopping region"
       >
-        <Globe className="w-4 h-4 mr-1.5 text-gray-500" />
+        {ActiveFlag ? (
+          <span className="w-5 h-3.5 mr-1.5 inline-block overflow-hidden rounded-[2px] shadow-sm shrink-0">
+            <ActiveFlag title={selectedRegion} className="w-full h-full object-cover" />
+          </span>
+        ) : (
+          <Globe className="w-4 h-4 mr-1.5 text-gray-500" />
+        )}
         <span>{getShortRegionName(selectedRegion)}</span>
         {isOpen ? (
           <ChevronUp className="ml-1 w-4 h-4 text-gray-400" />
@@ -56,6 +74,8 @@ const RegionSelector = () => {
           <div data-lenis-prevent className="py-2 max-h-64 overflow-y-auto" onWheel={(e) => e.stopPropagation()}>
             {REGIONS_LIST.map((region) => {
               const isSelected = region === selectedRegion;
+              const CountryFlag = flags[REGION_FLAG_MAP[region] || 'US'] as any;
+
               return (
                 <button
                   key={region}
@@ -69,7 +89,14 @@ const RegionSelector = () => {
                     setIsOpen(false);
                   }}
                 >
-                  {region}
+                  <div className="flex items-center gap-2.5">
+                    {CountryFlag && (
+                      <span className="w-5 h-3.5 inline-block overflow-hidden rounded-[2px] shadow-sm shrink-0">
+                        <CountryFlag title={region} className="w-full h-full object-cover" />
+                      </span>
+                    )}
+                    <span>{region}</span>
+                  </div>
                   {isSelected && <Check className="w-4 h-4 text-[#0f7a61]" />}
                 </button>
               );

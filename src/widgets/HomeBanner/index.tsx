@@ -115,9 +115,8 @@ const HomeBanner = () => {
 
           {/* Left Column */}
           <div
-            className={`w-full lg:w-[58%] flex flex-col items-start space-y-6 min-[1350px]:space-y-4 min-[1600px]:space-y-6 ${
-              isHeroLanding ? 'animate-hero-landing' : ''
-            }`}
+            className={`w-full lg:w-[58%] flex flex-col items-start space-y-6 min-[1350px]:space-y-4 min-[1600px]:space-y-6 ${isHeroLanding ? 'animate-hero-landing' : ''
+              }`}
           >
 
             {/* Badge */}
@@ -141,8 +140,8 @@ const HomeBanner = () => {
             <div className="flex flex-wrap items-center gap-3 min-[1350px]:gap-2 min-[1600px]:gap-3 pt-2 min-[1350px]:pt-1 min-[1600px]:pt-2">
               <span className="text-xs xxl:text-sm font-semibold text-gray-700 mr-2 min-[1350px]:mr-1 min-[1600px]:mr-2">Quick Access:</span>
               {['Surplus Inventory Buyers', 'Sell Excess Inventory', 'Get in Touch with Surplus Market', 'Overstock Solutions', 'Sustainability in Surplus Inventory', 'Inventory Ageing Calculator'].map((tag, idx) => (
-                <button 
-                  key={idx} 
+                <button
+                  key={idx}
                   onClick={() => handleQuickAccess(tag)}
                   className="bg-primary-light text-primary px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap hover:bg-primary-light-hover cursor-pointer transition-colors"
                 >
@@ -153,11 +152,10 @@ const HomeBanner = () => {
 
             {/* Interactive Search Bar & Attached Search Dropdown */}
             <div className="relative w-full max-w-2xl" ref={dropdownRef}>
-              <form 
+              <form
                 onSubmit={handleSearchSubmit}
-                className={`w-full bg-white border ${
-                  isDropdownOpen ? 'border-primary shadow-xl ring-2 ring-primary/20' : 'border-gray-200 shadow-lg shadow-gray-100/50'
-                } p-2 min-[1350px]:p-1.5 min-[1600px]:p-2 rounded-full flex items-center gap-3 mt-4 min-[1350px]:mt-2 min-[1600px]:mt-4 transition-all`}
+                className={`w-full bg-white border ${isDropdownOpen ? 'border-primary shadow-xl ring-2 ring-primary/20' : 'border-gray-200 shadow-lg shadow-gray-100/50'
+                  } p-2 min-[1350px]:p-1.5 min-[1600px]:p-2 rounded-full flex items-center gap-3 mt-4 min-[1350px]:mt-2 min-[1600px]:mt-4 transition-all`}
               >
                 <Search className="w-5 h-5 min-[1350px]:w-4 min-[1350px]:h-4 min-[1600px]:w-5 min-[1600px]:h-5 text-gray-400 ml-3 min-[1350px]:ml-2 min-[1600px]:ml-3 shrink-0" />
                 <input
@@ -168,7 +166,7 @@ const HomeBanner = () => {
                   className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 text-base min-[1350px]:text-sm min-[1600px]:text-base cursor-text"
                 />
 
-                <button 
+                <button
                   type="button"
                   onClick={handleAiSmartSearch}
                   className="hidden sm:flex items-center gap-1.5 text-primary font-bold text-sm min-[1350px]:text-xs min-[1600px]:text-sm bg-primary-light hover:bg-primary-light-hover transition-colors px-3.5 min-[1350px]:px-2.5 min-[1600px]:px-3.5 py-1.5 min-[1350px]:py-2 min-[1600px]:py-1.5 rounded-full cursor-pointer shrink-0"
@@ -177,7 +175,7 @@ const HomeBanner = () => {
                   <span>AI SMART SEARCH</span>
                 </button>
 
-                <button 
+                <button
                   type="submit"
                   className="btn btn-primary min-[1350px]:py-1.5 min-[1350px]:text-sm min-[1600px]:py-2.5 min-[1600px]:text-base shrink-0"
                 >
@@ -190,14 +188,14 @@ const HomeBanner = () => {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-4 mt-6 min-[1350px]:mt-3 min-[1600px]:mt-6">
-              <button 
+              <button
                 onClick={() => router.push('/browse')}
                 className="btn btn-primary"
               >
                 Browse Inventory
                 <ArrowRight className="w-4 h-4" />
               </button>
-              <button 
+              <button
                 onClick={() => router.push('/sell')}
                 className="btn btn-secondary"
               >
@@ -209,9 +207,8 @@ const HomeBanner = () => {
 
           {/* Right Column (Dark Dashboard Card) */}
           <div
-            className={`relative w-full lg:w-[41%] aspect-square max-w-[600px] min-[1350px]:max-w-[520px] min-[1600px]:max-w-[600px] mx-auto lg:ml-auto lg:mr-0 ${
-              isHeroLanding ? 'animate-hero-landing' : ''
-            }`}
+            className={`relative w-full lg:w-[41%] aspect-square max-w-[600px] min-[1350px]:max-w-[520px] min-[1600px]:max-w-[600px] mx-auto lg:ml-auto lg:mr-0 ${isHeroLanding ? 'animate-hero-landing' : ''
+              }`}
           >
 
             {/* Dark Card Container */}
@@ -253,9 +250,9 @@ const HomeBanner = () => {
 
                   {/* Video Thumbnail */}
                   <div className="flex-1 rounded-3xl overflow-hidden relative group cursor-pointer bg-gray-900 border border-dashboard-border">
-                    <Image 
-                      src="https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
-                      alt="Warehouse Surplus Tour" 
+                    <Image
+                      src="/hero-warehouse.jpg"
+                      alt="Warehouse Surplus Tour"
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 520px"
                       className="object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
