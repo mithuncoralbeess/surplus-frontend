@@ -137,6 +137,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       });
 
       if (res.success) {
+        await signIn('credentials', {
+          redirect: false,
+          email: emailOrPhone,
+          otp: otp,
+        });
         setLoading(false);
         setStep(3); // Go to onboarding
       } else {
@@ -185,13 +190,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     });
 
     if (res.success) {
-      // Automatically log them in to NextAuth session after successful registration
-      await signIn('credentials', {
-        redirect: false,
-        email: emailOrPhone,
-        otp: otp,
-      });
-      
       setLoading(false);
       onSuccess();
     } else {
@@ -442,3 +440,4 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
         document.body
       );
 }
+
