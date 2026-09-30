@@ -28,7 +28,7 @@ export interface PartnershipEnquiryPayload {
 
 export const inquiryService = {
   async submitContactForm(payload: ContactUsPayload): Promise<ApiResponse> {
-    return apiClient('/api/contact-us/', {
+    return apiClient('/api/enquiries/contact-us/', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
