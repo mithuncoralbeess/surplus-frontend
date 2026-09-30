@@ -20,9 +20,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const res = await apiClient('/api/maintenance-status/');
+      let res = await apiClient('/api/maintenance-status/');
+      if (!res.success) {
+        res = await apiClient('/api/maintenance/');
+      }
+
       if (res.success && res.data) {
-        setIsMaintenanceMode(Boolean(res.data.is_maintenance_mode));
+        const data = res.data;
+        const statusActive = Boolean(
+          data.is_maintenance_mode ??
+          data.is_maintenance ??
+          data.maintenance_mode ??
+          data.enabled ??
+          (data.status === 'maintenance' || data.status === 'under_maintenance')
+        );
+        setIsMaintenanceMode(statusActive);
       }
     } catch (err) {
       console.error('Failed to check maintenance status:', err);
