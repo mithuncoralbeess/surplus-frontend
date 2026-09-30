@@ -23,7 +23,7 @@ const handler = NextAuth({
             const data = res.data;
             const firstName = data.first_name || '';
             const lastName = data.last_name || '';
-            const fullName = data.name || (firstName || lastName ? `${firstName} ${lastName}`.trim() : '');
+            const fullName = data.full_name || data.name || (firstName || lastName ? `${firstName} ${lastName}`.trim() : "");
             const mobileNum = data.mobile_number || data.mobile || data.phone || data.phone_number || '';
             const loc = data.business_location || data.location || data.business_address || '';
             const comp = data.company_name || data.business_name || data.company || '';
@@ -97,3 +97,4 @@ const handler = NextAuth({
 });
 
 export { handler as GET, handler as POST };
+
