@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { inquiryService } from '../../services/inquiryService';
 import { motion } from '../../lib/motion';
 import { z } from 'zod';
@@ -18,12 +18,32 @@ import {
   Building2
 } from 'lucide-react';
 
+const nameRegex = /^[a-zA-Z\s'\-]{2,50}$/;
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const phoneRegex = /^\+?[0-9\s]{6,20}$/;
+const scriptCheckRegex = /<[^>]*>|javascript:|on\w+\s*=/i;
+
 const contactFormSchema = z.object({
-  fullName: z.string().min(2, "Full Name must be at least 2 characters long"),
-  email: z.string().email("Please enter a valid email address"),
-  phone: z.string().min(6, "Please enter a valid phone number"),
-  enquiryType: z.string().min(1, "Please select what you are enquiring about"),
-  message: z.string().min(10, "Message must be at least 10 characters long")
+  fullName: z
+    .string()
+    .min(2, "Full Name must be at least 2 characters long")
+    .regex(nameRegex, "Full Name can only contain letters, spaces, hyphens, and apostrophes (no numbers or scripts)")
+    .refine((val) => !scriptCheckRegex.test(val), { message: "Script tags or HTML code are not allowed" }),
+  email: z
+    .string()
+    .min(5, "Email is required")
+    .regex(emailRegex, "Please enter a valid email address (e.g. name@domain.com)"),
+  phone: z
+    .string()
+    .min(6, "Phone number must be at least 6 characters")
+    .regex(phoneRegex, "Phone number can only contain + and digits (e.g. +97430269988)"),
+  enquiryType: z
+    .string()
+    .min(1, "Please select what you are enquiring about"),
+  message: z
+    .string()
+    .min(10, "Message must be at least 10 characters long")
+    .refine((val) => !scriptCheckRegex.test(val), { message: "Message contains disallowed script or HTML tags" })
 });
 
 type ContactFormData = z.infer<typeof contactFormSchema>;
@@ -82,8 +102,31 @@ export default function ContactForm() {
   const [submitError, setSubmitError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
+  useEffect(() => {
+    if (isSuccess) {
+      const timer = setTimeout(() => {
+        setIsSuccess(false);
+      }, 30000);
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccess]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (isSuccess) setIsSuccess(false);
+    
+    let val = e.target.value;
+    if (e.target.name === 'fullName') {
+      // Disallow numbers, scripts, and special symbols in real-time
+      val = val.replace(/[^a-zA-Z\s'\-]/g, '');
+    } else if (e.target.name === 'phone') {
+      // Disallow non-digits and non-plus signs in real-time
+      val = val.replace(/[^0-9+\s]/g, '');
+    } else if (e.target.name === 'message') {
+      // Disallow HTML tags, script blocks, and inline script handlers in real-time
+      val = val.replace(/<[^>]*>|javascript:|on\w+\s*=/gi, '');
+    }
+
+    setFormData({ ...formData, [e.target.name]: val });
     if (errors[e.target.name as keyof ContactFormData]) {
       setErrors(prev => ({ ...prev, [e.target.name]: undefined }));
     }
@@ -113,6 +156,7 @@ export default function ContactForm() {
     if (res.success) {
       setIsSubmitting(false);
       setIsSuccess(true);
+      setFormData({ fullName: '', email: '', phone: '', enquiryType: '', message: '' });
       setErrors({});
     } else {
       setIsSubmitting(false);
@@ -138,13 +182,7 @@ export default function ContactForm() {
     <section className="w-full py-12 bg-gray-50 relative overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8 max-w-6xl relative z-10">
         
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 flex flex-col lg:flex-row"
-        >
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 flex flex-col lg:flex-row">
           {/* Left Side - Contact Info Panel */}
           <div className="lg:w-5/12 bg-[#0a1e17] text-white p-8 lg:p-10 relative overflow-hidden flex flex-col justify-between">
             {/* Background Glow */}
@@ -224,167 +262,163 @@ export default function ContactForm() {
 
           {/* Right Side - Form Panel */}
           <div className="lg:w-7/12 p-8 sm:p-12">
-            {isSuccess ? (
-              <div className="flex flex-col items-center justify-center text-center py-12 px-6 bg-[#e0f0e9]/50 rounded-2xl border border-[#0a5c48]/20">
-                <div className="w-16 h-16 bg-[#0a5c48] text-white rounded-full flex items-center justify-center mb-6 shadow-md">
-                  <CheckCircle2 className="w-10 h-10" />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {submitError && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium flex items-center justify-between">
+                  <span>{submitError}</span>
+                  <button type="button" onClick={() => setSubmitError('')} className="text-red-400 hover:text-red-600">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">Message Sent Successfully!</h3>
-                <p className="text-gray-600 text-sm max-w-md mb-8 leading-relaxed">
-                  Thank you for contacting us. A representative has received your request and will follow up with you shortly.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSuccess(false);
-                    setFormData({ fullName: '', email: '', phone: '', enquiryType: '', message: '' });
-                  }}
-                  className="px-6 py-3 bg-[#0a5c48] hover:bg-[#084838] text-white rounded-xl font-semibold text-sm transition-all shadow-sm"
-                >
-                  Send Another Message
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {submitError && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium flex items-center justify-between">
-                    <span>{submitError}</span>
-                    <button type="button" onClick={() => setSubmitError('')} className="text-red-400 hover:text-red-600">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
+              )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Full Name */}
-                  <div>
-                    <label htmlFor="fullName" className="block text-sm font-bold text-gray-900 mb-2">
-                      Full Name <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <User className={`h-5 w-5 ${errors.fullName ? 'text-red-400' : 'text-gray-400'}`} />
-                      </div>
-                      <input
-                        type="text"
-                        id="fullName"
-                        name="fullName"
-                        value={formData.fullName}
-                        onChange={handleChange}
-                        placeholder="Your full name"
-                        className={getInputClass('fullName')}
-                      />
-                    </div>
-                    {errors.fullName && <p className="text-red-500 text-xs mt-1.5">{errors.fullName}</p>}
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-bold text-gray-900 mb-2">
-                      Email Address <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className={`h-5 w-5 ${errors.email ? 'text-red-400' : 'text-gray-400'}`} />
-                      </div>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="yourname@example.com"
-                        className={getInputClass('email')}
-                      />
-                    </div>
-                    {errors.email && <p className="text-red-500 text-xs mt-1.5">{errors.email}</p>}
-                  </div>
-
-                  {/* Phone */}
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-bold text-gray-900 mb-2">
-                      Phone Number <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Phone className={`h-5 w-5 ${errors.phone ? 'text-red-400' : 'text-gray-400'}`} />
-                      </div>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="+974 3026 9988"
-                        className={getInputClass('phone')}
-                      />
-                    </div>
-                    {errors.phone && <p className="text-red-500 text-xs mt-1.5">{errors.phone}</p>}
-                  </div>
-
-                  {/* I'm enquiring about - React Select */}
-                  <div>
-                    <label htmlFor="enquiryType" className="block text-sm font-bold text-gray-900 mb-2">
-                      I'm enquiring about <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      id="enquiryType"
-                      instanceId="enquiryType-select"
-                      options={enquiryOptions}
-                      value={enquiryOptions.find(opt => opt.value === formData.enquiryType) || null}
-                      onChange={(selectedOption: any) => {
-                        const val = selectedOption ? selectedOption.value : '';
-                        setFormData(prev => ({ ...prev, enquiryType: val }));
-                        if (errors.enquiryType) {
-                          setErrors(prev => ({ ...prev, enquiryType: undefined }));
-                        }
-                      }}
-                      placeholder="Select inquiry topic..."
-                      styles={customSelectStyles(Boolean(errors.enquiryType))}
-                    />
-                    {errors.enquiryType && <p className="text-red-500 text-xs mt-1.5">{errors.enquiryType}</p>}
-                  </div>
-                </div>
-
-                {/* Message */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Full Name */}
                 <div>
-                  <label htmlFor="message" className="block text-sm font-bold text-gray-900 mb-2">
-                    Message <span className="text-red-500">*</span>
+                  <label htmlFor="fullName" className="block text-sm font-bold text-gray-900 mb-2">
+                    Full Name <span className="text-red-500">*</span>
                   </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows={5}
-                    value={formData.message}
-                    onChange={handleChange}
-                    placeholder="Provide details about your inquiry..."
-                    className={getTextareaClass('message')}
-                  ></textarea>
-                  {errors.message && <p className="text-red-500 text-xs mt-1.5">{errors.message}</p>}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <User className={`h-5 w-5 ${errors.fullName ? 'text-red-400' : 'text-gray-400'}`} />
+                    </div>
+                    <input
+                      type="text"
+                      id="fullName"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      placeholder="Your full name"
+                      className={getInputClass('fullName')}
+                    />
+                  </div>
+                  {errors.fullName && <p className="text-red-500 text-xs mt-1.5">{errors.fullName}</p>}
                 </div>
 
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-[#0a5c48] hover:bg-[#084838] text-white px-8 py-4 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-70 shadow-sm"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Sending Message...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      Send Message
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
+                {/* Email */}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-bold text-gray-900 mb-2">
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Mail className={`h-5 w-5 ${errors.email ? 'text-red-400' : 'text-gray-400'}`} />
+                    </div>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="yourname@example.com"
+                      className={getInputClass('email')}
+                    />
+                  </div>
+                  {errors.email && <p className="text-red-500 text-xs mt-1.5">{errors.email}</p>}
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-bold text-gray-900 mb-2">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Phone className={`h-5 w-5 ${errors.phone ? 'text-red-400' : 'text-gray-400'}`} />
+                    </div>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="+974 3026 9988"
+                      className={getInputClass('phone')}
+                    />
+                  </div>
+                  {errors.phone && <p className="text-red-500 text-xs mt-1.5">{errors.phone}</p>}
+                </div>
+
+                {/* I'm enquiring about - React Select */}
+                <div>
+                  <label htmlFor="enquiryType" className="block text-sm font-bold text-gray-900 mb-2">
+                    I'm enquiring about <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    id="enquiryType"
+                    instanceId="enquiryType-select"
+                    options={enquiryOptions}
+                    value={enquiryOptions.find(opt => opt.value === formData.enquiryType) || null}
+                    onChange={(selectedOption: any) => {
+                      if (isSuccess) setIsSuccess(false);
+                      const val = selectedOption ? selectedOption.value : '';
+                      setFormData(prev => ({ ...prev, enquiryType: val }));
+                      if (errors.enquiryType) {
+                        setErrors(prev => ({ ...prev, enquiryType: undefined }));
+                      }
+                    }}
+                    placeholder="Select inquiry topic..."
+                    styles={customSelectStyles(Boolean(errors.enquiryType))}
+                  />
+                  {errors.enquiryType && <p className="text-red-500 text-xs mt-1.5">{errors.enquiryType}</p>}
+                </div>
+              </div>
+
+              {/* Message */}
+              <div>
+                <label htmlFor="message" className="block text-sm font-bold text-gray-900 mb-2">
+                  Message <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  rows={5}
+                  value={formData.message}
+                  onChange={handleChange}
+                  placeholder="Provide details about your inquiry..."
+                  className={getTextareaClass('message')}
+                ></textarea>
+                {errors.message && <p className="text-red-500 text-xs mt-1.5">{errors.message}</p>}
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-[#0a5c48] hover:bg-[#084838] text-white px-8 py-4 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-70 shadow-sm"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Sending Message...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Send Message
+                  </>
+                )}
+              </button>
+
+              {/* Success Notification directly under submit button */}
+              {isSuccess && (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-[#0a5c48] text-sm font-semibold flex items-center justify-between animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-5 h-5 text-[#0a5c48] shrink-0" />
+                    <span>Message Sent Successfully!</span>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => setIsSuccess(false)} 
+                    className="text-[#0a5c48]/60 hover:text-[#0a5c48]"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </form>
           </div>
-        </motion.div>
+        </div>
 
       </div>
     </section>

@@ -10,12 +10,13 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
     }
 
     const lenis = new Lenis({
-      duration: 1.0,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      lerp: 0.1,
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
-      wheelMultiplier: 1.1,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 1.0,
+      syncTouch: false,
     });
 
     let rafId = 0;
@@ -26,17 +27,7 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
 
     rafId = requestAnimationFrame(raf);
 
-    // Auto-update Lenis scroll dimensions whenever DOM content expands or contracts
-    const resizeObserver = new ResizeObserver(() => {
-      lenis.resize();
-    });
-
-    if (document.body) {
-      resizeObserver.observe(document.body);
-    }
-
     return () => {
-      resizeObserver.disconnect();
       cancelAnimationFrame(rafId);
       lenis.destroy();
     };
@@ -47,3 +38,4 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
 
 // Backwards compatibility export for SmoothScroll
 export { LenisProvider as SmoothScroll };
+

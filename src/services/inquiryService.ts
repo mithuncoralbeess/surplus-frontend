@@ -35,7 +35,7 @@ export const inquiryService = {
   },
 
   async submitPartnershipEnquiry(payload: PartnershipEnquiryPayload): Promise<ApiResponse> {
-    return apiClient('/api/partnership-enquiry/', {
+    return apiClient('/api/enquiries/partnership/', {
       method: 'POST',
       body: JSON.stringify(payload),
     });

@@ -36,7 +36,7 @@ const Header = () => {
 
   return (
     <header 
-      className={`sticky top-0 w-full border-b border-gray-200/80 bg-white/95 backdrop-blur-md z-50 shadow-sm transition-all ${
+      className={`sticky top-0 w-full border-b border-gray-200/80 bg-white/95 backdrop-blur-md z-50 shadow-sm transition-all [transform:translateZ(0)] ${
         isLanding ? 'animate-header-landing' : ''
       }`}
     >

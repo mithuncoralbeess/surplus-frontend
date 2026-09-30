@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import "../styles/main.scss";
-import Header from "../widgets/Header";
-import Footer from "../components/Footer";
+import AppShell from "../components/AppShell";
 import SmoothScroll from "../components/SmoothScroll";
 import AuthProvider from "../components/AuthProvider";
 import { CurrencyProvider } from "../context/CurrencyContext";
@@ -39,11 +38,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CurrencyProvider>
             <AOSProvider>
               <SmoothScroll>
-                <Header />
-                <div className="flex-1">
+                <AppShell>
                   {children}
-                </div>
-                <Footer />
+                </AppShell>
               </SmoothScroll>
             </AOSProvider>
           </CurrencyProvider>

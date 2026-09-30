@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { inquiryService } from '../../services/inquiryService';
 import { motion } from '../../lib/motion';
 import { z } from 'zod';
@@ -16,13 +16,35 @@ import {
   X
 } from 'lucide-react';
 
+const nameRegex = /^[a-zA-Z\s'\-]{2,50}$/;
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const scriptCheckRegex = /<[^>]*>|javascript:|on\w+\s*=/i;
+
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters long"),
-  email: z.string().email("Please enter a valid email address"),
-  location: z.string().min(2, "Please provide your business location"),
-  interest: z.string().min(1, "Please select a partnership interest"),
-  subject: z.string().min(5, "Subject must be at least 5 characters long"),
-  message: z.string().min(20, "Please provide more details (at least 20 characters)")
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters long")
+    .regex(nameRegex, "Name can only contain letters, spaces, hyphens, and apostrophes (no numbers or scripts)")
+    .refine((val) => !scriptCheckRegex.test(val), { message: "Script tags or HTML code are not allowed" }),
+  email: z
+    .string()
+    .min(5, "Email is required")
+    .regex(emailRegex, "Please enter a valid email address (e.g. name@domain.com)"),
+  location: z
+    .string()
+    .min(2, "Please provide your business location")
+    .refine((val) => !scriptCheckRegex.test(val), { message: "Location contains disallowed script or HTML tags" }),
+  interest: z
+    .string()
+    .min(1, "Please select a partnership interest"),
+  subject: z
+    .string()
+    .min(5, "Subject must be at least 5 characters long")
+    .refine((val) => !scriptCheckRegex.test(val), { message: "Subject contains disallowed script or HTML tags" }),
+  message: z
+    .string()
+    .min(20, "Please provide more details (at least 20 characters)")
+    .refine((val) => !scriptCheckRegex.test(val), { message: "Message contains disallowed script or HTML tags" })
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -43,8 +65,28 @@ const PartnershipForm = () => {
   const [submitError, setSubmitError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
+  useEffect(() => {
+    if (isSuccess) {
+      const timer = setTimeout(() => {
+        setIsSuccess(false);
+      }, 30000);
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccess]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (isSuccess) setIsSuccess(false);
+
+    let val = e.target.value;
+    if (e.target.name === 'name') {
+      // Disallow numbers, scripts, and special symbols in real-time
+      val = val.replace(/[^a-zA-Z\s'\-]/g, '');
+    } else if (['location', 'subject', 'message'].includes(e.target.name)) {
+      // Disallow HTML tags, script blocks, and inline script handlers in real-time
+      val = val.replace(/<[^>]*>|javascript:|on\w+\s*=/gi, '');
+    }
+
+    setFormData({ ...formData, [e.target.name]: val });
     if (errors[e.target.name as keyof FormData]) {
       setErrors(prev => ({ ...prev, [e.target.name]: undefined }));
     }
@@ -74,6 +116,7 @@ const PartnershipForm = () => {
     if (res.success) {
       setIsSubmitting(false);
       setIsSuccess(true);
+      setFormData({ name: '', email: '', location: '', interest: '', subject: '', message: '' });
       setErrors({});
     } else {
       setIsSubmitting(false);
@@ -106,13 +149,7 @@ const PartnershipForm = () => {
   return (
     <section className="w-full py-16 bg-gray-50 relative overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8 max-w-6xl relative z-10">
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8 }}
-          className="bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col lg:flex-row"
-        >
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col lg:flex-row">
           
           {/* Left Side - Dark Info Panel */}
           <div className="lg:w-2/5 bg-[#0a1e17] text-white p-10 lg:p-12 relative overflow-hidden flex flex-col justify-between">
@@ -169,193 +206,188 @@ const PartnershipForm = () => {
 
           {/* Right Side - Form */}
           <div className="lg:w-3/5 p-10 lg:p-12">
-            {isSuccess ? (
-              <div className="flex flex-col items-center justify-center text-center py-12 px-6 bg-[#e0f0e9]/50 rounded-2xl border border-[#0a5c48]/20">
-                <div className="w-16 h-16 bg-[#0a5c48] text-white rounded-full flex items-center justify-center mb-6 shadow-md">
-                  <CheckCircle2 className="w-10 h-10" />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {submitError && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium flex items-center justify-between">
+                  <span>{submitError}</span>
+                  <button type="button" onClick={() => setSubmitError('')} className="text-red-400 hover:text-red-600">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">Enquiry Submitted Successfully!</h3>
-                <p className="text-gray-600 text-sm max-w-md mb-8 leading-relaxed">
-                  Thank you for reaching out to our Partnership Desk. We have received your proposal and our team will get back to you within 24–48 hours.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSuccess(false);
-                    setFormData({ name: '', email: '', location: '', interest: '', subject: '', message: '' });
-                  }}
-                  className="px-6 py-3 bg-[#0a5c48] hover:bg-[#084838] text-white rounded-xl font-semibold text-sm transition-all shadow-sm"
-                >
-                  Submit Another Enquiry
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {submitError && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium flex items-center justify-between">
-                    <span>{submitError}</span>
-                    <button type="button" onClick={() => setSubmitError('')} className="text-red-400 hover:text-red-600">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
+              )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Name */}
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-bold text-gray-900 mb-2">
-                      Name <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <User className={`h-5 w-5 ${errors.name ? 'text-red-400' : 'text-gray-400'}`} />
-                      </div>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        placeholder="Your name"
-                        className={getInputClass('name')}
-                      />
-                    </div>
-                    {errors.name && <p className="text-red-500 text-xs mt-1.5">{errors.name}</p>}
-                  </div>
-
-                  {/* Work Email */}
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-bold text-gray-900 mb-2">
-                      Work Email <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className={`h-5 w-5 ${errors.email ? 'text-red-400' : 'text-gray-400'}`} />
-                      </div>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="Your business email address"
-                        className={getInputClass('email')}
-                      />
-                    </div>
-                    {errors.email && <p className="text-red-500 text-xs mt-1.5">{errors.email}</p>}
-                  </div>
-
-                  {/* Business Location */}
-                  <div>
-                    <label htmlFor="location" className="block text-sm font-bold text-gray-900 mb-2">
-                      Business Location <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <MapPin className={`h-5 w-5 ${errors.location ? 'text-red-400' : 'text-gray-400'}`} />
-                      </div>
-                      <input
-                        type="text"
-                        id="location"
-                        name="location"
-                        value={formData.location}
-                        onChange={handleChange}
-                        placeholder="Country / City"
-                        className={getInputClass('location')}
-                      />
-                    </div>
-                    {errors.location && <p className="text-red-500 text-xs mt-1.5">{errors.location}</p>}
-                  </div>
-
-                  {/* Partnership Interest */}
-                  <div>
-                    <label htmlFor="interest" className="block text-sm font-bold text-gray-900 mb-2">
-                      Partnership Interest <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <HelpCircle className={`h-5 w-5 ${errors.interest ? 'text-red-400' : 'text-gray-400'}`} />
-                      </div>
-                      <select
-                        id="interest"
-                        name="interest"
-                        value={formData.interest}
-                        onChange={handleChange}
-                        className={getSelectClass('interest')}
-                      >
-                        <option value="" disabled>Select Partnership Type</option>
-                        <option value="Referral">Referral Partner</option>
-                        <option value="ESG">ESG / Sustainability</option>
-                        <option value="Logistics">Logistics / Fulfillment</option>
-                        <option value="Liquidation">Liquidation / Value Recovery</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
-                    {errors.interest && <p className="text-red-500 text-xs mt-1.5">{errors.interest}</p>}
-                  </div>
-                </div>
-
-                {/* Subject */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Name */}
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-bold text-gray-900 mb-2">
-                    Subject <span className="text-red-500">*</span>
+                  <label htmlFor="name" className="block text-sm font-bold text-gray-900 mb-2">
+                    Name <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MessageSquare className={`h-5 w-5 ${errors.subject ? 'text-red-400' : 'text-gray-400'}`} />
+                      <User className={`h-5 w-5 ${errors.name ? 'text-red-400' : 'text-gray-400'}`} />
                     </div>
                     <input
                       type="text"
-                      id="subject"
-                      name="subject"
-                      value={formData.subject}
+                      id="name"
+                      name="name"
+                      value={formData.name}
                       onChange={handleChange}
-                      placeholder="What would you like to discuss?"
-                      className={getInputClass('subject')}
+                      placeholder="Your name"
+                      className={getInputClass('name')}
                     />
                   </div>
-                  {errors.subject && <p className="text-red-500 text-xs mt-1.5">{errors.subject}</p>}
+                  {errors.name && <p className="text-red-500 text-xs mt-1.5">{errors.name}</p>}
                 </div>
 
-                {/* Message */}
+                {/* Work Email */}
                 <div>
-                  <label htmlFor="message" className="block text-sm font-bold text-gray-900 mb-2">
-                    How Can We Collaborate? <span className="text-red-500">*</span>
+                  <label htmlFor="email" className="block text-sm font-bold text-gray-900 mb-2">
+                    Work Email <span className="text-red-500">*</span>
                   </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows={4}
-                    value={formData.message}
-                    onChange={handleChange}
-                    placeholder="Tell us about your business, your network, your capabilities, or the opportunity you'd like to explore."
-                    className={getTextareaClass('message')}
-                  ></textarea>
-                  {errors.message && <p className="text-red-500 text-xs mt-1.5">{errors.message}</p>}
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Mail className={`h-5 w-5 ${errors.email ? 'text-red-400' : 'text-gray-400'}`} />
+                    </div>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="Your business email address"
+                      className={getInputClass('email')}
+                    />
+                  </div>
+                  {errors.email && <p className="text-red-500 text-xs mt-1.5">{errors.email}</p>}
                 </div>
 
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-[#0a5c48] hover:bg-[#084838] text-white px-8 py-4 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-70"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Submitting Enquiry...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      Submit Partnership Enquiry
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
+                {/* Business Location */}
+                <div>
+                  <label htmlFor="location" className="block text-sm font-bold text-gray-900 mb-2">
+                    Business Location <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <MapPin className={`h-5 w-5 ${errors.location ? 'text-red-400' : 'text-gray-400'}`} />
+                    </div>
+                    <input
+                      type="text"
+                      id="location"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      placeholder="Country / City"
+                      className={getInputClass('location')}
+                    />
+                  </div>
+                  {errors.location && <p className="text-red-500 text-xs mt-1.5">{errors.location}</p>}
+                </div>
+
+                {/* Partnership Interest */}
+                <div>
+                  <label htmlFor="interest" className="block text-sm font-bold text-gray-900 mb-2">
+                    Partnership Interest <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <HelpCircle className={`h-5 w-5 ${errors.interest ? 'text-red-400' : 'text-gray-400'}`} />
+                    </div>
+                    <select
+                      id="interest"
+                      name="interest"
+                      value={formData.interest}
+                      onChange={handleChange}
+                      className={getSelectClass('interest')}
+                    >
+                      <option value="" disabled>Select Partnership Type</option>
+                      <option value="Referral">Referral Partner</option>
+                      <option value="ESG">ESG / Sustainability</option>
+                      <option value="Logistics">Logistics / Fulfillment</option>
+                      <option value="Liquidation">Liquidation / Value Recovery</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  {errors.interest && <p className="text-red-500 text-xs mt-1.5">{errors.interest}</p>}
+                </div>
+              </div>
+
+              {/* Subject */}
+              <div>
+                <label htmlFor="subject" className="block text-sm font-bold text-gray-900 mb-2">
+                  Subject <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <MessageSquare className={`h-5 w-5 ${errors.subject ? 'text-red-400' : 'text-gray-400'}`} />
+                  </div>
+                  <input
+                    type="text"
+                    id="subject"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleChange}
+                    placeholder="What would you like to discuss?"
+                    className={getInputClass('subject')}
+                  />
+                </div>
+                {errors.subject && <p className="text-red-500 text-xs mt-1.5">{errors.subject}</p>}
+              </div>
+
+              {/* Message */}
+              <div>
+                <label htmlFor="message" className="block text-sm font-bold text-gray-900 mb-2">
+                  How Can We Collaborate? <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  rows={4}
+                  value={formData.message}
+                  onChange={handleChange}
+                  placeholder="Tell us about your business, your network, your capabilities, or the opportunity you'd like to explore."
+                  className={getTextareaClass('message')}
+                ></textarea>
+                {errors.message && <p className="text-red-500 text-xs mt-1.5">{errors.message}</p>}
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-[#0a5c48] hover:bg-[#084838] text-white px-8 py-4 rounded-xl font-bold text-[15px] transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-70"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Submitting Enquiry...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Submit Partnership Enquiry
+                  </>
+                )}
+              </button>
+
+              {/* Success Notification directly under submit button */}
+              {isSuccess && (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-[#0a5c48] text-sm font-semibold flex items-center justify-between animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-5 h-5 text-[#0a5c48] shrink-0" />
+                    <span>Enquiry Submitted Successfully!</span>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => setIsSuccess(false)} 
+                    className="text-[#0a5c48]/60 hover:text-[#0a5c48]"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </form>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

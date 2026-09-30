@@ -47,17 +47,57 @@ export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
 }
 
 /**
- * Validates whether a URL is a safe HTTPS or relative HTTP URL.
- * Prevents SSRF / Open Redirect vulnerabilities.
+ * Sanitizes a URL input string to prevent cyber attacks:
+ * - Strips pseudo-protocols (javascript:, data:, vbscript:, file:, blob:)
+ * - Strips CRLF characters (\r, \n, %0d, %0a) to prevent HTTP Header Injection
+ * - Strips HTML tags and script payloads
+ */
+export function sanitizeUrl(url: string): string {
+  if (!url || typeof url !== 'string') return '';
+
+  let cleaned = url
+    // Remove control chars & line breaks (CRLF injection prevention)
+    .replace(/[\r\n\t]/g, '')
+    .replace(/%0[ad]/gi, '')
+    // Remove HTML tags and quotes
+    .replace(/<[^>]*>/g, '')
+    .replace(/["'<>]/g, '')
+    // Remove inline JS handlers
+    .replace(/on\w+\s*=/gi, '')
+    .trim();
+
+  // Block dangerous pseudo-protocols (XSS / Local File Inclusion)
+  const dangerousProtocols = /^(javascript|data|vbscript|file|blob|ftp):/i;
+  if (dangerousProtocols.test(cleaned)) {
+    return '';
+  }
+
+  // Prevent protocol-relative URLs starting with // (Open Redirect) unless http(s)://
+  if (cleaned.startsWith('//')) {
+    return '';
+  }
+
+  return cleaned;
+}
+
+/**
+ * Validates whether a URL is a safe HTTPS, HTTP, or relative URL.
+ * Protects against SSRF, Open Redirect, and Protocol-based XSS attacks.
  */
 export function isSafeUrl(url: string): boolean {
   if (!url || typeof url !== 'string') return false;
 
-  // Allow relative URLs starting with /
-  if (url.startsWith('/')) return true;
+  const sanitized = sanitizeUrl(url);
+  if (!sanitized) return false;
+
+  // Allow safe relative paths (e.g. /browse, /profile)
+  if (sanitized.startsWith('/') && !sanitized.startsWith('//')) {
+    return true;
+  }
 
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(sanitized);
+    // Strict whitelist: Only http and https protocols are permitted
     return parsed.protocol === 'https:' || parsed.protocol === 'http:';
   } catch {
     return false;
