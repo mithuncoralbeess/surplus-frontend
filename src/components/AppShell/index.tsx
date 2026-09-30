@@ -22,25 +22,49 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       if (!res.success) {
         res = await apiClient('/api/maintenance/');
       }
+      if (!res.success) {
+        res = await apiClient('/api/website-status/');
+      }
 
-      if (res.status === 503 || (res.message && res.message.toLowerCase().includes('maintenance'))) {
+      if (res.status === 503) {
         setIsMaintenanceMode(true);
         return;
       }
 
       if (res.success && res.data) {
         const data = res.data;
-        const statusActive = Boolean(
-          data.is_maintenance_mode ??
-          data.is_maintenance ??
-          data.maintenance_mode ??
-          data.enabled ??
-          (data.status === 'maintenance' || data.status === 'under_maintenance')
+
+        // Check for explicit "Live" status from backend dashboard
+        const isLive = 
+          data.website_status === 'Live' || 
+          data.status === 'Live' || 
+          data.status === 'live' || 
+          data.is_live === true || 
+          data.is_maintenance_mode === false || 
+          data.is_maintenance === false;
+
+        if (isLive) {
+          setIsMaintenanceMode(false);
+          return;
+        }
+
+        // Check for explicit Maintenance status from backend dashboard
+        const isMaintenance = Boolean(
+          data.is_maintenance_mode === true ||
+          data.is_maintenance === true ||
+          data.maintenance_mode === true ||
+          data.website_status === 'Maintenance' ||
+          data.status === 'maintenance' ||
+          data.status === 'under_maintenance'
         );
-        setIsMaintenanceMode(statusActive);
+
+        setIsMaintenanceMode(isMaintenance);
+      } else {
+        setIsMaintenanceMode(false);
       }
     } catch (err) {
       console.error('Failed to check maintenance status:', err);
+      setIsMaintenanceMode(false);
     }
   }, []);
 
