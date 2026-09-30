@@ -23,6 +23,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         res = await apiClient('/api/maintenance/');
       }
 
+      if (res.status === 503 || (res.message && res.message.toLowerCase().includes('maintenance'))) {
+        setIsMaintenanceMode(true);
+        return;
+      }
+
       if (res.success && res.data) {
         const data = res.data;
         const statusActive = Boolean(

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Surplus Market API Client
  * Centralized, secure HTTP client with error handling, URL resolution, and request sanitization.
  */
@@ -43,11 +43,6 @@ export async function apiClient<T = any>(
     }
 
     if (!response.ok) {
-      if (response.status === 503 && json?.error === 'Maintenance Mode') {
-        if (typeof window !== 'undefined' && window.location.pathname !== '/maintenance') {
-          window.location.href = '/maintenance';
-        }
-      }
       const errorMsg = json.message || json.detail || (typeof json === 'object' && Object.keys(json).length > 0 ? JSON.stringify(json) : `Request failed with status ${response.status}`);
       return {
         success: false,
