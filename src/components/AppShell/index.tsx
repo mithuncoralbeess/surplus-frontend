@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { usePathname } from 'next/navigation';
 import Header from '../../widgets/Header';
 import Footer from '../Footer';
 import MaintenanceWidget from '../../widgets/Maintenance';
 import { apiClient } from '../../services/apiClient';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean>(() => {
     return process.env.NEXT_PUBLIC_IS_MAINTENANCE === 'true';
   });
@@ -49,8 +47,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [checkMaintenanceStatus]);
 
-  // Conditionally render Under Maintenance page in layout
-  if (isMaintenanceMode || pathname === '/maintenance') {
+  // Conditionally render Under Maintenance widget directly in layout
+  if (isMaintenanceMode) {
     return (
       <main className="flex-1 min-h-screen">
         <MaintenanceWidget />
