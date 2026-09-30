@@ -43,10 +43,11 @@ export async function apiClient<T = any>(
     }
 
     if (!response.ok) {
+      const errorMsg = json.message || json.detail || (typeof json === 'object' && Object.keys(json).length > 0 ? JSON.stringify(json) : `Request failed with status ${response.status}`);
       return {
         success: false,
         status: response.status,
-        message: json.message || json.detail || `Request failed with status ${response.status}`,
+        message: errorMsg,
       };
     }
 

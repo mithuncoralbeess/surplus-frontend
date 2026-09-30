@@ -8,41 +8,92 @@ const handler = NextAuth({
       name: "OTP",
       credentials: {
         email: { label: "Email / Phone", type: "text" },
-        otp: { label: "OTP", type: "text" }
+        otp: { label: "OTP", type: "text" },
+        isRegister: { label: "Is Register", type: "text" },
+        fullName: { label: "Full Name", type: "text" },
+        mobileNumber: { label: "Mobile Number", type: "text" }
       },
       async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.otp) return null;
         
         try {
-          const res = await authService.verifyLoginOtp({
-            email: credentials.email,
-            otp: credentials.otp,
-          });
+          const res = credentials.isRegister === 'true'
+            ? await authService.verifyRegistrationOtp({
+                email: credentials.email,
+                otp: credentials.otp,
+              })
+            : await authService.verifyLoginOtp({
+                email: credentials.email,
+                otp: credentials.otp,
+              });
           
           if (res.success && res.data) {
-            const data = res.data;
-            const firstName = data.first_name || '';
-            const lastName = data.last_name || '';
-            const fullName = data.full_name || data.name || (firstName || lastName ? `${firstName} ${lastName}`.trim() : "");
-            const mobileNum = data.mobile_number || data.mobile || data.phone || data.phone_number || '';
-            const loc = data.business_location || data.location || data.business_address || '';
-            const comp = data.company_name || data.business_name || data.company || '';
-            const trn = data.trn_number || data.trn || data.tax_id || '';
+            const rawData = res.data as any;
+            const data = rawData.user || rawData.vendor || rawData.profile || rawData.data || rawData;
+
+            const firstName = data.first_name || data.firstName || '';
+            const lastName = data.last_name || data.lastName || '';
+            let fullName = data.full_name || data.fullName || data.name || (firstName || lastName ? `${firstName} ${lastName}`.trim() : "");
+            let mobileNum = data.mobile_number || data.mobileNumber || data.mobile || data.phone || data.phone_number || data.phoneNumber || '';
+            
+            // Fallback to credentials passed from frontend during registration
+            if (!fullName && credentials.fullName) fullName = credentials.fullName;
+            if (!mobileNum && credentials.mobileNumber) mobileNum = credentials.mobileNumber;
+
+            const loc = data.business_location || data.businessLocation || data.location || data.business_address || data.address || '';
+            const comp = data.company_name || data.companyName || data.business_name || data.company || '';
+            const trn = data.tax_registration_number || data.taxRegistrationNumber || data.trn_number || data.trn || data.tax_id || data.taxId || '';
+
+            const rawAccountEntity = (
+              data.account_entity_type ||
+              data.accountEntityType ||
+              data.account_type ||
+              data.entity_type ||
+              data.account_entity ||
+              data.entity ||
+              ''
+            ).toString().toUpperCase();
+
+            let accountEntityType = '';
+            if (rawAccountEntity.includes('INDIVIDUAL')) {
+              accountEntityType = 'INDIVIDUAL';
+            } else if (rawAccountEntity.includes('COMPANY') || rawAccountEntity.includes('BUSINESS')) {
+              accountEntityType = 'COMPANY';
+            } else {
+              accountEntityType = rawAccountEntity;
+            }
+
+            const rawUserType = (
+              data.user_type ||
+              data.userType ||
+              data.role ||
+              data.account_role ||
+              data.type ||
+              ''
+            ).toString().toUpperCase();
+
+            const categoryInterested = data.category_interested || data.categoryInterested || data.categories_interested || data.categories || '';
+            const businessType = data.business_type || data.businessType || '';
 
             return { 
               id: String(data.vendor_id || data.id || credentials.email),
               email: data.email || credentials.email,
               name: fullName,
-              vendor_id: data.vendor_id,
-              user_type: data.user_type,
+              full_name: fullName,
+              first_name: firstName,
+              last_name: lastName,
+              vendor_id: data.vendor_id || data.id,
+              user_type: rawUserType || 'BUYER',
               mobile: mobileNum,
               phone: mobileNum,
               location: loc,
               business_location: loc,
               company_name: comp,
               tax_id: trn,
-              business_type: data.business_type || '',
-              address: data.address || data.business_address || loc
+              business_type: businessType,
+              address: data.address || data.business_address || loc,
+              account_entity_type: accountEntityType,
+              category_interested: categoryInterested
             };
           }
           return null;
@@ -60,7 +111,23 @@ const handler = NextAuth({
     signIn: '/login',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // Handle session update
+      if (trigger === "update" && session) {
+        if (session.full_name !== undefined) token.full_name = session.full_name;
+        if (session.name !== undefined) token.name = session.name;
+        if (session.mobile !== undefined) token.mobile = session.mobile;
+        if (session.phone !== undefined) token.phone = session.phone;
+        if (session.company_name !== undefined) token.company_name = session.company_name;
+        if (session.business_location !== undefined) token.business_location = session.business_location;
+        if (session.business_type !== undefined) token.business_type = session.business_type;
+        if (session.tax_id !== undefined) token.tax_id = session.tax_id;
+        if (session.address !== undefined) token.address = session.address;
+        if (session.account_entity_type !== undefined) token.account_entity_type = session.account_entity_type;
+        if (session.user_type !== undefined) token.user_type = session.user_type;
+        if (session.category_interested !== undefined) token.category_interested = session.category_interested;
+      }
+      
       if (user) {
         const u = user as any;
         token.vendor_id = u.vendor_id;
@@ -73,6 +140,12 @@ const handler = NextAuth({
         token.tax_id = u.tax_id;
         token.business_type = u.business_type;
         token.address = u.address;
+        token.full_name = u.full_name;
+        token.first_name = u.first_name;
+        token.last_name = u.last_name;
+        token.account_entity_type = u.account_entity_type;
+        token.category_interested = u.category_interested;
+        if (u.name) token.name = u.name;
       }
       return token;
     },
@@ -89,6 +162,13 @@ const handler = NextAuth({
         u.tax_id = token.tax_id;
         u.business_type = token.business_type;
         u.address = token.address;
+        u.full_name = token.full_name;
+        u.first_name = token.first_name;
+        u.last_name = token.last_name;
+        u.account_entity_type = token.account_entity_type;
+        u.category_interested = token.category_interested;
+        if (token.name) u.name = token.name;
+        if (!u.name && token.full_name) u.name = token.full_name;
       }
       return session;
     }
@@ -97,4 +177,5 @@ const handler = NextAuth({
 });
 
 export { handler as GET, handler as POST };
+
 

@@ -61,7 +61,7 @@ const BuyMegamenu = () => {
     setIsOpen(false);
   }, [pathname]);
 
-  const isBuyActive = pathname === '/shop-by-category' || pathname === '/browse' || pathname.startsWith('/browse');
+  const isBuyActive = pathname === '/shop-by-category' || pathname.startsWith('/category');
 
   return (
     <div 

@@ -1,4 +1,5 @@
 @use "sass:math";
+@use "sass:map";
 
 @function rem($px) {
   @return math.div($px, 16) * 1rem;
@@ -30,7 +31,7 @@ $container-max-widths: (
   margin-left: auto;
 
   @each $breakpoint, $max-width in $container-max-widths {
-    @media (min-width: map-get($breakpoints, $breakpoint)) {
+    @media (min-width: map.get($breakpoints, $breakpoint)) {
       max-width: $max-width;
     }
   }
@@ -101,8 +102,8 @@ $heading-font-sizes: (
         font-size: $size;
       }
 
-      @else if map-has-key($breakpoints, $bp) {
-        @media (min-width: map-get($breakpoints, $bp)) {
+      @else if map.has-key($breakpoints, $bp) {
+        @media (min-width: map.get($breakpoints, $bp)) {
           font-size: $size;
         }
       }

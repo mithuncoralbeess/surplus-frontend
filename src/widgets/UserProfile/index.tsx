@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { authService } from '../../services/authService';
 import { 
   User, 
   Building2, 
@@ -29,8 +31,16 @@ import SimpleListingModal from '../../components/SimpleListingModal';
 import LotImportModal from '../../components/LotImportModal';
 
 export default function UserProfileWidget() {
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, status, update } = useSession();
   const { formatPrice } = useCurrency();
+
+  // Redirect unauthenticated users immediately to homepage
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.replace('/');
+    }
+  }, [status, router]);
   const [activeTab, setActiveTab] = useState<'profile' | 'rfqs' | 'listings' | 'saved' | 'settings'>('profile');
 
   // Listing Type Filter State inside Tab 3
@@ -42,13 +52,19 @@ export default function UserProfileWidget() {
 
   // Form State - Empty if not logged in, populated dynamically from session user
   const u = (session?.user || {}) as any;
-  const [fullName, setFullName] = useState(u.name || u.first_name || '');
+  const rawInitialEntity = (u.account_entity_type || u.accountEntityType || u.account_type || u.entity_type || '').toString().toUpperCase();
+  const initialEntityType = rawInitialEntity.includes('INDIVIDUAL') ? 'INDIVIDUAL' : rawInitialEntity.includes('COMPANY') ? 'COMPANY' : (u.account_entity_type || 'COMPANY');
+
+  const [fullName, setFullName] = useState(u.full_name || u.name || u.first_name || '');
   const [email, setEmail] = useState(u.email || '');
   const [phone, setPhone] = useState(u.phone || u.mobile || u.mobile_number || u.phone_number || '');
   const [businessLocation, setBusinessLocation] = useState(u.business_location || u.businessLocation || u.location || u.business_address || '');
   const [companyName, setCompanyName] = useState(u.company_name || u.companyName || u.company || u.business_name || '');
   const [taxId, setTaxId] = useState(u.tax_id || u.taxId || u.trn || u.trn_number || '');
-  const [businessType, setBusinessType] = useState(u.business_type || u.businessType || 'Wholesaler / Distributor');
+  const [businessType, setBusinessType] = useState(u.business_type || u.businessType || '');
+  const [accountEntityType, setAccountEntityType] = useState(initialEntityType);
+  const [userType, setUserType] = useState(u.user_type || 'BUYER');
+  const [categoriesInterested, setCategoriesInterested] = useState(u.category_interested || u.categoryInterested || u.categories_interested || '');
   const [address, setAddress] = useState(u.address || u.business_address || u.location || '');
   const [isSavedNotice, setIsSavedNotice] = useState(false);
 
@@ -56,13 +72,22 @@ export default function UserProfileWidget() {
   useEffect(() => {
     if (session?.user) {
       const userObj = session.user as any;
-      setFullName(userObj.name || userObj.first_name || (userObj.first_name && userObj.last_name ? `${userObj.first_name} ${userObj.last_name}` : ''));
+      setFullName(userObj.full_name || userObj.name || userObj.first_name || (userObj.first_name && userObj.last_name ? `${userObj.first_name} ${userObj.last_name}` : ''));
       setEmail(userObj.email || '');
       setPhone(userObj.phone || userObj.mobile || userObj.mobile_number || userObj.phone_number || '');
       setBusinessLocation(userObj.business_location || userObj.businessLocation || userObj.location || userObj.business_address || '');
       setCompanyName(userObj.company_name || userObj.companyName || userObj.company || userObj.business_name || '');
       setTaxId(userObj.tax_id || userObj.taxId || userObj.trn || userObj.trn_number || '');
-      setBusinessType(userObj.business_type || userObj.businessType || 'Wholesaler / Distributor');
+      setBusinessType(userObj.business_type || userObj.businessType || '');
+      
+      const rawEntity = (userObj.account_entity_type || userObj.accountEntityType || userObj.account_type || userObj.entity_type || '').toString().toUpperCase();
+      const normalizedEntity = rawEntity.includes('INDIVIDUAL') ? 'INDIVIDUAL' : 'COMPANY';
+      setAccountEntityType(normalizedEntity);
+
+      const rawUserRole = (userObj.user_type || userObj.userType || userObj.role || '').toString().toUpperCase();
+      setUserType(rawUserRole || 'BUYER');
+
+      setCategoriesInterested(userObj.category_interested || userObj.categoryInterested || userObj.categories_interested || '');
       setAddress(userObj.address || userObj.business_address || userObj.location || '');
     } else {
       // Clear all fields if user is not logged in
@@ -73,6 +98,9 @@ export default function UserProfileWidget() {
       setCompanyName('');
       setTaxId('');
       setBusinessType('');
+      setAccountEntityType('COMPANY');
+      setUserType('BUYER');
+      setCategoriesInterested('');
       setAddress('');
     }
   }, [session]);
@@ -82,10 +110,61 @@ export default function UserProfileWidget() {
   const [rfqUpdates, setRfqUpdates] = useState(true);
   const [priceAlerts, setPriceAlerts] = useState(true);
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSavedNotice(true);
-    setTimeout(() => setIsSavedNotice(false), 3000);
+    setIsSaving(true);
+    setSaveError('');
+    
+    try {
+      const payload: any = {
+        email: email,
+        full_name: fullName,
+        mobile_number: phone,
+        phone: phone,
+        account_entity_type: accountEntityType as 'COMPANY' | 'INDIVIDUAL',
+        user_type: userType || 'BUYER',
+        business_location: businessLocation,
+        category_interested: categoriesInterested,
+        company_name: accountEntityType === 'COMPANY' ? companyName : '',
+        business_type: accountEntityType === 'COMPANY' ? businessType : '',
+        business_address: address,
+        tax_registration_number: accountEntityType === 'COMPANY' ? taxId : '',
+      };
+
+      const res = await authService.completeProfile(payload);
+      
+      if (res.success) {
+        const resData = (res.data?.user || res.data?.vendor || res.data?.profile || res.data?.data || res.data || {}) as any;
+
+        // Update NextAuth session with all saved fields
+        await update({
+          full_name: fullName || resData.full_name || resData.name,
+          name: fullName || resData.full_name || resData.name,
+          mobile: phone || resData.mobile_number || resData.mobile,
+          phone: phone || resData.mobile_number || resData.mobile,
+          business_location: businessLocation || resData.business_location || resData.location,
+          company_name: companyName || resData.company_name,
+          tax_id: taxId || resData.tax_registration_number || resData.tax_id,
+          business_type: businessType || resData.business_type,
+          address: address || resData.business_address || resData.address,
+          account_entity_type: accountEntityType || resData.account_entity_type,
+          user_type: userType || resData.user_type,
+          category_interested: categoriesInterested || resData.category_interested
+        });
+        
+        setIsSavedNotice(true);
+        setTimeout(() => setIsSavedNotice(false), 3000);
+      } else {
+        setSaveError(res.message || 'Failed to update profile.');
+      }
+    } catch (err) {
+      setSaveError('An unexpected error occurred while saving.');
+    }
+    
+    setIsSaving(false);
   };
 
   const sampleRfqs = [
@@ -144,6 +223,40 @@ export default function UserProfileWidget() {
     { id: 'SAV-2', title: 'LG UltraFine 27" 4K Monitors Wholesale Lot', priceUsd: 5400, location: 'Riyadh, Saudi Arabia', image: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=300&auto=format&fit=crop&q=80' },
   ];
 
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-50/60 flex items-center justify-center p-8">
+        <div className="flex items-center space-x-3 text-gray-500 font-medium">
+          <svg className="animate-spin h-5 w-5 text-[#0f7a61]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <span>Loading profile...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'unauthenticated' || !session) {
+    return null;
+  }
+
+  const getSubtitleText = () => {
+    if (accountEntityType === 'INDIVIDUAL') {
+      if (companyName) {
+        return `${companyName} • Individual Account`;
+      }
+      return 'Individual Account';
+    }
+    if (companyName && businessType) {
+      return `${companyName} • ${businessType}`;
+    }
+    if (companyName) {
+      return `${companyName} • Company/Business`;
+    }
+    if (businessType) {
+      return businessType;
+    }
+    return 'Company / Business Account';
+  };
+
   return (
     <section className="py-10 bg-gray-50/60 min-h-screen">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -167,17 +280,23 @@ export default function UserProfileWidget() {
                 <div className="flex items-center space-x-2">
                   <h1 className="text-2xl font-bold text-gray-900">{fullName}</h1>
                   <span className="bg-[#e6f7ef] text-[#0f7a61] text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> Verified Business
+                    <Sparkles className="w-3 h-3" /> {accountEntityType === 'INDIVIDUAL' ? 'Verified Individual' : 'Verified Business'}
                   </span>
                 </div>
-                <p className="text-gray-500 text-sm mt-1">{companyName} &bull; {businessType}</p>
+                <p className="text-gray-500 text-sm mt-1">
+                  {getSubtitleText()}
+                </p>
                 <div className="flex items-center space-x-4 mt-2 text-xs text-gray-400">
-                  <span className="flex items-center gap-1">
-                    <Mail className="w-3.5 h-3.5 text-gray-400" /> {email}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-gray-400" /> Dubai, UAE
-                  </span>
+                  {email && (
+                    <span className="flex items-center gap-1">
+                      <Mail className="w-3.5 h-3.5 text-gray-400" /> {email}
+                    </span>
+                  )}
+                  {businessLocation && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-gray-400" /> {businessLocation}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -291,6 +410,12 @@ export default function UserProfileWidget() {
                   <h2 className="text-xl font-bold text-gray-900 mb-1">Personal Details</h2>
                   <p className="text-gray-500 text-xs">Manage your personal contact info and credentials.</p>
                   
+                  {saveError && (
+                    <div className="mt-4 bg-red-50 text-red-600 text-sm font-medium p-3 rounded-xl border border-red-100">
+                      {saveError}
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1">Full Name</label>
@@ -332,16 +457,58 @@ export default function UserProfileWidget() {
                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61]" 
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Account Entity Type</label>
+                      <div className="flex bg-gray-100 p-1 rounded-xl mt-0">
+                        {['COMPANY', 'INDIVIDUAL'].map(type => (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => setAccountEntityType(type)}
+                            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${accountEntityType === type ? 'bg-white text-[#0f7a61] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                          >
+                            {type === 'COMPANY' ? 'Company/Business' : 'Individual'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Account Role</label>
+                      <div className="flex bg-gray-100 p-1 rounded-xl mt-0">
+                        {['BUYER', 'SELLER', 'BOTH'].map(role => (
+                          <button
+                            key={role}
+                            type="button"
+                            onClick={() => setUserType(role)}
+                            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${userType === role ? 'bg-white text-[#0f7a61] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                          >
+                            {role === 'BUYER' ? 'Buyer' : role === 'SELLER' ? 'Seller' : 'Both'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Categories Interested</label>
+                      <input 
+                        type="text" 
+                        value={categoriesInterested} 
+                        onChange={(e) => setCategoriesInterested(e.target.value)}
+                        placeholder="e.g. Electronics, Machinery"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61]" 
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="h-px bg-gray-100"></div>
+                {accountEntityType === 'COMPANY' && (
+                  <>
+                    <div className="h-px bg-gray-100"></div>
 
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">Business & Company Details</h2>
-                  <p className="text-gray-500 text-xs">Verified tax & business registration details.</p>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900 mb-1">Business & Company Details</h2>
+                      <p className="text-gray-500 text-xs">Verified tax & business registration details.</p>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1">Company Name</label>
                       <input 
@@ -388,13 +555,25 @@ export default function UserProfileWidget() {
                     </div>
                   </div>
                 </div>
+                </>
+                )}
 
                 <div className="pt-2 flex justify-end">
                   <button 
                     type="submit"
-                    className="bg-[#0f7a61] hover:bg-[#0c6651] text-white font-semibold text-sm px-6 py-2.5 rounded-full flex items-center gap-2 transition-colors shadow-sm"
+                    disabled={isSaving}
+                    className="bg-[#0f7a61] hover:bg-[#0c6651] text-white font-semibold text-sm px-6 py-2.5 rounded-full flex items-center gap-2 transition-colors shadow-sm disabled:opacity-70"
                   >
-                    <Save className="w-4 h-4" /> Save Changes
+                    {isSaving ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Saving...
+                      </span>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" /> Save Changes
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
@@ -645,3 +824,5 @@ export default function UserProfileWidget() {
     </section>
   );
 }
+
+

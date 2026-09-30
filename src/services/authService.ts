@@ -13,11 +13,17 @@ export interface VerifyOtpPayload {
 
 export interface CompleteProfilePayload {
   email: string;
+  full_name?: string;
+  mobile_number?: string;
+  phone?: string;
   account_entity_type: 'COMPANY' | 'INDIVIDUAL';
   company_name?: string;
+  business_address?: string;
+  tax_registration_number?: string;
+  business_type?: string;
   business_location?: string;
   user_type: string;
-  category_interested: string;
+  category_interested?: string;
 }
 
 export const authService = {

@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { authService } from '../../services/authService';
 import { motion, AnimatePresence } from '../../lib/motion';
 import { X, ArrowRight, Loader2, CheckCircle2, ChevronDown, Search } from 'lucide-react';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import PhoneInput from 'react-phone-number-input';
 import flags from 'react-phone-number-input/flags';
 import 'react-phone-number-input/style.css';
@@ -18,6 +18,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthModalProps) {
+  const { update } = useSession();
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -131,22 +132,21 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     setError('');
 
     if (mode === 'register') {
-      const res = await authService.verifyRegistrationOtp({
+      const res = await signIn('credentials', {
+        redirect: false,
         email: emailOrPhone,
         otp: otp,
+        isRegister: 'true',
+        fullName: fullName,
+        mobileNumber: mobileNumber,
       });
 
-      if (res.success) {
-        await signIn('credentials', {
-          redirect: false,
-          email: emailOrPhone,
-          otp: otp,
-        });
+      if (res?.error) {
+        setError('Invalid or expired OTP.');
+        setLoading(false);
+      } else {
         setLoading(false);
         setStep(3); // Go to onboarding
-      } else {
-        setError(res.message || 'Invalid or expired OTP.');
-        setLoading(false);
       }
     } else {
       const res = await signIn('credentials', {
@@ -183,13 +183,20 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     const res = await authService.completeProfile({
       email: emailOrPhone,
       account_entity_type: entityType === 'Company/Business' ? 'COMPANY' : 'INDIVIDUAL',
-      company_name: entityType === 'Company/Business' ? companyName : '',
-      business_location: businessLocation,
+      company_name: entityType === 'Company/Business' ? companyName : undefined,
+      business_location: businessLocation || undefined,
       user_type: role.toUpperCase(),
-      category_interested: categories.join(', '),
+      category_interested: categories.join(', ') || undefined,
     });
 
     if (res.success) {
+      await update({
+        company_name: entityType === 'Company/Business' ? companyName : '',
+        business_location: businessLocation,
+        business_type: role.toUpperCase(),
+        account_entity_type: entityType === 'Company/Business' ? 'COMPANY' : 'INDIVIDUAL',
+        category_interested: categories.join(', '),
+      });
       setLoading(false);
       onSuccess();
     } else {

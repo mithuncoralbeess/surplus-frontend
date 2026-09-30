@@ -109,19 +109,19 @@ const BrowseSearchBanner = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setIsDropdownOpen(true)}
               placeholder="Refurbished Dell rack servers with wa..."
               className="w-full pl-16 pr-4 py-3.5 bg-transparent text-gray-900 placeholder-gray-400 focus:outline-none text-[17px]"
             />
             
-            <div className="flex items-center space-x-3 shrink-0 pr-1">
+            <div className="flex items-center space-x-2 md:space-x-3 shrink-0 pr-1">
               <button
                 type="button"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="hidden md:flex items-center bg-emerald-50 text-[#0f7a61] hover:bg-emerald-100 px-4 py-2.5 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer"
+                className="flex items-center bg-emerald-50 text-[#0f7a61] hover:bg-emerald-100 px-3 md:px-4 py-2.5 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer"
               >
-                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                <span>AI SMART SEARCH</span>
+                <Sparkles className="w-3.5 h-3.5 mr-1 md:mr-1.5" />
+                <span className="hidden sm:inline">AI SMART SEARCH</span>
+                <span className="sm:hidden">AI SEARCH</span>
               </button>
               <button
                 type="submit"
