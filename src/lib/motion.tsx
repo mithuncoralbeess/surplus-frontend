@@ -35,8 +35,15 @@ const createMotionComponent = (Tag: string) => {
   return Component;
 };
 
+const componentCache = new Map<string, any>();
+
 export const motion = new Proxy({} as any, {
-  get: (_, prop: string) => createMotionComponent(prop),
+  get: (_, prop: string) => {
+    if (!componentCache.has(prop)) {
+      componentCache.set(prop, createMotionComponent(prop));
+    }
+    return componentCache.get(prop);
+  },
 });
 
 export const AnimatePresence: React.FC<{ children: React.ReactNode; mode?: string; initial?: boolean }> = ({ children }) => <>{children}</>;

@@ -16,6 +16,8 @@ import {
   X
 } from 'lucide-react';
 
+import { sanitizeInput } from '../../lib/security/sanitizer';
+
 const nameRegex = /^[a-zA-Z\s'\-]{2,50}$/;
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const scriptCheckRegex = /<[^>]*>|javascript:|on\w+\s*=/i;
@@ -24,15 +26,18 @@ const formSchema = z.object({
   name: z
     .string()
     .min(2, "Name must be at least 2 characters long")
+    .max(100, "Name cannot exceed 100 characters")
     .regex(nameRegex, "Name can only contain letters, spaces, hyphens, and apostrophes (no numbers or scripts)")
     .refine((val) => !scriptCheckRegex.test(val), { message: "Script tags or HTML code are not allowed" }),
   email: z
     .string()
     .min(5, "Email is required")
+    .max(254, "Email address cannot exceed 254 characters")
     .regex(emailRegex, "Please enter a valid email address (e.g. name@domain.com)"),
   location: z
     .string()
     .min(2, "Please provide your business location")
+    .max(150, "Location cannot exceed 150 characters")
     .refine((val) => !scriptCheckRegex.test(val), { message: "Location contains disallowed script or HTML tags" }),
   interest: z
     .string()
@@ -40,10 +45,12 @@ const formSchema = z.object({
   subject: z
     .string()
     .min(5, "Subject must be at least 5 characters long")
+    .max(150, "Subject cannot exceed 150 characters")
     .refine((val) => !scriptCheckRegex.test(val), { message: "Subject contains disallowed script or HTML tags" }),
   message: z
     .string()
     .min(20, "Please provide more details (at least 20 characters)")
+    .max(3000, "Message cannot exceed 3000 characters")
     .refine((val) => !scriptCheckRegex.test(val), { message: "Message contains disallowed script or HTML tags" })
 });
 
@@ -111,7 +118,16 @@ const PartnershipForm = () => {
     setIsSubmitting(true);
     setSubmitError('');
 
-    const res = await inquiryService.submitPartnershipEnquiry(result.data);
+    const sanitizedPayload = {
+      name: sanitizeInput(result.data.name),
+      email: sanitizeInput(result.data.email.trim()),
+      location: sanitizeInput(result.data.location),
+      interest: sanitizeInput(result.data.interest),
+      subject: sanitizeInput(result.data.subject),
+      message: sanitizeInput(result.data.message),
+    };
+
+    const res = await inquiryService.submitPartnershipEnquiry(sanitizedPayload);
 
     if (res.success) {
       setIsSubmitting(false);

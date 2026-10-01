@@ -6,21 +6,43 @@ import { useSession } from 'next-auth/react';
 import { X, UploadCloud, FileSpreadsheet, ChevronRight, Check, ArrowLeft, Download, Tag, Plus, Percent, Trash2, Edit2, User, CheckCircle2 } from 'lucide-react';
 import { z } from 'zod';
 import { validateManifestUpload } from '../../lib/security/fileUploadValidator';
+import { sanitizeInput } from '../../lib/security/sanitizer';
+
+const noScriptRegex = /<[^>]*>/g;
 
 const step1Schema = z.object({
   manifestFile: z.any().refine(val => val !== null, "Please upload a manifest file to continue")
 });
 
 const step2Schema = z.object({
-  fullName: z.string().min(1, "Full Name is required"),
-  email: z.string().email("Valid email is required"),
-  mobile: z.string().min(1, "Mobile Number is required"),
-  location: z.string().min(1, "Inventory Location is required"),
+  fullName: z.string()
+    .min(1, "Full Name is required")
+    .max(100, "Full Name cannot exceed 100 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited"),
+  email: z.string()
+    .min(1, "Valid email is required")
+    .email("Valid email is required")
+    .max(254, "Email address cannot exceed 254 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited"),
+  mobile: z.string()
+    .min(1, "Mobile Number is required")
+    .max(25, "Mobile Number cannot exceed 25 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited"),
+  location: z.string()
+    .min(1, "Inventory Location is required")
+    .max(150, "Inventory Location cannot exceed 150 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited"),
 });
 
 const step3Schema = z.object({
-  title: z.string().min(1, "Listing Title is required"),
-  description: z.string().min(1, "Lot Description & Notes are required"),
+  title: z.string()
+    .min(1, "Listing Title is required")
+    .max(200, "Listing Title cannot exceed 200 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited"),
+  description: z.string()
+    .min(1, "Lot Description & Notes are required")
+    .max(3000, "Lot Description cannot exceed 3000 characters")
+    .refine(val => !/<script[^>]*>[\s\S]*?<\/script>/gi.test(val) && !/on\w+\s*=/gi.test(val), "Script execution payloads are not allowed"),
   category: z.string().min(1, "Category is required"),
   condition: z.string().min(1, "Condition is required"),
   sourceType: z.string().min(1, "Source Type is required"),
@@ -207,31 +229,31 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
         data.append('vendor_id', String((session.user as any).vendor_id));
       }
       
-      // user_information (JSON String)
+      // user_information (JSON String) with input sanitization
       data.append('user_information', JSON.stringify({
-        full_name: formData.fullName,
-        email: formData.email,
-        mobile: formData.mobile,
-        location: formData.location
+        full_name: sanitizeInput(formData.fullName),
+        email: sanitizeInput(formData.email.trim()),
+        mobile: sanitizeInput(formData.mobile),
+        location: sanitizeInput(formData.location)
       }));
       
-      // lot_details (JSON String)
+      // lot_details (JSON String) with input sanitization
       data.append('lot_details', JSON.stringify({
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        allocation: formData.allocation,
-        condition: formData.condition,
-        source_type: formData.sourceType,
-        load_type: formData.loadType,
-        lot_size: formData.lotSize,
-        pallet_count: formData.palletCount,
-        weight: formData.weight,
-        unit_type: formData.unitType,
-        shipping_terms: formData.shippingTerms,
-        ask_price: formData.askPrice,
-        sale_method: formData.saleMethod,
-        allow_counter_offers: formData.allowCounterOffers,
+        title: sanitizeInput(String(formData.title || '')),
+        description: sanitizeInput(String(formData.description || '')),
+        category: sanitizeInput(String(formData.category || '')),
+        allocation: sanitizeInput(String(formData.allocation)),
+        condition: sanitizeInput(String(formData.condition || '')),
+        source_type: sanitizeInput(String(formData.sourceType || '')),
+        load_type: sanitizeInput(String(formData.loadType || '')),
+        lot_size: sanitizeInput(String(formData.lotSize || '')),
+        pallet_count: Number(formData.palletCount) || 1,
+        weight: sanitizeInput(String(formData.weight || '')),
+        unit_type: sanitizeInput(String(formData.unitType || '')),
+        shipping_terms: sanitizeInput(String(formData.shippingTerms || '')),
+        ask_price: sanitizeInput(String(formData.askPrice || '')),
+        sale_method: sanitizeInput(String(formData.saleMethod || '')),
+        allow_counter_offers: Boolean(formData.allowCounterOffers),
         total_units: totalUnits,
         total_retail_value: totalRetail
       }));

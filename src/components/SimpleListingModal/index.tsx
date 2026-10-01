@@ -8,40 +8,86 @@ import { ChevronDown, ChevronRight, Check, X, UploadCloud, Trash2, ArrowRight, A
 import Select from 'react-select';
 import { z } from 'zod';
 import { validateImageUpload } from '../../lib/security/fileUploadValidator';
+import { sanitizeInput } from '../../lib/security/sanitizer';
+
+const noScriptRegex = /<[^>]*>/g;
 
 const step1Schema = z.object({
-  fullName: z.string().min(1, "Full Name is required"),
-  email: z.string().email("Invalid email address"),
-  mobile: z.string().min(1, "Mobile Number is required"),
-  location: z.string().min(1, "Inventory Location is required"),
+  fullName: z.string()
+    .min(1, "Full Name is required")
+    .max(100, "Full Name cannot exceed 100 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited"),
+  email: z.string()
+    .min(1, "Email address is required")
+    .email("Invalid email address format")
+    .max(254, "Email address cannot exceed 254 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited"),
 });
 
 const step2Schema = z.object({
-  productName: z.string().min(1, "Product Name is required"),
-  category: z.string().min(1, "Product Category is required").refine(val => val !== '-- Select Category --' && val !== '', "Please select a category"),
-  brandName: z.string().optional(),
-  modelNo: z.string().optional(),
+  productName: z.string()
+    .min(1, "Product Name is required")
+    .max(200, "Product Name cannot exceed 200 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited"),
+  category: z.string()
+    .min(1, "Product Category is required")
+    .refine(val => val !== '-- Select Category --' && val !== '', "Please select a category"),
+  subCategory: z.string()
+    .min(1, "Subcategory is required")
+    .refine(val => val !== '-- Select Subcategory --' && val !== '', "Please select a subcategory"),
+  location: z.string()
+    .min(1, "Inventory Location is required")
+    .max(150, "Inventory Location cannot exceed 150 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited"),
+  brandName: z.string()
+    .max(100, "Brand Name cannot exceed 100 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited")
+    .optional(),
+  modelNo: z.string()
+    .max(100, "Model Number cannot exceed 100 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited")
+    .optional(),
 });
 
 const step3Schema = z.object({
-  country: z.string().min(1, "Manufacturing Country is required").refine(val => val !== '-- Select Country --' && val !== '', "Please select a country"),
-  year: z.string().optional(),
-  dimensions: z.string().optional(),
+  country: z.string()
+    .min(1, "Manufacturing Country is required")
+    .refine(val => val !== '-- Select Country --' && val !== '', "Please select a country"),
+  year: z.string()
+    .refine(val => !val || (/^\d{4}$/.test(val) && parseInt(val) >= 1900 && parseInt(val) <= new Date().getFullYear() + 1), "Please enter a valid 4-digit manufacturing year")
+    .optional(),
+  dimensions: z.string()
+    .max(100, "Dimensions cannot exceed 100 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited")
+    .optional(),
   expiry: z.string().optional(),
 });
 
 const step4Schema = z.object({
-  quantity: z.string().min(1, "Quantity is required"),
-  currency: z.string().min(1, "Currency is required"),
-  liquidatingPrice: z.string().min(1, "Liquidating Price is required"),
-  previousPrice: z.string().min(1, "Previous Price is required"),
+  quantity: z.string()
+    .min(1, "Quantity is required")
+    .refine(val => /^[1-9]\d*$/.test(val), "Quantity must be a positive integer"),
+  currency: z.string()
+    .min(1, "Currency is required"),
+  liquidatingPrice: z.string()
+    .min(1, "Liquidating Price is required")
+    .refine(val => /^\d+(\.\d{1,2})?$/.test(val) && parseFloat(val) > 0, "Liquidating Price must be a positive number"),
+  previousPrice: z.string()
+    .min(1, "Previous Price is required")
+    .refine(val => /^\d+(\.\d{1,2})?$/.test(val) && parseFloat(val) > 0, "Previous Price must be a positive number"),
   excludedCountries: z.array(z.string()).optional(),
 });
 
 const step5Schema = z.object({
-  description: z.string().min(1, "Description is required"),
+  description: z.string()
+    .min(10, "Description must be at least 10 characters")
+    .max(3000, "Description cannot exceed 3000 characters")
+    .refine(val => !/<script[^>]*>[\s\S]*?<\/script>/gi.test(val) && !/on\w+\s*=/gi.test(val), "Executable script payloads are strictly prohibited"),
   reasonToSell: z.string().min(1, "Reason to Sell is required"),
-  warranty: z.string().optional(),
+  warranty: z.string()
+    .max(200, "Warranty description cannot exceed 200 characters")
+    .refine(val => !noScriptRegex.test(val), "HTML tags and scripts are strictly prohibited")
+    .optional(),
   certificate: z.boolean().optional(),
   imagesUploaded: z.boolean().refine(val => val === true, "Product Images are required")
 });
@@ -55,6 +101,36 @@ const categoryOptions = [
   { value: 'Automation & Control', label: 'Automation & Control' },
   { value: 'Electrical Parts', label: 'Electrical Parts' },
   { value: 'Mechanical Parts', label: 'Mechanical Parts' },
+];
+
+const subCategoryOptions: Record<string, { value: string; label: string }[]> = {
+  'Automation & Control': [
+    { value: 'PLC Modules & Controllers', label: 'PLC Modules & Controllers' },
+    { value: 'Sensors & Encoders', label: 'Sensors & Encoders' },
+    { value: 'Drives & VFDs', label: 'Drives & VFDs' },
+    { value: 'HMI Panels & Displays', label: 'HMI Panels & Displays' },
+    { value: 'Relays & Contactors', label: 'Relays & Contactors' },
+  ],
+  'Electrical Parts': [
+    { value: 'Circuit Breakers & Fuses', label: 'Circuit Breakers & Fuses' },
+    { value: 'Transformers & Power Supplies', label: 'Transformers & Power Supplies' },
+    { value: 'Switches & Sockets', label: 'Switches & Sockets' },
+    { value: 'Cables, Wires & Accessories', label: 'Cables, Wires & Accessories' },
+    { value: 'Lighting & Fittings', label: 'Lighting & Fittings' },
+  ],
+  'Mechanical Parts': [
+    { value: 'Bearings & Seals', label: 'Bearings & Seals' },
+    { value: 'Pumps, Valves & Fittings', label: 'Pumps, Valves & Fittings' },
+    { value: 'Pneumatics & Hydraulics', label: 'Pneumatics & Hydraulics' },
+    { value: 'Gears, Motors & Actuators', label: 'Gears, Motors & Actuators' },
+    { value: 'Fasteners & Hardware', label: 'Fasteners & Hardware' },
+  ],
+};
+
+const defaultSubCategoryOptions = [
+  { value: 'General Components', label: 'General Components' },
+  { value: 'Industrial Hardware', label: 'Industrial Hardware' },
+  { value: 'Spare Parts & Accessories', label: 'Spare Parts & Accessories' },
 ];
 
 const countryOptions = [
@@ -112,7 +188,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
     email: session?.user?.email || '', 
     mobile: (session?.user as any)?.mobile || '', 
     location: (session?.user as any)?.location || '',
-    productName: '', category: '-- Select Category --', brandName: '', modelNo: '',
+    productName: '', category: '-- Select Category --', subCategory: '', brandName: '', modelNo: '',
     country: '-- Select Country --', year: '', dimensions: '', expiry: '',
     quantity: '', currency: 'USD - US Dollar', liquidatingPrice: '', previousPrice: '', excludedCountries: [] as string[],
     description: '', reasonToSell: 'Surplus Inventory', warranty: '', certificate: false, imagesUploaded: false,
@@ -133,7 +209,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       setIsSuccess(false);
       setFormData(prev => ({
         ...prev,
-        productName: '', category: '-- Select Category --', brandName: '', modelNo: '',
+        productName: '', category: '-- Select Category --', subCategory: '', brandName: '', modelNo: '',
         country: '-- Select Country --', year: '', dimensions: '', expiry: '',
         quantity: '', currency: 'USD - US Dollar', liquidatingPrice: '', previousPrice: '', excludedCountries: [],
         description: '', reasonToSell: 'Surplus Inventory', warranty: '', certificate: false, imagesUploaded: false,
@@ -211,44 +287,45 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       try {
         const data = new FormData();
         
-        // Add user info
-        data.append('full_name', formData.fullName);
-        data.append('email', formData.email);
-        data.append('mobile', formData.mobile);
-        data.append('location', formData.location);
+        // Add user info with sanitization against XSS & injection attacks
+        data.append('full_name', sanitizeInput(formData.fullName));
+        data.append('email', sanitizeInput(formData.email.trim()));
+        data.append('mobile', sanitizeInput(formData.mobile || ''));
+        data.append('location', sanitizeInput(formData.location || ''));
         
         if (session?.user && (session.user as any).vendor_id) {
           data.append('vendor_id', String((session.user as any).vendor_id));
         }
 
-        // Add product info
-        data.append('product_name', formData.productName);
-        data.append('category', formData.category);
-        data.append('brand_name', formData.brandName || '');
-        data.append('model_no', formData.modelNo || '');
+        // Add product info with sanitization
+        data.append('product_name', sanitizeInput(formData.productName));
+        data.append('category', sanitizeInput(formData.category));
+        data.append('sub_category', sanitizeInput(formData.subCategory || ''));
+        data.append('brand_name', sanitizeInput(formData.brandName || ''));
+        data.append('model_no', sanitizeInput(formData.modelNo || ''));
         
-        data.append('country', formData.country);
+        data.append('country', sanitizeInput(formData.country));
         if (formData.year) {
-          data.append('manufacturing_year', formData.year);
+          data.append('manufacturing_year', sanitizeInput(formData.year));
         }
-        data.append('dimensions', formData.dimensions || '');
+        data.append('dimensions', sanitizeInput(formData.dimensions || ''));
         if (formData.expiry) {
-          data.append('expiry', formData.expiry);
+          data.append('expiry', sanitizeInput(formData.expiry));
         }
         
-        data.append('quantity', formData.quantity);
-        data.append('currency', formData.currency.substring(0, 3)); // Backend expects < 10 chars (e.g. "USD")
-        data.append('liquidating_price', formData.liquidatingPrice);
-        data.append('previous_price', formData.previousPrice);
-        data.append('excluded_countries', JSON.stringify(formData.excludedCountries));
+        data.append('quantity', sanitizeInput(formData.quantity));
+        data.append('currency', sanitizeInput(formData.currency.substring(0, 3))); // Backend expects < 10 chars (e.g. "USD")
+        data.append('liquidating_price', sanitizeInput(formData.liquidatingPrice));
+        data.append('previous_price', sanitizeInput(formData.previousPrice));
+        data.append('excluded_countries', JSON.stringify(formData.excludedCountries.map(c => sanitizeInput(c))));
         
         // Create a copy of formData without the files for the raw_data JSON payload
         const { images, ...rawDataPayload } = formData;
         data.append('raw_data', JSON.stringify(rawDataPayload));
         
-        data.append('description', formData.description);
-        data.append('reason_to_sell', formData.reasonToSell);
-        data.append('warranty', formData.warranty || '');
+        data.append('description', sanitizeInput(formData.description));
+        data.append('reason_to_sell', sanitizeInput(formData.reasonToSell));
+        data.append('warranty', sanitizeInput(formData.warranty || ''));
         data.append('certificate', formData.certificate ? 'true' : 'false');
         
         if (formData.images && formData.images.length > 0) {
@@ -383,16 +460,6 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                           <input type="email" className={inputClass} placeholder="john@example.com" value={formData.email} onChange={e => handleInputChange('email', e.target.value)} />
                           {renderError('email')}
                         </div>
-                        <div>
-                          <label className={labelClass}>Mobile Number *</label>
-                          <input type="tel" className={inputClass} placeholder="+1 (555) 000-0000" value={formData.mobile} onChange={e => handleInputChange('mobile', e.target.value)} />
-                          {renderError('mobile')}
-                        </div>
-                        <div>
-                          <label className={labelClass}>Inventory Location *</label>
-                          <input type="text" className={inputClass} placeholder="City, Country" value={formData.location} onChange={e => handleInputChange('location', e.target.value)} />
-                          {renderError('location')}
-                        </div>
                       </div>
                     </div>
                   )}
@@ -412,10 +479,29 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                             options={categoryOptions}
                             styles={customSelectStyles}
                             value={categoryOptions.find(c => c.value === formData.category) || null}
-                            onChange={(option: any) => handleInputChange('category', option?.value || '')}
+                            onChange={(option: any) => {
+                              handleInputChange('category', option?.value || '');
+                              handleInputChange('subCategory', '');
+                            }}
                             placeholder="-- Select Category --"
                           />
                           {renderError('category')}
+                        </div>
+                        <div>
+                          <label className={labelClass}>Subcategory *</label>
+                          <Select
+                            options={subCategoryOptions[formData.category] || defaultSubCategoryOptions}
+                            styles={customSelectStyles}
+                            value={(subCategoryOptions[formData.category] || defaultSubCategoryOptions).find(s => s.value === formData.subCategory) || (formData.subCategory ? { value: formData.subCategory, label: formData.subCategory } : null)}
+                            onChange={(option: any) => handleInputChange('subCategory', option?.value || '')}
+                            placeholder="-- Select Subcategory --"
+                          />
+                          {renderError('subCategory')}
+                        </div>
+                        <div>
+                          <label className={labelClass}>Inventory Location *</label>
+                          <input type="text" className={inputClass} placeholder="City, Country" value={formData.location} onChange={e => handleInputChange('location', e.target.value)} />
+                          {renderError('location')}
                         </div>
                         <div>
                           <label className={labelClass}>Brand Name</label>

@@ -18,6 +18,8 @@ import {
   Building2
 } from 'lucide-react';
 
+import { sanitizeInput } from '../../lib/security/sanitizer';
+
 const nameRegex = /^[a-zA-Z\s'\-]{2,50}$/;
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const phoneRegex = /^\+?[0-9\s]{6,20}$/;
@@ -27,15 +29,18 @@ const contactFormSchema = z.object({
   fullName: z
     .string()
     .min(2, "Full Name must be at least 2 characters long")
+    .max(100, "Full Name cannot exceed 100 characters")
     .regex(nameRegex, "Full Name can only contain letters, spaces, hyphens, and apostrophes (no numbers or scripts)")
     .refine((val) => !scriptCheckRegex.test(val), { message: "Script tags or HTML code are not allowed" }),
   email: z
     .string()
     .min(5, "Email is required")
+    .max(254, "Email address cannot exceed 254 characters")
     .regex(emailRegex, "Please enter a valid email address (e.g. name@domain.com)"),
   phone: z
     .string()
     .min(6, "Phone number must be at least 6 characters")
+    .max(25, "Phone number cannot exceed 25 characters")
     .regex(phoneRegex, "Phone number can only contain + and digits (e.g. +97430269988)"),
   enquiryType: z
     .string()
@@ -43,6 +48,7 @@ const contactFormSchema = z.object({
   message: z
     .string()
     .min(10, "Message must be at least 10 characters long")
+    .max(3000, "Message cannot exceed 3000 characters")
     .refine((val) => !scriptCheckRegex.test(val), { message: "Message contains disallowed script or HTML tags" })
 });
 
@@ -151,7 +157,15 @@ export default function ContactForm() {
     setIsSubmitting(true);
     setSubmitError('');
 
-    const res = await inquiryService.submitContactForm(result.data);
+    const sanitizedPayload = {
+      fullName: sanitizeInput(result.data.fullName),
+      email: sanitizeInput(result.data.email.trim()),
+      phone: sanitizeInput(result.data.phone),
+      enquiryType: sanitizeInput(result.data.enquiryType),
+      message: sanitizeInput(result.data.message),
+    };
+
+    const res = await inquiryService.submitContactForm(sanitizedPayload);
 
     if (res.success) {
       setIsSubmitting(false);
