@@ -13,12 +13,16 @@ import AuthModal from '../../components/AuthModal';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 
+import LanguageSelector from '../../components/LanguageSelector';
+import { useLanguage } from '../../context/LanguageContext';
+
 // Track if header landing animation has played in this browser JS context
 let hasLandedInPageLoad = false;
 
 const Header = () => {
   const pathname = usePathname();
   const { data: session, status } = useSession();
+  const { t } = useLanguage();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isLanding] = useState(() => !hasLandedInPageLoad);
@@ -43,7 +47,7 @@ const Header = () => {
       <div className="container">
         <div className="flex items-center justify-between h-20">
           {/* Left Group: Logo & Navigation */}
-          <div className="flex items-center space-x-10 lg:space-x-12 h-full">
+          <div className="flex items-center space-x-10 lg:space-x-12 rtl:space-x-reverse h-full">
             {/* Logo Section */}
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="flex items-center">
@@ -59,37 +63,37 @@ const Header = () => {
             </div>
 
             {/* Center Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8 h-full">
+            <nav className="hidden lg:flex items-center space-x-8 rtl:space-x-reverse h-full">
               <BuyMegamenu />
               <Link 
                 href="/sell" 
                 className={`font-medium text-[15px] transition-all py-1 ${
-                  isActive('/sell') ? 'text-[#0f7a61] font-semibold border-b-2 border-[#0f7a61]' : 'text-gray-600 hover:text-gray-900'
+                  isActive('/sell') ? 'text-[#0f7a61] font-semibold' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Sell
+                {t('nav.sell', 'Sell')}
               </Link>
               <Link 
                 href="/partnership" 
                 className={`font-medium text-[15px] transition-all py-1 ${
-                  isActive('/partnership') ? 'text-[#0f7a61] font-semibold border-b-2 border-[#0f7a61]' : 'text-gray-600 hover:text-gray-900'
+                  isActive('/partnership') ? 'text-[#0f7a61] font-semibold' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Become a Partner
+                {t('nav.partner', 'Become a Partner')}
               </Link>
               <Link 
                 href="/sustainability" 
                 className={`font-medium text-[15px] transition-all py-1 ${
-                  isActive('/sustainability') ? 'text-[#0f7a61] font-semibold border-b-2 border-[#0f7a61]' : 'text-gray-600 hover:text-gray-900'
+                  isActive('/sustainability') ? 'text-[#0f7a61] font-semibold' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Sustainability
+                {t('nav.sustainability', 'Sustainability')}
               </Link>
             </nav>
           </div>
 
         {/* Right Actions */}
-        <div className="hidden lg:flex items-center space-x-3.5">
+        <div className="hidden lg:flex items-center space-x-3.5 rtl:space-x-reverse">
           <Link 
             href="/browse"
             className="text-gray-600 hover:text-gray-900 transition-colors"
@@ -97,6 +101,7 @@ const Header = () => {
             <Search className="w-[20px] h-[20px]" />
           </Link>
           
+          <LanguageSelector />
           <RegionSelector />
           <CurrencySelector />
 
@@ -113,7 +118,7 @@ const Header = () => {
                 {session.user?.name?.[0]?.toUpperCase() || session.user?.email?.[0]?.toUpperCase() || 'U'}
               </button>
 
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.12)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2 z-50 overflow-hidden">
+              <div className="absolute right-0 rtl:right-auto rtl:left-0 mt-2 w-56 bg-white border border-gray-100 rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.12)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2 z-50 overflow-hidden">
                 {/* User Info Header */}
                 <div className="px-4 py-2.5 border-b border-gray-100 bg-gray-50/50">
                   <p className="font-semibold text-gray-900 text-sm truncate">
@@ -133,7 +138,7 @@ const Header = () => {
                     className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-[#e6f7ef] hover:text-[#0f7a61] transition-colors"
                   >
                     <User className="w-4 h-4 text-gray-400 group-hover:text-[#0f7a61]" />
-                    <span>Profile</span>
+                    <span>{t('nav.profile', 'Profile')}</span>
                   </Link>
                 </div>
 
@@ -142,24 +147,24 @@ const Header = () => {
                 {/* Sign Out Button */}
                 <button 
                   onClick={() => signOut()}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left rtl:text-right"
                 >
                   <LogOut className="w-4 h-4 text-red-500" />
-                  <span>Sign out</span>
+                  <span>{t('nav.signOut', 'Sign out')}</span>
                 </button>
               </div>
             </div>
           ) : (
             <>
               <button onClick={() => openAuth('login')} className="text-gray-600 hover:text-gray-900 font-medium text-[15px]">
-                Sign in
+                {t('nav.signIn', 'Sign in')}
               </button>
 
               <button 
                 onClick={() => openAuth('register')}
                 className="bg-[#0f7a61] hover:bg-[#0c6651] text-white px-5 py-2.5 rounded-full font-medium text-[15px] transition-colors"
               >
-                Register
+                {t('nav.register', 'Register')}
               </button>
             </>
           )}

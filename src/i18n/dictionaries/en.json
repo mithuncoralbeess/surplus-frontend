@@ -1,0 +1,53 @@
+{
+  "nav": {
+    "buy": "Buy",
+    "sell": "Sell",
+    "partner": "Become a Partner",
+    "sustainability": "Sustainability",
+    "signIn": "Sign in",
+    "register": "Register",
+    "profile": "Profile",
+    "signOut": "Sign out",
+    "browse": "Browse Lots",
+    "cart": "Cart"
+  },
+  "common": {
+    "search": "Search surplus inventory...",
+    "language": "Language",
+    "currency": "Currency",
+    "region": "Region",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "save": "Save",
+    "close": "Close",
+    "viewAll": "View All",
+    "learnMore": "Learn More",
+    "contactUs": "Contact Us",
+    "english": "English",
+    "arabic": "العربية"
+  },
+  "hero": {
+    "title": "Empowering B2B Surplus & Asset Liquidation",
+    "subtitle": "Discover, list, and trade certified excess inventory, industrial machinery, and overstock materials across global markets.",
+    "ctaBuy": "Browse Lots",
+    "ctaSell": "List Surplus"
+  },
+  "footer": {
+    "tagline": "The premier B2B marketplace for surplus inventory and industrial asset recovery.",
+    "quickLinks": "Quick Links",
+    "categories": "Categories",
+    "contact": "Contact Info",
+    "rights": "All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "register": "Create Account",
+    "email": "Email Address",
+    "password": "Password",
+    "fullName": "Full Name",
+    "mobile": "Mobile Number"
+  }
+}

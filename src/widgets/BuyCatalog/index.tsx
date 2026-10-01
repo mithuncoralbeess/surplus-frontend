@@ -177,7 +177,7 @@ const BuyCatalog = () => {
           </div>
 
           {/* Category Circles (Horizontal Scroll) */}
-          <div className="flex items-start gap-4 overflow-x-auto pb-4 pt-1 -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="flex items-start gap-6 sm:gap-8 md:gap-10 overflow-x-auto pb-6 pt-3 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-thin scrollbar-thumb-gray-200">
             {CATEGORIES.map((category) => {
               const isActive = activeCategory === category.name;
               const Icon = category.icon;
@@ -185,18 +185,20 @@ const BuyCatalog = () => {
                 <button
                   key={category.name}
                   onClick={() => setActiveCategory(category.name)}
-                  className="flex flex-col items-center gap-2 group flex-shrink-0 w-20 cursor-pointer"
+                  className="flex flex-col items-center gap-3 group flex-shrink-0 min-w-[110px] sm:min-w-[130px] md:min-w-[145px] max-w-[160px] cursor-pointer"
                 >
                   <div className={`
-                    w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 shadow-xs border
+                    w-20 h-20 sm:w-22 sm:h-22 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all duration-300 border
                     ${isActive 
-                      ? 'bg-[#0f3b2f] text-white border-[#0f3b2f] scale-105 shadow-md' 
-                      : 'bg-white text-gray-600 border-gray-200 group-hover:border-[#0f3b2f]/30 group-hover:text-[#0f3b2f] group-hover:bg-gray-50'
+                      ? 'bg-[#0f3b2f] text-white border-[#0f3b2f] scale-105 shadow-[0_10px_25px_rgba(15,59,47,0.3)] ring-4 ring-[#0f3b2f]/15' 
+                      : 'bg-white text-gray-700 border-gray-200/90 shadow-sm group-hover:border-[#0f3b2f]/40 group-hover:text-[#0f3b2f] group-hover:bg-emerald-50/40 group-hover:-translate-y-1 group-hover:shadow-md'
                     }
                   `}>
-                    <Icon className="w-7 h-7" strokeWidth={1.5} />
+                    <Icon className="w-8 h-8 sm:w-10 sm:h-10" strokeWidth={1.5} />
                   </div>
-                  <span className={`text-[12px] font-bold text-center leading-tight transition-colors ${isActive ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-900'}`}>
+                  <span className={`text-[13px] sm:text-[14px] font-bold text-center leading-snug transition-colors line-clamp-2 px-1 ${
+                    isActive ? 'text-[#0f3b2f] font-extrabold' : 'text-gray-700 group-hover:text-[#0f3b2f]'
+                  }`}>
                     {category.name}
                   </span>
                 </button>

@@ -17,10 +17,12 @@ import {
   Sparkles,
   Tag,
   Package,
-  PlayCircle
+  PlayCircle,
+  Box
 } from 'lucide-react';
+import { useAppSelector } from '../../store';
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { name: 'Building Materials', count: 227, icon: Hammer },
   { name: 'Electricals', count: 331, icon: Zap },
   { name: 'Hand tools', count: 132, icon: Wrench },
@@ -30,6 +32,22 @@ const CATEGORIES = [
   { name: 'Decor', count: 76, icon: Lamp },
   { name: 'Abrasives', count: 30, icon: Disc },
 ];
+
+const ICON_MAP: Record<string, any> = {
+  'building materials': Hammer,
+  'electricals': Zap,
+  'hand tools': Wrench,
+  'chisels and punches': PenTool,
+  'ppe': HardHat,
+  'power tools': Drill,
+  'decor': Lamp,
+  'abrasives': Disc,
+};
+
+const getCategoryIcon = (name: string) => {
+  const normalized = name.toLowerCase().trim();
+  return ICON_MAP[normalized] || Box;
+};
 
 const FORMATS = [
   {
@@ -55,6 +73,7 @@ const FORMATS = [
 const BuyMegamenu = () => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const { categories, loading } = useAppSelector((state) => state.categories);
 
   // Close the megamenu whenever the route changes
   useEffect(() => {
@@ -62,6 +81,23 @@ const BuyMegamenu = () => {
   }, [pathname]);
 
   const isBuyActive = pathname === '/shop-by-category' || pathname.startsWith('/category');
+
+  // Prepare display categories from Redux store or default fallback
+  const displayCategories = categories && categories.length > 0
+    ? categories.slice(0, 8).map((cat) => ({
+        id: cat.id,
+        name: cat.name,
+        count: cat.subcategories?.length ? `${cat.subcategories.length} subcategories` : 'Items available',
+        icon: getCategoryIcon(cat.name),
+        slug: cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      }))
+    : DEFAULT_CATEGORIES.map((cat) => ({
+        id: cat.name,
+        name: cat.name,
+        count: `${cat.count} items`,
+        icon: cat.icon,
+        slug: cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      }));
 
   return (
     <div 
@@ -72,7 +108,7 @@ const BuyMegamenu = () => {
       {/* Trigger */}
       <div className={`flex items-center font-medium text-[15px] transition-all py-1 ${
         isBuyActive || isOpen 
-          ? 'text-[#0f7a61] font-semibold border-b-2 border-[#0f7a61]' 
+          ? 'text-[#0f7a61] font-semibold' 
           : 'text-gray-600 hover:text-gray-900'
       }`}>
         Shop by Category <ChevronDown className={`ml-1 w-4 h-4 transition-colors ${isBuyActive || isOpen ? 'text-[#0f7a61]' : 'text-gray-400'}`} />
@@ -100,19 +136,18 @@ const BuyMegamenu = () => {
             </div>
 
             <div className="grid grid-cols-4 gap-4">
-              {CATEGORIES.map((cat, idx) => {
+              {displayCategories.map((cat) => {
                 const Icon = cat.icon;
-                const slug = cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
                 return (
-                  <Link href={`/category/${slug}`} key={idx} className="flex flex-col items-center justify-center py-4 px-2 border border-gray-200 rounded-2xl hover:border-primary/40 hover:bg-primary-light/20 hover:-translate-y-0.5 hover:shadow-md transition-all group/card">
+                  <Link href={`/shop-by-category/${cat.slug}`} key={cat.id} className="flex flex-col items-center justify-center py-4 px-2 border border-gray-200 rounded-2xl hover:border-primary/40 hover:bg-primary-light/20 hover:-translate-y-0.5 hover:shadow-md transition-all group/card">
                     <div className="w-10 h-10 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center mb-2 text-primary group-hover/card:scale-110 group-hover/card:bg-primary group-hover/card:text-white transition-all duration-300">
                       <Icon className="w-5 h-5" strokeWidth={1.5} />
                     </div>
-                    <span className="text-xs font-bold text-gray-900 text-center w-full truncate">
+                    <span className="text-xs font-bold text-gray-900 text-center w-full truncate px-1">
                       {cat.name}
                     </span>
                     <span className="text-[10px] text-gray-500 mt-1">
-                      {cat.count} items
+                      {cat.count}
                     </span>
                   </Link>
                 );

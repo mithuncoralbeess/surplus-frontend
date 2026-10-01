@@ -10,6 +10,9 @@ import AOSProvider from "../components/AosProvider";
 
 import GoogleAnalytics from "../components/GoogleAnalytics";
 
+import { LanguageProvider } from "../context/LanguageContext";
+import ReduxProvider from "../store/ReduxProvider";
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -35,15 +38,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <GoogleAnalytics />
         <AuthProvider>
-          <CurrencyProvider>
-            <AOSProvider>
-              <SmoothScroll>
-                <AppShell>
-                  {children}
-                </AppShell>
-              </SmoothScroll>
-            </AOSProvider>
-          </CurrencyProvider>
+          <ReduxProvider>
+            <LanguageProvider>
+              <CurrencyProvider>
+                <AOSProvider>
+                  <SmoothScroll>
+                    <AppShell>
+                      {children}
+                    </AppShell>
+                  </SmoothScroll>
+                </AOSProvider>
+              </CurrencyProvider>
+            </LanguageProvider>
+          </ReduxProvider>
         </AuthProvider>
       </body>
     </html>
