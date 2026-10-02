@@ -8,6 +8,7 @@ import { motion } from '../../lib/motion';
 import RegionSelector from '../../components/RegionSelector';
 import CurrencySelector from '../../components/CurrencySelector';
 import HeaderCartDropdown from '../../components/HeaderCartDropdown';
+import HeaderNotificationsDropdown from '../../components/HeaderNotificationsDropdown';
 import BuyMegamenu from './BuyMegamenu';
 import AuthModal from '../../components/AuthModal';
 import { useSession, signOut } from 'next-auth/react';
@@ -106,6 +107,7 @@ const Header = () => {
           <CurrencySelector />
 
           <HeaderCartDropdown />
+          <HeaderNotificationsDropdown />
 
           {status === 'loading' ? (
             <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse"></div>

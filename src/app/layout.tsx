@@ -13,6 +13,7 @@ import GoogleAnalytics from "../components/GoogleAnalytics";
 import AnalyticsTracker from "../components/AnalyticsTracker";
 
 import { LanguageProvider } from "../context/LanguageContext";
+import { NotificationProvider } from "../context/NotificationContext";
 import ReduxProvider from "../store/ReduxProvider";
 
 const inter = Inter({
@@ -46,13 +47,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ReduxProvider>
             <LanguageProvider>
               <CurrencyProvider>
-                <AOSProvider>
-                  <SmoothScroll>
-                    <AppShell>
-                      {children}
-                    </AppShell>
-                  </SmoothScroll>
-                </AOSProvider>
+                <NotificationProvider>
+                  <AOSProvider>
+                    <SmoothScroll>
+                      <AppShell>
+                        {children}
+                      </AppShell>
+                    </SmoothScroll>
+                  </AOSProvider>
+                </NotificationProvider>
               </CurrencyProvider>
             </LanguageProvider>
           </ReduxProvider>

@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { validateImageUpload, validateFileUpload } from '../../lib/security/fileUploadValidator';
 import { sanitizeInput } from '../../lib/security/sanitizer';
 import { authService } from '../../services/authService';
+import { useNotifications } from '../../context/NotificationContext';
 import AuthModal from '../AuthModal';
 
 // Security regex patterns for threat detection (XSS, SQLi, CRLF, Path Traversal, Command Injection)
@@ -318,6 +319,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const modalScrollRef = useRef<HTMLDivElement>(null);
+  const { showToast, addNotification } = useNotifications();
 
   // Extract logged-in vendor ID from session
   const userObj = (session?.user || {}) as any;
@@ -838,7 +840,6 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
 
       // Raw data JSON payload
       const { images, warrantyDocument, certificateDocument, ...cleanPayload } = formData;
-      const currentVendorId = vendorId || activeVendorId || userObj.vendor_id || userObj.id;
       data.append('raw_data', JSON.stringify({
         vendor_id: currentVendorId,
         user_email: userObj.email || null,
@@ -880,6 +881,24 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       if (response.ok) {
         setIsSubmitting(false);
         setIsSuccess(true);
+
+        // Dispatch real-time toast alert
+        showToast({
+          type: 'success',
+          title: 'Product Request Submitted!',
+          message: `"${formData.productName}" was submitted successfully and is pending verification.`,
+          link: '/profile',
+          linkText: 'Track in Profile'
+        });
+
+        // Add persistent in-app notification
+        addNotification({
+          type: 'listing',
+          title: 'Product Under Review',
+          message: `Listing submission for "${formData.productName}" (Qty: ${formData.quantity || 1}) has been received. Our team is verifying specifications.`,
+          link: '/profile',
+        });
+
         if (typeof window !== 'undefined') {
           try {
             localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -897,10 +916,22 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
         }
         setSubmitError(errorMessage);
         setIsSubmitting(false);
+
+        showToast({
+          type: 'error',
+          title: 'Submission Failed',
+          message: errorMessage
+        });
       }
     } catch {
       setSubmitError('Network error. Make sure the backend server is reachable.');
       setIsSubmitting(false);
+
+      showToast({
+        type: 'error',
+        title: 'Connection Error',
+        message: 'Could not connect to the server. Please verify your network connection.'
+      });
     }
   };
 

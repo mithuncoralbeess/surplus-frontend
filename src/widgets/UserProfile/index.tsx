@@ -27,6 +27,7 @@ import {
   Hash
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useNotifications } from '../../context/NotificationContext';
 import Link from 'next/link';
 import SimpleListingModal from '../../components/SimpleListingModal';
 import LotImportModal from '../../components/LotImportModal';
@@ -35,6 +36,7 @@ export default function UserProfileWidget() {
   const router = useRouter();
   const { data: session, status, update } = useSession();
   const { formatPrice } = useCurrency();
+  const { showToast } = useNotifications();
 
   // Redirect unauthenticated users immediately to homepage
   useEffect(() => {
@@ -220,11 +222,26 @@ export default function UserProfileWidget() {
         
         setIsSavedNotice(true);
         setTimeout(() => setIsSavedNotice(false), 3000);
+        showToast({
+          type: 'success',
+          title: 'Profile Saved',
+          message: 'Your personal and vendor credentials were saved successfully.'
+        });
       } else {
         setSaveError(res.message || 'Failed to update profile.');
+        showToast({
+          type: 'error',
+          title: 'Save Failed',
+          message: res.message || 'Failed to update profile.'
+        });
       }
     } catch (err) {
       setSaveError('An unexpected error occurred while saving.');
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'An unexpected error occurred while saving profile.'
+      });
     }
     
     setIsSaving(false);

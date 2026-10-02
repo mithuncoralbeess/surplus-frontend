@@ -138,3 +138,17 @@ html.modal-open {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Toast Progress Countdown Animation */
+@keyframes toastShrink {
+  0% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
+.animate-toast-shrink {
+  animation: toastShrink linear forwards;
+}
