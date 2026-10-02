@@ -23,7 +23,8 @@ import {
   Plus,
   Box,
   Boxes,
-  Tag
+  Tag,
+  Hash
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import Link from 'next/link';
@@ -55,6 +56,9 @@ export default function UserProfileWidget() {
   const rawInitialEntity = (u.account_entity_type || u.accountEntityType || u.account_type || u.entity_type || '').toString().toUpperCase();
   const initialEntityType = rawInitialEntity.includes('INDIVIDUAL') ? 'INDIVIDUAL' : rawInitialEntity.includes('COMPANY') ? 'COMPANY' : (u.account_entity_type || 'COMPANY');
 
+  const [userId, setUserId] = useState<string>(
+    u.vendor_id || u.id || u.user_id || u.pk || ''
+  );
   const [fullName, setFullName] = useState(u.full_name || u.name || u.first_name || '');
   const [email, setEmail] = useState(u.email || '');
   const [phone, setPhone] = useState(u.phone || u.mobile || u.mobile_number || u.phone_number || '');
@@ -72,6 +76,13 @@ export default function UserProfileWidget() {
   useEffect(() => {
     if (session?.user) {
       const userObj = session.user as any;
+      const foundId = userObj.vendor_id || userObj.id || userObj.user_id || userObj.pk || '';
+      if (foundId) {
+        setUserId(String(foundId));
+      } else if (typeof window !== 'undefined') {
+        const localId = localStorage.getItem('vendor_id') || localStorage.getItem('user_id');
+        if (localId) setUserId(String(localId));
+      }
       setFullName(userObj.full_name || userObj.name || userObj.first_name || (userObj.first_name && userObj.last_name ? `${userObj.first_name} ${userObj.last_name}` : ''));
       setEmail(userObj.email || '');
       setPhone(userObj.phone || userObj.mobile || userObj.mobile_number || userObj.phone_number || '');
@@ -91,6 +102,12 @@ export default function UserProfileWidget() {
       setAddress(userObj.address || userObj.business_address || userObj.location || '');
     } else {
       // Clear all fields if user is not logged in
+      if (typeof window !== 'undefined') {
+        const localId = localStorage.getItem('vendor_id') || localStorage.getItem('user_id');
+        setUserId(localId ? String(localId) : '');
+      } else {
+        setUserId('');
+      }
       setFullName('');
       setEmail('');
       setPhone('');
@@ -277,16 +294,26 @@ export default function UserProfileWidget() {
               </div>
 
               <div>
-                <div className="flex items-center space-x-2">
-                  <h1 className="text-2xl font-bold text-gray-900">{fullName}</h1>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-bold text-gray-900">{fullName || 'User Profile'}</h1>
                   <span className="bg-[#e6f7ef] text-[#0f7a61] text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
                     <Sparkles className="w-3 h-3" /> {accountEntityType === 'INDIVIDUAL' ? 'Verified Individual' : 'Verified Business'}
                   </span>
+                  {userId && (
+                    <span className="bg-emerald-50 text-[#0f7a61] border border-emerald-200/80 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 font-mono shadow-2xs" title="Vendor ID / User ID">
+                      <Hash className="w-3 h-3 text-[#0f7a61]" /> User ID: #{userId}
+                    </span>
+                  )}
                 </div>
                 <p className="text-gray-500 text-sm mt-1">
                   {getSubtitleText()}
                 </p>
-                <div className="flex items-center space-x-4 mt-2 text-xs text-gray-400">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-gray-500">
+                  {userId && (
+                    <span className="flex items-center gap-1 font-medium text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md font-mono">
+                      <Hash className="w-3.5 h-3.5 text-gray-400" /> ID: <strong>{userId}</strong>
+                    </span>
+                  )}
                   {email && (
                     <span className="flex items-center gap-1">
                       <Mail className="w-3.5 h-3.5 text-gray-400" /> {email}
@@ -417,6 +444,21 @@ export default function UserProfileWidget() {
                   )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">User ID / Vendor ID</label>
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          value={userId ? `#${userId}` : 'Assigned upon verification'} 
+                          readOnly 
+                          disabled
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm font-mono cursor-not-allowed select-all font-semibold" 
+                        />
+                        <span className="absolute right-3 top-2.5 text-[11px] font-bold text-[#0f7a61] bg-emerald-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                          Verified ID
+                        </span>
+                      </div>
+                    </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1">Full Name</label>
                       <input 
