@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { validateImageUpload, validateFileUpload } from '../../lib/security/fileUploadValidator';
 import { sanitizeInput } from '../../lib/security/sanitizer';
 import { authService } from '../../services/authService';
+import AuthModal from '../AuthModal';
 
 // Security regex patterns for threat detection (XSS, SQLi, CRLF, Path Traversal, Command Injection)
 const XSS_PAYLOAD_REGEX = /<[^>]*>|javascript\s*:|data\s*:\s*text\/html|vbscript\s*:|\bon\w+\s*=/i;
@@ -315,31 +316,53 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
   const [submitError, setSubmitError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isReviewMode, setIsReviewMode] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const modalScrollRef = useRef<HTMLDivElement>(null);
 
   // Extract logged-in vendor ID from session
   const userObj = (session?.user || {}) as any;
-  const vendorId = 
-    userObj.vendor_id || 
-    (typeof window !== 'undefined' ? (localStorage.getItem('vendor_id') || '') : '');
-  const isAuthenticated = Boolean(session?.user && vendorId);
+  const [activeVendorId, setActiveVendorId] = useState<string>(() => {
+    return userObj.vendor_id || userObj.id || (typeof window !== 'undefined' ? (localStorage.getItem('vendor_id') || '') : '');
+  });
 
-  // Auto-resolve vendor ID from backend if logged in but vendorId is pending in current state
+  const isAuthenticated = Boolean(session?.user);
+  const vendorId = userObj.vendor_id || userObj.id || activeVendorId || (typeof window !== 'undefined' ? (localStorage.getItem('vendor_id') || '') : '');
+
+  // Keep activeVendorId synchronized with the current session and fetch exact vendor_id from DB
   useEffect(() => {
-    if (isOpen && session?.user && !vendorId) {
-      const email = (session.user as any)?.email;
+    if (session?.user) {
+      const u = session.user as any;
+      const initialId = u.vendor_id || u.id;
+      if (initialId) {
+        setActiveVendorId(String(initialId));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('vendor_id', String(initialId));
+        }
+      }
+
+      const email = u.email;
       if (email) {
         authService.getProfile(email).then((res: any) => {
-          if (res?.success && res.data) {
-            const vId = res.data.vendor_id || res.data.raw_vendor_id;
-            if (vId && typeof window !== 'undefined') {
-              localStorage.setItem('vendor_id', String(vId));
+          if (res?.success) {
+            const resData = res.data || res;
+            const vId = resData.vendor_id || resData.raw_vendor_id || resData.id;
+            if (vId) {
+              const strId = String(vId);
+              setActiveVendorId(strId);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('vendor_id', strId);
+              }
             }
           }
         }).catch(() => {});
       }
+    } else {
+      setActiveVendorId('');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('vendor_id');
+      }
     }
-  }, [isOpen, session, vendorId]);
+  }, [session, isOpen]);
 
   const [formData, setFormData] = useState({
     productName: '', category: '-- Select Category --', subCategory: '', brandName: '', modelNo: '',
@@ -748,6 +771,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
     if (e) e.preventDefault();
     if (!isAuthenticated) {
       setSubmitError('You must be signed in as a registered vendor to submit a listing. Please sign in to continue.');
+      setShowAuthModal(true);
       return;
     }
     if (!validateAll()) {
@@ -765,6 +789,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
     if (!isAuthenticated) {
       setSubmitError('You must be signed in as a registered vendor to submit a listing. Please sign in to continue.');
       setIsReviewMode(false);
+      setShowAuthModal(true);
       return;
     }
     if (!validateAll()) {
@@ -779,7 +804,12 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       const data = new FormData();
 
       // Vendor identification taken directly from the authenticated session
-      data.append('vendor_id', String(vendorId));
+      const currentVendorId = vendorId || activeVendorId || userObj.vendor_id || userObj.id;
+      data.append('vendor_id', String(currentVendorId || ''));
+      if (userObj.email) {
+        data.append('user_email', String(userObj.email));
+        data.append('email', String(userObj.email));
+      }
 
       // Product info
       data.append('product_name', sanitizeInput(formData.productName));
@@ -808,8 +838,10 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
 
       // Raw data JSON payload
       const { images, warrantyDocument, certificateDocument, ...cleanPayload } = formData;
+      const currentVendorId = vendorId || activeVendorId || userObj.vendor_id || userObj.id;
       data.append('raw_data', JSON.stringify({
-        vendor_id: vendorId,
+        vendor_id: currentVendorId,
+        user_email: userObj.email || null,
         ...cleanPayload,
         offer: pricingAnalysis.discountPercent || 0,
         warranty_document_name: formData.warrantyDocument?.name || null,
@@ -1326,7 +1358,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                       </div>
                       <button
                         type="button"
-                        onClick={() => signIn()}
+                        onClick={() => setShowAuthModal(true)}
                         className="px-4 py-2 bg-[#0a5c48] hover:bg-[#084838] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
                       >
                         <LogIn className="w-3.5 h-3.5" /> Sign In as Vendor
@@ -2015,6 +2047,14 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
           </div>
         </div>
       )}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          setShowAuthModal(false);
+          setSubmitError('');
+        }}
+      />
     </AnimatePresence>,
     document.body
   );
