@@ -1,19 +1,20 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import { useAppSelector } from '../../store';
 import { motion, AnimatePresence } from '../../lib/motion';
-import { 
-  ChevronDown, X, UploadCloud, CheckCircle2, 
+import {
+  ChevronDown, X, UploadCloud, CheckCircle2,
   Package, MapPin, DollarSign, FileText, Image as ImageIcon, ShieldCheck, Shield,
-  Edit3, ArrowRight, Eye, Info
+  Edit3, ArrowRight, Eye, Info, AlertCircle, LogIn
 } from 'lucide-react';
 import Select from 'react-select';
 import { z } from 'zod';
 import { validateImageUpload, validateFileUpload } from '../../lib/security/fileUploadValidator';
 import { sanitizeInput } from '../../lib/security/sanitizer';
+import { authService } from '../../services/authService';
 
 // Security regex patterns for threat detection (XSS, SQLi, CRLF, Path Traversal, Command Injection)
 const XSS_PAYLOAD_REGEX = /<[^>]*>|javascript\s*:|data\s*:\s*text\/html|vbscript\s*:|\bon\w+\s*=/i;
@@ -283,8 +284,8 @@ const customSelectStyles = {
     border: state.isDisabled
       ? '1px dashed #d1d5db'
       : state.isFocused
-      ? '2px solid #0a5c48'
-      : '1px solid #d1d5db',
+        ? '2px solid #0a5c48'
+        : '1px solid #d1d5db',
     boxShadow: 'none',
     padding: '3px',
     backgroundColor: state.isDisabled ? '#f9fafb' : 'white',
@@ -294,8 +295,8 @@ const customSelectStyles = {
       border: state.isDisabled
         ? '1px dashed #d1d5db'
         : state.isFocused
-        ? '2px solid #0a5c48'
-        : '1px solid #9ca3af'
+          ? '2px solid #0a5c48'
+          : '1px solid #9ca3af'
     }
   }),
   option: (provided: any, state: any) => ({
@@ -308,12 +309,37 @@ const customSelectStyles = {
 const DRAFT_STORAGE_KEY = 'simple_listing_draft_v1';
 
 export default function SimpleListingModal({ isOpen, onClose }: SimpleListingModalProps) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { categories: reduxCategories } = useAppSelector((state) => state.categories);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isReviewMode, setIsReviewMode] = useState(false);
+  const modalScrollRef = useRef<HTMLDivElement>(null);
+
+  // Extract logged-in vendor ID from session
+  const userObj = (session?.user || {}) as any;
+  const vendorId = 
+    userObj.vendor_id || 
+    (typeof window !== 'undefined' ? (localStorage.getItem('vendor_id') || '') : '');
+  const isAuthenticated = Boolean(session?.user && vendorId);
+
+  // Auto-resolve vendor ID from backend if logged in but vendorId is pending in current state
+  useEffect(() => {
+    if (isOpen && session?.user && !vendorId) {
+      const email = (session.user as any)?.email;
+      if (email) {
+        authService.getProfile(email).then((res: any) => {
+          if (res?.success && res.data) {
+            const vId = res.data.vendor_id || res.data.raw_vendor_id;
+            if (vId && typeof window !== 'undefined') {
+              localStorage.setItem('vendor_id', String(vId));
+            }
+          }
+        }).catch(() => {});
+      }
+    }
+  }, [isOpen, session, vendorId]);
 
   const [formData, setFormData] = useState({
     productName: '', category: '-- Select Category --', subCategory: '', brandName: '', modelNo: '',
@@ -361,8 +387,8 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
 
   // Subcategory is only available when user has selected a category
   const isCategorySelected = Boolean(
-    formData.category && 
-    formData.category !== '-- Select Category --' && 
+    formData.category &&
+    formData.category !== '-- Select Category --' &&
     formData.category !== ''
   );
 
@@ -467,8 +493,8 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
             ...prev,
             ...parsed,
             msrp: parsed.msrp !== undefined ? parsed.msrp : (parsed.previousPrice || ''),
-            hasWarranty: parsed.hasWarranty !== undefined 
-              ? parsed.hasWarranty 
+            hasWarranty: parsed.hasWarranty !== undefined
+              ? parsed.hasWarranty
               : Boolean(parsed.warranty && parsed.warranty !== 'No' && parsed.warranty !== ''),
             images: [],
           }));
@@ -485,14 +511,14 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       try {
         const { images, warrantyDocument, certificateDocument, ...serializableData } = formData;
         const hasContent = Boolean(
-          serializableData.productName || 
-          (serializableData.category && serializableData.category !== '-- Select Category --') || 
+          serializableData.productName ||
+          (serializableData.category && serializableData.category !== '-- Select Category --') ||
           serializableData.subCategory ||
-          serializableData.brandName || 
+          serializableData.brandName ||
           serializableData.modelNo ||
-          serializableData.quantity || 
-          serializableData.liquidatingPrice || 
-          serializableData.msrp || 
+          serializableData.quantity ||
+          serializableData.liquidatingPrice ||
+          serializableData.msrp ||
           serializableData.description
         );
 
@@ -661,6 +687,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
 
     if (Object.keys(newErrors).length > 0) {
       setFormErrors(newErrors);
+      scrollToModalError(newErrors);
       return false;
     }
 
@@ -668,14 +695,62 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
     return true;
   };
 
+  const scrollToModalError = (errors: Record<string, string>) => {
+    const errorKeys = Object.keys(errors);
+    if (errorKeys.length === 0) return;
+
+    // Use a short delay so React can commit any error text to the DOM
+    setTimeout(() => {
+      const container = modalScrollRef.current;
+      if (!container) return;
+
+      // Find the first field container or input element with error inside modalScrollRef ONLY
+      let targetEl: HTMLElement | null = null;
+      for (const key of errorKeys) {
+        const el = container.querySelector<HTMLElement>(`[data-field="${key}"]`) ||
+          container.querySelector<HTMLElement>(`[name="${key}"]`);
+        if (el) {
+          targetEl = el;
+          break;
+        }
+      }
+
+      // Fallback to first error text element inside modalScrollRef ONLY
+      if (!targetEl) {
+        targetEl = container.querySelector<HTMLElement>('.modal-field-error, .text-red-500');
+      }
+
+      if (targetEl) {
+        // Calculate relative position strictly inside the modal container
+        const containerRect = container.getBoundingClientRect();
+        const targetRect = targetEl.getBoundingClientRect();
+        const currentScroll = container.scrollTop;
+        const relativeTop = targetRect.top - containerRect.top + currentScroll;
+
+        // Scroll ONLY the modal container itself, never window or background page
+        container.scrollTo({
+          top: Math.max(0, relativeTop - 30),
+          behavior: 'smooth',
+        });
+
+        // Focus the input if available, preventing browser window scroll
+        const inputEl = targetEl.tagName === 'INPUT' || targetEl.tagName === 'SELECT' || targetEl.tagName === 'TEXTAREA'
+          ? targetEl
+          : targetEl.querySelector<HTMLElement>('input, select, textarea');
+        if (inputEl && typeof inputEl.focus === 'function') {
+          inputEl.focus({ preventScroll: true });
+        }
+      }
+    }, 50);
+  };
+
   const handleProceedToReview = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!isAuthenticated) {
+      setSubmitError('You must be signed in as a registered vendor to submit a listing. Please sign in to continue.');
+      return;
+    }
     if (!validateAll()) {
-      // Scroll to the first error
-      const firstErrorEl = document.querySelector('.text-red-500');
-      if (firstErrorEl) {
-        firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
       return;
     }
     setIsReviewMode(true);
@@ -687,13 +762,13 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (!isAuthenticated) {
+      setSubmitError('You must be signed in as a registered vendor to submit a listing. Please sign in to continue.');
+      setIsReviewMode(false);
+      return;
+    }
     if (!validateAll()) {
       setIsReviewMode(false);
-      // Scroll to the first error
-      const firstErrorEl = document.querySelector('.text-red-500');
-      if (firstErrorEl) {
-        firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
       return;
     }
 
@@ -702,16 +777,9 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
 
     try {
       const data = new FormData();
-      
-      // Vendor identification taken directly from the logged-in user session (no form input needed)
-      const vendorId = 
-        (session?.user as any)?.vendor_id || 
-        (session?.user as any)?.id ||
-        (typeof window !== 'undefined' ? (localStorage.getItem('vendor_id') || localStorage.getItem('user_id')) : '');
-      
-      if (vendorId) {
-        data.append('vendor_id', String(vendorId));
-      }
+
+      // Vendor identification taken directly from the authenticated session
+      data.append('vendor_id', String(vendorId));
 
       // Product info
       data.append('product_name', sanitizeInput(formData.productName));
@@ -719,7 +787,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       data.append('sub_category', sanitizeInput(formData.subCategory || ''));
       data.append('brand_name', sanitizeInput(formData.brandName || ''));
       data.append('model_no', sanitizeInput(formData.modelNo || ''));
-      
+
       // Origin & Specs
       data.append('country', sanitizeInput(formData.country));
       if (formData.year) {
@@ -729,7 +797,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       if (formData.expiry) {
         data.append('expiry', sanitizeInput(formData.expiry));
       }
-      
+
       // Pricing & Quantity
       data.append('quantity', sanitizeInput(formData.quantity));
       data.append('currency', sanitizeInput(formData.currency.substring(0, 3)));
@@ -737,17 +805,17 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       data.append('msrp', sanitizeInput(formData.msrp));
       data.append('offer', String(pricingAnalysis.discountPercent || 0));
       data.append('excluded_countries', JSON.stringify(formData.excludedCountries.map(c => sanitizeInput(c))));
-      
+
       // Raw data JSON payload
       const { images, warrantyDocument, certificateDocument, ...cleanPayload } = formData;
       data.append('raw_data', JSON.stringify({
-        vendor_id: vendorId || null,
+        vendor_id: vendorId,
         ...cleanPayload,
         offer: pricingAnalysis.discountPercent || 0,
         warranty_document_name: formData.warrantyDocument?.name || null,
         certificate_document_name: formData.certificateDocument?.name || null,
       }));
-      
+
       // Details & Media
       data.append('description', sanitizeInput(formData.description));
       data.append('reason_to_sell', sanitizeInput(formData.reasonToSell));
@@ -759,7 +827,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       if (formData.certificate && formData.certificateDocument) {
         data.append('certificate_document', formData.certificateDocument);
       }
-      
+
       if (formData.images && formData.images.length > 0) {
         formData.images.forEach(image => {
           data.append('images', image);
@@ -771,7 +839,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       const endpoint = apiBase
         ? (apiBase.endsWith('/api') ? `${apiBase}/submit-product-request/` : `${apiBase}/api/submit-product-request/`)
         : '/api/submit-product-request/';
-      
+
       const response = await fetch(endpoint, {
         method: 'POST',
         body: data,
@@ -810,7 +878,11 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
   const errorClass = "text-red-500 text-xs font-semibold mt-1";
 
   const renderError = (field: string) => {
-    return formErrors[field] ? <p className={errorClass}>{formErrors[field]}</p> : null;
+    return formErrors[field] ? (
+      <p className={`${errorClass} modal-field-error`} data-error-field={field}>
+        {formErrors[field]}
+      </p>
+    ) : null;
   };
 
   if (!mounted) return null;
@@ -818,7 +890,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div 
+        <div
           data-lenis-prevent
           role="dialog"
           aria-modal="true"
@@ -881,7 +953,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                 </div>
 
                 {/* Review Scrollable Body */}
-                <div 
+                <div
                   data-lenis-prevent
                   className="p-6 md:p-8 overflow-y-auto flex-1 min-h-0 bg-[#fafbfa] space-y-6 overscroll-contain"
                   style={{ WebkitOverflowScrolling: 'touch' }}
@@ -893,20 +965,19 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                   )}
 
                   {/* Notice Banner with Quick Edit button */}
-                  <div className="flex items-center justify-between p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl gap-3">
                     <div className="flex items-center gap-2.5">
                       <ShieldCheck className="w-5 h-5 text-[#0a5c48] shrink-0" />
-                      <span className="text-sm font-medium text-emerald-950">
-                        Review your details below. Everything looks accurate? Click <strong>Confirm & Submit Listing</strong> to publish.
-                      </span>
+                      <div className="text-sm font-medium text-emerald-950">
+                        Listing as Vendor ID <strong className="font-mono text-[#0a5c48]">#{vendorId}</strong>. Click <strong>Confirm & Submit Listing</strong> to publish.
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={handleBackToEdit}
-                      className="px-3.5 py-1.5 bg-white border border-emerald-300 text-[#0a5c48] hover:bg-emerald-50 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+                      className="px-3.5 py-1.5 bg-white hover:bg-emerald-50 text-[#0a5c48] border border-emerald-300 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer shrink-0"
                     >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>Edit Details</span>
+                      <Edit3 className="w-3.5 h-3.5" /> Edit Details
                     </button>
                   </div>
 
@@ -1069,8 +1140,8 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                       <div>
                         <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Excluded Export Countries</span>
                         <p className="font-medium text-gray-800">
-                          {formData.excludedCountries && formData.excludedCountries.length > 0 
-                            ? formData.excludedCountries.join(', ') 
+                          {formData.excludedCountries && formData.excludedCountries.length > 0
+                            ? formData.excludedCountries.join(', ')
                             : 'None (Worldwide Export Allowed)'}
                         </p>
                       </div>
@@ -1237,11 +1308,42 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                 </div>
 
                 {/* Form Body - Single Scrollable Form with Clear Sections */}
-                <div 
+                <div
+                  ref={modalScrollRef}
                   data-lenis-prevent
-                  className="p-6 md:p-8 overflow-y-auto flex-1 min-h-0 bg-[#fafbfa] space-y-8 overscroll-contain"
+                  className="p-6 md:p-8 overflow-y-auto flex-1 min-h-0 bg-[#fafbfa] space-y-6 overscroll-contain"
                   style={{ WebkitOverflowScrolling: 'touch' }}
                 >
+                  {/* Vendor Authentication Guard Status Banner */}
+                  {!isAuthenticated ? (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 text-xs sm:text-sm shadow-xs">
+                      <div className="flex items-center gap-2.5">
+                        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+                        <div>
+                          <span className="font-bold block text-gray-900">Sign In Required</span>
+                          <span className="text-amber-700 text-xs">You must be logged in as a registered vendor to publish listings. Your vendor ID will be automatically attached.</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => signIn()}
+                        className="px-4 py-2 bg-[#0a5c48] hover:bg-[#084838] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
+                      >
+                        <LogIn className="w-3.5 h-3.5" /> Sign In as Vendor
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl text-xs text-[#0a5c48]">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-[#0a5c48] shrink-0" />
+                        <span>Submitting as Verified Vendor: <strong className="font-mono text-gray-900">ID #{vendorId}</strong></span>
+                      </div>
+                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-bold text-[11px]">
+                        Verified Vendor
+                      </span>
+                    </div>
+                  )}
+
                   {submitError && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm font-medium">
                       {submitError}
@@ -1260,19 +1362,19 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2">
+                      <div data-field="productName" className="md:col-span-2">
                         <label className={labelClass}>Product Title / Name *</label>
-                        <input 
-                          type="text" 
-                          className={inputClass} 
-                          placeholder="e.g. Siemens SIMATIC S7-1200 PLC CPU Module" 
-                          value={formData.productName} 
-                          onChange={e => handleInputChange('productName', e.target.value)} 
+                        <input
+                          type="text"
+                          className={inputClass}
+                          placeholder="e.g. Siemens SIMATIC S7-1200 PLC CPU Module"
+                          value={formData.productName}
+                          onChange={e => handleInputChange('productName', e.target.value)}
                         />
                         {renderError('productName')}
                       </div>
 
-                      <div>
+                      <div data-field="category">
                         <label className={labelClass}>Product Category *</label>
                         <Select
                           options={categoryOptions}
@@ -1288,14 +1390,14 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                         {renderError('category')}
                       </div>
 
-                      <div>
+                      <div data-field="subCategory">
                         <label className={labelClass}>Subcategory *</label>
                         <Select
                           isDisabled={!isCategorySelected}
                           options={dynamicSubCategoryOptions}
                           styles={customSelectStyles}
                           value={
-                            dynamicSubCategoryOptions.find((s: any) => s.value === formData.subCategory) || 
+                            dynamicSubCategoryOptions.find((s: any) => s.value === formData.subCategory) ||
                             (formData.subCategory && isCategorySelected ? { value: formData.subCategory, label: formData.subCategory } : null)
                           }
                           onChange={(option: any) => handleInputChange('subCategory', option?.value || '')}
@@ -1306,25 +1408,25 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                         {renderError('subCategory')}
                       </div>
 
-                      <div>
+                      <div data-field="brandName">
                         <label className={labelClass}>Brand Name</label>
-                        <input 
-                          type="text" 
-                          className={inputClass} 
-                          placeholder="e.g. Siemens, Dell, Bosch" 
-                          value={formData.brandName} 
-                          onChange={e => handleInputChange('brandName', e.target.value)} 
+                        <input
+                          type="text"
+                          className={inputClass}
+                          placeholder="e.g. Siemens, Dell, Bosch"
+                          value={formData.brandName}
+                          onChange={e => handleInputChange('brandName', e.target.value)}
                         />
                       </div>
 
-                      <div>
+                      <div data-field="modelNo">
                         <label className={labelClass}>Model No. / Part Number</label>
-                        <input 
-                          type="text" 
-                          className={inputClass} 
-                          placeholder="e.g. 6ES7214-1AG40-0XB0" 
-                          value={formData.modelNo} 
-                          onChange={e => handleInputChange('modelNo', e.target.value)} 
+                        <input
+                          type="text"
+                          className={inputClass}
+                          placeholder="e.g. 6ES7214-1AG40-0XB0"
+                          value={formData.modelNo}
+                          onChange={e => handleInputChange('modelNo', e.target.value)}
                         />
                       </div>
                     </div>
@@ -1342,7 +1444,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                      <div data-field="country">
                         <label className={labelClass}>Manufacturing Country *</label>
                         <Select
                           options={countryOptions}
@@ -1354,36 +1456,36 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                         {renderError('country')}
                       </div>
 
-                      <div>
+                      <div data-field="year">
                         <label className={labelClass}>Manufacturing Year</label>
-                        <input 
-                          type="text" 
-                          className={inputClass} 
-                          placeholder="e.g. 2024" 
-                          value={formData.year} 
-                          onChange={e => handleInputChange('year', e.target.value)} 
+                        <input
+                          type="text"
+                          className={inputClass}
+                          placeholder="e.g. 2024"
+                          value={formData.year}
+                          onChange={e => handleInputChange('year', e.target.value)}
                         />
                         {renderError('year')}
                       </div>
 
                       <div>
                         <label className={labelClass}>Dimensions (Optional)</label>
-                        <input 
-                          type="text" 
-                          className={inputClass} 
-                          placeholder="e.g. 400 x 300 x 150 mm" 
-                          value={formData.dimensions} 
-                          onChange={e => handleInputChange('dimensions', e.target.value)} 
+                        <input
+                          type="text"
+                          className={inputClass}
+                          placeholder="e.g. 400 x 300 x 150 mm"
+                          value={formData.dimensions}
+                          onChange={e => handleInputChange('dimensions', e.target.value)}
                         />
                       </div>
 
                       <div>
                         <label className={labelClass}>Expiry Date (If applicable)</label>
-                        <input 
-                          type="date" 
-                          className={inputClass} 
-                          value={formData.expiry} 
-                          onChange={e => handleInputChange('expiry', e.target.value)} 
+                        <input
+                          type="date"
+                          className={inputClass}
+                          value={formData.expiry}
+                          onChange={e => handleInputChange('expiry', e.target.value)}
                         />
                       </div>
                     </div>
@@ -1401,20 +1503,20 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+                      <div data-field="quantity">
                         <label className={labelClass}>Available Quantity *</label>
-                        <input 
-                          type="number" 
-                          min="1" 
-                          className={inputClass} 
-                          placeholder="e.g. 50" 
-                          value={formData.quantity} 
-                          onChange={e => handleInputChange('quantity', e.target.value)} 
+                        <input
+                          type="number"
+                          min="1"
+                          className={inputClass}
+                          placeholder="e.g. 50"
+                          value={formData.quantity}
+                          onChange={e => handleInputChange('quantity', e.target.value)}
                         />
                         {renderError('quantity')}
                       </div>
 
-                      <div>
+                      <div data-field="currency">
                         <label className={labelClass}>Currency *</label>
                         <Select
                           options={currencyOptions}
@@ -1426,41 +1528,40 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                         {renderError('currency')}
                       </div>
 
-                      <div>
+                      <div data-field="msrp">
                         <label className={labelClass}>Original / Retail MSRP Price (Per Unit) *</label>
-                        <input 
-                          type="number" 
-                          step="0.01" 
+                        <input
+                          type="number"
+                          step="0.01"
                           min="0.01"
-                          className={inputClass} 
-                          placeholder="e.g. 350.00" 
-                          value={formData.msrp} 
-                          onChange={e => handleInputChange('msrp', e.target.value)} 
+                          className={inputClass}
+                          placeholder="e.g. 350.00"
+                          value={formData.msrp}
+                          onChange={e => handleInputChange('msrp', e.target.value)}
                         />
                         {renderError('msrp')}
                       </div>
 
-                      <div>
+                      <div data-field="liquidatingPrice">
                         <label className={labelClass}>Liquidating / Surplus Price (Per Unit) *</label>
                         <div className="relative flex items-center">
-                          <input 
-                            type="number" 
-                            step="0.01" 
+                          <input
+                            type="number"
+                            step="0.01"
                             min="0.01"
-                            className={`${inputClass} ${
-                              pricingAnalysis.hasMsrp && pricingAnalysis.hasLiq && !pricingAnalysis.meetsMinDiscount
+                            className={`${inputClass} ${pricingAnalysis.hasMsrp && pricingAnalysis.hasLiq && !pricingAnalysis.meetsMinDiscount
                                 ? 'border-red-400 focus:ring-red-400 bg-red-50/20'
                                 : pricingAnalysis.hasMsrp && pricingAnalysis.hasLiq && pricingAnalysis.meetsMinDiscount
-                                ? 'border-emerald-500 focus:ring-emerald-500 bg-emerald-50/20'
-                                : ''
-                            } ${pricingAnalysis.hasMsrp ? 'pr-36' : ''} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} 
+                                  ? 'border-emerald-500 focus:ring-emerald-500 bg-emerald-50/20'
+                                  : ''
+                              } ${pricingAnalysis.hasMsrp ? 'pr-36' : ''} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                             placeholder={
-                              pricingAnalysis.hasMsrp 
-                                ? `Max: ${formData.currency?.split(' ')[0] || 'USD'} ${pricingAnalysis.maxAllowedPrice} (min. 40% off)` 
+                              pricingAnalysis.hasMsrp
+                                ? `Max: ${formData.currency?.split(' ')[0] || 'USD'} ${pricingAnalysis.maxAllowedPrice} (min. 40% off)`
                                 : "e.g. 150.00"
-                            } 
-                            value={formData.liquidatingPrice} 
-                            onChange={e => handleInputChange('liquidatingPrice', e.target.value)} 
+                            }
+                            value={formData.liquidatingPrice}
+                            onChange={e => handleInputChange('liquidatingPrice', e.target.value)}
                           />
                           {pricingAnalysis.hasMsrp && (
                             <button
@@ -1508,7 +1609,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                             <span className="text-blue-700 text-xs leading-relaxed block">
                               {pricingAnalysis.hasLiq ? (
                                 <>
-                                  Your surplus payout price is <strong>{formData.currency?.split(' ')[0] || 'USD'} {parseFloat(formData.liquidatingPrice).toFixed(2)}</strong>. 
+                                  Your surplus payout price is <strong>{formData.currency?.split(' ')[0] || 'USD'} {parseFloat(formData.liquidatingPrice).toFixed(2)}</strong>.
                                   When published to public buyers, it will be listed at <strong>{formData.currency?.split(' ')[0] || 'USD'} {pricingAnalysis.publicPrice}</strong> (+10% charge added to public buyers).
                                 </>
                               ) : (
@@ -1545,24 +1646,24 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2">
+                      <div data-field="description" className="md:col-span-2">
                         <label className={labelClass}>Description & Technical Condition *</label>
-                        <textarea 
-                          rows={4} 
-                          className={inputClass} 
-                          placeholder="Describe the product condition, packaging (original box, pallet, sealed), technical specifications, and condition..." 
-                          value={formData.description} 
+                        <textarea
+                          rows={4}
+                          className={inputClass}
+                          placeholder="Describe the product condition, packaging (original box, pallet, sealed), technical specifications, and condition..."
+                          value={formData.description}
                           onChange={e => handleInputChange('description', e.target.value)}
                         />
                         {renderError('description')}
                       </div>
 
-                      <div className="md:col-span-2">
+                      <div data-field="reasonToSell" className="md:col-span-2">
                         <label className={labelClass}>Reason to Sell *</label>
                         <div className="relative">
-                          <select 
-                            className={selectClass} 
-                            value={formData.reasonToSell} 
+                          <select
+                            className={selectClass}
+                            value={formData.reasonToSell}
                             onChange={e => handleInputChange('reasonToSell', e.target.value)}
                           >
                             <option>Surplus Inventory</option>
@@ -1576,7 +1677,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                       </div>
 
                       {/* Product Warranty Option - Next row card style matching 3rd Party Certificate */}
-                      <div className="md:col-span-2 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                      <div data-field="warranty" className="md:col-span-2 p-4 bg-gray-50 rounded-xl border border-gray-200">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <Shield className="w-5 h-5 text-[#0a5c48]" />
@@ -1588,10 +1689,10 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                           <div className="flex items-center gap-2.5">
                             <span className="text-xs font-bold text-gray-600">{formData.hasWarranty ? 'Yes' : 'No'}</span>
                             <label className="relative inline-flex items-center cursor-pointer">
-                              <input 
-                                type="checkbox" 
-                                className="sr-only peer" 
-                                checked={formData.hasWarranty} 
+                              <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={formData.hasWarranty}
                                 onChange={e => {
                                   const checked = e.target.checked;
                                   handleInputChange('hasWarranty', checked);
@@ -1603,7 +1704,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                                     handleInputChange('warranty', 'No');
                                     handleInputChange('warrantyDocument', null);
                                   }
-                                }} 
+                                }}
                               />
                               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0a5c48]"></div>
                             </label>
@@ -1614,12 +1715,12 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                           <div className="pt-3 mt-3 border-t border-gray-200/70 space-y-3">
                             <div>
                               <label className="text-xs font-bold text-gray-700 block mb-1.5">Warranty Period / Guarantee *</label>
-                              <input 
-                                type="text" 
-                                className={inputClass} 
-                                placeholder="e.g. 30 Days, 90 Days, 1 Year" 
-                                value={formData.warranty === 'No' ? '' : formData.warranty} 
-                                onChange={e => handleInputChange('warranty', e.target.value)} 
+                              <input
+                                type="text"
+                                className={inputClass}
+                                placeholder="e.g. 30 Days, 90 Days, 1 Year"
+                                value={formData.warranty === 'No' ? '' : formData.warranty}
+                                onChange={e => handleInputChange('warranty', e.target.value)}
                               />
                             </div>
                             <div className="flex flex-wrap gap-1.5">
@@ -1628,11 +1729,10 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                                   key={preset}
                                   type="button"
                                   onClick={() => handleInputChange('warranty', preset)}
-                                  className={`px-2.5 py-1 text-xs rounded-lg border transition-colors cursor-pointer ${
-                                    formData.warranty === preset
+                                  className={`px-2.5 py-1 text-xs rounded-lg border transition-colors cursor-pointer ${formData.warranty === preset
                                       ? 'bg-emerald-50 border-emerald-300 text-[#0a5c48] font-bold'
                                       : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
-                                  }`}
+                                    }`}
                                 >
                                   {preset}
                                 </button>
@@ -1645,7 +1745,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                                 <span>Upload Warranty Document (Optional)</span>
                                 <span className="text-[11px] font-normal text-gray-400">PDF, JPG, PNG (Max 10MB)</span>
                               </label>
-                              
+
                               {!formData.warrantyDocument ? (
                                 <label className="border border-dashed border-gray-300 hover:border-[#0a5c48] bg-white hover:bg-emerald-50/30 rounded-xl p-3 flex items-center justify-center gap-2 cursor-pointer transition-colors group">
                                   <UploadCloud className="w-4 h-4 text-gray-400 group-hover:text-[#0a5c48]" />
@@ -1716,10 +1816,10 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                           <div className="flex items-center gap-2.5">
                             <span className="text-xs font-bold text-gray-600">{formData.certificate ? 'Yes' : 'No'}</span>
                             <label className="relative inline-flex items-center cursor-pointer">
-                              <input 
-                                type="checkbox" 
-                                className="sr-only peer" 
-                                checked={formData.certificate} 
+                              <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={formData.certificate}
                                 onChange={e => {
                                   const checked = e.target.checked;
                                   handleInputChange('certificate', checked);
@@ -1731,7 +1831,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                                       return copy;
                                     });
                                   }
-                                }} 
+                                }}
                               />
                               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0a5c48]"></div>
                             </label>
@@ -1739,12 +1839,12 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                         </div>
 
                         {formData.certificate && (
-                          <div className="pt-3 mt-3 border-t border-gray-200/70 space-y-2">
+                          <div data-field="certificateDocument" className="pt-3 mt-3 border-t border-gray-200/70 space-y-2">
                             <label className="text-xs font-bold text-gray-700 block flex items-center justify-between">
                               <span>Upload Certificate / Test Report Document *</span>
                               <span className="text-[11px] font-normal text-gray-400">PDF, JPG, PNG (Max 10MB)</span>
                             </label>
-                            
+
                             {!formData.certificateDocument ? (
                               <label className={`border-2 border-dashed ${formErrors.certificateDocument ? 'border-red-400 bg-red-50/40' : 'border-gray-300 hover:border-[#0a5c48] bg-white hover:bg-emerald-50/30'} rounded-xl p-4 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors group`}>
                                 <UploadCloud className="w-5 h-5 text-gray-400 group-hover:text-[#0a5c48]" />
@@ -1803,18 +1903,17 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                       </div>
 
                       {/* Product Images Upload */}
-                      <div className="md:col-span-2">
+                      <div data-field="imagesUploaded" className="md:col-span-2">
                         <label className={labelClass}>Product Images *</label>
-                        <label 
-                          className={`border-2 border-dashed ${
-                            formErrors.imagesUploaded ? 'border-red-400 bg-red-50/50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100/70'
-                          } rounded-2xl p-6 flex flex-col items-center justify-center transition-colors cursor-pointer group block`}
+                        <label
+                          className={`border-2 border-dashed ${formErrors.imagesUploaded ? 'border-red-400 bg-red-50/50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100/70'
+                            } rounded-2xl p-6 flex flex-col items-center justify-center transition-colors cursor-pointer group block`}
                         >
-                          <input 
-                            type="file" 
-                            multiple 
-                            accept="image/png, image/jpeg, image/webp, image/gif" 
-                            className="hidden" 
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/png, image/jpeg, image/webp, image/gif"
+                            className="hidden"
                             onChange={(e) => {
                               if (e.target.files && e.target.files.length > 0) {
                                 const filesArray = Array.from(e.target.files);
@@ -1856,9 +1955,9 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                           <div className="flex flex-wrap gap-3 mt-3">
                             {formData.images.map((file, idx) => (
                               <div key={idx} className="relative group w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shadow-xs">
-                                <img 
-                                  src={URL.createObjectURL(file)} 
-                                  alt={`Preview ${idx}`} 
+                                <img
+                                  src={URL.createObjectURL(file)}
+                                  alt={`Preview ${idx}`}
                                   className="w-full h-full object-cover"
                                 />
                                 <button

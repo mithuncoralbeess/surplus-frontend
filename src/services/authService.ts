@@ -65,4 +65,10 @@ export const authService = {
       body: JSON.stringify(payload),
     });
   },
+
+  async getProfile(email: string): Promise<ApiResponse> {
+    return apiClient(`/api/auth/register/complete-profile/?email=${encodeURIComponent(email)}`, {
+      method: 'GET',
+    });
+  },
 };

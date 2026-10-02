@@ -56,8 +56,8 @@ export default function UserProfileWidget() {
   const rawInitialEntity = (u.account_entity_type || u.accountEntityType || u.account_type || u.entity_type || '').toString().toUpperCase();
   const initialEntityType = rawInitialEntity.includes('INDIVIDUAL') ? 'INDIVIDUAL' : rawInitialEntity.includes('COMPANY') ? 'COMPANY' : (u.account_entity_type || 'COMPANY');
 
-  const [userId, setUserId] = useState<string>(
-    u.vendor_id || u.id || u.user_id || u.pk || ''
+  const [vendorId, setVendorId] = useState<string>(
+    u.vendor_id || ''
   );
   const [fullName, setFullName] = useState(u.full_name || u.name || u.first_name || '');
   const [email, setEmail] = useState(u.email || '');
@@ -76,12 +76,15 @@ export default function UserProfileWidget() {
   useEffect(() => {
     if (session?.user) {
       const userObj = session.user as any;
-      const foundId = userObj.vendor_id || userObj.id || userObj.user_id || userObj.pk || '';
+      const foundId = userObj.vendor_id || '';
       if (foundId) {
-        setUserId(String(foundId));
+        setVendorId(String(foundId));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('vendor_id', String(foundId));
+                  }
       } else if (typeof window !== 'undefined') {
-        const localId = localStorage.getItem('vendor_id') || localStorage.getItem('user_id');
-        if (localId) setUserId(String(localId));
+        const localId = localStorage.getItem('vendor_id');
+        if (localId) setVendorId(String(localId));
       }
       setFullName(userObj.full_name || userObj.name || userObj.first_name || (userObj.first_name && userObj.last_name ? `${userObj.first_name} ${userObj.last_name}` : ''));
       setEmail(userObj.email || '');
@@ -100,13 +103,47 @@ export default function UserProfileWidget() {
 
       setCategoriesInterested(userObj.category_interested || userObj.categoryInterested || userObj.categories_interested || '');
       setAddress(userObj.address || userObj.business_address || userObj.location || '');
+
+      // Proactively fetch latest profile & auto-assigned vendor_id from backend
+      if (userObj.email) {
+        authService.getProfile(userObj.email).then((res) => {
+          if (res?.success && res.data) {
+            const vData = res.data;
+            const fetchedVendorId = vData.vendor_id || vData.raw_vendor_id || vData.id;
+            if (fetchedVendorId) {
+              setVendorId(String(fetchedVendorId));
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('vendor_id', String(fetchedVendorId));
+                              }
+              if (!userObj.vendor_id || userObj.vendor_id !== fetchedVendorId) {
+                update({
+                  vendor_id: fetchedVendorId,
+                });
+              }
+            }
+            if (vData.full_name) setFullName(vData.full_name);
+            if (vData.company_name) setCompanyName(vData.company_name);
+            if (vData.business_location) setBusinessLocation(vData.business_location);
+            if (vData.business_address) setAddress(vData.business_address);
+            if (vData.tax_registration_number) setTaxId(vData.tax_registration_number);
+            if (vData.business_type) setBusinessType(vData.business_type);
+            if (vData.account_entity_type) {
+              const entity = String(vData.account_entity_type).toUpperCase();
+              setAccountEntityType(entity.includes('INDIVIDUAL') ? 'INDIVIDUAL' : 'COMPANY');
+            }
+            if (vData.user_type) setUserType(String(vData.user_type).toUpperCase());
+          }
+        }).catch((err) => {
+          console.error("Failed to auto-fetch vendor profile:", err);
+        });
+      }
     } else {
       // Clear all fields if user is not logged in
       if (typeof window !== 'undefined') {
-        const localId = localStorage.getItem('vendor_id') || localStorage.getItem('user_id');
-        setUserId(localId ? String(localId) : '');
+        const localId = localStorage.getItem('vendor_id');
+        setVendorId(localId ? String(localId) : '');
       } else {
-        setUserId('');
+        setVendorId('');
       }
       setFullName('');
       setEmail('');
@@ -155,9 +192,18 @@ export default function UserProfileWidget() {
       
       if (res.success) {
         const resData = (res.data?.user || res.data?.vendor || res.data?.profile || res.data?.data || res.data || {}) as any;
+        const resolvedVendorId = resData.vendor_id || resData.vendorId || resData.raw_vendor_id || resData.id || res.data?.vendor_id || vendorId;
+
+        if (resolvedVendorId) {
+          setVendorId(String(resolvedVendorId));
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('vendor_id', String(resolvedVendorId));
+                      }
+        }
 
         // Update NextAuth session with all saved fields
         await update({
+          vendor_id: resolvedVendorId ? String(resolvedVendorId) : undefined,
           full_name: fullName || resData.full_name || resData.name,
           name: fullName || resData.full_name || resData.name,
           mobile: phone || resData.mobile_number || resData.mobile,
@@ -299,9 +345,9 @@ export default function UserProfileWidget() {
                   <span className="bg-[#e6f7ef] text-[#0f7a61] text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
                     <Sparkles className="w-3 h-3" /> {accountEntityType === 'INDIVIDUAL' ? 'Verified Individual' : 'Verified Business'}
                   </span>
-                  {userId && (
-                    <span className="bg-emerald-50 text-[#0f7a61] border border-emerald-200/80 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 font-mono shadow-2xs" title="Vendor ID / User ID">
-                      <Hash className="w-3 h-3 text-[#0f7a61]" /> User ID: #{userId}
+                  {vendorId && (
+                    <span className="bg-emerald-50 text-[#0f7a61] border border-emerald-200/80 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 font-mono shadow-2xs" title="Vendor ID">
+                      <Hash className="w-3 h-3 text-[#0f7a61]" /> Vendor ID: {vendorId.startsWith('USR') || vendorId.startsWith('#') ? vendorId : `#${vendorId}`}
                     </span>
                   )}
                 </div>
@@ -309,9 +355,9 @@ export default function UserProfileWidget() {
                   {getSubtitleText()}
                 </p>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-gray-500">
-                  {userId && (
+                  {vendorId && (
                     <span className="flex items-center gap-1 font-medium text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md font-mono">
-                      <Hash className="w-3.5 h-3.5 text-gray-400" /> ID: <strong>{userId}</strong>
+                      <Hash className="w-3.5 h-3.5 text-gray-400" /> Vendor ID: <strong>{vendorId}</strong>
                     </span>
                   )}
                   {email && (
@@ -445,11 +491,11 @@ export default function UserProfileWidget() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">User ID / Vendor ID</label>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Vendor ID</label>
                       <div className="relative">
                         <input 
                           type="text" 
-                          value={userId ? `#${userId}` : 'Assigned upon verification'} 
+                          value={vendorId ? (vendorId.startsWith('USR') || vendorId.startsWith('#') ? vendorId : `#${vendorId}`) : 'Assigned upon verification'} 
                           readOnly 
                           disabled
                           className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm font-mono cursor-not-allowed select-all font-semibold" 

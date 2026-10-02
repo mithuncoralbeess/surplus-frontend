@@ -190,7 +190,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     });
 
     if (res.success) {
+      const resData = (res.data?.user || res.data?.vendor || res.data?.profile || res.data?.data || res.data || {}) as any;
+      const assignedVendorId = resData.vendor_id || resData.vendorId || resData.raw_vendor_id || resData.id || res.data?.vendor_id;
+      if (assignedVendorId && typeof window !== 'undefined') {
+        localStorage.setItem('vendor_id', String(assignedVendorId));
+              }
+
       await update({
+        vendor_id: assignedVendorId ? String(assignedVendorId) : undefined,
         company_name: entityType === 'Company/Business' ? companyName : '',
         business_location: businessLocation,
         business_type: role.toUpperCase(),

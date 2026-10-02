@@ -15,7 +15,7 @@ const handler = NextAuth({
       },
       async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.otp) return null;
-        
+
         try {
           const res = credentials.isRegister === 'true'
             ? await authService.verifyRegistrationOtp({
@@ -26,16 +26,32 @@ const handler = NextAuth({
                 email: credentials.email,
                 otp: credentials.otp,
               });
-          
+
           if (res.success && res.data) {
             const rawData = res.data as any;
             const data = rawData.user || rawData.vendor || rawData.profile || rawData.data || rawData;
+
+            // Resolve vendor_id and user ID comprehensively from backend response
+            const resolvedVendorId = (
+              rawData.vendor_id ||
+              data.vendor_id ||
+              rawData.vendorId ||
+              data.vendorId ||
+              rawData.raw_vendor_id ||
+              data.raw_vendor_id ||
+              rawData.vendor?.vendor_id ||
+              rawData.vendor?.id ||
+              rawData.user?.vendor_id ||
+              rawData.user?.id ||
+              data.id ||
+              rawData.id
+            );
 
             const firstName = data.first_name || data.firstName || '';
             const lastName = data.last_name || data.lastName || '';
             let fullName = data.full_name || data.fullName || data.name || (firstName || lastName ? `${firstName} ${lastName}`.trim() : "");
             let mobileNum = data.mobile_number || data.mobileNumber || data.mobile || data.phone || data.phone_number || data.phoneNumber || '';
-            
+
             // Fallback to credentials passed from frontend during registration
             if (!fullName && credentials.fullName) fullName = credentials.fullName;
             if (!mobileNum && credentials.mobileNumber) mobileNum = credentials.mobileNumber;
@@ -75,14 +91,14 @@ const handler = NextAuth({
             const categoryInterested = data.category_interested || data.categoryInterested || data.categories_interested || data.categories || '';
             const businessType = data.business_type || data.businessType || '';
 
-            return { 
-              id: String(data.vendor_id || data.id || credentials.email),
-              email: data.email || credentials.email,
+            return {
+              id: resolvedVendorId ? String(resolvedVendorId) : credentials.email,
+              email: data.email || rawData.email || credentials.email,
               name: fullName,
               full_name: fullName,
               first_name: firstName,
               last_name: lastName,
-              vendor_id: data.vendor_id || data.id,
+              vendor_id: resolvedVendorId ? String(resolvedVendorId) : undefined,
               user_type: rawUserType || 'BUYER',
               mobile: mobileNum,
               phone: mobileNum,
@@ -114,6 +130,8 @@ const handler = NextAuth({
     async jwt({ token, user, trigger, session }) {
       // Handle session update
       if (trigger === "update" && session) {
+        if (session.vendor_id !== undefined) token.vendor_id = session.vendor_id;
+        if (session.id !== undefined) token.id = session.id;
         if (session.full_name !== undefined) token.full_name = session.full_name;
         if (session.name !== undefined) token.name = session.name;
         if (session.mobile !== undefined) token.mobile = session.mobile;
@@ -127,10 +145,11 @@ const handler = NextAuth({
         if (session.user_type !== undefined) token.user_type = session.user_type;
         if (session.category_interested !== undefined) token.category_interested = session.category_interested;
       }
-      
+
       if (user) {
         const u = user as any;
-        token.vendor_id = u.vendor_id;
+        token.id = u.id || u.vendor_id;
+        token.vendor_id = u.vendor_id || u.id;
         token.user_type = u.user_type;
         token.mobile = u.mobile;
         token.phone = u.phone;
@@ -152,7 +171,8 @@ const handler = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         const u = session.user as any;
-        u.vendor_id = token.vendor_id;
+        u.id = token.id || token.vendor_id || token.sub;
+        u.vendor_id = token.vendor_id || token.id;
         u.user_type = token.user_type;
         u.mobile = token.mobile;
         u.phone = token.phone || token.mobile;
@@ -177,5 +197,3 @@ const handler = NextAuth({
 });
 
 export { handler as GET, handler as POST };
-
-
