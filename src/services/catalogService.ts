@@ -14,7 +14,9 @@ export interface ProductRequestPayload {
   quantity: string;
   currency: string;
   liquidatingPrice: string;
-  previousPrice: string;
+  msrp?: string;
+  previousPrice?: string;
+  offer?: string | number;
   excludedCountries: string[];
   description: string;
   reasonToSell: string;
@@ -43,7 +45,7 @@ export interface LotRequestPayload {
 
 export const catalogService = {
   async submitProductRequest(payload: ProductRequestPayload): Promise<ApiResponse> {
-    return apiClient('/submit-product-request/', {
+    return apiClient('/api/submit-product-request/', {
       method: 'POST',
       body: JSON.stringify(payload),
     });

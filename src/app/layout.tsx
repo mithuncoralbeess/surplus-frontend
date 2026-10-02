@@ -8,7 +8,9 @@ import AuthProvider from "../components/AuthProvider";
 import { CurrencyProvider } from "../context/CurrencyContext";
 import AOSProvider from "../components/AosProvider";
 
+import { Suspense } from "react";
 import GoogleAnalytics from "../components/GoogleAnalytics";
+import AnalyticsTracker from "../components/AnalyticsTracker";
 
 import { LanguageProvider } from "../context/LanguageContext";
 import ReduxProvider from "../store/ReduxProvider";
@@ -37,6 +39,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <GoogleAnalytics />
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
+        </Suspense>
         <AuthProvider>
           <ReduxProvider>
             <LanguageProvider>

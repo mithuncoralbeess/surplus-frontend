@@ -3,7 +3,7 @@
  * Centralized, secure HTTP client with error handling, URL resolution, and request sanitization.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -12,27 +12,43 @@ export interface ApiResponse<T = any> {
   status?: number;
 }
 
+export interface RequestOptions extends RequestInit {
+  silent?: boolean;
+  timeout?: number;
+}
+
 export async function apiClient<T = any>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestOptions = {}
 ): Promise<ApiResponse<T>> {
-  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+  const { silent = false, timeout = 12000, ...fetchOptions } = options;
+  const base = API_BASE_URL.replace(/\/$/, '');
+  const url = endpoint.startsWith('http')
+    ? endpoint
+    : `${base}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
 
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
 
+  // Controller for request timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
   const config: RequestInit = {
-    ...options,
+    ...fetchOptions,
+    signal: fetchOptions.signal || controller.signal,
     headers: {
       ...defaultHeaders,
-      ...options.headers,
+      ...fetchOptions.headers,
     },
   };
 
   try {
     const response = await fetch(url, config);
+    clearTimeout(timeoutId);
+
     const text = await response.text();
     let json: any = {};
 
@@ -43,7 +59,13 @@ export async function apiClient<T = any>(
     }
 
     if (!response.ok) {
-      const errorMsg = json.message || json.detail || (typeof json === 'object' && Object.keys(json).length > 0 ? JSON.stringify(json) : `Request failed with status ${response.status}`);
+      const errorMsg =
+        json.message ||
+        json.detail ||
+        (typeof json === 'object' && Object.keys(json).length > 0
+          ? JSON.stringify(json)
+          : `Request failed with status ${response.status}`);
+
       return {
         success: false,
         status: response.status,
@@ -58,11 +80,17 @@ export async function apiClient<T = any>(
       message: json.message,
     };
   } catch (error: any) {
-    console.error(`API Client Error [${endpoint}]:`, error);
+    clearTimeout(timeoutId);
+    if (!silent) {
+      console.warn(`[API Client Notice] ${endpoint}:`, error?.message || error);
+    }
     return {
       success: false,
-      status: 500,
-      message: error?.message || 'Network error or server unavailable. Please try again later.',
+      status: error?.name === 'AbortError' ? 408 : 500,
+      message:
+        error?.name === 'AbortError'
+          ? 'Request timed out. Server may be starting up.'
+          : error?.message || 'Network error or server unavailable.',
     };
   }
 }

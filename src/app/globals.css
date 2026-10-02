@@ -43,6 +43,13 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
+/* Modal Open Scroll Locks */
+body.modal-open,
+html.modal-open {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

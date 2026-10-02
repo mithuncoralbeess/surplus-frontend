@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Search, ShieldCheck, Play, ArrowRight, BarChart2, Sparkles, Zap, Clock, TrendingUp } from 'lucide-react';
+import { Search, ShieldCheck, Play, ArrowRight, BarChart2, Sparkles, Zap, Clock, TrendingUp, Mic, MicOff, X } from 'lucide-react';
+import { parseNaturalLanguageQuery, getInstantSuggestions } from '../../lib/aiSearchEngine';
+import { useVoiceSearch } from '../../hooks/useVoiceSearch';
 
 const AI_PROMPTS = [
   { text: "Overstock Power Tools & Industrial Machinery", tag: "Power Tools" },
@@ -47,6 +49,13 @@ const HomeBanner = () => {
   const [recentSearches, setRecentSearches] = useState(DEFAULT_RECENT);
   const [isHeroLanding] = useState(() => !hasHeroLandedInPageLoad);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const { isListening, isSupported, toggleListening } = useVoiceSearch({
+    onTranscript: (transcript) => {
+      setSearchQuery(transcript);
+      router.push(`/browse?q=${encodeURIComponent(transcript.trim())}`);
+    }
+  });
 
   useEffect(() => {
     hasHeroLandedInPageLoad = true;
@@ -165,6 +174,32 @@ const HomeBanner = () => {
                   placeholder="Search products, categories, part numbers, or brands..."
                   className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 text-base min-[1350px]:text-sm min-[1600px]:text-base cursor-text"
                 />
+
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="p-1 text-gray-400 hover:text-gray-600 rounded-full transition-colors cursor-pointer"
+                    title="Clear"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+
+                {isSupported && (
+                  <button
+                    type="button"
+                    onClick={toggleListening}
+                    className={`p-1.5 rounded-full transition-all cursor-pointer ${
+                      isListening 
+                        ? 'bg-rose-500 text-white animate-pulse ring-2 ring-rose-300' 
+                        : 'text-gray-400 hover:text-[#0f7a61] hover:bg-emerald-50'
+                    }`}
+                    title={isListening ? "Listening..." : "Search by voice"}
+                  >
+                    {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  </button>
+                )}
 
                 <button
                   type="button"

@@ -18,13 +18,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      let res = await apiClient('/api/maintenance-status/');
-      if (!res.success) {
-        res = await apiClient('/api/maintenance/');
-      }
-      if (!res.success) {
-        res = await apiClient('/api/website-status/');
-      }
+      const res = await apiClient('/api/maintenance-status/', {
+        silent: true,
+        timeout: 8000,
+      });
 
       if (res.status === 503) {
         setIsMaintenanceMode(true);
@@ -35,12 +32,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         const data = res.data;
 
         // Check for explicit "Live" status from backend dashboard
-        const isLive = 
-          data.website_status === 'Live' || 
-          data.status === 'Live' || 
-          data.status === 'live' || 
-          data.is_live === true || 
-          data.is_maintenance_mode === false || 
+        const isLive =
+          data.website_status === 'Live' ||
+          data.status === 'Live' ||
+          data.status === 'live' ||
+          data.is_live === true ||
+          data.is_maintenance_mode === false ||
           data.is_maintenance === false;
 
         if (isLive) {
@@ -60,10 +57,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         setIsMaintenanceMode(isMaintenance);
       } else {
+        // If server is cold-starting or unreachable, keep default live state
         setIsMaintenanceMode(false);
       }
-    } catch (err) {
-      console.error('Failed to check maintenance status:', err);
+    } catch {
       setIsMaintenanceMode(false);
     }
   }, []);
@@ -71,9 +68,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     checkMaintenanceStatus();
 
-    // Poll status every 5 seconds to react quickly when admin toggles maintenance mode
-    const interval = setInterval(checkMaintenanceStatus, 5000);
-    return () => clearInterval(interval);
+    // Check on window focus and poll at gentle 45s interval to avoid hammering cold starts
+    const interval = setInterval(checkMaintenanceStatus, 45000);
+    const handleFocus = () => checkMaintenanceStatus();
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [checkMaintenanceStatus]);
 
   // Conditionally render Under Maintenance design on homepage / all routes when maintenance mode is active
