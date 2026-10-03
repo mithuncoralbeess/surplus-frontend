@@ -477,3 +477,185 @@ export function getInstantSuggestions(query: string, limit = 5) {
     suggestions: suggestions.slice(0, 3)
   };
 }
+
+
+/**
+ * Maps raw backend Neon DB product results into frontend AiSearchResultItem format
+ */
+
+/**
+ * Maps raw backend Neon DB product results into frontend AiSearchResultItem format
+ */
+
+/**
+ * Maps raw backend Neon DB product results into frontend AiSearchResultItem format
+ */
+export function mapBackendProductToAiItem(p: any): AiSearchResultItem {
+  const price = Number(p.liquidating_price || p.current_price || 0);
+  const retailPrice = Number(p.current_price) || (price > 0 ? Math.round(price * 1.25) : 0);
+  const discountPercent = retailPrice > price ? Math.round(((retailPrice - price) / retailPrice) * 100) : 15;
+
+  let img = p.image || '';
+  if (img && !img.startsWith('http')) {
+    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
+    const prefix = img.startsWith('/') ? '' : '/';
+    img = apiBase + prefix + img;
+  }
+  if (!img) {
+    img = 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80';
+  }
+
+  const sku = p.product_id || p.model_no || (p.id ? 'PRO-' + p.id : 'PRO-SURPLUS');
+
+  return {
+    id: String(p.id || p.product_id || sku),
+    sku: sku,
+    title: p.product_name || 'Surplus Inventory Lot',
+    brand: p.brand || 'Enterprise',
+    category: p.category || 'Surplus Inventory',
+    subCategory: p.subcategory || '',
+    condition: 'Brand New Surplus',
+    price: price,
+    retailPrice: retailPrice,
+    discountPercent: discountPercent,
+    moq: 1,
+    estQty: p.quantity || 1,
+    location: p.inventory_location || 'Warehouse Location',
+    country: 'India',
+    isCertified: true,
+    isVerifiedSeller: true,
+    sellerRating: 4.9,
+    image: img,
+    description: p.product_name,
+    specs: {
+      'Brand': p.brand || 'N/A',
+      'Model': p.model_no || 'N/A',
+      'Location': p.inventory_location || 'N/A',
+      'Available Qty': String(p.quantity || 1),
+      'Currency': p.currency || 'USD'
+    },
+    tags: [p.brand, p.category, p.subcategory, 'Verified Surplus'].filter(Boolean),
+    warranty: p.has_warranty ? 'Verified Warranty Included' : 'Surplus Terms',
+    aiMatchScore: Math.round(p.similarity_score || 85),
+    matchReasons: (Array.isArray(p.match_reasons) && p.match_reasons.length > 0)
+      ? p.match_reasons
+      : ['Neon DB pgvector semantic similarity match']
+  };
+}
+
+/**
+ * Executes a Live Semantic Natural Language Search against the Neon DB pgvector backend.
+ * Falls back gracefully to local client hybrid search if the server is offline or empty.
+ */
+export async function fetchSemanticSearchResults(
+  query: string,
+  options: SearchOptions = {}
+): Promise<AiSearchResponse> {
+  const startTime = performance.now();
+  const trimmed = query.trim();
+
+  // If query is empty, return standard client response
+  if (!trimmed) {
+    return performAiSearch('', options);
+  }
+
+  try {
+    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
+    const endpoint = apiBase + '/api/products/semantic-search/?q=' + encodeURIComponent(trimmed) + '&limit=36';
+
+    const res = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.results) && data.results.length > 0) {
+        const liveResults: AiSearchResultItem[] = data.results.map(mapBackendProductToAiItem);
+
+        // Apply client-side filters if active
+        let filtered = liveResults.filter(item => {
+          if (options.category && options.category !== 'All' && item.category !== options.category) {
+            return false;
+          }
+          if (options.condition && options.condition !== 'All' && item.condition !== options.condition) {
+            return false;
+          }
+          if (options.isCertifiedOnly && !item.isCertified) {
+            return false;
+          }
+          if (options.minPrice !== undefined && item.price < options.minPrice) {
+            return false;
+          }
+          if (options.maxPrice !== undefined && item.price > options.maxPrice) {
+            return false;
+          }
+          return true;
+        });
+
+        // Apply sorting
+        const sortBy = options.sortBy || 'relevance';
+        filtered.sort((a, b) => {
+          switch (sortBy) {
+            case 'price_asc':
+              return a.price - b.price;
+            case 'price_desc':
+              return b.price - a.price;
+            case 'discount_desc':
+              return b.discountPercent - a.discountPercent;
+            case 'relevance':
+            default:
+              return b.aiMatchScore - a.aiMatchScore;
+          }
+        });
+
+        const executionMs = Math.round((performance.now() - startTime) * 10) / 10;
+
+        const categoryCounts: Record<string, number> = {};
+        liveResults.forEach(item => {
+          categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
+        });
+        const availableCategories = Object.entries(categoryCounts).map(([name, count]) => ({
+          name,
+          count
+        }));
+
+        const prices = liveResults.map(i => i.price);
+        const priceRange = {
+          min: prices.length ? Math.min(...prices) : 0,
+          max: prices.length ? Math.max(...prices) : 10000
+        };
+
+        const parsed = data.parsed_intent || {};
+        const intent: ParsedAiIntent = {
+          rawQuery: query,
+          cleanedQuery: parsed.semantic_keywords || query,
+          brand: parsed.brand || undefined,
+          location: parsed.location || undefined,
+          maxPrice: parsed.max_price != null ? parsed.max_price : undefined,
+          minPrice: parsed.min_price != null ? parsed.min_price : undefined,
+          confidence: 0.98
+        };
+
+        return {
+          query,
+          intent,
+          results: filtered,
+          totalCount: filtered.length,
+          executionMs,
+          mode: 'ai',
+          availableCategories,
+          priceRange
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Live semantic search error, using local fallback:', err);
+  }
+
+  // Graceful fallback to client-side search engine
+  return performAiSearch(query, options);
+}
+

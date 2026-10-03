@@ -25,6 +25,7 @@ const AI_CATEGORIZED_PROMPTS: AiPromptCategory[] = [
     category: "ICT & Data Center",
     icon: Cpu,
     prompts: [
+      { text: "Show me 2U rackmount servers under $500 available in Maharashtra", tag: "Conversational Search" },
       { text: "Dell PowerEdge R740 rack server refurbished with warranty", tag: "Enterprise Servers" },
       { text: "Cisco Catalyst 9300 48-port PoE+ network switch surplus", tag: "Networking" },
       { text: "HPE ProLiant DL380 Gen10 servers under $1500", tag: "ICT Hardware" }
@@ -370,7 +371,7 @@ const BrowseSearchBanner = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={
                 searchMode === 'ai'
-                  ? "e.g. Refurbished Dell rack servers under $2,000 in Texas..."
+                  ? "Ask conversationally (e.g. 'Show me 2U rackmount servers under $500 in Maharashtra')..."
                   : "e.g. Enter Part # or Model: R740-XD, C9300, DCD996..."
               }
               className="w-full pl-3 pr-2 py-3 bg-transparent text-gray-900 placeholder-gray-400 focus:outline-none text-[15px] sm:text-[16px] font-medium"

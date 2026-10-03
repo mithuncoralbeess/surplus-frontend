@@ -8,9 +8,11 @@ import { parseNaturalLanguageQuery, getInstantSuggestions } from '../../lib/aiSe
 import { useVoiceSearch } from '../../hooks/useVoiceSearch';
 
 const AI_PROMPTS = [
+  { text: "Show me 2U rackmount servers under $500 available in Maharashtra", tag: "ICT & Servers" },
+  { text: "Industrial pumps with warranty under $1000", tag: "Heavy Equipment" },
+  { text: "Refurbished Dell PowerEdge servers with warranty", tag: "Enterprise IT" },
   { text: "Overstock Power Tools & Industrial Machinery", tag: "Power Tools" },
   { text: "Wholesale Consumer Electronics & TWS Earbuds", tag: "Electronics" },
-  { text: "Enterprise Servers & IT Networking Hardware", tag: "ICT & Servers" },
   { text: "Home Decor & Bulk Candle Liquidation Lots", tag: "Decor & Home" }
 ];
 
@@ -171,7 +173,7 @@ const HomeBanner = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search products, categories, part numbers, or brands..."
+                  placeholder="Ask anything (e.g. 'Show me 2U servers under $500 in Maharashtra')..."
                   className="flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 text-base min-[1350px]:text-sm min-[1600px]:text-base cursor-text"
                 />
 

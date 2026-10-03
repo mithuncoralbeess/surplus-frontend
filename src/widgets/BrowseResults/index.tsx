@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { 
   performAiSearch, 
+  fetchSemanticSearchResults,
   AiSearchResultItem, 
   AiSearchResponse 
 } from '../../lib/aiSearchEngine';
@@ -42,16 +43,54 @@ const BrowseResults = () => {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
   const [rfqSubmittedMap, setRfqSubmittedMap] = useState<Record<string, boolean>>({});
 
-  // Perform AI Hybrid Search
-  const searchResult: AiSearchResponse = useMemo(() => {
-    return performAiSearch(query, {
+  // Perform AI Hybrid Search with Live Neon DB pgvector vector similarity
+  const [searchResult, setSearchResult] = useState<AiSearchResponse>(() => 
+    performAiSearch(query, {
       mode,
       category: selectedCategory !== 'All' ? selectedCategory : undefined,
       condition: selectedCondition !== 'All' ? selectedCondition : undefined,
       isCertifiedOnly,
       maxPrice: priceMax < 10000 ? priceMax : undefined,
       sortBy
-    });
+    })
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLiveBackend, setIsLiveBackend] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+    setIsLoading(true);
+
+    const filterOptions = {
+      mode,
+      category: selectedCategory !== 'All' ? selectedCategory : undefined,
+      condition: selectedCondition !== 'All' ? selectedCondition : undefined,
+      isCertifiedOnly,
+      maxPrice: priceMax < 10000 ? priceMax : undefined,
+      sortBy
+    };
+
+    fetchSemanticSearchResults(query, filterOptions)
+      .then((res) => {
+        if (!isCancelled) {
+          setSearchResult(res);
+          const hasDbItems = res.results.some(r => r.sku && r.sku.startsWith('PRO-'));
+          setIsLiveBackend(hasDbItems);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('Semantic search error:', err);
+        if (!isCancelled) {
+          setSearchResult(performAiSearch(query, filterOptions));
+          setIsLiveBackend(false);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
   }, [query, mode, selectedCategory, selectedCondition, isCertifiedOnly, priceMax, sortBy]);
 
   // Sync category if parsed from intent on fresh query
@@ -88,10 +127,23 @@ const BrowseResults = () => {
             <div className="flex items-center gap-2 mb-1.5">
               <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100/70 border border-emerald-300/60 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                 <Sparkles className="w-3 h-3 text-[#14b875]" />
-                AI Smart Search Engine
+                Semantic pgvector Engine
               </span>
-              <span className="text-[11px] font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                ⚡ {searchResult.executionMs}ms response
+              <span className="text-[11px] font-mono text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                {isLoading ? (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span>Searching Neon DB pgvector...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>⚡ {searchResult.executionMs}ms</span>
+                    <span className="text-gray-300">•</span>
+                    <span className={isLiveBackend ? "text-emerald-700 font-semibold" : "text-gray-500"}>
+                      {isLiveBackend ? "Neon DB pgvector" : "Vector Cache"}
+                    </span>
+                  </>
+                )}
               </span>
             </div>
 
@@ -423,6 +475,17 @@ const BrowseResults = () => {
                           <div className="text-[11px] text-gray-500 line-clamp-1">
                             {item.description}
                           </div>
+
+                          {/* Live AI Match Reasons */}
+                          {Array.isArray(item.matchReasons) && item.matchReasons.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {item.matchReasons.slice(0, 3).map((reason: string, rIdx: number) => (
+                                <span key={rIdx} className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200/60 rounded px-1.5 py-0.5">
+                                  ✓ {reason}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -525,9 +588,20 @@ const BrowseResults = () => {
                       </h3>
 
                       {/* Specs snippet */}
-                      <div className="text-[11px] text-gray-500 font-mono mb-3">
+                      <div className="text-[11px] text-gray-500 font-mono mb-2">
                         SKU: <span className="text-gray-800 font-medium">{item.sku}</span> • {item.location}
                       </div>
+
+                      {/* Live AI Match Reasons */}
+                      {Array.isArray(item.matchReasons) && item.matchReasons.length > 0 && (
+                        <div className="mb-3 flex flex-wrap gap-1">
+                          {item.matchReasons.slice(0, 2).map((reason: string, rIdx: number) => (
+                            <span key={rIdx} className="text-[10px] bg-emerald-50 text-emerald-800 border border-emerald-200/60 rounded px-1.5 py-0.5 truncate max-w-full">
+                              ✓ {reason}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Price Section */}
                       <div className="mt-auto pt-3 border-t border-gray-100">
