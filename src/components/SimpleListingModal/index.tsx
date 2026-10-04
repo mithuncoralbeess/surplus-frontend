@@ -279,6 +279,14 @@ const excludedCountriesOptions = [
   { value: 'Cuba', label: 'Cuba' },
 ];
 
+const reasonToSellOptions = [
+  { value: 'Surplus Inventory', label: 'Surplus Inventory' },
+  { value: 'Overstock Clearance', label: 'Overstock Clearance' },
+  { value: 'Business Closure', label: 'Business Closure' },
+  { value: 'Asset Liquidation', label: 'Asset Liquidation' },
+  { value: 'Canceled Project', label: 'Canceled Project' },
+];
+
 const customSelectStyles = {
   control: (provided: any, state: any) => ({
     ...provided,
@@ -1723,20 +1731,14 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
 
                       <div data-field="reasonToSell" className="md:col-span-2">
                         <label className={labelClass}>Reason to Sell *</label>
-                        <div className="relative">
-                          <select
-                            className={selectClass}
-                            value={formData.reasonToSell}
-                            onChange={e => handleInputChange('reasonToSell', e.target.value)}
-                          >
-                            <option>Surplus Inventory</option>
-                            <option>Overstock Clearance</option>
-                            <option>Business Closure</option>
-                            <option>Asset Liquidation</option>
-                            <option>Canceled Project</option>
-                          </select>
-                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                        </div>
+                        <Select
+                          options={reasonToSellOptions}
+                          styles={customSelectStyles}
+                          value={reasonToSellOptions.find(o => o.value === formData.reasonToSell) || null}
+                          onChange={(option: any) => handleInputChange('reasonToSell', option ? option.value : '')}
+                          placeholder="-- Select Reason to Sell --"
+                        />
+                        {renderError('reasonToSell')}
                       </div>
 
                       {/* Product Warranty Option - Next row card style matching 3rd Party Certificate */}
