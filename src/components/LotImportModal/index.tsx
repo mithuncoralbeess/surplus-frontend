@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSession } from 'next-auth/react';
 import { X, UploadCloud, FileSpreadsheet, ChevronRight, Check, ArrowLeft, Download, Tag, Plus, Percent, Trash2, Edit2, User, CheckCircle2, Image as ImageIcon, Film, DollarSign, Info, ShieldCheck } from 'lucide-react';
@@ -83,9 +83,7 @@ const step3Schema = z.object({
     .min(1, "Inventory Location is required")
     .max(150, "Inventory Location cannot exceed 150 characters")
     .refine(cyberAttackFilter, "Security Violation: Malicious payload or HTML tags detected in location"),
-  category: z.string()
-    .min(1, "Category is required")
-    .refine(cyberAttackFilter, "Security Violation: Invalid category parameter"),
+  category: z.string().optional(),
   condition: z.string()
     .min(1, "Condition is required")
     .refine(cyberAttackFilter, "Security Violation: Invalid condition parameter"),
@@ -297,6 +295,130 @@ const customSelectStyles = {
   })
 };
 
+interface FastInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+  value: string | number;
+  onValueChange: (val: string) => void;
+  debounceMs?: number;
+}
+
+const FastInput = React.memo(React.forwardRef<HTMLInputElement, FastInputProps>(({ 
+  value, 
+  onValueChange, 
+  onBlur, 
+  onFocus, 
+  debounceMs = 250,
+  ...props 
+}, ref) => {
+  const [localVal, setLocalVal] = useState<string>(String(value ?? ''));
+  const isFocusedRef = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync value from parent ONLY when input is not actively focused by the user
+  useEffect(() => {
+    if (!isFocusedRef.current) {
+      setLocalVal(String(value ?? ''));
+    }
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setLocalVal(v); // 0ms Instant Native Typing
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      onValueChange(v);
+    }, debounceMs);
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    isFocusedRef.current = true;
+    if (onFocus) onFocus(e);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    isFocusedRef.current = false;
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    onValueChange(localVal); // Guarantee 100% sync on focus leave
+    if (onBlur) onBlur(e);
+  };
+
+  return (
+    <input
+      {...props}
+      ref={ref}
+      value={localVal}
+      onChange={handleChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+    />
+  );
+}));
+FastInput.displayName = 'FastInput';
+
+interface FastTextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onChange'> {
+  value: string;
+  onValueChange: (val: string) => void;
+  debounceMs?: number;
+}
+
+const FastTextarea = React.memo(React.forwardRef<HTMLTextAreaElement, FastTextareaProps>(({ 
+  value, 
+  onValueChange, 
+  onBlur, 
+  onFocus, 
+  debounceMs = 250,
+  ...props 
+}, ref) => {
+  const [localVal, setLocalVal] = useState<string>(value ?? '');
+  const isFocusedRef = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync value from parent ONLY when textarea is not actively focused by the user
+  useEffect(() => {
+    if (!isFocusedRef.current) {
+      setLocalVal(value ?? '');
+    }
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const v = e.target.value;
+    setLocalVal(v); // 0ms Instant Native Typing
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      onValueChange(v);
+    }, debounceMs);
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    isFocusedRef.current = true;
+    if (onFocus) onFocus(e);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    isFocusedRef.current = false;
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    onValueChange(localVal); // Guarantee 100% sync on focus leave
+    if (onBlur) onBlur(e);
+  };
+
+  return (
+    <textarea
+      {...props}
+      ref={ref}
+      value={localVal}
+      onChange={handleChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+    />
+  );
+}));
+FastTextarea.displayName = 'FastTextarea';
+
 interface CategoryAllocation {
   id: string;
   category: string;
@@ -338,7 +460,9 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
     setCategoryAllocations(prev => prev.length > 1 ? prev.filter(item => item.id !== id) : prev);
   };
 
-  const totalAllocationPercentage = categoryAllocations.reduce((acc, row) => acc + (Number(row.allocation) || 0), 0);
+  const totalAllocationPercentage = useMemo(() => {
+    return categoryAllocations.reduce((acc, row) => acc + (Number(row.allocation) || 0), 0);
+  }, [categoryAllocations]);
 
   useEffect(() => {
     setMounted(true);
@@ -382,8 +506,13 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const totalUnits = manifestData.reduce((acc, row) => acc + (Number(row.qty) || 0), 0);
-  const totalRetail = manifestData.reduce((acc, row) => acc + ((Number(row.qty) || 0) * (Number(row.msrp) || 0)), 0);
+  const totalUnits = useMemo(() => {
+    return manifestData.reduce((acc, row) => acc + (Number(row.qty) || 0), 0);
+  }, [manifestData]);
+
+  const totalRetail = useMemo(() => {
+    return manifestData.reduce((acc, row) => acc + ((Number(row.qty) || 0) * (Number(row.msrp) || 0)), 0);
+  }, [manifestData]);
 
   // Real-time pricing validation and discount calculation (matching SimpleListingModal)
   const pricingAnalysis = useMemo(() => {
@@ -462,15 +591,21 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
     }
   }, [session]);
 
+  const mediaPreviews = useMemo(() => {
+    return mediaFiles.map((file) => ({
+      file,
+      url: file.type.startsWith('image/') ? URL.createObjectURL(file) : '',
+    }));
+  }, [mediaFiles]);
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (formErrors[field]) {
-      setFormErrors(prev => {
-        const newErrs = { ...prev };
-        delete newErrs[field];
-        return newErrs;
-      });
-    }
+    setFormErrors(prev => {
+      if (!prev[field]) return prev;
+      const newErrs = { ...prev };
+      delete newErrs[field];
+      return newErrs;
+    });
   };
 
   const downloadStandardTemplate = () => {
@@ -672,23 +807,20 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
           setManifestFile(selectedFile);
           setManifestData(parsedItems);
 
-          // Auto-calculate Category Allocations breakdown
+          // Set primary Category Allocation from manifest top category
           const categoriesList = Object.keys(categoryCountMap);
           if (categoriesList.length > 0 && totalQtySum > 0) {
-            const calculatedAllocations = categoriesList.map((cat, idx) => {
-              const qtyForCat = categoryCountMap[cat];
-              const pct = Math.round((qtyForCat / totalQtySum) * 100);
-              return {
-                id: String(idx + 1),
-                category: cat,
-                allocation: pct
-              };
-            });
-            const currentSum = calculatedAllocations.reduce((acc, c) => acc + c.allocation, 0);
-            if (calculatedAllocations.length > 0 && currentSum !== 100) {
-              calculatedAllocations[0].allocation += (100 - currentSum);
-            }
-            setCategoryAllocations(calculatedAllocations);
+            // Find category with highest unit count in Excel file
+            const topCategory = categoriesList.reduce((maxCat, cat) => 
+              categoryCountMap[cat] > (categoryCountMap[maxCat] || 0) ? cat : maxCat, categoriesList[0]);
+            
+            // Match with available category options or use topCategory name
+            const matchedCategory = CATEGORY_OPTIONS.find(c => c.toLowerCase() === topCategory.toLowerCase()) 
+              || CATEGORY_OPTIONS.find(c => c.toLowerCase().includes(topCategory.toLowerCase()))
+              || topCategory;
+
+            setFormData(prev => ({ ...prev, category: matchedCategory }));
+            setCategoryAllocations([{ id: '1', category: matchedCategory, allocation: 100 }]);
           }
 
           // Auto-fill Lot Form fields
@@ -858,13 +990,24 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       }));
       
       // lot_details (JSON String) with input sanitization
+      const effectiveRetail = Number(formData.msrp) || totalRetail || 0;
+      const discountVal = effectiveRetail > 0 && Number(formData.askPrice) > 0 
+        ? Math.round(((effectiveRetail - Number(formData.askPrice)) / effectiveRetail) * 100)
+        : 0;
+
+      const primaryCat = categoryAllocations[0]?.category || formData.category || 'General Surplus';
+
       data.append('lot_details', JSON.stringify({
         title: sanitizeInput(String(formData.title || '')),
         description: sanitizeInput(String(formData.description || '')),
-        location: sanitizeInput(String(formData.location || '')),
+        inventory_location: sanitizeInput(String(formData.location || '')),
         key_brands: sanitizeInput(String(formData.keyBrands || '')),
-        category: categoryAllocations.map(c => c.category).join(', '),
-        category_allocations: categoryAllocations,
+        category: primaryCat,
+        primary_category: primaryCat,
+        category_allocations: categoryAllocations.map(c => ({
+          category: c.category,
+          percentage: Number(c.allocation) || 0
+        })),
         condition: sanitizeInput(String(formData.condition || '')),
         source_type: sanitizeInput(String(formData.sourceType || '')),
         stock_age: sanitizeInput(String(formData.stockAge || '')),
@@ -876,20 +1019,28 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
         weight: sanitizeInput(String(formData.weight || '')),
         unit_type: sanitizeInput(String(formData.unitType || '')),
         shipping_terms: sanitizeInput(String(formData.shippingTerms || '')),
+        currency: sanitizeInput(String(formData.currency || 'USD')),
+        msrp: sanitizeInput(String(formData.msrp || effectiveRetail || '')),
         ask_price: sanitizeInput(String(formData.askPrice || '')),
-        sale_method: sanitizeInput(String(formData.saleMethod || '')),
+        offer: discountVal > 0 ? `${discountVal}% Off MSRP` : '',
         allow_counter_offers: Boolean(formData.allowCounterOffers),
+        excluded_countries: formData.excludedCountries || [],
+        sale_method: sanitizeInput(String(formData.saleMethod || '')),
         certificate_available: Boolean(formData.certificate),
         total_units: totalUnits || Number(formData.manualUnits) || 0,
-        total_retail_value: totalRetail
+        total_retail_value: effectiveRetail
       }));
       
-      // manifest_items (JSON String)
-      data.append('manifest_items', JSON.stringify(manifestData));
+      // manifest_file & manifest_items (JSON String required by backend DRF JSONField)
+      const manifestJson = JSON.stringify(manifestData || []);
+      data.append('manifest_file', manifestJson);
+      data.append('manifest_items', manifestJson);
       
-      // manifest_file (File Object)
+      // Binary Excel File Uploads
       if (manifestFile) {
-        data.append('manifest_file', manifestFile);
+        data.append('file', manifestFile);
+        data.append('excel_file', manifestFile);
+        data.append('document', manifestFile);
       }
 
       // Certificate Document File
@@ -902,8 +1053,12 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
         data.append('media_files', file);
       });
       
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-      const endpoint = apiBase ? `${apiBase}/submit-lot-request/` : '/submit-lot-request/';
+      const rawApiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+      const apiBase = rawApiBase.replace(/\/$/, '');
+      const endpoint = apiBase
+        ? (apiBase.endsWith('/api') ? `${apiBase}/submit-lot-request/` : `${apiBase}/api/submit-lot-request/`)
+        : '/api/submit-lot-request/';
+
       const response = await fetch(endpoint, {
         method: 'POST',
         body: data,
@@ -932,7 +1087,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
   if (!mounted || !isOpen) return null;
 
   return createPortal(
-    <div data-lenis-prevent className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div data-lenis-prevent className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl flex flex-col overflow-hidden max-h-[90vh]">
         {isSuccess ? (
           <div className="flex flex-col items-center justify-center p-12 text-center h-[500px]">
@@ -1096,36 +1251,36 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                 <div className="space-y-5">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Listing Title <span className="text-red-500">*</span></label>
-                    <input 
+                    <FastInput 
                       type="text" 
                       className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm placeholder-gray-400" 
                       placeholder="e.g. 1 Pallet - 50 Pcs - Electronics - Returns - Target" 
                       value={formData.title}
-                      onChange={e => handleInputChange('title', e.target.value)}
+                      onValueChange={val => handleInputChange('title', val)}
                     />
                     {renderError('title')}
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Lot Description & Notes <span className="text-red-500">*</span></label>
-                    <textarea 
+                    <FastTextarea 
                       rows={4} 
                       className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm placeholder-gray-400 resize-y" 
                       placeholder="Describe the lot context, packaging condition, and any 'sold as-is' terms..."
                       value={formData.description}
-                      onChange={e => handleInputChange('description', e.target.value)}
-                    ></textarea>
+                      onValueChange={val => handleInputChange('description', val)}
+                    ></FastTextarea>
                     {renderError('description')}
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Key Brands Included <span className="text-red-500">*</span></label>
-                    <input 
+                    <FastInput 
                       type="text" 
                       className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm placeholder-gray-400" 
                       placeholder="e.g. DeWalt, Milwaukee, Bosch, Schneider, Siemens" 
                       value={formData.keyBrands}
-                      onChange={e => handleInputChange('keyBrands', e.target.value)}
+                      onValueChange={val => handleInputChange('keyBrands', val)}
                     />
                     {renderError('keyBrands')}
                   </div>
@@ -1156,9 +1311,9 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                     {renderError('mediaFiles')}
 
                     {/* Media Previews */}
-                    {mediaFiles.length > 0 && (
+                    {mediaPreviews.length > 0 && (
                       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {mediaFiles.map((file, idx) => (
+                        {mediaPreviews.map(({ file, url }, idx) => (
                           <div key={idx} className="relative group rounded-xl border border-gray-200 overflow-hidden bg-gray-50 p-2 flex flex-col items-center justify-center text-center">
                             {file.type.startsWith('video/') ? (
                               <div className="w-full h-20 bg-gray-900 rounded-lg flex flex-col items-center justify-center text-white">
@@ -1168,7 +1323,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                             ) : (
                               <div className="w-full h-20 rounded-lg overflow-hidden relative bg-gray-200">
                                 <img 
-                                  src={URL.createObjectURL(file)} 
+                                  src={url} 
                                   alt={file.name} 
                                   className="w-full h-full object-cover" 
                                 />
@@ -1199,58 +1354,61 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                 </h4>
                 <p className="text-[15px] text-gray-500 mb-4">Select categories with their inventory percentage allocations</p>
 
-                <div className="space-y-4 mb-5">
-                  {categoryAllocations.map((item, idx) => (
-                    <div key={item.id} className="bg-gray-50 border border-gray-200 rounded-2xl p-5 shadow-sm relative group">
-                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-                        <div className="sm:col-span-7">
-                          <label className="block text-sm font-bold text-gray-900 mb-1.5">
-                            Category {categoryAllocations.length > 1 ? `#${idx + 1}` : ''} <span className="text-red-500">*</span>
-                          </label>
-                          <Select
-                            options={categorySelectOptions}
-                            styles={customSelectStyles}
-                            value={categorySelectOptions.find(opt => opt.value === item.category) || null}
-                            onChange={(option: any) => updateCategoryAllocation(item.id, 'category', option ? option.value : '')}
-                            placeholder="Select Category"
-                          />
-                        </div>
+                {/* Column Headers (Shown Once) */}
+                <div className="grid grid-cols-12 gap-3 mb-2 px-1 text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  <div className="col-span-7">Category <span className="text-red-500">*</span></div>
+                  <div className="col-span-4">Allocation <span className="text-red-500">*</span></div>
+                  <div className="col-span-1"></div>
+                </div>
 
-                        <div className="sm:col-span-4">
-                          <label className="block text-sm font-bold text-gray-900 mb-1.5">
-                            Allocation <span className="text-red-500">*</span>
-                          </label>
-                          <div className="relative">
-                            <input 
-                              type="number" 
-                              min="0"
-                              max="100"
-                              className="w-full bg-white border border-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm" 
-                              value={item.allocation}
-                              onChange={e => updateCategoryAllocation(item.id, 'allocation', Math.max(0, Math.min(100, Number(e.target.value) || 0)))}
-                            />
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">%</span>
-                          </div>
-                        </div>
+                <div className="space-y-3 mb-5">
+                  {categoryAllocations.map((item) => (
+                    <div key={item.id} className="grid grid-cols-12 gap-3 items-center">
+                      <div className="col-span-7">
+                        <Select
+                          options={categorySelectOptions}
+                          styles={customSelectStyles}
+                          value={categorySelectOptions.find(opt => opt.value === item.category) || (item.category ? { value: item.category, label: item.category } : null)}
+                          onChange={(option: any) => {
+                            const val = option ? option.value : '';
+                            updateCategoryAllocation(item.id, 'category', val);
+                            if (item.id === categoryAllocations[0].id) {
+                              setFormData(prev => ({ ...prev, category: val }));
+                            }
+                          }}
+                          placeholder="Select Category"
+                        />
+                      </div>
 
-                        <div className="sm:col-span-1 flex items-end justify-center pt-2 sm:pt-6">
-                          {categoryAllocations.length > 1 && (
-                            <button 
-                              type="button"
-                              onClick={() => removeCategoryAllocation(item.id)}
-                              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Remove category"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          )}
-                        </div>
+                      <div className="col-span-4 relative">
+                        <FastInput 
+                          type="number" 
+                          min="0"
+                          max="100"
+                          className="w-full bg-white border border-gray-300 rounded-lg pl-3 pr-8 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-xs text-sm" 
+                          value={item.allocation}
+                          onValueChange={val => updateCategoryAllocation(item.id, 'allocation', Math.max(0, Math.min(100, Number(val) || 0)))}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-xs">%</span>
+                      </div>
+
+                      <div className="col-span-1 flex items-center justify-center">
+                        {categoryAllocations.length > 1 && (
+                          <button 
+                            type="button"
+                            onClick={() => removeCategoryAllocation(item.id)}
+                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Remove category"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="flex justify-between items-center flex-wrap gap-3">
+                <div className="flex justify-between items-center flex-wrap gap-3 pt-2">
                   <button 
                     type="button" 
                     onClick={addCategoryAllocation}
@@ -1403,24 +1561,24 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Inventory Location <span className="text-red-500">*</span></label>
-                    <input 
+                    <FastInput 
                       type="text" 
                       className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm placeholder-gray-400" 
                       placeholder="e.g. Austin, TX, USA or Dubai Industrial City, UAE" 
                       value={formData.location}
-                      onChange={e => handleInputChange('location', e.target.value)}
+                      onValueChange={val => handleInputChange('location', val)}
                     />
                     {renderError('location')}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Number of Distinct SKUs <span className="text-red-500">*</span></label>
-                    <input 
+                    <FastInput 
                       type="number" 
                       min="1"
                       className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm placeholder-gray-400" 
                       placeholder={manifestData.length ? `${manifestData.length} (from manifest)` : "e.g. 25"} 
                       value={formData.distinctSkus}
-                      onChange={e => handleInputChange('distinctSkus', e.target.value)}
+                      onValueChange={val => handleInputChange('distinctSkus', val)}
                     />
                     {renderError('distinctSkus')}
                   </div>
@@ -1429,12 +1587,12 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Total Units / Quantity <span className="text-red-500">*</span></label>
-                    <input 
+                    <FastInput 
                       type="text" 
                       className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm placeholder-gray-400" 
                       placeholder={totalUnits ? `${totalUnits.toLocaleString()} (from manifest)` : "e.g. 1500"} 
                       value={formData.manualUnits}
-                      onChange={e => handleInputChange('manualUnits', e.target.value)}
+                      onValueChange={val => handleInputChange('manualUnits', val)}
                     />
                     {renderError('manualUnits')}
                   </div>
@@ -1451,12 +1609,12 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Total Weight</label>
-                    <input 
+                    <FastInput 
                       type="text" 
                       className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm placeholder-gray-400" 
                       placeholder="e.g. 500 lbs" 
                       value={formData.weight}
-                      onChange={e => handleInputChange('weight', e.target.value)}
+                      onValueChange={val => handleInputChange('weight', val)}
                     />
                   </div>
 
@@ -1486,22 +1644,22 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Lot Size <span className="text-red-500">*</span></label>
-                    <input 
+                    <FastInput 
                       type="text" 
                       className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm placeholder-gray-400" 
                       placeholder="e.g. 1 Pallet" 
                       value={formData.lotSize}
-                      onChange={e => handleInputChange('lotSize', e.target.value)}
+                      onValueChange={val => handleInputChange('lotSize', val)}
                     />
                     {renderError('lotSize')}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Pallet Count <span className="text-red-500">*</span></label>
-                    <input 
+                    <FastInput 
                       type="number" 
                       className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm" 
                       value={formData.palletCount}
-                      onChange={e => handleInputChange('palletCount', Number(e.target.value))}
+                      onValueChange={val => handleInputChange('palletCount', Number(val))}
                     />
                     {renderError('palletCount')}
                   </div>
@@ -1543,14 +1701,14 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
                           {pricingAnalysis.currSymbol === 'AED' ? 'AED' : pricingAnalysis.currSymbol === 'SAR' ? 'SAR' : '$'}
                         </span>
-                        <input
+                        <FastInput
                           type="number"
                           step="0.01"
                           min="0"
                           className="w-full bg-white border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm font-medium placeholder-gray-400"
                           placeholder={totalRetail ? `${totalRetail.toFixed(2)} (from manifest)` : "e.g. 50000.00"}
                           value={formData.msrp}
-                          onChange={e => handleInputChange('msrp', e.target.value)}
+                          onValueChange={val => handleInputChange('msrp', val)}
                         />
                       </div>
                       {renderError('msrp')}
@@ -1562,14 +1720,14 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                           {pricingAnalysis.currSymbol === 'AED' ? 'AED' : pricingAnalysis.currSymbol === 'SAR' ? 'SAR' : '$'}
                         </span>
-                        <input 
+                        <FastInput 
                           type="number" 
                           step="0.01"
                           min="0.01"
                           className={`w-full bg-white border border-gray-300 rounded-lg pl-10 ${pricingAnalysis.hasMsrp ? 'pr-32' : 'pr-4'} py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm font-medium placeholder-gray-400`}
                           placeholder="0.00" 
                           value={formData.askPrice}
-                          onChange={e => handleInputChange('askPrice', e.target.value)}
+                          onValueChange={val => handleInputChange('askPrice', val)}
                         />
                         {pricingAnalysis.hasMsrp && (
                           <button

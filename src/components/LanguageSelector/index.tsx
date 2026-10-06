@@ -29,23 +29,23 @@ const LanguageSelector = () => {
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Toggle Button */}
-      <div 
-        className="flex items-center gap-1.5 cursor-pointer text-gray-600 hover:text-gray-900 font-medium text-[14px] bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200/80 transition-colors"
+      <div
+        className="flex items-center gap-1 cursor-pointer text-gray-600 hover:text-gray-900 font-medium text-[12px] bg-gray-50 hover:bg-gray-100 px-2 py-1 rounded-full border border-gray-200/80 transition-colors header-selector-btn"
         onClick={() => setIsOpen(!isOpen)}
         title={t('common.language', 'Language')}
       >
-        <Globe className="w-3.5 h-3.5 text-[#0f7a61]" />
-        <span className="font-semibold text-gray-800 text-[13px] uppercase">{activeLang.code}</span>
+        <Globe className="w-3 h-3 text-[#0f7a61]" />
+        <span className="font-medium text-gray-800 text-[12px] uppercase">{activeLang.code}</span>
         {isOpen ? (
-          <ChevronUp className="w-3.5 h-3.5 text-gray-500" />
+          <ChevronUp className="w-3 h-3 text-gray-500" />
         ) : (
-          <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+          <ChevronDown className="w-3 h-3 text-gray-500" />
         )}
       </div>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div 
+        <div
           data-lenis-prevent
           className="absolute top-full right-0 mt-3 w-56 bg-white rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.12)] border border-gray-100 z-50 overflow-hidden"
           onWheel={(e) => e.stopPropagation()}
@@ -54,20 +54,19 @@ const LanguageSelector = () => {
             <h3 className="font-semibold text-gray-900 text-[14px]">{t('common.language', 'Language')}</h3>
             <p className="text-gray-500 text-[11px] mt-0.5">Select interface language</p>
           </div>
-          
+
           <div className="h-px bg-gray-100"></div>
-          
+
           <div data-lenis-prevent className="py-1.5" onWheel={(e) => e.stopPropagation()}>
             {LANGUAGES.map((lang) => {
               const isSelected = lang.code === locale;
               return (
                 <button
                   key={lang.code}
-                  className={`w-full text-left px-4 py-2.5 flex items-center justify-between text-[14px] transition-colors ${
-                    isSelected
+                  className={`w-full text-left px-4 py-2.5 flex items-center justify-between text-[14px] transition-colors ${isSelected
                       ? 'bg-[#e6f7ef] text-[#0f7a61] font-medium'
                       : 'text-gray-700 hover:bg-[#e6f7ef] hover:text-[#0f7a61]'
-                  }`}
+                    }`}
                   onClick={() => {
                     setLocale(lang.code);
                     setIsOpen(false);

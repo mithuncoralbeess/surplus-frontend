@@ -1,121 +1,25 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, SearchX, ShieldCheck, Layers, ArrowLeft, Filter, Sparkles } from 'lucide-react';
 import ProductCard from '../../components/ProductCard';
 import { useAppSelector } from '../../store';
+import { catalogService, ProductItem } from '../../services/catalogService';
 
 interface CategoryDetailWidgetProps {
   categorySlug: string;
 }
 
-// Mock catalog products tied to categories & subcategories
-const MOCK_CATALOG_PRODUCTS = [
-  {
-    id: 101,
-    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-    category: 'Electricals',
-    subCategory: 'Circuit Breakers & Fuses',
-    title: 'Industrial 3-Phase Circuit Breaker 400A High Voltage',
-    moq: 10,
-    estQty: 250,
-    price: 145.00,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 102,
-    image: 'https://images.unsplash.com/photo-1544724569-5f546fd6f2b5?auto=format&fit=crop&w=600&q=80',
-    category: 'Electricals',
-    subCategory: 'Cables, Wires & Conduit',
-    title: 'Heavy Duty Armored Copper Power Cable (100m Roll)',
-    moq: 5,
-    estQty: 80,
-    price: 320.00,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 103,
-    image: 'https://images.unsplash.com/photo-1509395176047-4a66953fd231?auto=format&fit=crop&w=600&q=80',
-    category: 'Electricals',
-    subCategory: 'Industrial & LED Lighting',
-    title: 'Waterproof Outdoor LED High Bay Warehouse Light 200W',
-    moq: 20,
-    estQty: 600,
-    price: 68.50,
-    isCertified: true,
-    isNew: false,
-  },
-  {
-    id: 104,
-    image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80',
-    category: 'Building Materials',
-    subCategory: 'Steel, Rebar & Structural Metals',
-    title: 'Deformed Steel Rebar Grade 60 (12mm x 12m Batch)',
-    moq: 50,
-    estQty: 5000,
-    price: 18.20,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 105,
-    image: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=600&q=80',
-    category: 'Building Materials',
-    subCategory: 'Plumbing, Pipes & Fittings',
-    title: 'HDPE Water Pressure Pipe Coil 110mm (PN16)',
-    moq: 10,
-    estQty: 300,
-    price: 125.00,
-    isCertified: true,
-    isNew: false,
-  },
-  {
-    id: 106,
-    image: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=600&q=80',
-    category: 'Hand Tools & Hardware',
-    subCategory: 'Wrenches, Spanners & Sockets',
-    title: 'Professional Ratchet Wrench Socket Set (108 Pieces)',
-    moq: 15,
-    estQty: 450,
-    price: 79.90,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 107,
-    image: 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?auto=format&fit=crop&w=600&q=80',
-    category: 'Power Tools & Equipment',
-    subCategory: 'Cordless & Corded Drills',
-    title: 'Brushless Cordless Impact Drill Kit 20V with Dual Batteries',
-    moq: 10,
-    estQty: 350,
-    price: 112.00,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 108,
-    image: 'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=600&q=80',
-    category: 'PPE & Safety Gear',
-    subCategory: 'Safety Boots & Protective Footwear',
-    title: 'Steel Toe Industrial Safety Boots Anti-Slip S3',
-    moq: 25,
-    estQty: 1200,
-    price: 34.50,
-    isCertified: true,
-    isNew: true,
-  }
-];
 
 export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWidgetProps) {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [apiProducts, setApiProducts] = useState<ProductItem[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState<boolean>(true);
 
   // Read categories from Redux store
-  const { categories, loading } = useAppSelector((state) => state.categories);
+  const { categories } = useAppSelector((state) => state.categories);
 
   // Normalize slug for matching
   const normalizedSlug = (categorySlug || '').toLowerCase().trim();
@@ -130,6 +34,34 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
     }) || categories[0];
   }, [categories, normalizedSlug]);
 
+  const categoryTitle = currentCategory ? currentCategory.name : categorySlug.replace(/-/g, ' ').toUpperCase();
+
+  // Fetch products from /api/products/
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingProducts(true);
+
+    catalogService.getProducts({ category: categoryTitle, search: searchQuery })
+      .then((data) => {
+        if (isMounted) {
+          const productsOnly = data.filter((item) => item.type !== 'lot');
+          setApiProducts(productsOnly);
+          setLoadingProducts(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('[CategoryDetailWidget] API fetch error:', err);
+        if (isMounted) {
+          setApiProducts([]);
+          setLoadingProducts(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [categoryTitle, searchQuery]);
+
   // Extract subcategories array
   const subCategoriesList = useMemo(() => {
     if (!currentCategory) return [];
@@ -137,23 +69,15 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
     return subs.map((s: any) => typeof s === 'string' ? s : s.name);
   }, [currentCategory]);
 
-  // Filter products for this category and selected subcategory pill
+  // Filter products for this subcategory
   const filteredProducts = useMemo(() => {
-    return MOCK_CATALOG_PRODUCTS.filter((prod) => {
-      // Subcategory filter pill
-      if (selectedSubCategory !== 'all' && prod.subCategory.toLowerCase() !== selectedSubCategory.toLowerCase()) {
+    return apiProducts.filter((prod) => {
+      if (selectedSubCategory !== 'all' && prod.category?.toLowerCase() !== selectedSubCategory.toLowerCase()) {
         return false;
-      }
-      // Search query filter
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        return prod.title.toLowerCase().includes(q) || prod.subCategory.toLowerCase().includes(q);
       }
       return true;
     });
-  }, [selectedSubCategory, searchQuery]);
-
-  const categoryTitle = currentCategory ? currentCategory.name : categorySlug.replace(/-/g, ' ').toUpperCase();
+  }, [apiProducts, selectedSubCategory]);
 
   return (
     <div className="w-full bg-[#f8faf9] min-h-screen py-10 lg:py-16">
@@ -258,7 +182,20 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts.length > 0 ? (
+            {loadingProducts ? (
+              Array.from({ length: 8 }).map((_, idx) => (
+                <ProductCard
+                  key={`skeleton-${idx}`}
+                  image=""
+                  category=""
+                  title=""
+                  moq={0}
+                  estQty={0}
+                  price={0}
+                  isLoading={true}
+                />
+              ))
+            ) : filteredProducts.length > 0 ? (
               filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -275,9 +212,9 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
             ) : (
               <div className="col-span-full py-20 bg-white rounded-3xl border border-gray-200 text-center p-8 shadow-xs">
                 <SearchX className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <h3 className="text-lg font-bold text-gray-900 mb-1">No products found</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">No products available</h3>
                 <p className="text-gray-500 text-sm mb-4">
-                  No listings found for this subcategory or search query.
+                  No product data was returned from the API (/api/products/) for this section.
                 </p>
                 <button
                   onClick={() => {
@@ -286,7 +223,7 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
                   }}
                   className="bg-[#0f7a61] text-white font-bold text-xs px-5 py-2.5 rounded-full hover:bg-[#0c6651]"
                 >
-                  View All Products
+                  Clear Search Filters
                 </button>
               </div>
             )}
@@ -297,3 +234,4 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
     </div>
   );
 }
+

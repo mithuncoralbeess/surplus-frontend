@@ -4,67 +4,38 @@ import React, { useState, useEffect } from 'react';
 import { Package, SearchX } from 'lucide-react';
 import { motion } from '../../lib/motion';
 import LotCard from '../../components/LotCard';
-
-const MOCK_LOTS = [
-  {
-    id: 1,
-    image: 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?auto=format&fit=crop&w=600&q=80',
-    title: 'Assorted Electronics & Accessories Liquidation',
-    condition: 'Customer Returns',
-    units: 1250,
-    pallets: 3,
-    msrp: 45000,
-    price: 4500,
-    location: 'Dallas, TX',
-  },
-  {
-    id: 2,
-    image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=600&q=80',
-    title: 'Mixed Seasonal Apparel (Winter/Summer)',
-    condition: 'Overstock / NWT',
-    units: 4500,
-    pallets: 5,
-    msrp: 120000,
-    price: 18000,
-    location: 'Los Angeles, CA',
-  },
-  {
-    id: 3,
-    image: 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=600&q=80',
-    title: 'Home Goods, Kitchenware & Small Appliances',
-    condition: 'Mixed Condition',
-    units: 850,
-    pallets: 2,
-    msrp: 24500,
-    price: 3200,
-    location: 'Chicago, IL',
-  },
-  {
-    id: 4,
-    image: 'https://images.unsplash.com/photo-1621252179027-9d7a2267b140?auto=format&fit=crop&w=600&q=80',
-    title: 'Health, Beauty & Cosmetics Assortment',
-    condition: 'Shelf Pulls',
-    units: 3200,
-    pallets: 1,
-    msrp: 38000,
-    price: 4500,
-    location: 'Miami, FL',
-  }
-];
+import { catalogService, LotItem } from '../../services/catalogService';
 
 const TABS = ['View All', 'Electronics', 'Apparel', 'Home Goods'];
 
 const PalletDeals = () => {
   const [activeTab, setActiveTab] = useState('View All');
+  const [lots, setLots] = useState<LotItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Simulate data fetching delay
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    let isMounted = true;
+    setLoading(true);
+
+    catalogService.getLots({ category: activeTab })
+      .then((data) => {
+        if (isMounted) {
+          setLots(data);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('[PalletDeals] API fetch error:', err);
+        if (isMounted) {
+          setLots([]);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab]);
 
   return (
     <section className="w-full bg-[#fdfcf9] py-20 border-b border-gray-100">
@@ -133,8 +104,8 @@ const PalletDeals = () => {
                 isLoading={true}
               />
             ))
-          ) : MOCK_LOTS.length > 0 ? (
-            MOCK_LOTS.map((lot) => (
+          ) : lots.length > 0 ? (
+            lots.map((lot) => (
               <LotCard
                 key={lot.id}
                 {...lot}
@@ -145,7 +116,7 @@ const PalletDeals = () => {
             <div className="col-span-full py-24 flex flex-col items-center justify-center text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
               <SearchX className="w-16 h-16 text-gray-300 mb-4" />
               <h3 className="text-xl font-bold text-gray-900 mb-2">No lots available</h3>
-              <p className="text-gray-500 text-sm max-w-sm">There are no pallet deals available in this category right now. Please check back later.</p>
+              <p className="text-gray-500 text-sm max-w-sm">No wholesale lot data was returned from the API (/api/lots/). Please check back later or try another tab.</p>
             </div>
           )}
         </motion.div>
@@ -156,3 +127,4 @@ const PalletDeals = () => {
 };
 
 export default PalletDeals;
+

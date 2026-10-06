@@ -10,29 +10,24 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
     }
 
     const lenis = new Lenis({
-      lerp: 0.1,
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
       wheelMultiplier: 1.0,
-      touchMultiplier: 1.0,
-      syncTouch: false,
+      touchMultiplier: 1.5,
       prevent: (node) => {
-        // Prevent smooth scrolling when background scroll is locked
         if (typeof document !== 'undefined') {
           if (
-            document.body.style.overflow === 'hidden' ||
-            document.documentElement.style.overflow === 'hidden'
+            document.body.classList.contains('modal-open') ||
+            document.body.style.overflow === 'hidden'
           ) {
             return true;
           }
         }
-        // Prevent smooth scrolling inside any modal, dialog, or lenis-prevent container
         if (node && node instanceof HTMLElement) {
-          if (
-            node.hasAttribute('data-lenis-prevent') ||
-            Boolean(node.closest('[data-lenis-prevent], [role="dialog"], .fixed'))
-          ) {
+          if (node.hasAttribute('data-lenis-prevent') || node.closest('[data-lenis-prevent]')) {
             return true;
           }
         }

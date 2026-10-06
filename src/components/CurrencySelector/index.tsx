@@ -22,22 +22,24 @@ const CurrencySelector = () => {
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Toggle Button */}
-      <div 
-        className="flex items-center cursor-pointer text-gray-600 hover:text-gray-900 font-medium text-[14px] bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200/80 transition-colors"
+      <div
+        className="flex items-center gap-1 cursor-pointer text-gray-600 hover:text-gray-900 font-medium text-[12px] bg-gray-50 hover:bg-gray-100 px-2 py-1 rounded-full border border-gray-200/80 transition-colors header-selector-btn"
         onClick={() => setIsOpen(!isOpen)}
         title="Change currency"
       >
-        <span className="font-semibold text-gray-800 text-[13px]">{activeOption.code} ({activeOption.symbol})</span>
+        <span className="font-medium text-gray-800 text-[12px]">
+          {activeOption.code === activeOption.symbol ? activeOption.code : `${activeOption.code} (${activeOption.symbol})`}
+        </span>
         {isOpen ? (
-          <ChevronUp className="ml-1 w-3.5 h-3.5 text-gray-500" />
+          <ChevronUp className="w-3 h-3 text-gray-500" />
         ) : (
-          <ChevronDown className="ml-1 w-3.5 h-3.5 text-gray-500" />
+          <ChevronDown className="w-3 h-3 text-gray-500" />
         )}
       </div>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div 
+        <div
           data-lenis-prevent
           className="absolute top-full right-0 mt-3 w-64 bg-white rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.12)] border border-gray-100 z-50 overflow-hidden"
           onWheel={(e) => e.stopPropagation()}
@@ -53,20 +55,19 @@ const CurrencySelector = () => {
               </span>
             )}
           </div>
-          
+
           <div className="h-px bg-gray-100"></div>
-          
+
           <div data-lenis-prevent className="py-1.5 max-h-64 overflow-y-auto" onWheel={(e) => e.stopPropagation()}>
             {currencyOptions.map((opt) => {
               const isSelected = opt.code === currency;
               return (
                 <button
                   key={opt.code}
-                  className={`w-full text-left px-4 py-2.5 flex items-center justify-between text-[14px] transition-colors ${
-                    isSelected
+                  className={`w-full text-left px-4 py-2.5 flex items-center justify-between text-[14px] transition-colors ${isSelected
                       ? 'bg-[#e6f7ef] text-[#0f7a61] font-medium'
                       : 'text-gray-700 hover:bg-[#e6f7ef] hover:text-[#0f7a61]'
-                  }`}
+                    }`}
                   onClick={() => {
                     setCurrency(opt.code);
                     setIsOpen(false);

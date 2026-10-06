@@ -131,7 +131,7 @@ const HomeBanner = () => {
           >
 
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-primary-light text-primary px-4 py-1.5 rounded-full text-sm font-medium">
+            <div className="inline-flex items-center gap-2 bg-primary-light text-primary px-4 py-1.5 rounded-full text-xs xxl:text-sm font-medium">
               <ShieldCheck className="w-4 h-4" />
               B2B Liquidation Marketplace
             </div>
@@ -143,7 +143,7 @@ const HomeBanner = () => {
             </h1>
 
             {/* Subtitle */}
-            <p className="text-lg text-gray-600 leading-relaxed">
+            <p className="text-md xxl:text-lg text-gray-600 leading-relaxed">
               Connect with verified global buyers and sellers of surplus inventory to unlock savings, maximize revenue and reduce waste.
             </p>
 
@@ -154,7 +154,7 @@ const HomeBanner = () => {
                 <button
                   key={idx}
                   onClick={() => handleQuickAccess(tag)}
-                  className="bg-primary-light text-primary px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap hover:bg-primary-light-hover cursor-pointer transition-colors"
+                  className="bg-primary-light text-primary px-4 py-1.5 rounded-full text-[11px] xxl:text-xs font-medium whitespace-nowrap hover:bg-primary-light-hover cursor-pointer transition-colors"
                 >
                   {tag}
                 </button>
@@ -192,11 +192,10 @@ const HomeBanner = () => {
                   <button
                     type="button"
                     onClick={toggleListening}
-                    className={`p-1.5 rounded-full transition-all cursor-pointer ${
-                      isListening 
-                        ? 'bg-rose-500 text-white animate-pulse ring-2 ring-rose-300' 
-                        : 'text-gray-400 hover:text-[#0f7a61] hover:bg-emerald-50'
-                    }`}
+                    className={`p-1 rounded-full transition-all cursor-pointer ${isListening
+                      ? 'bg-rose-500 text-white animate-pulse ring-2 ring-rose-300'
+                      : 'text-gray-400 hover:text-[#0f7a61] hover:bg-emerald-50'
+                      }`}
                     title={isListening ? "Listening..." : "Search by voice"}
                   >
                     {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}

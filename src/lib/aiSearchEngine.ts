@@ -506,21 +506,24 @@ export function mapBackendProductToAiItem(p: any): AiSearchResultItem {
   }
 
   const sku = p.product_id || p.model_no || (p.id ? 'PRO-' + p.id : 'PRO-SURPLUS');
+  const catName = typeof p.category === 'object' && p.category ? (p.category.name || p.category.title || p.category.slug || 'Surplus Inventory') : String(p.category || 'Surplus Inventory');
+  const brandName = typeof p.brand === 'object' && p.brand ? (p.brand.name || p.brand.title || 'Enterprise') : String(p.brand || 'Enterprise');
+  const subCatName = typeof p.subcategory === 'object' && p.subcategory ? (p.subcategory.name || p.subcategory.title || '') : String(p.subcategory || '');
 
   return {
     id: String(p.id || p.product_id || sku),
     sku: sku,
     title: p.product_name || 'Surplus Inventory Lot',
-    brand: p.brand || 'Enterprise',
-    category: p.category || 'Surplus Inventory',
-    subCategory: p.subcategory || '',
+    brand: brandName,
+    category: catName,
+    subCategory: subCatName,
     condition: 'Brand New Surplus',
     price: price,
     retailPrice: retailPrice,
     discountPercent: discountPercent,
     moq: 1,
     estQty: p.quantity || 1,
-    location: p.inventory_location || 'Warehouse Location',
+    location: typeof p.inventory_location === 'object' ? (p.inventory_location.name || 'Warehouse Location') : String(p.inventory_location || 'Warehouse Location'),
     country: 'India',
     isCertified: true,
     isVerifiedSeller: true,
@@ -528,16 +531,17 @@ export function mapBackendProductToAiItem(p: any): AiSearchResultItem {
     image: img,
     description: p.product_name,
     specs: {
-      'Brand': p.brand || 'N/A',
+      'Brand': brandName || 'N/A',
       'Model': p.model_no || 'N/A',
-      'Location': p.inventory_location || 'N/A',
+      'Location': typeof p.inventory_location === 'object' ? (p.inventory_location.name || 'N/A') : String(p.inventory_location || 'N/A'),
       'Available Qty': String(p.quantity || 1),
       'Currency': p.currency || 'USD'
     },
-    tags: [p.brand, p.category, p.subcategory, 'Verified Surplus'].filter(Boolean),
+    tags: [brandName, catName, subCatName, 'Verified Surplus'].filter(Boolean),
     warranty: p.has_warranty ? 'Verified Warranty Included' : 'Surplus Terms',
     aiMatchScore: Math.round(p.similarity_score || 85),
     matchReasons: (Array.isArray(p.match_reasons) && p.match_reasons.length > 0)
+
       ? p.match_reasons
       : ['Neon DB pgvector semantic similarity match']
   };

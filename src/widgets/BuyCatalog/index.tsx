@@ -1,261 +1,370 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  Search, ChevronRight, SearchX, 
-  Hammer, Zap, Wrench, PenTool, HardHat, Drill, Lamp, Disc, Laptop, Paintbrush, Truck 
+  Search, 
+  SearchX, 
+  Filter, 
+  X, 
+  SlidersHorizontal, 
+  Tag, 
+  DollarSign, 
+  ShoppingBag,
+  Package
 } from 'lucide-react';
-import { motion } from '../../lib/motion';
 import ProductCard from '../../components/ProductCard';
+import LotCard from '../../components/LotCard';
+import { catalogService, ProductItem, LotItem } from '../../services/catalogService';
 
-const CATEGORIES = [
-  { name: 'All', icon: Search },
-  { name: 'Building Materials', icon: Hammer },
-  { name: 'Electricals', icon: Zap },
-  { name: 'Hand tools', icon: Wrench },
-  { name: 'Chisels And Drill bits', icon: PenTool },
-  { name: 'PPE', icon: HardHat },
-  { name: 'Power tools', icon: Drill },
-  { name: 'Decor', icon: Lamp },
-  { name: 'Abrasives', icon: Disc },
-  { name: 'Lifting accessories', icon: Truck },
-  { name: 'ICT', icon: Laptop },
-  { name: 'Paints & accessories', icon: Paintbrush }
+const PRICE_RANGES = [
+  { label: 'All Prices', min: 0, max: Infinity },
+  { label: 'Under $100', min: 0, max: 100 },
+  { label: '$100 - $500', min: 100, max: 500 },
+  { label: '$500 - $1,000', min: 500, max: 1000 },
+  { label: 'Over $1,000', min: 1000, max: Infinity },
 ];
 
-const MOCK_PRODUCTS = [
-  {
-    id: 1,
-    image: 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=600&q=80',
-    category: 'CONSUMER ELECTRONICS',
-    title: 'InnAIO AI Translator (Wearable/Clip-on AI Voice)',
-    moq: 20,
-    estQty: 500,
-    price: 89.86,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 2,
-    image: 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=600&q=80',
-    category: 'MOBILE PHONE AND ACCESSORI...',
-    title: 'Wireless earbuds (tws)',
-    moq: 20,
-    estQty: 1000,
-    price: 6.60,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 3,
-    image: 'https://images.unsplash.com/photo-1602874801007-bd458cb6c975?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Soywax candle',
-    moq: 20,
-    estQty: 25000,
-    price: 154224,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 4,
-    image: 'https://images.unsplash.com/photo-1618213837799-25d5552820d3?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Ashtray',
-    moq: 20,
-    estQty: 450,
-    price: 4.20,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 5,
-    image: 'https://images.unsplash.com/photo-1616422285623-13824f114674?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Table Number / Signage',
-    moq: 20,
-    estQty: 4000,
-    price: 0.63,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 6,
-    image: 'https://images.unsplash.com/photo-1602874801007-bd458cb6c975?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Please Do Not Disturb Sign',
-    moq: 20,
-    estQty: 25000,
-    price: 2.10,
-    isCertified: true,
-    isNew: false,
-  },
-  {
-    id: 7,
-    image: 'https://images.unsplash.com/photo-1618213837799-25d5552820d3?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Tissue Box Cover',
-    moq: 20,
-    estQty: 450,
-    price: 8.50,
-    isCertified: true,
-    isNew: false,
-  },
-  {
-    id: 8,
-    image: 'https://images.unsplash.com/photo-1616422285623-13824f114674?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Wooden Block Decor',
-    moq: 20,
-    estQty: 4000,
-    price: 3.20,
-    isCertified: true,
-    isNew: false,
-  },
-  {
-    id: 9,
-    image: 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=600&q=80',
-    category: 'CONSUMER ELECTRONICS',
-    title: 'Smart LED Bulb',
-    moq: 50,
-    estQty: 2000,
-    price: 12.50,
-    isCertified: true,
-    isNew: false,
-  },
-  {
-    id: 10,
-    image: 'https://images.unsplash.com/photo-1602874801007-bd458cb6c975?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Ceramic Vase Set',
-    moq: 10,
-    estQty: 300,
-    price: 45.00,
-    isCertified: true,
-    isNew: false,
-  },
+const CONDITIONS = [
+  'All Conditions',
+  'Brand New / Overstock',
+  'Customer Returns',
+  'Refurbished',
+  'Salvage / Parts'
 ];
 
 const BuyCatalog = () => {
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [purchaseMode, setPurchaseMode] = useState<'product' | 'lot'>('product');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedPriceRangeIndex, setSelectedPriceRangeIndex] = useState<number>(0);
+  const [selectedCondition, setSelectedCondition] = useState<string>('All Conditions');
 
-  // Simulate data fetching delay
+  const [products, setProducts] = useState<ProductItem[]>([]);
+  const [lots, setLots] = useState<LotItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
+
+  const fetchCatalogData = () => {
+    setLoading(true);
+    Promise.allSettled([
+      catalogService.getProducts({ search: searchQuery }),
+      catalogService.getLots({ search: searchQuery }),
+    ])
+      .then(([productsRes, lotsRes]) => {
+        if (productsRes.status === 'fulfilled') {
+          setProducts(productsRes.value.filter((item) => item.type !== 'lot'));
+        }
+        if (lotsRes.status === 'fulfilled') {
+          setLots(lotsRes.value);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  };
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchCatalogData();
+  }, [searchQuery]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const p = product.currentPrice || product.price || 0;
+      const priceRange = PRICE_RANGES[selectedPriceRangeIndex];
+      if (p < priceRange.min || p > priceRange.max) return false;
+
+      if (selectedCondition !== 'All Conditions') {
+        const cond = product.condition?.toLowerCase() || '';
+        if (selectedCondition.includes('New') && !cond.includes('new') && !product.isNew) return false;
+        if (selectedCondition.includes('Return') && !cond.includes('return')) return false;
+        if (selectedCondition.includes('Refurbished') && !cond.includes('refurbish')) return false;
+      }
+      return true;
+    });
+  }, [products, selectedPriceRangeIndex, selectedCondition]);
+
+  const filteredLots = useMemo(() => {
+    return lots.filter((lot) => {
+      const p = lot.price || 0;
+      const priceRange = PRICE_RANGES[selectedPriceRangeIndex];
+      if (p < priceRange.min || p > priceRange.max) return false;
+
+      if (selectedCondition !== 'All Conditions') {
+        const cond = lot.condition?.toLowerCase() || '';
+        if (selectedCondition.includes('New') && !cond.includes('new') && !cond.includes('overstock')) return false;
+        if (selectedCondition.includes('Return') && !cond.includes('return')) return false;
+        if (selectedCondition.includes('Refurbished') && !cond.includes('refurbish')) return false;
+      }
+      return true;
+    });
+  }, [lots, selectedPriceRangeIndex, selectedCondition]);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (searchQuery.trim()) count++;
+    if (selectedPriceRangeIndex > 0) count++;
+    if (selectedCondition !== 'All Conditions') count++;
+    return count;
+  }, [searchQuery, selectedPriceRangeIndex, selectedCondition]);
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedPriceRangeIndex(0);
+    setSelectedCondition('All Conditions');
+  };
 
   return (
-    <div className="w-full bg-[#fdfcf9] min-h-screen pt-8 pb-20">
-      
-      {/* Sticky Header Section */}
-      <div className="sticky top-0 z-40 bg-[#fdfcf9]/95 backdrop-blur-md border-b border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.02)] transition-all">
-        <div className="container mx-auto px-4 lg:px-8 max-w-[1600px] py-4">
+    <main className="w-full min-h-screen bg-[#fafafa] pb-32 font-sans selection:bg-slate-200">
+      {/* Sleek Mode Switcher */}
+      <div className="sticky top-0 z-40 w-full backdrop-blur-xl bg-white/70 border-b border-black/5 shadow-[0_4px_30px_rgba(0,0,0,0.02)]">
+        <div className="container mx-auto px-6 lg:px-12 max-w-7xl py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <h2 className="text-2xl font-light text-slate-900 tracking-tight">The <span className="font-semibold">Catalog</span></h2>
           
-          {/* Title & Search Bar */}
-          <div className="flex flex-col md:flex-row md:items-center gap-6 mb-5">
-            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 whitespace-nowrap">
-              All Products
-            </h1>
-            
-            <div className="relative flex-1 max-w-3xl">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Search className="w-5 h-5 text-gray-400" />
-              </div>
-              <input 
-                type="text" 
-                placeholder="Search all products..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 rounded-full text-gray-900 text-[15px] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_15px_-4px_rgba(0,0,0,0.08)]"
-              />
-            </div>
+          <div className="inline-flex p-1.5 bg-slate-100/50 backdrop-blur-md rounded-2xl border border-slate-200/50">
+            <button
+              onClick={() => setPurchaseMode('product')}
+              className={`flex items-center gap-2.5 px-7 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+                purchaseMode === 'product'
+                  ? 'bg-white text-slate-900 shadow-sm shadow-slate-200/50 scale-100'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-white/40 scale-95 hover:scale-100'
+              }`}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>Products</span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-colors ${
+                purchaseMode === 'product' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {filteredProducts.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setPurchaseMode('lot')}
+              className={`flex items-center gap-2.5 px-7 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+                purchaseMode === 'lot'
+                  ? 'bg-white text-slate-900 shadow-sm shadow-slate-200/50 scale-100'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-white/40 scale-95 hover:scale-100'
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              <span>Wholesale Lots</span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-colors ${
+                purchaseMode === 'lot' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-600'
+              }`}>
+                {filteredLots.length}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-6 lg:px-12 max-w-7xl pt-12">
+        <div className="flex flex-col lg:flex-row gap-12 items-start">
+          
+          {/* Mobile Filter Toggle */}
+          <div className="w-full lg:hidden flex items-center justify-between bg-white/80 backdrop-blur-lg p-5 rounded-2xl border border-slate-200/60 shadow-sm">
+            <button
+              onClick={() => setIsMobileFilterOpen(true)}
+              className="flex items-center gap-2 text-sm font-medium text-slate-800"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              <span>Filters</span>
+              {activeFiltersCount > 0 && (
+                <span className="bg-slate-900 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
+            <span className="text-xs font-medium text-slate-500">
+              {purchaseMode === 'product' ? filteredProducts.length : filteredLots.length} items
+            </span>
           </div>
 
-          {/* Category Circles (Horizontal Scroll) */}
-          <div className="flex items-start gap-6 sm:gap-8 md:gap-10 overflow-x-auto pb-6 pt-3 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-thin scrollbar-thumb-gray-200">
-            {CATEGORIES.map((category) => {
-              const isActive = activeCategory === category.name;
-              const Icon = category.icon;
-              return (
-                <button
-                  key={category.name}
-                  onClick={() => setActiveCategory(category.name)}
-                  className="flex flex-col items-center gap-3 group flex-shrink-0 min-w-[110px] sm:min-w-[130px] md:min-w-[145px] max-w-[160px] cursor-pointer"
-                >
-                  <div className={`
-                    w-20 h-20 sm:w-22 sm:h-22 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all duration-300 border
-                    ${isActive 
-                      ? 'bg-[#0f3b2f] text-white border-[#0f3b2f] scale-105 shadow-[0_10px_25px_rgba(15,59,47,0.3)] ring-4 ring-[#0f3b2f]/15' 
-                      : 'bg-white text-gray-700 border-gray-200/90 shadow-sm group-hover:border-[#0f3b2f]/40 group-hover:text-[#0f3b2f] group-hover:bg-emerald-50/40 group-hover:-translate-y-1 group-hover:shadow-md'
-                    }
-                  `}>
-                    <Icon className="w-8 h-8 sm:w-10 sm:h-10" strokeWidth={1.5} />
-                  </div>
-                  <span className={`text-[13px] sm:text-[14px] font-bold text-center leading-snug transition-colors line-clamp-2 px-1 ${
-                    isActive ? 'text-[#0f3b2f] font-extrabold' : 'text-gray-700 group-hover:text-[#0f3b2f]'
-                  }`}>
-                    {category.name}
-                  </span>
+          {/* Elegant Sidebar Filters */}
+          <aside className={`
+            fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-sm transition-opacity lg:static lg:bg-transparent lg:z-auto lg:w-72 shrink-0
+            ${isMobileFilterOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none lg:opacity-100 lg:pointer-events-auto'}
+          `}>
+            <div className={`
+              fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white p-8 shadow-2xl overflow-y-auto transition-transform duration-500 ease-out z-50
+              lg:static lg:w-full lg:p-0 lg:bg-transparent lg:shadow-none lg:overflow-visible
+              ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            `}>
+              
+              <div className="flex items-center justify-between pb-6 border-b border-slate-100 mb-8 lg:hidden">
+                <h2 className="font-light text-2xl text-slate-900">Filters</h2>
+                <button onClick={() => setIsMobileFilterOpen(false)} className="p-2 text-slate-400 hover:text-slate-900 transition-colors">
+                  <X className="w-5 h-5" />
                 </button>
-              );
-            })}
+              </div>
+
+              <div className="hidden lg:flex items-center justify-between mb-8">
+                <h2 className="font-medium text-sm tracking-widest uppercase text-slate-400">Refine Search</h2>
+                {activeFiltersCount > 0 && (
+                  <button onClick={handleResetFilters} className="text-xs font-medium text-slate-900 hover:underline">
+                    Clear All
+                  </button>
+                )}
+              </div>
+
+              {/* Keyword Search */}
+              <div className="mb-10">
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 transition-colors group-focus-within:text-slate-900">
+                    <Search className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search catalog..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-11 pr-10 py-3.5 bg-white border border-slate-200/80 rounded-2xl text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all shadow-sm shadow-slate-100/50"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-900 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Price Filter */}
+              <div className="mb-10">
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  Price Range
+                </h3>
+                <div className="space-y-1.5">
+                  {PRICE_RANGES.map((range, idx) => (
+                    <button
+                      key={range.label}
+                      onClick={() => setSelectedPriceRangeIndex(idx)}
+                      className={`
+                        w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300
+                        ${selectedPriceRangeIndex === idx
+                          ? 'bg-slate-900 text-white shadow-md shadow-slate-900/20'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
+                      `}
+                    >
+                      {range.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Condition Filter */}
+              <div className="mb-10">
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  Item Condition
+                </h3>
+                <div className="space-y-1.5">
+                  {CONDITIONS.map((cond) => (
+                    <button
+                      key={cond}
+                      onClick={() => setSelectedCondition(cond)}
+                      className={`
+                        w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300
+                        ${selectedCondition === cond
+                          ? 'bg-slate-900 text-white shadow-md shadow-slate-900/20'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}
+                      `}
+                    >
+                      {cond}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-slate-100 flex gap-4 lg:hidden mt-auto">
+                <button
+                  onClick={handleResetFilters}
+                  className="flex-1 py-4 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-2xl text-sm font-semibold transition-colors"
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={() => setIsMobileFilterOpen(false)}
+                  className="flex-1 py-4 bg-slate-900 hover:bg-black text-white rounded-2xl text-sm font-semibold transition-colors shadow-lg shadow-slate-900/20"
+                >
+                  Apply
+                </button>
+              </div>
+
+            </div>
+          </aside>
+
+          {/* Catalog Grid Area */}
+          <div className="flex-1 w-full">
+            {purchaseMode === 'product' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {loading ? (
+                  Array.from({ length: 6 }).map((_, idx) => (
+                    <div key={`skel-prod-${idx}`} className="animate-pulse flex flex-col gap-4">
+                      <div className="bg-slate-200 aspect-[4/5] rounded-3xl w-full" />
+                      <div className="h-4 bg-slate-200 rounded w-3/4" />
+                      <div className="h-4 bg-slate-200 rounded w-1/2" />
+                    </div>
+                  ))
+                ) : filteredProducts.length > 0 ? (
+                  filteredProducts.map((product) => (
+                    <div key={product.id} className="group cursor-pointer">
+                      <ProductCard {...product} isLoading={false} />
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full py-32 flex flex-col items-center justify-center text-center bg-white/50 backdrop-blur-sm rounded-[3rem] border border-slate-200/50 p-12">
+                    <SearchX className="w-16 h-16 text-slate-300 mb-6" />
+                    <h3 className="text-2xl font-light text-slate-900 mb-3">No matches found</h3>
+                    <p className="text-slate-500 text-sm max-w-sm mb-8 leading-relaxed">
+                      We couldn't find any products matching your current filters. Try adjusting them or clear your search.
+                    </p>
+                    <button
+                      onClick={handleResetFilters}
+                      className="px-8 py-3.5 bg-slate-900 text-white rounded-full text-sm font-semibold transition-all hover:bg-black hover:shadow-lg hover:shadow-slate-900/20"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {loading ? (
+                  Array.from({ length: 6 }).map((_, idx) => (
+                    <div key={`skel-lot-${idx}`} className="animate-pulse flex flex-col gap-4">
+                      <div className="bg-slate-200 aspect-video rounded-3xl w-full" />
+                      <div className="h-4 bg-slate-200 rounded w-3/4" />
+                      <div className="h-4 bg-slate-200 rounded w-1/2" />
+                    </div>
+                  ))
+                ) : filteredLots.length > 0 ? (
+                  filteredLots.map((lot) => (
+                    <div key={lot.id} className="group cursor-pointer">
+                      <LotCard {...lot} isLoading={false} />
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full py-32 flex flex-col items-center justify-center text-center bg-white/50 backdrop-blur-sm rounded-[3rem] border border-slate-200/50 p-12">
+                    <SearchX className="w-16 h-16 text-slate-300 mb-6" />
+                    <h3 className="text-2xl font-light text-slate-900 mb-3">No matches found</h3>
+                    <p className="text-slate-500 text-sm max-w-sm mb-8 leading-relaxed">
+                      We couldn't find any wholesale lots matching your current filters. Try adjusting them or clear your search.
+                    </p>
+                    <button
+                      onClick={handleResetFilters}
+                      className="px-8 py-3.5 bg-slate-900 text-white rounded-full text-sm font-semibold transition-all hover:bg-black hover:shadow-lg hover:shadow-slate-900/20"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
         </div>
       </div>
-
-      {/* Main Content Area */}
-      <div className="container mx-auto px-4 lg:px-8 max-w-[1600px] mt-8">
-        
-        {/* Results Count */}
-        <div className="mb-6 text-[15px]">
-          <span className="font-extrabold text-gray-900 text-lg">1,283</span> <span className="text-gray-500">products</span>
-        </div>
-
-        {/* Product Grid (5 columns on XXL) */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xxl:grid-cols-5 gap-5"
-        >
-          {loading ? (
-            Array.from({ length: 15 }).map((_, idx) => (
-              <ProductCard
-                key={`skeleton-${idx}`}
-                image=""
-                category=""
-                title=""
-                moq={0}
-                estQty={0}
-                price={0}
-                isLoading={true}
-              />
-            ))
-          ) : MOCK_PRODUCTS.length > 0 ? (
-            MOCK_PRODUCTS.map((product) => (
-              <ProductCard
-                key={product.id}
-                {...product}
-                isLoading={false}
-              />
-            ))
-          ) : (
-            <div className="col-span-full py-32 flex flex-col items-center justify-center text-center bg-white rounded-3xl border border-gray-100 shadow-sm">
-              <SearchX className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No products found</h3>
-              <p className="text-gray-500 text-sm max-w-sm">Try adjusting your search or category filters to find what you're looking for.</p>
-            </div>
-          )}
-        </motion.div>
-
-      </div>
-    </div>
+    </main>
   );
 };
 

@@ -45,10 +45,10 @@ const Header = () => {
         isLanding ? 'animate-header-landing' : ''
       }`}
     >
-      <div className="container">
+      <div className="container header-container">
         <div className="flex items-center justify-between h-20">
           {/* Left Group: Logo & Navigation */}
-          <div className="flex items-center space-x-10 lg:space-x-12 rtl:space-x-reverse h-full">
+          <div className="flex items-center h-full header-left-group">
             {/* Logo Section */}
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="flex items-center">
@@ -57,18 +57,18 @@ const Header = () => {
                   alt="Surplus Market Logo" 
                   width={180} 
                   height={40} 
-                  className="object-contain"
+                  className="object-contain header-logo"
                   priority 
                 />
               </Link>
             </div>
 
             {/* Center Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8 rtl:space-x-reverse h-full">
+            <nav className="hidden lg:flex items-center h-full header-nav whitespace-nowrap">
               <BuyMegamenu />
               <Link 
                 href="/sell" 
-                className={`font-medium text-[15px] transition-all py-1 ${
+                className={`font-medium text-[14px] transition-all py-1 header-nav-link whitespace-nowrap ${
                   isActive('/sell') ? 'text-[#0f7a61] font-semibold' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -76,7 +76,7 @@ const Header = () => {
               </Link>
               <Link 
                 href="/partnership" 
-                className={`font-medium text-[15px] transition-all py-1 ${
+                className={`font-medium text-[14px] transition-all py-1 header-nav-link whitespace-nowrap ${
                   isActive('/partnership') ? 'text-[#0f7a61] font-semibold' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -84,7 +84,7 @@ const Header = () => {
               </Link>
               <Link 
                 href="/sustainability" 
-                className={`font-medium text-[15px] transition-all py-1 ${
+                className={`font-medium text-[14px] transition-all py-1 header-nav-link whitespace-nowrap ${
                   isActive('/sustainability') ? 'text-[#0f7a61] font-semibold' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -94,12 +94,12 @@ const Header = () => {
           </div>
 
         {/* Right Actions */}
-        <div className="hidden lg:flex items-center space-x-3.5 rtl:space-x-reverse">
+        <div className="hidden lg:flex items-center header-right-actions">
           <Link 
             href="/browse"
-            className="text-gray-600 hover:text-gray-900 transition-colors"
+            className="text-gray-600 hover:text-gray-900 transition-colors p-1"
           >
-            <Search className="w-[20px] h-[20px]" />
+            <Search className="w-[18px] h-[18px]" />
           </Link>
           
           <LanguageSelector />
@@ -110,11 +110,11 @@ const Header = () => {
           <HeaderNotificationsDropdown />
 
           {status === 'loading' ? (
-            <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse"></div>
+            <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
           ) : session ? (
             <div className="relative group">
               <button 
-                className="flex items-center justify-center w-9 h-9 rounded-full bg-[#0f7a61] text-white font-bold text-sm hover:opacity-90 transition-opacity focus:outline-none shadow-sm"
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-[#0f7a61] text-white font-bold text-xs hover:opacity-90 transition-opacity focus:outline-none shadow-sm"
                 title={session.user?.name || session.user?.email || 'User Profile'}
               >
                 {session.user?.name?.[0]?.toUpperCase() || session.user?.email?.[0]?.toUpperCase() || 'U'}
@@ -158,13 +158,13 @@ const Header = () => {
             </div>
           ) : (
             <>
-              <button onClick={() => openAuth('login')} className="text-gray-600 hover:text-gray-900 font-medium text-[15px]">
+              <button onClick={() => openAuth('login')} className="text-gray-600 hover:text-gray-900 font-medium text-[13px] header-auth-link">
                 {t('nav.signIn', 'Sign in')}
               </button>
 
               <button 
                 onClick={() => openAuth('register')}
-                className="bg-[#0f7a61] hover:bg-[#0c6651] text-white px-5 py-2.5 rounded-full font-medium text-[15px] transition-colors"
+                className="bg-[#0f7a61] hover:bg-[#0c6651] text-white px-3.5 py-1.5 rounded-full font-medium text-[13px] transition-colors header-auth-btn"
               >
                 {t('nav.register', 'Register')}
               </button>

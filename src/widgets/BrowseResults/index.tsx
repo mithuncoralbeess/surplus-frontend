@@ -434,7 +434,7 @@ const BrowseResults = () => {
                     >
                       <div className="flex items-start gap-4 min-w-0">
                         <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gray-50 border border-gray-200/70 shrink-0">
-                          <Image src={item.image} alt={item.title} fill className="object-cover" />
+                          <Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 96px, 112px" className="object-cover" />
                           {item.discountPercent >= 50 && (
                             <span className="absolute top-2 left-2 bg-rose-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full shadow-xs">
                               -{item.discountPercent}%

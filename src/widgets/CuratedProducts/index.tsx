@@ -1,114 +1,43 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, PackageSearch } from 'lucide-react';
 import { motion } from '../../lib/motion';
 import ProductCard from '../../components/ProductCard';
-
-const MOCK_PRODUCTS = [
-  {
-    id: 1,
-    image: 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=600&q=80',
-    category: 'MOBILE PHONE AND ACCESSORI...',
-    title: 'Wireless earbuds (tws)',
-    moq: 20,
-    estQty: 1000,
-    price: 6.60,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 2,
-    image: 'https://images.unsplash.com/photo-1602874801007-bd458cb6c975?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Soywax candle',
-    moq: 20,
-    estQty: 25000,
-    price: 154224, // Assuming the image shows $154,224 or maybe a lot/pallet price
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 3,
-    image: 'https://images.unsplash.com/photo-1618213837799-25d5552820d3?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Ashtray',
-    moq: 20,
-    estQty: 450,
-    price: 4.20,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 4,
-    image: 'https://images.unsplash.com/photo-1616422285623-13824f114674?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Table Number / Signage',
-    moq: 20,
-    estQty: 4000,
-    price: 0.63,
-    isCertified: true,
-    isNew: true,
-  },
-  {
-    id: 5,
-    image: 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=600&q=80',
-    category: 'MOBILE PHONE AND ACCESSORI...',
-    title: 'Wireless earbuds (tws)',
-    moq: 20,
-    estQty: 1000,
-    price: 6.60,
-    isCertified: true,
-    isNew: false,
-  },
-  {
-    id: 6,
-    image: 'https://images.unsplash.com/photo-1602874801007-bd458cb6c975?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Soywax candle',
-    moq: 20,
-    estQty: 25000,
-    price: 154224,
-    isCertified: true,
-    isNew: false,
-  },
-  {
-    id: 7,
-    image: 'https://images.unsplash.com/photo-1618213837799-25d5552820d3?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Ashtray',
-    moq: 20,
-    estQty: 450,
-    price: 4.20,
-    isCertified: true,
-    isNew: false,
-  },
-  {
-    id: 8,
-    image: 'https://images.unsplash.com/photo-1616422285623-13824f114674?auto=format&fit=crop&w=600&q=80',
-    category: 'DECOR',
-    title: 'Table Number / Signage',
-    moq: 20,
-    estQty: 4000,
-    price: 0.63,
-    isCertified: true,
-    isNew: false,
-  },
-];
+import { catalogService, ProductItem } from '../../services/catalogService';
 
 const TABS = ['Best Sellers', 'New Arrivals', 'Featured Deals'];
 
 const CuratedProducts = () => {
   const [activeTab, setActiveTab] = useState('Best Sellers');
+  const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Simulate data fetching delay to show shimmer skeleton
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+
+    catalogService.getProducts()
+      .then((data) => {
+        if (isMounted) {
+          // Filter out lot items (display products not lots)
+          const singleProducts = data.filter((item) => item.type !== 'lot');
+          setProducts(singleProducts);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('[CuratedProducts] API fetch error:', err);
+        if (isMounted) {
+          setProducts([]);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab]);
 
   return (
     <section className="w-full bg-[#fdfcf9] pt-20 pb-12 border-b border-gray-100">
@@ -171,8 +100,8 @@ const CuratedProducts = () => {
                 isLoading={true}
               />
             ))
-          ) : MOCK_PRODUCTS.length > 0 ? (
-            MOCK_PRODUCTS.map((product) => (
+          ) : products.length > 0 ? (
+            products.map((product) => (
               <ProductCard
                 key={product.id}
                 {...product}
@@ -183,7 +112,7 @@ const CuratedProducts = () => {
             <div className="col-span-full py-24 flex flex-col items-center justify-center text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
               <PackageSearch className="w-16 h-16 text-gray-300 mb-4" />
               <h3 className="text-xl font-bold text-gray-900 mb-2">No products available</h3>
-              <p className="text-gray-500 text-sm max-w-sm">We couldn't find any products in this section right now. Please check back later or try a different category.</p>
+              <p className="text-gray-500 text-sm max-w-sm">No product data was returned from the API (/api/products/). Please check back later or add new products.</p>
             </div>
           )}
         </motion.div>
@@ -194,3 +123,4 @@ const CuratedProducts = () => {
 };
 
 export default CuratedProducts;
+

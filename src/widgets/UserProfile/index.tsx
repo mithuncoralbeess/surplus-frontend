@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { authService } from '../../services/authService';
@@ -845,7 +846,15 @@ export default function UserProfileWidget() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {sampleSaved.map((item) => (
                     <div key={item.id} className="p-4 rounded-2xl border border-gray-100 bg-gray-50/50 flex space-x-3">
-                      <img src={item.image} alt={item.title} className="w-16 h-16 rounded-xl object-cover border border-gray-200 shrink-0" />
+                      <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-200 shrink-0">
+                        <Image 
+                          src={item.image} 
+                          alt={item.title} 
+                          fill 
+                          sizes="64px"
+                          className="object-cover" 
+                        />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-xs font-semibold text-gray-900 truncate mb-1">{item.title}</h4>
                         <p className="text-[11px] text-gray-400 mb-2">{item.location}</p>

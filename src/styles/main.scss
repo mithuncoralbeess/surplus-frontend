@@ -18,7 +18,7 @@ $container-max-widths: (
   sm: 540px,
   md: 720px,
   lg: 960px,
-  xl: 1140px,
+  xl: 1170px,
   xxl: 1320px,
   xxxl: 1520px
 );
@@ -42,15 +42,15 @@ $heading-font-sizes: (
     sm: 40px,
     md: 48px,
     lg: rem(56),
-    xl: rem(64),
+    xl: rem(45),
     xxl: rem(50),
     xxxl: rem(58)),
   h2: (base: 30px,
-    sm: 32px,
-    md: 36px,
-    lg: rem(40),
-    xl: rem(44),
-    xxl: rem(48),
+    sm: 30px,
+    md: 34px,
+    lg: rem(38),
+    xl: rem(40),
+    xxl: rem(46),
     xxxl: rem(52)),
   h3: (base: 26px,
     sm: 28px,
@@ -119,11 +119,11 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.875rem 2rem;
+  padding: 10px 2rem;
   border-radius: 9999px;
   font-size: 0.875rem;
-  font-weight: 700;
-  transition: all 0.3s ease;
+  font-weight: 500;
+  transition: all 0.3s ease-in-out;
   gap: 0.5rem;
   border: none;
   transition: all .3s ease-in-out;
@@ -184,7 +184,9 @@ button {
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 
-    svg, img, .PhoneInputCountryIconImg {
+    svg,
+    img,
+    .PhoneInputCountryIconImg {
       width: 100% !important;
       height: 100% !important;
       object-fit: cover;
@@ -290,5 +292,279 @@ button {
   .iti__country-list {
     max-height: 220px;
     overflow-y: auto;
+  }
+}
+
+/* ==========================================================================
+   Header Responsive System (Powered by $breakpoints)
+   ========================================================================== */
+
+.header-container {
+  width: 100%;
+}
+
+.header-nav-link,
+.header-auth-link,
+.header-auth-btn,
+.header-selector-btn {
+  white-space: nowrap !important;
+}
+
+/* Base / Mobile & Small Tablet (< 992px) */
+.header-left-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-logo {
+  width: 125px !important;
+  height: auto !important;
+}
+
+.header-nav {
+  display: none;
+}
+
+.header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Large Screens (lg: 992px to 1199px) */
+@media (min-width: map.get($breakpoints, lg)) {
+  .header-left-group {
+    gap: 0.875rem;
+  }
+
+  .header-logo {
+    width: 130px !important;
+    height: auto !important;
+  }
+
+  .header-nav {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .header-nav-link {
+    font-size: 12px !important;
+  }
+
+  .header-right-actions {
+    gap: 0.35rem;
+  }
+
+  .header-selector-btn {
+    padding: 0.2rem 0.4rem !important;
+    font-size: 11px !important;
+  }
+
+  .header-auth-link {
+    font-size: 12px !important;
+  }
+
+  .header-auth-btn {
+    padding: 0.35rem 0.65rem !important;
+    font-size: 12px !important;
+  }
+
+  .megamenu-right-panel {
+    width: 300px !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* Extra Large Screens (xl: 1200px to 1399px) */
+@media (min-width: map.get($breakpoints, xl)) {
+  .header-left-group {
+    gap: 1.25rem;
+  }
+
+  .header-logo {
+    width: 145px !important;
+    height: auto !important;
+  }
+
+  .header-nav {
+    gap: 1rem;
+  }
+
+  .header-nav-link {
+    font-size: 14px !important;
+  }
+
+  .header-right-actions {
+    gap: .7rem;
+  }
+
+  .header-selector-btn {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 12px !important;
+    font-weight: 400;
+  }
+
+  .header-auth-link {
+    font-size: 13px !important;
+  }
+
+  .header-auth-btn {
+    padding: 0.4rem 0.85rem !important;
+    font-size: 13px !important;
+  }
+
+  .megamenu-right-panel {
+    width: 330px !important;
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
+  }
+}
+
+/* 2XL Screens (xxl: 1400px to 1599px) */
+@media (min-width: map.get($breakpoints, xxl)) {
+  .header-left-group {
+    gap: 1.5rem;
+  }
+
+  .header-logo {
+    width: 180px !important;
+    height: auto !important;
+  }
+
+  .header-nav {
+    gap: 1.25rem;
+  }
+
+  .header-nav-link {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+  }
+
+  .header-right-actions {
+    gap: 0.5rem;
+
+    svg {
+      width: 19px !important;
+      height: 19px !important;
+    }
+  }
+
+  .header-selector-btn {
+    padding: 0.4rem 0.75rem !important;
+    font-size: 14px !important;
+  }
+
+  .header-auth-link {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+  }
+
+  .header-auth-btn {
+    padding: 0.5rem 1.25rem !important;
+    font-size: 16px !important;
+  }
+
+  .megamenu-right-panel {
+    width: 400px !important;
+    padding-left: 1.75rem !important;
+    padding-right: 1.75rem !important;
+  }
+}
+
+/* Screens >= 1440px */
+@media (min-width: 1440px) {
+  .header-left-group {
+    gap: 1.5rem;
+  }
+
+  .header-logo {
+    width: 185px !important;
+    height: auto !important;
+  }
+
+  .header-nav {
+    gap: 1.25rem;
+  }
+
+  .header-nav-link {
+    font-size: 16.5px !important;
+    font-weight: 600 !important;
+  }
+
+  .header-right-actions {
+    gap: 0.625rem;
+
+    svg {
+      width: 20px !important;
+      height: 20px !important;
+    }
+  }
+
+  .header-selector-btn {
+    padding: 0.45rem 0.85rem !important;
+    font-size: 14.5px !important;
+  }
+
+  .header-auth-link {
+    font-size: 16.5px !important;
+    font-weight: 600 !important;
+  }
+
+  .header-auth-btn {
+    padding: 0.55rem 1.35rem !important;
+    font-size: 16.5px !important;
+  }
+}
+
+/* 3XL Screens (xxxl: >= 1600px) */
+@media (min-width: map.get($breakpoints, xxxl)) {
+  .header-left-group {
+    gap: 1.75rem;
+  }
+
+  .header-logo {
+    width: 195px !important;
+    height: auto !important;
+  }
+
+  .header-nav {
+    gap: 1.5rem;
+  }
+
+  .header-nav-link {
+    font-size: 17px !important;
+    font-weight: 600 !important;
+  }
+
+  .header-right-actions {
+    gap: 0.75rem;
+
+    svg {
+      width: 21px !important;
+      height: 21px !important;
+    }
+  }
+
+  .header-selector-btn {
+    padding: 0.5rem 0.95rem !important;
+    font-size: 15px !important;
+  }
+
+  .header-auth-link {
+    font-size: 17px !important;
+    font-weight: 600 !important;
+  }
+
+  .header-auth-btn {
+    padding: 0.6rem 1.5rem !important;
+    font-size: 17px !important;
+  }
+
+  .megamenu-right-panel {
+    width: 440px !important;
+    padding-left: 2.5rem !important;
+    padding-right: 2.5rem !important;
   }
 }

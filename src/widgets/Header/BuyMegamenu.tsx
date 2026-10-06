@@ -21,6 +21,7 @@ import {
   Box
 } from 'lucide-react';
 import { useAppSelector } from '../../store';
+import { useLanguage } from '../../context/LanguageContext';
 
 const DEFAULT_CATEGORIES = [
   { name: 'Building Materials', count: 227, icon: Hammer },
@@ -72,6 +73,7 @@ const FORMATS = [
 
 const BuyMegamenu = () => {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const { categories, loading } = useAppSelector((state) => state.categories);
 
@@ -80,7 +82,7 @@ const BuyMegamenu = () => {
     setIsOpen(false);
   }, [pathname]);
 
-  const isBuyActive = pathname === '/shop-by-category' || pathname.startsWith('/category');
+  const isBuyActive = pathname === '/buy' || pathname.startsWith('/buy') || pathname === '/shop-by-category' || pathname.startsWith('/category');
 
   // Prepare display categories from Redux store or default fallback
   const displayCategories = categories && categories.length > 0
@@ -106,12 +108,12 @@ const BuyMegamenu = () => {
       onMouseLeave={() => setIsOpen(false)}
     >
       {/* Trigger */}
-      <div className={`flex items-center font-medium text-[15px] transition-all py-1 ${
+      <div className={`flex items-center font-medium text-[14px] transition-all py-1 header-nav-link whitespace-nowrap ${
         isBuyActive || isOpen 
           ? 'text-[#0f7a61] font-semibold' 
           : 'text-gray-600 hover:text-gray-900'
       }`}>
-        Shop by Category <ChevronDown className={`ml-1 w-4 h-4 transition-colors ${isBuyActive || isOpen ? 'text-[#0f7a61]' : 'text-gray-400'}`} />
+        {t('nav.buy', 'Buy')} <ChevronDown className={`ml-1 w-4 h-4 transition-colors ${isBuyActive || isOpen ? 'text-[#0f7a61]' : 'text-gray-400'}`} />
       </div>
 
       {/* Dropdown Container */}
@@ -156,7 +158,7 @@ const BuyMegamenu = () => {
           </div>
 
           {/* Right Panel: Special Formats */}
-          <div className="w-[440px] bg-[#f4fbf9] py-6 px-10 relative overflow-hidden flex flex-col border-l border-gray-100">
+          <div className="w-[440px] bg-[#f4fbf9] py-6 px-10 relative overflow-hidden flex flex-col border-l border-gray-100 megamenu-right-panel">
             {/* Background Icon Decoration */}
             <PlayCircle className="absolute -top-10 -right-10 w-48 h-48 text-white/40 pointer-events-none" strokeWidth={1} />
             
@@ -172,7 +174,7 @@ const BuyMegamenu = () => {
                 {FORMATS.map((format, idx) => {
                   const Icon = format.icon;
                   return (
-                    <Link href="/browse" key={idx} className="flex items-start gap-5 group/format p-3 -ml-3 rounded-2xl hover:bg-white/60 transition-colors">
+                    <Link href="/buy" key={idx} className="flex items-start gap-5 group/format p-3 -ml-3 rounded-2xl hover:bg-white/60 transition-colors">
                       <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-primary shadow-sm border border-gray-50 group-hover/format:scale-110 group-hover/format:shadow-md transition-all duration-300">
                         <Icon className="w-5 h-5" strokeWidth={1.5} />
                       </div>
@@ -200,7 +202,7 @@ const BuyMegamenu = () => {
               <span className="text-xs text-gray-500 font-medium">
                 All items verified by SM
               </span>
-              <Link href="/browse" className="text-xs font-bold text-primary hover:text-primary-dark flex items-center transition-colors">
+              <Link href="/buy" className="text-xs font-bold text-primary hover:text-primary-dark flex items-center transition-colors">
                 Browse catalog <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </Link>
             </div>

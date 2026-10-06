@@ -39,8 +39,8 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Needed for Next.js hydration & dev
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob: https://images.unsplash.com https://*.er-api.com https://surplus-backend-uhg0.onrender.com https://purecatamphetamine.github.io",
-      "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 https://surplus-backend-uhg0.onrender.com https://open.er-api.com",
+      "img-src 'self' data: blob: https: http:",
+      "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 https://surplus-backend-uhg0.onrender.com https://open.er-api.com https://*.r2.cloudflarestorage.com https://*.cloudflarestorage.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -54,15 +54,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com',
+        hostname: '**',
       },
       {
-        protocol: 'https',
-        hostname: 'surplus-backend-uhg0.onrender.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'purecatamphetamine.github.io',
+        protocol: 'http',
+        hostname: '**',
       },
     ],
   },
@@ -77,3 +73,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+

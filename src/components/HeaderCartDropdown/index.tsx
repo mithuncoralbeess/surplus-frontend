@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { ShoppingBag, X, Trash2, ArrowRight, Package } from 'lucide-react';
+import Image from 'next/image';
 import { useCurrency } from '../../context/CurrencyContext';
 
 interface CartItem {
@@ -60,12 +61,12 @@ const HeaderCartDropdown = () => {
       {/* Shopping Bag Button with Badge */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="relative text-gray-600 hover:text-gray-900 transition-colors p-1.5 focus:outline-none"
+        className="relative text-gray-600 hover:text-gray-900 transition-colors p-1 focus:outline-none"
         title="View RFQ Basket"
       >
-        <ShoppingBag className="w-[20px] h-[20px]" />
+        <ShoppingBag className="w-[18px] h-[18px]" />
         {cartItems.length > 0 && (
-          <span className="absolute -top-1 -right-1 bg-[#0f7a61] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+          <span className="absolute -top-1 -right-1 bg-[#0f7a61] text-white text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center animate-pulse">
             {cartItems.length}
           </span>
         )}
@@ -107,11 +108,15 @@ const HeaderCartDropdown = () => {
                   const itemTotalInUsd = item.unitPrice * item.quantity;
                   return (
                     <div key={item.id} className="p-4 flex items-center gap-3 hover:bg-gray-50/50 transition-colors group">
-                      <img 
-                        src={item.image} 
-                        alt={item.title} 
-                        className="w-12 h-12 rounded-xl object-cover border border-gray-100 shrink-0"
-                      />
+                      <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-gray-100 shrink-0">
+                        <Image 
+                          src={item.image} 
+                          alt={item.title} 
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
                           {item.category}
