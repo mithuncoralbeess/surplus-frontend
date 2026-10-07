@@ -60,7 +60,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
     : null;
   const displayOffer = formatOfferString(offer) || calculatedOffer;
 
-  const productLink = id ? `/buy/${id}` : title ? `/buy/${encodeURIComponent(title)}` : sku ? `/buy/${encodeURIComponent(sku)}` : '/buy';
+  const productLink = title 
+    ? `/browse?q=${encodeURIComponent(title)}` 
+    : sku 
+      ? `/browse?q=${encodeURIComponent(sku)}` 
+      : '/browse';
 
   const handleAddRfq = (e: React.MouseEvent) => {
     e.stopPropagation();

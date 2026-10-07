@@ -82,7 +82,7 @@ const BuyMegamenu = () => {
     setIsOpen(false);
   }, [pathname]);
 
-  const isBuyActive = pathname === '/buy' || pathname.startsWith('/buy') || pathname === '/shop-by-category' || pathname.startsWith('/category');
+  const isBuyActive = pathname === '/buy' || pathname.startsWith('/buy') || pathname === '/browse' || pathname.startsWith('/browse') || pathname === '/shop-by-category' || pathname.startsWith('/category');
 
   // Prepare display categories from Redux store or default fallback
   const displayCategories = categories && categories.length > 0
@@ -174,7 +174,7 @@ const BuyMegamenu = () => {
                 {FORMATS.map((format, idx) => {
                   const Icon = format.icon;
                   return (
-                    <Link href="/buy" key={idx} className="flex items-start gap-5 group/format p-3 -ml-3 rounded-2xl hover:bg-white/60 transition-colors">
+                    <Link href="/browse" key={idx} className="flex items-start gap-5 group/format p-3 -ml-3 rounded-2xl hover:bg-white/60 transition-colors">
                       <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-primary shadow-sm border border-gray-50 group-hover/format:scale-110 group-hover/format:shadow-md transition-all duration-300">
                         <Icon className="w-5 h-5" strokeWidth={1.5} />
                       </div>
@@ -199,10 +199,10 @@ const BuyMegamenu = () => {
 
             {/* Footer Area */}
             <div className="mt-auto pt-6 border-t border-primary/10 flex justify-between items-center relative z-10">
-              <span className="text-xs text-gray-500 font-medium">
-                All items verified by SM
-              </span>
               <Link href="/buy" className="text-xs font-bold text-primary hover:text-primary-dark flex items-center transition-colors">
+                Liquidation Buy Hub <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              </Link>
+              <Link href="/browse" className="text-xs font-semibold text-gray-500 hover:text-primary flex items-center transition-colors">
                 Browse catalog <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </Link>
             </div>

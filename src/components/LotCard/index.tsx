@@ -57,7 +57,7 @@ const LotCard: React.FC<LotCardProps> = ({
       : null;
   const displayOffer = formatOfferString(offer) || calculatedOffer;
 
-  const lotLink = id ? `/buy/lot/${id}` : title ? `/buy/lot/${encodeURIComponent(title)}` : '/buy';
+  const lotLink = title ? `/browse?q=${encodeURIComponent(title)}` : '/browse';
 
   if (isLoading) {
     return (

@@ -240,7 +240,7 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
               The product you requested (ID: {productId}) is unavailable or may have been removed.
             </p>
             <button
-              onClick={() => router.push('/buy')}
+              onClick={() => router.push('/browse')}
               className="px-6 py-3 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer"
             >
               Browse All Products
@@ -273,12 +273,12 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
           <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
             <Link href="/" className="hover:text-gray-900 transition-colors shrink-0">Home</Link>
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
-            <Link href="/buy" className="hover:text-gray-900 transition-colors shrink-0">Buy</Link>
+            <Link href="/browse" className="hover:text-gray-900 transition-colors shrink-0">Browse</Link>
             {product.category && product.category.toLowerCase() !== 'consumer electronics' && (
               <>
                 <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
                 <Link 
-                  href={`/buy?category=${encodeURIComponent(product.category)}`}
+                  href={`/browse?category=${encodeURIComponent(product.category)}`}
                   className="hover:text-[#0f7a61] transition-colors shrink-0 font-medium truncate max-w-[140px] sm:max-w-[200px]"
                 >
                   {product.category}
@@ -930,7 +930,7 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
                 </p>
               </div>
               <Link 
-                href={`/buy?category=${encodeURIComponent(product.category)}`}
+                href={`/browse?category=${encodeURIComponent(product.category)}`}
                 className="text-xs sm:text-sm font-extrabold text-[#0f7a61] hover:text-[#0c6651] flex items-center gap-1"
               >
                 <span>View All In Category</span>
