@@ -51,18 +51,49 @@ export interface ProductItem {
 
 export interface LotItem {
   id: string | number;
+  lot_number?: string;
+  vendor_id?: string;
   title: string;
+  listing_title?: string;
+  description?: string;
+  lot_description_and_notes?: string;
   condition: string;
+  source_type?: string;
+  inventory_stock_age?: string;
   units: number;
+  total_units_quantity?: number;
+  primary_unit_type?: string;
   pallets: number;
+  pallet_count?: number;
+  number_of_distinct_skus?: number;
   msrp: number;
+  total_est_retail_value_msrp?: number;
   price: number;
+  ask_price_surplus_payout?: number;
   offer?: string;
   location: string;
+  inventory_location?: string;
   image: string;
+  warehouse_images?: string[];
   category?: string;
+  category_allocations?: Array<{ alocation?: string; allocation?: string; category_name: string }>;
+  key_brands_included?: string;
+  total_weight?: string;
+  load_type?: string;
+  shipping_size?: string;
+  lot_size?: string;
+  shipping_terms?: string;
+  currency?: string;
+  excluded_export_countries?: string[];
+  sale_method?: string;
+  file?: string;
+  file_url?: string;
   manifest_items?: any[];
-  products?: any[];
+  products: any[];
+  manifest_data: any[];
+  enquiry_status?: string;
+  active_status?: string;
+  is_active?: boolean;
   type?: 'lot';
 }
 
@@ -236,22 +267,51 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
 }
 
 
-export function mapApiLotToLotItem(item: any, index: number): LotItem {
-  const price = Number(item.price || item.asking_price || item.total_price || item.priceUsd || 0);
-  const msrp = Number(item.msrp || item.total_retail || item.retail_price || 0);
+export function mapApiLotToLotItem(raw: any, index: number): LotItem {
+  const item = raw?.lot || raw?.data || raw || {};
+  
+  const price = Number(
+    item.price ||
+    item.asking_price ||
+    item.ask_price_surplus_payout ||
+    item.total_price ||
+    item.priceUsd ||
+    0
+  );
+  
+  const msrp = Number(
+    item.msrp ||
+    item.total_est_retail_value_msrp ||
+    item.total_retail ||
+    item.retail_price ||
+    0
+  );
   
   let image = item.image || item.image_url || item.photo || item.thumbnail || '';
   if (Array.isArray(item.images) && item.images.length > 0) {
     image = item.images[0]?.url || item.images[0] || image;
   }
-  if (!image) {
-    image = 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?auto=format&fit=crop&w=600&q=80';
+  if (!image && Array.isArray(item.warehouse_images) && item.warehouse_images.length > 0) {
+    const firstWh = item.warehouse_images[0];
+    if (typeof firstWh === 'string' && (firstWh.startsWith('http://') || firstWh.startsWith('https://'))) {
+      image = firstWh;
+    }
+  }
+  if (!image || (!image.startsWith('http://') && !image.startsWith('https://') && !image.startsWith('/'))) {
+    image = 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?auto=format&fit=crop&w=1200&q=80';
   }
 
-  const discount = msrp > price ? Math.round(((msrp - price) / msrp) * 100) : 0;
-  const categoryName = extractStringValue(item.category, 'General');
-  const conditionName = extractStringValue(item.condition, 'Customer Returns / Overstock');
-  const locationName = extractStringValue(item.location || item.country, 'Dallas, TX');
+  const discount = msrp > price && msrp > 0 ? Math.round(((msrp - price) / msrp) * 100) : 0;
+  
+  let categoryName = 'General Inventory';
+  if (Array.isArray(item.category_allocations) && item.category_allocations.length > 0) {
+    categoryName = item.category_allocations[0]?.category_name || categoryName;
+  } else if (item.category) {
+    categoryName = extractStringValue(item.category, 'General Inventory');
+  }
+
+  const conditionName = extractStringValue(item.condition, 'New');
+  const locationName = extractStringValue(item.inventory_location || item.location || item.country, 'Dubai, UAE');
 
   const rawLotOffer = item.offer !== undefined && item.offer !== null && String(item.offer).trim() !== '' ? String(item.offer).trim() : undefined;
   let lotOfferTag: string | undefined = undefined;
@@ -272,19 +332,80 @@ export function mapApiLotToLotItem(item: any, index: number): LotItem {
     lotOfferTag = `${discount}% OFF`;
   }
 
+  const productsList = Array.isArray(item.products) && item.products.length > 0
+    ? item.products
+    : (Array.isArray(item.manifest_data) && item.manifest_data.length > 0
+      ? item.manifest_data
+      : (Array.isArray(item.manifest_items) ? item.manifest_items : []));
+
+  const unitsCount = Number(
+    item.units ||
+    item.total_units_quantity ||
+    item.total_units ||
+    item.quantity ||
+    (productsList.length > 0 
+      ? productsList.reduce((acc: number, p: any) => acc + Number(p.available_quantity || p.quantity || 1), 0)
+      : 100)
+  );
+
+  const palletsCount = Number(item.pallets || item.pallet_count || 1);
+  const distinctSkus = Number(item.number_of_distinct_skus || productsList.length);
+
+  let manifestUrl = item.file_url || item.file || '';
+  if (typeof manifestUrl === 'string') {
+    manifestUrl = sanitizeImageUrl(manifestUrl);
+  }
+
+  let curr = item.currency || 'USD';
+  if (typeof curr === 'string' && curr.includes(' ')) {
+    curr = curr.split(' ')[0];
+  }
+
   return {
-    id: item.id || item.lot_id || `LOT-${index + 1}`,
-    title: item.title || item.lot_title || item.name || 'Wholesale Liquidation Lot',
+    id: item.id || item.lot_number || item.lot_id || `LOT-${index + 1}`,
+    lot_number: item.lot_number || item.lot_id || `LOT-${item.id || index + 1}`,
+    vendor_id: item.vendor_id || '',
+    title: item.title || item.listing_title || item.lot_title || item.name || 'Wholesale Liquidation Lot',
+    listing_title: item.listing_title || item.title || '',
+    description: item.description || item.lot_description_and_notes || '',
+    lot_description_and_notes: item.lot_description_and_notes || item.description || '',
     condition: conditionName,
-    units: Number(item.units || item.total_units || item.quantity || 100),
-    pallets: Number(item.pallets || item.pallet_count || 1),
+    source_type: item.source_type || 'Overstock',
+    inventory_stock_age: item.inventory_stock_age || '',
+    units: unitsCount,
+    total_units_quantity: unitsCount,
+    primary_unit_type: item.primary_unit_type || 'Pieces / Units',
+    pallets: palletsCount,
+    pallet_count: palletsCount,
+    number_of_distinct_skus: distinctSkus,
     msrp: msrp,
+    total_est_retail_value_msrp: msrp,
     price: price,
+    ask_price_surplus_payout: price,
     offer: lotOfferTag,
     location: locationName,
+    inventory_location: locationName,
     image: image,
+    warehouse_images: Array.isArray(item.warehouse_images) ? item.warehouse_images : [],
     category: categoryName,
-    products: item.products || [],
+    category_allocations: Array.isArray(item.category_allocations) ? item.category_allocations : [],
+    key_brands_included: item.key_brands_included || '',
+    total_weight: item.total_weight || '',
+    load_type: item.load_type || 'Pallet',
+    shipping_size: item.shipping_size || 'Multi-Pallet / LTL',
+    lot_size: item.lot_size || `${palletsCount} Pallets`,
+    shipping_terms: item.shipping_terms || 'Buyer Arranges Freight',
+    currency: curr,
+    excluded_export_countries: Array.isArray(item.excluded_export_countries) ? item.excluded_export_countries : [],
+    sale_method: item.sale_method || 'offer',
+    file: manifestUrl,
+    file_url: manifestUrl,
+    manifest_items: productsList,
+    products: productsList,
+    manifest_data: productsList,
+    enquiry_status: item.enquiry_status || 'approved',
+    active_status: item.active_status || 'active',
+    is_active: Boolean(item.is_active ?? true),
     type: 'lot',
   };
 }
@@ -496,19 +617,24 @@ export const catalogService = {
 
     try {
       const isNumericId = /^\d+$/.test(key);
+      const isLotNum = /^lot-?\d+/i.test(key);
       const [singleRes, listRes] = await Promise.allSettled([
-        isNumericId ? apiClient(`/api/lots/${id}/`, { silent: true }) : Promise.resolve(null),
+        (isNumericId || isLotNum) ? apiClient(`/api/lots/${id}/`, { silent: true }) : Promise.resolve(null),
         this.getLots()
       ]);
 
-      if (singleRes.status === 'fulfilled' && singleRes.value && singleRes.value.success && singleRes.value.data) {
-        return mapApiLotToLotItem(singleRes.value.data, 0);
+      if (singleRes.status === 'fulfilled' && singleRes.value && singleRes.value.success) {
+        const payload = singleRes.value.data?.lot || singleRes.value.data?.data || singleRes.value.data;
+        if (payload) {
+          return mapApiLotToLotItem(payload, 0);
+        }
       }
 
       const list = listRes.status === 'fulfilled' && Array.isArray(listRes.value) ? listRes.value : [];
       const match = list.find(
         (l) =>
           String(l.id).toLowerCase() === keyLower ||
+          String(l.lot_number || '').toLowerCase() === keyLower ||
           (targetSlug && slugify(l.title) === targetSlug) ||
           l.title.toLowerCase().trim() === keyLower ||
           encodeURIComponent(l.title) === key
