@@ -61,11 +61,11 @@ export interface LotItem {
   image: string;
   category?: string;
   manifest_items?: any[];
+  products?: any[];
   type?: 'lot';
 }
 
 export interface ProductRequestPayload {
-  user_email: string;
   category: string;
   title: string;
   brand: string;
@@ -90,7 +90,6 @@ export interface ProductRequestPayload {
 }
 
 export interface LotRequestPayload {
-  user_email: string;
   manifest_items: Array<{
     title: string;
     sku?: string;
@@ -273,6 +272,7 @@ export function mapApiLotToLotItem(item: any, index: number): LotItem {
     location: locationName,
     image: image,
     category: categoryName,
+    products: item.products || [],
     type: 'lot',
   };
 }

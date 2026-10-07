@@ -317,6 +317,94 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
           </div>
         </div>
 
+        {/* Products Table Section */}
+        {lot.products && lot.products.length > 0 && (
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200/90 shadow-sm p-4 sm:p-6 lg:p-8 mb-8 sm:mb-10 overflow-hidden">
+            <div className="flex items-center gap-2 text-gray-800 font-extrabold text-xs sm:text-sm uppercase tracking-wider mb-5">
+              <List className="w-4 h-4 text-[#0f7a61]" />
+              <span>Lot Products Breakdown</span>
+            </div>
+            <div className="overflow-x-auto rounded-xl border border-gray-200">
+              <table className="w-full text-left border-collapse min-w-[3500px]">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 shadow-[1px_0_0_#e5e7eb]">S.No</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider sticky left-[60px] bg-gray-50 z-10 shadow-[1px_0_0_#e5e7eb]">Product Name</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Product Description</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Product Category</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Subcategory</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Brand / Manufacturer</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Model / Part Number</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Available Quantity</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Original Price</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Asking Price</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Country of Origin</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Year of Manufacture</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Datasheet / Certificate Link</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Gross Weight per Unit</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Length</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Width</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Height</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Measurement Unit</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Stock Age</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Tested and verified</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Functional Status</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Visible Damage?</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Missing Parts?</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Warranty Available?</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Safety Certificate Available?</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Certificate Type</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Regulatory Approval</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Hazardous Material?</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Recyclable?</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Estimated Product Life Remaining</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Seller Custom Field 1</th>
+                    <th className="py-3 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Seller Custom Field 2</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {lot.products.map((prod: any, idx: number) => (
+                    <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-3 px-4 text-xs font-mono text-gray-500 sticky left-0 bg-white z-10 shadow-[1px_0_0_#e5e7eb] group-hover:bg-gray-50/50">{prod.s_no || idx + 1}</td>
+                      <td className="py-3 px-4 text-sm font-bold text-gray-900 sticky left-[60px] bg-white z-10 shadow-[1px_0_0_#e5e7eb] group-hover:bg-gray-50/50 max-w-[250px] truncate" title={prod.name || prod.product_name || prod.title}>{prod.name || prod.product_name || prod.title}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600 max-w-[250px] truncate" title={prod.product_description}>{prod.product_description || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.category || prod.product_category || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.subcategory || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.brand || '-'}</td>
+                      <td className="py-3 px-4 text-xs font-mono text-gray-500">{prod.model_part_number || prod.sku || '-'}</td>
+                      <td className="py-3 px-4 text-sm font-extrabold text-gray-900 text-center">{prod.available_quantity || prod.quantity || 0}</td>
+                      <td className="py-3 px-4 text-sm font-medium text-gray-900 text-right whitespace-nowrap">{prod.original_price || prod.msrp ? formatPrice(prod.original_price || prod.msrp, currencyCode) : '-'}</td>
+                      <td className="py-3 px-4 text-sm font-bold text-[#0f7a61] text-right whitespace-nowrap">{prod.asking_price || prod.price ? formatPrice(prod.asking_price || prod.price, currencyCode) : '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.country_of_origin || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.year_of_manufacture || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-blue-500 hover:underline">{prod.datasheet_certificate_link && prod.datasheet_certificate_link !== 'NIL' ? <a href={prod.datasheet_certificate_link} target="_blank" rel="noreferrer">View Link</a> : '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.gross_weight_per_unit || prod.total_weight || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.length || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.width || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.height || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.measurement_unit || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">{prod.stock_age || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.tested_and_verified || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.functional_status || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.visible_damage || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.missing_parts || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.warranty_available || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.safety_certificate_available || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600 truncate max-w-[150px]" title={prod.certificate_type || ''}>{prod.certificate_type || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.regulatory_approval || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.hazardous_material || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.recyclable || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">{prod.estimated_product_life_remaining || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.seller_custom_field_1 || '-'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{prod.seller_custom_field_2 || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
       </div>
     </main>
   );

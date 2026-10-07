@@ -981,77 +981,64 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
         data.append('vendor_id', String((session.user as any).vendor_id));
       }
       
-      // user_information (JSON String) with input sanitization
-      data.append('user_information', JSON.stringify({
-        full_name: sanitizeInput(formData.fullName),
-        email: sanitizeInput(formData.email.trim()),
-        mobile: sanitizeInput(formData.mobile),
-        location: sanitizeInput(formData.location)
-      }));
-      
-      // lot_details (JSON String) with input sanitization
+      // --- 1-3. Basic Info ---
+      data.append('title', sanitizeInput(String(formData.title || '')));
+      data.append('description', sanitizeInput(String(formData.description || '')));
+      data.append('key_brands_included', sanitizeInput(String(formData.keyBrands || '')));
+
+      // --- 4. Warehouse Images ---
+      mediaFiles.forEach((file) => {
+        data.append('warehouse_images', file);
+      });
+
+      // --- 5. Category Allocations ---
+      data.append('category_allocations', JSON.stringify(categoryAllocations.map(c => ({
+        category_name: c.category,
+        alocation: `${Number(c.allocation) || 0}%`
+      }))));
+
+      // --- 6-8. Condition & Age ---
+      data.append('condition', sanitizeInput(String(formData.condition || '')));
+      data.append('source_type', sanitizeInput(String(formData.sourceType || '')));
+      data.append('inventory_stock_age', sanitizeInput(String(formData.stockAge || '')));
+
+      // --- 9-10. Certificates ---
+      data.append('third_party_certificate_available', formData.certificate ? 'true' : 'false');
+      if (formData.certificate && formData.certificateDocument) {
+        data.append('third_party_documents', formData.certificateDocument);
+      }
+
+      // --- 11-15. Location, Units, & Metrics ---
+      data.append('inventory_location', sanitizeInput(String(formData.location || '')));
+      data.append('number_of_distinct_skus', String(formData.distinctSkus || manifestData.length || 0));
+      data.append('total_units_quantity', String(totalUnits || formData.manualUnits || 0));
+      data.append('primary_unit_type', sanitizeInput(String(formData.unitType || '')));
+      data.append('total_weight', sanitizeInput(String(formData.weight || '')));
+
+      // --- 17-21. Shipping & Logistics ---
+      data.append('load_type', sanitizeInput(String(formData.loadType || '')));
+      data.append('shipping_size', sanitizeInput(String(formData.shippingSize || '')));
+      data.append('lot_size', sanitizeInput(String(formData.lotSize || '')));
+      data.append('pallet_count', String(formData.palletCount || 1));
+      data.append('shipping_terms', sanitizeInput(String(formData.shippingTerms || '')));
+
+      // --- 22-26. Pricing & Sales Method ---
       const effectiveRetail = Number(formData.msrp) || totalRetail || 0;
       const discountVal = effectiveRetail > 0 && Number(formData.askPrice) > 0 
         ? Math.round(((effectiveRetail - Number(formData.askPrice)) / effectiveRetail) * 100)
         : 0;
+      data.append('currency', sanitizeInput(String(formData.currency || 'USD')));
+      data.append('total_est_retail_value_msrp', String(effectiveRetail));
+      data.append('ask_price_surplus_payout', String(formData.askPrice || 0));
+      data.append('offer', discountVal > 0 ? `${discountVal}% Off MSRP` : '');
+      data.append('excluded_export_countries', JSON.stringify(formData.excludedCountries || []));
+      data.append('sale_method', sanitizeInput(String(formData.saleMethod || 'offer')));
 
-      const primaryCat = categoryAllocations[0]?.category || formData.category || 'General Surplus';
-
-      data.append('lot_details', JSON.stringify({
-        title: sanitizeInput(String(formData.title || '')),
-        description: sanitizeInput(String(formData.description || '')),
-        inventory_location: sanitizeInput(String(formData.location || '')),
-        key_brands: sanitizeInput(String(formData.keyBrands || '')),
-        category: primaryCat,
-        primary_category: primaryCat,
-        category_allocations: categoryAllocations.map(c => ({
-          category: c.category,
-          percentage: Number(c.allocation) || 0
-        })),
-        condition: sanitizeInput(String(formData.condition || '')),
-        source_type: sanitizeInput(String(formData.sourceType || '')),
-        stock_age: sanitizeInput(String(formData.stockAge || '')),
-        load_type: sanitizeInput(String(formData.loadType || '')),
-        shipping_size: sanitizeInput(String(formData.shippingSize || '')),
-        lot_size: sanitizeInput(String(formData.lotSize || '')),
-        pallet_count: Number(formData.palletCount) || 1,
-        distinct_skus: formData.distinctSkus || manifestData.length || '',
-        weight: sanitizeInput(String(formData.weight || '')),
-        unit_type: sanitizeInput(String(formData.unitType || '')),
-        shipping_terms: sanitizeInput(String(formData.shippingTerms || '')),
-        currency: sanitizeInput(String(formData.currency || 'USD')),
-        msrp: sanitizeInput(String(formData.msrp || effectiveRetail || '')),
-        ask_price: sanitizeInput(String(formData.askPrice || '')),
-        offer: discountVal > 0 ? `${discountVal}% Off MSRP` : '',
-        allow_counter_offers: Boolean(formData.allowCounterOffers),
-        excluded_countries: formData.excludedCountries || [],
-        sale_method: sanitizeInput(String(formData.saleMethod || '')),
-        certificate_available: Boolean(formData.certificate),
-        total_units: totalUnits || Number(formData.manualUnits) || 0,
-        total_retail_value: effectiveRetail
-      }));
-      
-      // manifest_file & manifest_items (JSON String required by backend DRF JSONField)
-      const manifestJson = JSON.stringify(manifestData || []);
-      data.append('manifest_file', manifestJson);
-      data.append('manifest_items', manifestJson);
-      
-      // Binary Excel File Uploads
+      // --- 27. Manifest Data ---
       if (manifestFile) {
-        data.append('file', manifestFile);
-        data.append('excel_file', manifestFile);
-        data.append('document', manifestFile);
+        data.append('manifest_file', manifestFile);
       }
-
-      // Certificate Document File
-      if (formData.certificate && formData.certificateDocument) {
-        data.append('certificate_document', formData.certificateDocument);
-      }
-
-      // Product & Warehouse Media Files
-      mediaFiles.forEach((file) => {
-        data.append('media_files', file);
-      });
+      data.append('manifest_items', JSON.stringify(manifestData || []));
       
       const rawApiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
       const apiBase = rawApiBase.replace(/\/$/, '');

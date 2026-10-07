@@ -817,7 +817,6 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       const currentVendorId = vendorId || activeVendorId || userObj.vendor_id || userObj.id;
       data.append('vendor_id', String(currentVendorId || ''));
       if (userObj.email) {
-        data.append('user_email', String(userObj.email));
         data.append('email', String(userObj.email));
       }
 
@@ -850,7 +849,6 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       const { images, warrantyDocument, certificateDocument, ...cleanPayload } = formData;
       data.append('raw_data', JSON.stringify({
         vendor_id: currentVendorId,
-        user_email: userObj.email || null,
         ...cleanPayload,
         offer: pricingAnalysis.discountPercent || 0,
         warranty_document_name: formData.warrantyDocument?.name || null,

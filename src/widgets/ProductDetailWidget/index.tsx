@@ -274,7 +274,7 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
             <Link href="/" className="hover:text-gray-900 transition-colors shrink-0">Home</Link>
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
             <Link href="/buy" className="hover:text-gray-900 transition-colors shrink-0">Buy</Link>
-            {product.category && (
+            {product.category && product.category.toLowerCase() !== 'consumer electronics' && (
               <>
                 <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
                 <Link 
