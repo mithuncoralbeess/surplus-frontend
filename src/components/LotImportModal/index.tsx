@@ -886,6 +886,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
           return newErrs;
         });
       }
+      e.target.value = '';
     }
   };
 
@@ -1900,7 +1901,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                               <span className="text-[9px] truncate w-full">{f.name}</span>
                             </div>
                           ) : (
-                            <img src={URL.createObjectURL(f)} alt={f.name} className="w-full h-full object-cover" />
+                            <img src={mediaPreviews[i]?.url || ""} alt={f.name} className="w-full h-full object-cover" />
                           )}
                         </div>
                       ))}

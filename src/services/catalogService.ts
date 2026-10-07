@@ -293,8 +293,14 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
   }
   if (!image && Array.isArray(item.warehouse_images) && item.warehouse_images.length > 0) {
     const firstWh = item.warehouse_images[0];
-    if (typeof firstWh === 'string' && (firstWh.startsWith('http://') || firstWh.startsWith('https://'))) {
-      image = firstWh;
+    if (typeof firstWh === 'string') {
+      if (firstWh.startsWith('http://') || firstWh.startsWith('https://')) {
+        image = firstWh;
+      } else if (firstWh.startsWith('/')) {
+        const rawApiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+        const base = rawApiBase.replace(/\/$/, '');
+        image = `${base}${firstWh}`;
+      }
     }
   }
   if (!image || (!image.startsWith('http://') && !image.startsWith('https://') && !image.startsWith('/'))) {
@@ -386,7 +392,16 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     location: locationName,
     inventory_location: locationName,
     image: image,
-    warehouse_images: Array.isArray(item.warehouse_images) ? item.warehouse_images : [],
+    warehouse_images: Array.isArray(item.warehouse_images)
+      ? item.warehouse_images.map((wh: string) => {
+          if (typeof wh === 'string' && wh.startsWith('/')) {
+            const rawApiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+            const base = rawApiBase.replace(/\/$/, '');
+            return `${base}${wh}`;
+          }
+          return wh;
+        })
+      : [],
     category: categoryName,
     category_allocations: Array.isArray(item.category_allocations) ? item.category_allocations : [],
     key_brands_included: item.key_brands_included || '',

@@ -24,6 +24,7 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
   const { formatPrice } = useCurrency();
 
   const [lot, setLot] = useState<LotItem | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   // Table search & filter state
@@ -246,7 +247,7 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
             <div className="lg:col-span-6 space-y-4">
               <div className="relative aspect-[4/3] w-full bg-gray-50 rounded-xl sm:rounded-2xl border border-gray-100 overflow-hidden shadow-xs group">
                 <Image
-                  src={image}
+                  src={selectedImage || image}
                   alt={title}
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
@@ -273,9 +274,16 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                 <div className="flex gap-2 overflow-x-auto py-1">
                   {lot.warehouse_images.map((img, i) => (
                     img.startsWith('http') ? (
-                      <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 shrink-0">
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setSelectedImage(img)}
+                        className={`relative w-16 h-16 rounded-lg overflow-hidden border transition-all shrink-0 cursor-pointer ${
+                          (selectedImage || image) === img ? 'border-[#0a5c48] ring-2 ring-[#0a5c48]/40 scale-105' : 'border-gray-200 hover:border-gray-400 opacity-80 hover:opacity-100'
+                        }`}
+                      >
                         <Image src={img} alt={`Warehouse view ${i + 1}`} fill className="object-cover" />
-                      </div>
+                      </button>
                     ) : null
                   ))}
                 </div>
