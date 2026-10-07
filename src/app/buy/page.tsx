@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Metadata } from 'next';
 import BuyHeroBanner from '../../widgets/BuyHeroBanner';
 import BuyFeaturedLots from '../../widgets/BuyFeaturedLots';
-import BuySourcingFormats from '../../widgets/BuySourcingFormats';
 import BuyTrustGuarantee from '../../widgets/BuyTrustGuarantee';
 import { getPageMetadata } from '../../services/pageSeoService';
 
@@ -40,12 +39,11 @@ export default function BuyPage() {
       <BuyHeroBanner />
 
       {/* 2. Interactive Manifested Pallet Lots & Liquidation Batches */}
-      <BuyFeaturedLots />
+      <Suspense fallback={<div className="w-full py-24 text-center text-slate-400">Loading dynamic catalog...</div>}>
+        <BuyFeaturedLots />
+      </Suspense>
 
-      {/* 3. Procurement Channels & Interactive ROI / Margin Calculator */}
-      <BuySourcingFormats />
-
-      {/* 4. Institutional Buyer Protection Charter & Liquidation FAQ */}
+      {/* 3. Institutional Buyer Protection Charter & Liquidation FAQ */}
       <BuyTrustGuarantee />
     </main>
   );

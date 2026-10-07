@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ShieldCheck, Tag, CheckCircle2 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
+import { createProductUrl } from '../../lib/slugs';
 
 export interface ProductCardProps {
   id?: string | number;
@@ -60,12 +61,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
     : null;
   const displayOffer = formatOfferString(offer) || calculatedOffer;
 
-  const productLink = title 
-    ? `/browse?q=${encodeURIComponent(title)}` 
-    : sku 
-      ? `/browse?q=${encodeURIComponent(sku)}` 
-      : '/browse';
-
   const handleAddRfq = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -119,6 +114,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const categoryText = typeof category === 'object' && category !== null
     ? (category as any).name || (category as any).title || (category as any).slug || 'General'
     : String(category || 'General');
+
+  const productLink = createProductUrl(categoryText, title || sku || id);
 
   return (
     <div className="group relative flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full">
@@ -179,12 +176,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className="mt-auto space-y-2 mb-4">
           <div className="flex items-center justify-between text-[11px] xl:text-[13px]">
             <span className="text-gray-900">MOQ</span>
-            <span className="font-bold text-black">{moq.toLocaleString('en-US')}</span>
+            <span suppressHydrationWarning className="font-bold text-black">{moq.toLocaleString('en-US')}</span>
           </div>
           <div className="h-px w-full bg-gray-100"></div>
           <div className="flex items-center justify-between text-[11px] xl:text-[13px]">
             <span className="text-gray-900">Est. Qty</span>
-            <span className="font-bold text-black">{estQty.toLocaleString('en-US')}</span>
+            <span suppressHydrationWarning className="font-bold text-black">{estQty.toLocaleString('en-US')}</span>
           </div>
           <div className="h-px w-full bg-gray-100"></div>
         </div>
@@ -192,11 +189,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Price Row */}
         <div className="mb-4">
           <div className="flex items-baseline gap-2 flex-wrap mb-1">
-            <span className="text-[18px] xl:text-[22px] font-extrabold text-[#0f7a61] leading-none">
+            <span suppressHydrationWarning className="text-[18px] xl:text-[22px] font-extrabold text-[#0f7a61] leading-none">
               {formatPrice(price, currency)}
             </span>
             {originalPrice && originalPrice > price && (
-              <span className="text-md text-gray-700 line-through font-medium">
+              <span suppressHydrationWarning className="text-md text-gray-700 line-through font-medium">
                 {formatPrice(originalPrice, currency)}
               </span>
             )}

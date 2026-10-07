@@ -424,12 +424,12 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
                 <div>
                   <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Wholesale Liquidation Price</div>
                   <div className="flex items-baseline gap-2.5 sm:gap-3 flex-wrap">
-                    <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0f7a61]">
+                    <span suppressHydrationWarning className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0f7a61]">
                       {formatPrice(unitPrice, currencyCode)}
                     </span>
                     <span className="text-xs sm:text-sm text-gray-500 font-bold">/ unit</span>
                     {msrpPrice && msrpPrice > unitPrice && (
-                      <span className="text-sm sm:text-base text-gray-500 line-through font-semibold">
+                      <span suppressHydrationWarning className="text-sm sm:text-base text-gray-500 line-through font-semibold">
                         MSRP {formatPrice(msrpPrice, currencyCode)}
                       </span>
                     )}
@@ -437,7 +437,7 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
                   {product.liquidatingPrice && product.liquidatingPrice !== unitPrice && (
                     <div className="text-xs sm:text-sm font-semibold text-gray-700 mt-2 flex items-center gap-1.5 flex-wrap">
                       <span>Liquidation Floor:</span>
-                      <strong className="font-black text-gray-900">{formatPrice(product.liquidatingPrice, currencyCode)}</strong>
+                      <strong suppressHydrationWarning className="font-black text-gray-900">{formatPrice(product.liquidatingPrice, currencyCode)}</strong>
                     </div>
                   )}
                 </div>
@@ -487,7 +487,7 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
                   {/* Computed Price */}
                   <div className="text-right">
                     <span className="text-[10px] sm:text-xs md:text-sm text-gray-400 block font-medium">Subtotal ({quantity} units):</span>
-                    <span className="text-xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl font-black text-gray-900">
+                    <span suppressHydrationWarning className="text-xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl font-black text-gray-900">
                       {formatPrice(totalPrice, currencyCode)}
                     </span>
                   </div>

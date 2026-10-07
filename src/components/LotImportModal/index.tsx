@@ -1029,7 +1029,11 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
         : 0;
       data.append('currency', sanitizeInput(String(formData.currency || 'USD')));
       data.append('total_est_retail_value_msrp', String(effectiveRetail));
+      data.append('total_retail', String(effectiveRetail));
+      data.append('msrp', String(effectiveRetail));
       data.append('ask_price_surplus_payout', String(formData.askPrice || 0));
+      data.append('asking_price', String(formData.askPrice || 0));
+      data.append('price', String(formData.askPrice || 0));
       data.append('offer', discountVal > 0 ? `${discountVal}% Off MSRP` : '');
       data.append('excluded_export_countries', JSON.stringify(formData.excludedCountries || []));
       data.append('sale_method', sanitizeInput(String(formData.saleMethod || 'offer')));

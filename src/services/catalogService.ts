@@ -1,4 +1,5 @@
 import { apiClient, ApiResponse } from './apiClient';
+import { slugify } from '../lib/slugs';
 
 export interface ProductItem {
   id: string | number;
@@ -102,6 +103,13 @@ export interface LotRequestPayload {
   total_retail: number;
   lot_title: string;
   asking_price: number;
+  price?: number;
+  msrp?: number;
+  offer?: string | number;
+  currency?: string;
+  pallet_count?: number;
+  condition?: string;
+  category?: string;
   location: string;
   notes?: string;
 }
@@ -402,49 +410,68 @@ export const catalogService = {
   },
 
   /**
-   * Fetch single product by ID or SKU from /api/products/:id/
+   * Fetch single product by ID, SKU, or slugified title from /api/products/:id/
    * Optimized with instant in-memory cache and parallel execution.
    */
   async getProductById(id: string | number): Promise<ProductItem | null> {
     if (!id) return null;
     const key = String(id);
+    const keyLower = key.toLowerCase().trim();
+    const targetSlug = slugify(key);
 
     // 1. Instant Cache Lookup (0ms latency if already loaded)
     if (productCache.has(key)) {
       return productCache.get(key)!;
     }
+    if (targetSlug && productCache.has(targetSlug)) {
+      return productCache.get(targetSlug)!;
+    }
     if (allProductsCache) {
       const match = allProductsCache.find(
-        (p) => String(p.id) === key || String(p.sku) === key || String(p.product_id) === key
+        (p) =>
+          String(p.id) === key ||
+          String(p.sku || '').toLowerCase() === keyLower ||
+          String(p.product_id || '').toLowerCase() === keyLower ||
+          (targetSlug && slugify(p.title) === targetSlug) ||
+          p.title.toLowerCase().trim() === keyLower
       );
       if (match) {
         productCache.set(key, match);
+        if (targetSlug) productCache.set(targetSlug, match);
         return match;
       }
     }
 
     // 2. Parallel API Execution (prevents sequential fallback delay)
     try {
+      const isNumericId = /^\d+$/.test(key);
       const [singleRes, listRes] = await Promise.allSettled([
-        apiClient(`/api/products/${id}/`, { silent: true }),
+        isNumericId ? apiClient(`/api/products/${id}/`, { silent: true }) : Promise.resolve(null),
         allProductsCache ? Promise.resolve(null) : this.getProducts()
       ]);
 
-      if (singleRes.status === 'fulfilled' && singleRes.value.success && singleRes.value.data) {
+      if (singleRes.status === 'fulfilled' && singleRes.value && singleRes.value.success && singleRes.value.data) {
         const mapped = mapApiProductToProductItem(singleRes.value.data, 0);
         productCache.set(key, mapped);
         if (mapped.sku) productCache.set(String(mapped.sku), mapped);
         if (mapped.product_id) productCache.set(String(mapped.product_id), mapped);
+        if (targetSlug) productCache.set(targetSlug, mapped);
         return mapped;
       }
 
       // Fallback matching from parallel list result
       const list = listRes.status === 'fulfilled' && Array.isArray(listRes.value) ? listRes.value : (allProductsCache || []);
       const match = list.find(
-        (p) => String(p.id) === key || String(p.sku) === key || String(p.product_id) === key
+        (p) =>
+          String(p.id) === key ||
+          String(p.sku || '').toLowerCase() === keyLower ||
+          String(p.product_id || '').toLowerCase() === keyLower ||
+          (targetSlug && slugify(p.title) === targetSlug) ||
+          p.title.toLowerCase().trim() === keyLower
       );
       if (match) {
         productCache.set(key, match);
+        if (targetSlug) productCache.set(targetSlug, match);
         return match;
       }
     } catch (err) {
@@ -455,24 +482,33 @@ export const catalogService = {
   },
 
   /**
-   * Fetch single lot by ID
+   * Fetch single lot by ID, lot_id, or slugified title
    */
   async getLotById(id: string | number): Promise<LotItem | null> {
     if (!id) return null;
     const key = String(id);
+    const keyLower = key.toLowerCase().trim();
+    const targetSlug = slugify(key);
 
     try {
+      const isNumericId = /^\d+$/.test(key);
       const [singleRes, listRes] = await Promise.allSettled([
-        apiClient(`/api/lots/${id}/`, { silent: true }),
+        isNumericId ? apiClient(`/api/lots/${id}/`, { silent: true }) : Promise.resolve(null),
         this.getLots()
       ]);
 
-      if (singleRes.status === 'fulfilled' && singleRes.value.success && singleRes.value.data) {
+      if (singleRes.status === 'fulfilled' && singleRes.value && singleRes.value.success && singleRes.value.data) {
         return mapApiLotToLotItem(singleRes.value.data, 0);
       }
 
       const list = listRes.status === 'fulfilled' && Array.isArray(listRes.value) ? listRes.value : [];
-      const match = list.find((l) => String(l.id) === key || encodeURIComponent(l.title) === key);
+      const match = list.find(
+        (l) =>
+          String(l.id).toLowerCase() === keyLower ||
+          (targetSlug && slugify(l.title) === targetSlug) ||
+          l.title.toLowerCase().trim() === keyLower ||
+          encodeURIComponent(l.title) === key
+      );
       if (match) return match;
       
     } catch (err) {
@@ -483,9 +519,34 @@ export const catalogService = {
   },
 
   async submitLotRequest(payload: LotRequestPayload): Promise<ApiResponse> {
+    const askingPrice = Number(payload.asking_price || payload.price || 0);
+    const retailMsrp = Number(payload.total_retail || payload.msrp || 0);
+    const discount = retailMsrp > askingPrice && retailMsrp > 0
+      ? Math.round(((retailMsrp - askingPrice) / retailMsrp) * 100)
+      : 0;
+    const computedOffer = payload.offer !== undefined
+      ? payload.offer
+      : (discount > 0 ? `${discount}% Off MSRP` : '');
+
+    const enrichedPayload = {
+      ...payload,
+      title: payload.lot_title,
+      price: askingPrice,
+      asking_price: askingPrice,
+      ask_price_surplus_payout: askingPrice,
+      msrp: retailMsrp,
+      total_retail: retailMsrp,
+      total_est_retail_value_msrp: retailMsrp,
+      total_units: payload.total_units,
+      total_units_quantity: payload.total_units,
+      inventory_location: payload.location,
+      offer: computedOffer,
+      currency: payload.currency || 'USD',
+    };
+
     return apiClient('/api/submit-lot-request/', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify(enrichedPayload),
     });
   },
 };

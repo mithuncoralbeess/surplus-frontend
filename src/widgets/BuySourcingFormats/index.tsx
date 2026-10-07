@@ -164,7 +164,7 @@ export default function BuySourcingFormats() {
                 <div>
                   <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
                     <span className="text-slate-300">Lot Wholesale Purchase Price</span>
-                    <span className="text-white font-mono text-sm font-bold bg-white/10 px-2.5 py-0.5 rounded-lg">
+                    <span suppressHydrationWarning className="text-white font-mono text-sm font-bold bg-white/10 px-2.5 py-0.5 rounded-lg">
                       {formatPrice(lotCost)}
                     </span>
                   </div>
@@ -187,7 +187,7 @@ export default function BuySourcingFormats() {
                 <div>
                   <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
                     <span className="text-slate-300">Total Retail MSRP (Manifest Value)</span>
-                    <span className="text-emerald-300 font-mono text-sm font-bold bg-white/10 px-2.5 py-0.5 rounded-lg">
+                    <span suppressHydrationWarning className="text-emerald-300 font-mono text-sm font-bold bg-white/10 px-2.5 py-0.5 rounded-lg">
                       {formatPrice(retailMsrp)}
                     </span>
                   </div>
@@ -210,7 +210,7 @@ export default function BuySourcingFormats() {
                 <div>
                   <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
                     <span className="text-slate-300">Estimated Freight & Prep Handling</span>
-                    <span className="text-slate-200 font-mono text-sm font-bold bg-white/10 px-2.5 py-0.5 rounded-lg">
+                    <span suppressHydrationWarning className="text-slate-200 font-mono text-sm font-bold bg-white/10 px-2.5 py-0.5 rounded-lg">
                       {formatPrice(logisticsCost)}
                     </span>
                   </div>
@@ -237,14 +237,14 @@ export default function BuySourcingFormats() {
                 <div className="text-xs font-bold uppercase tracking-wider text-emerald-300 mb-1">
                   Projected Financial Return
                 </div>
-                <div className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">
+                <div suppressHydrationWarning className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">
                   +{formatPrice(grossProfit)}
                 </div>
 
                 <div className="space-y-3 pb-6 border-b border-white/10 text-xs">
                   <div className="flex items-center justify-between text-slate-300">
                     <span>Total Invested Capital:</span>
-                    <span className="font-bold text-white font-mono">{formatPrice(totalCost)}</span>
+                    <span suppressHydrationWarning className="font-bold text-white font-mono">{formatPrice(totalCost)}</span>
                   </div>
 
                   <div className="flex items-center justify-between text-slate-300">

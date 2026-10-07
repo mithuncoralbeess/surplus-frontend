@@ -1,12 +1,34 @@
-"use client";
-
 import React from 'react';
-import { useParams } from 'next/navigation';
+import { Metadata } from 'next';
 import LotDetailWidget from '../../../../widgets/LotDetailWidget';
+import { getPageMetadata } from '../../../../services/pageSeoService';
 
-export default function LotDetailPage() {
-  const params = useParams();
-  const id = params?.id ? String(params.id) : '';
+interface PageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
 
-  return <LotDetailWidget lotId={id} />;
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const { id } = await props.params;
+  const decodedId = decodeURIComponent(id || '').replace(/-/g, ' ');
+  const readableTitle = decodedId.replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const fallbackMetadata: Metadata = {
+    title: `${readableTitle} | Verified Wholesale Lot on Surplus Market`,
+    description: `Inspect manifested liquidation batch ${readableTitle}. Detailed line-item manifest, escrow protection hold, and LTL/FTL logistics dispatch.`,
+  };
+
+  return getPageMetadata(`lot-${id}`, fallbackMetadata);
+}
+
+export default async function LotDetailPage(props: PageProps) {
+  const { id } = await props.params;
+  const lotIdentifier = decodeURIComponent(id || '');
+
+  return (
+    <main className="min-h-screen bg-[#fcfbf7] flex flex-col w-full">
+      <LotDetailWidget lotId={lotIdentifier} />
+    </main>
+  );
 }

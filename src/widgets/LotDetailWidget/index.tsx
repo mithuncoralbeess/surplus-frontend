@@ -215,11 +215,11 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
               <div className="bg-[#f8faf9] p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-emerald-100 flex flex-col justify-center gap-2">
                 <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">Lot Price</div>
                 <div className="flex items-baseline gap-2.5 sm:gap-3 flex-wrap">
-                  <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0f7a61]">
+                  <span suppressHydrationWarning className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0f7a61]">
                     {formatPrice(price, currencyCode)}
                   </span>
                   {msrp > price && (
-                    <span className="text-sm sm:text-base text-gray-500 line-through font-semibold">
+                    <span suppressHydrationWarning className="text-sm sm:text-base text-gray-500 line-through font-semibold">
                       Est. MSRP {formatPrice(msrp, currencyCode)}
                     </span>
                   )}
@@ -231,7 +231,7 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="block text-xs text-gray-500 font-bold uppercase mb-1">Total Units</span>
-                    <span className="text-lg font-extrabold text-gray-900">{units.toLocaleString()}</span>
+                    <span suppressHydrationWarning className="text-lg font-extrabold text-gray-900">{units.toLocaleString()}</span>
                   </div>
                   <div>
                     <span className="block text-xs text-gray-500 font-bold uppercase mb-1">Pallets</span>
