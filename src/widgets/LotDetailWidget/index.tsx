@@ -651,8 +651,9 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
               <table className="w-full text-left border-collapse min-w-[3400px]">
                 <thead className="bg-[#f8faf9] border-b border-gray-200 text-gray-600">
                   <tr>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider sticky left-0 bg-[#f8faf9] z-20 shadow-[1px_0_0_#e5e7eb] w-[60px] text-center">#</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider sticky left-[60px] bg-[#f8faf9] z-20 shadow-[1px_0_0_#e5e7eb] min-w-[280px]">Product Name & Model</th>
+                    <th className="py-3.5 px-3 text-xs font-bold uppercase tracking-wider sticky left-0 bg-[#f8faf9] z-20 shadow-[1px_0_0_#e5e7eb] w-[50px] text-center">#</th>
+                    <th className="py-3.5 px-3 text-xs font-bold uppercase tracking-wider sticky left-[50px] bg-[#f8faf9] z-20 shadow-[1px_0_0_#e5e7eb] w-[65px] text-center">Image</th>
+                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider sticky left-[115px] bg-[#f8faf9] z-20 shadow-[1px_0_0_#e5e7eb] min-w-[280px]">Product Name & Model</th>
                     <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider min-w-[140px]">Brand</th>
                     <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider min-w-[180px]">Category / Subcategory</th>
                     <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-center min-w-[100px]">Available Qty</th>
@@ -695,12 +696,25 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                     return (
                       <tr key={idx} className="hover:bg-emerald-50/30 transition-colors group">
                         {/* Sticky S.No */}
-                        <td className="py-3 px-4 text-xs font-mono text-gray-500 text-center sticky left-0 bg-white group-hover:bg-[#f6faf8] z-10 shadow-[1px_0_0_#e5e7eb]">
+                        <td className="py-3 px-3 text-xs font-mono text-gray-500 text-center sticky left-0 bg-white group-hover:bg-[#f6faf8] z-10 shadow-[1px_0_0_#e5e7eb]">
                           {sNo}
                         </td>
 
+                        {/* Sticky Row Image */}
+                        <td className="py-2 px-2.5 sticky left-[50px] bg-white group-hover:bg-[#f6faf8] z-10 shadow-[1px_0_0_#e5e7eb] w-[65px]">
+                          <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 shrink-0">
+                            <Image
+                              src={prod.image || prod.image_url || prod.photo || lot.image}
+                              alt={name}
+                              fill
+                              sizes="40px"
+                              className="object-cover"
+                            />
+                          </div>
+                        </td>
+
                         {/* Sticky Product Name & Model */}
-                        <td className="py-3 px-4 sticky left-[60px] bg-white group-hover:bg-[#f6faf8] z-10 shadow-[1px_0_0_#e5e7eb]">
+                        <td className="py-3 px-4 sticky left-[115px] bg-white group-hover:bg-[#f6faf8] z-10 shadow-[1px_0_0_#e5e7eb]">
                           <div className="font-bold text-gray-900 leading-snug line-clamp-2" title={name}>
                             {name}
                           </div>

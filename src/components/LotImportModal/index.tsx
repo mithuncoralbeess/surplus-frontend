@@ -987,9 +987,14 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       data.append('key_brands_included', sanitizeInput(String(formData.keyBrands || '')));
 
       // --- 4. Warehouse Images ---
-      // Send an array of image file names as JSON (backend expects JSON format)
-      const warehouseImageNames = mediaFiles.map((file) => file.name);
-      data.append('warehouse_images', JSON.stringify(warehouseImageNames));
+      // Send raw binary files via FormData so backend receives actual UploadedFiles in request.FILES
+      if (Array.isArray(mediaFiles) && mediaFiles.length > 0) {
+        mediaFiles.forEach((file) => {
+          if (file) {
+            data.append('warehouse_images', file, file.name);
+          }
+        });
+      }
 
       // --- 5. Category Allocations ---
       data.append('category_allocations', JSON.stringify(categoryAllocations.map(c => ({
