@@ -263,6 +263,7 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
   const discountPercent = msrpPrice && msrpPrice > unitPrice
     ? Math.round(((msrpPrice - unitPrice) / msrpPrice) * 100)
     : 0;
+  const displayOffer = product.offer || (discountPercent > 0 ? `${discountPercent}% OFF` : null);
 
   return (
     <main className="w-full min-h-screen bg-[#fcfbf7] pb-16 sm:pb-24 pt-4 sm:pt-6">
@@ -326,6 +327,12 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
                   {product.isNew && (
                     <span className="bg-[#0f7a61] text-white px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-extrabold uppercase shadow-xs">
                       New Arrival
+                    </span>
+                  )}
+                  {displayOffer && (
+                    <span className="bg-rose-500 text-white px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-extrabold uppercase shadow-xs flex items-center gap-1">
+                      <Tag className="w-3 h-3" />
+                      <span>{displayOffer}</span>
                     </span>
                   )}
                 </div>
@@ -431,6 +438,12 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
                     {msrpPrice && msrpPrice > unitPrice && (
                       <span suppressHydrationWarning className="text-sm sm:text-base text-gray-500 line-through font-semibold">
                         MSRP {formatPrice(msrpPrice, currencyCode)}
+                      </span>
+                    )}
+                    {displayOffer && (
+                      <span className="bg-rose-50 border border-rose-200 text-rose-700 px-2.5 py-0.5 rounded-full text-xs font-extrabold flex items-center gap-1 shadow-xs">
+                        <Tag className="w-3 h-3 text-rose-600" />
+                        <span>{displayOffer}</span>
                       </span>
                     )}
                   </div>

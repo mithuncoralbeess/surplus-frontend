@@ -170,12 +170,14 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
   
   let offerTag: string | undefined = undefined;
   if (rawOffer) {
-    if (rawOffer.endsWith('%') || rawOffer.toLowerCase().includes('off')) {
+    if (rawOffer.endsWith('%') || rawOffer.toLowerCase().includes('off') || rawOffer.toLowerCase().includes('msrp')) {
       offerTag = rawOffer;
     } else {
       const numOffer = parseFloat(rawOffer);
-      if (!isNaN(numOffer) && numOffer > 0) {
-        offerTag = `${numOffer}% OFF`;
+      if (!isNaN(numOffer)) {
+        if (numOffer > 0) {
+          offerTag = `${Math.round(numOffer)}% OFF`;
+        }
       } else {
         offerTag = `${rawOffer}% OFF`;
       }
@@ -254,12 +256,14 @@ export function mapApiLotToLotItem(item: any, index: number): LotItem {
   const rawLotOffer = item.offer !== undefined && item.offer !== null && String(item.offer).trim() !== '' ? String(item.offer).trim() : undefined;
   let lotOfferTag: string | undefined = undefined;
   if (rawLotOffer) {
-    if (rawLotOffer.endsWith('%') || rawLotOffer.toLowerCase().includes('off')) {
+    if (rawLotOffer.endsWith('%') || rawLotOffer.toLowerCase().includes('off') || rawLotOffer.toLowerCase().includes('msrp')) {
       lotOfferTag = rawLotOffer;
     } else {
       const numLotOffer = parseFloat(rawLotOffer);
-      if (!isNaN(numLotOffer) && numLotOffer > 0) {
-        lotOfferTag = `${numLotOffer}% OFF`;
+      if (!isNaN(numLotOffer)) {
+        if (numLotOffer > 0) {
+          lotOfferTag = `${Math.round(numLotOffer)}% OFF`;
+        }
       } else {
         lotOfferTag = `${rawLotOffer}% OFF`;
       }

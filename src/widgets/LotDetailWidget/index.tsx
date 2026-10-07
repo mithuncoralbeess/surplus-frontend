@@ -223,6 +223,12 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                       Est. MSRP {formatPrice(msrp, currencyCode)}
                     </span>
                   )}
+                  {offer && (
+                    <span className="bg-rose-50 border border-rose-200 text-rose-700 px-2.5 py-0.5 rounded-full text-xs font-extrabold flex items-center gap-1 shadow-xs">
+                      <Tag className="w-3 h-3 text-rose-600" />
+                      <span>{offer}</span>
+                    </span>
+                  )}
                 </div>
               </div>
 

@@ -98,9 +98,20 @@ const LotCard: React.FC<LotCardProps> = ({
   const lotIdText = String(id || 'LOT');
   const lotLink = createLotUrl(title || lotIdText);
 
-  const displayOffer = offer 
-    ? (offer.endsWith('%') || offer.includes('OFF') ? offer : `${offer}% OFF`)
-    : (discountPercent > 0 ? `-${discountPercent}% MSRP` : null);
+  const formatOfferBadge = (raw?: string) => {
+    if (!raw) return null;
+    const trimmed = raw.trim();
+    if (trimmed.endsWith('%') || trimmed.toLowerCase().includes('off') || trimmed.toLowerCase().includes('msrp')) {
+      return trimmed;
+    }
+    const num = parseFloat(trimmed);
+    if (!isNaN(num)) {
+      return num > 0 ? `${Math.round(num)}% OFF` : null;
+    }
+    return trimmed;
+  };
+
+  const displayOffer = formatOfferBadge(offer) || (discountPercent > 0 ? `-${discountPercent}% MSRP` : null);
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col group h-full">

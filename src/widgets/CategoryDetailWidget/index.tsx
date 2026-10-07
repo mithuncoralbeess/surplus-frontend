@@ -199,14 +199,8 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
               filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
-                  image={product.image}
-                  category={product.category}
-                  title={product.title}
-                  moq={product.moq}
-                  estQty={product.estQty}
-                  price={product.price}
-                  isCertified={product.isCertified}
-                  isNew={product.isNew}
+                  {...product}
+                  isLoading={false}
                 />
               ))
             ) : (

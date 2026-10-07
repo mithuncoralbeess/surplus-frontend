@@ -46,12 +46,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const formatOfferString = (raw?: string) => {
     if (!raw) return null;
     const trimmed = raw.trim();
-    if (trimmed.endsWith('%') || trimmed.toLowerCase().includes('off')) {
+    if (trimmed.endsWith('%') || trimmed.toLowerCase().includes('off') || trimmed.toLowerCase().includes('msrp')) {
       return trimmed;
     }
     const num = parseFloat(trimmed);
-    if (!isNaN(num) && num > 0) {
-      return `${num}% OFF`;
+    if (!isNaN(num)) {
+      return num > 0 ? `${Math.round(num)}% OFF` : null;
     }
     return trimmed;
   };
