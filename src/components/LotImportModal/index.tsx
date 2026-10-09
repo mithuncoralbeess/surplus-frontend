@@ -1123,12 +1123,14 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       data.append('description', sanitizeInput(String(formData.description || '')));
       data.append('key_brands_included', sanitizeInput(String(formData.keyBrands || '')));
 
-      // --- 4. Warehouse Images ---
-      // Send raw binary files via FormData so backend receives actual UploadedFiles in request.FILES
+      // --- 4. Warehouse Images & Media ---
+      // Send raw binary files via FormData under all recognized keys so backend receives actual UploadedFiles in request.FILES
       if (Array.isArray(mediaFiles) && mediaFiles.length > 0) {
         mediaFiles.forEach((file) => {
           if (file) {
             data.append('warehouse_images', file, file.name);
+            data.append('images', file, file.name);
+            data.append('media_files', file, file.name);
           }
         });
       }
@@ -1318,18 +1320,29 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                 </div>
               )}
 
-              <a 
-                href={encodeURI('/Surplus Market XLSX Format.xlsx')}
-                download="Surplus Market XLSX Format.xlsx"
-                onClick={(e) => {
-                  e.preventDefault();
-                  downloadStandardTemplate();
-                }}
-                className="flex items-center text-sm font-semibold text-[#0a5c48] hover:underline mt-3 cursor-pointer"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download our standard template
-              </a>
+              <div className="flex flex-wrap items-center gap-3 mt-3">
+                <a 
+                  href={encodeURI('/Surplus Market XLSX Format.xlsx')}
+                  download="Surplus Market XLSX Format.xlsx"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    downloadStandardTemplate();
+                  }}
+                  className="flex items-center text-sm font-semibold text-[#0a5c48] hover:underline cursor-pointer"
+                >
+                  <Download className="w-4 h-4 mr-1.5" />
+                  Download blank template
+                </a>
+                <span className="text-gray-300 hidden sm:inline">•</span>
+                <a 
+                  href={encodeURI('/Sample_Lot_Submission_Example.xlsx')}
+                  download="Sample_Lot_Submission_Example.xlsx"
+                  className="flex items-center text-sm font-semibold text-[#0a5c48] hover:underline cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+                  Download sample filled manifest (.xlsx)
+                </a>
+              </div>
 
               {/* Parsed Excel Inventory Sheet Data Preview Table */}
               {manifestData.length > 0 && (

@@ -87,10 +87,10 @@ const PalletDeals = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
         >
           {loading ? (
-            Array.from({ length: 4 }).map((_, idx) => (
+            Array.from({ length: 6 }).map((_, idx) => (
               <LotCard
                 key={`skeleton-${idx}`}
                 image=""

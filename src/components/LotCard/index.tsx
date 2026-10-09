@@ -3,15 +3,15 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  Package, 
-  MapPin, 
-  Tag, 
-  FileSpreadsheet, 
-  TrendingUp, 
-  Boxes, 
-  Eye, 
-  ArrowRight 
+import {
+  Package,
+  MapPin,
+  Tag,
+  FileSpreadsheet,
+  TrendingUp,
+  Boxes,
+  Eye,
+  ArrowRight
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import { createLotUrl } from '../../lib/slugs';
@@ -193,9 +193,9 @@ const LotCard: React.FC<LotCardProps> = ({
         </Link>
 
         {/* Liquidation Specs Breakdown */}
-        <div className="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-100 mb-5 space-y-2 mt-auto">
+        <div className="bg-slate-50/80 rounded-2xl border border-slate-100 mb-5 space-y-2 mt-auto">
           {/* Volume & Units */}
-          <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center justify-between text-sm">
             <span className="text-slate-500 flex items-center gap-1.5 font-medium">
               <Package className="w-3.5 h-3.5 text-slate-400" />
               Volume & Units
