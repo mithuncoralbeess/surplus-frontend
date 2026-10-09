@@ -41,17 +41,24 @@ const RegionSelector = () => {
         title="Change shopping region"
       >
         {ActiveFlag ? (
-          <span className="w-4 h-3 inline-block overflow-hidden rounded-[2px] shadow-sm shrink-0">
-            <ActiveFlag title={selectedRegion} className="w-full h-full object-cover" />
+          <span 
+            className="region-flag-container relative inline-flex items-center justify-center shrink-0 overflow-hidden rounded-[2px] border border-black/15 shadow-xs bg-white"
+            style={{ width: '20px', height: '14px', minWidth: '20px', minHeight: '14px' }}
+          >
+            <ActiveFlag 
+              title={selectedRegion} 
+              className="region-flag-svg"
+              style={{ width: '100%', height: '100%', display: 'block' }}
+            />
           </span>
         ) : (
-          <Globe className="w-3 h-3 text-gray-500" />
+          <Globe className="w-3.5 h-3.5 text-gray-500" />
         )}
         <span className="font-medium text-gray-800 text-[12px]">{getShortRegionName(selectedRegion)}</span>
         {isOpen ? (
-          <ChevronUp className="w-3 h-3 text-gray-500" />
+          <ChevronUp className="selector-chevron w-3 h-3 text-gray-500 shrink-0" style={{ width: '12px', height: '12px' }} />
         ) : (
-          <ChevronDown className="w-3 h-3 text-gray-500" />
+          <ChevronDown className="selector-chevron w-3 h-3 text-gray-500 shrink-0" style={{ width: '12px', height: '12px' }} />
         )}
       </div>
 
@@ -90,8 +97,15 @@ const RegionSelector = () => {
                 >
                   <div className="flex items-center gap-2.5">
                     {CountryFlag && (
-                      <span className="w-5 h-3.5 inline-block overflow-hidden rounded-[2px] shadow-sm shrink-0">
-                        <CountryFlag title={region} className="w-full h-full object-cover" />
+                      <span 
+                        className="region-flag-container relative inline-flex items-center justify-center shrink-0 overflow-hidden rounded-[2px] border border-gray-200/90 shadow-xs bg-white"
+                        style={{ width: '24px', height: '16px', minWidth: '24px', minHeight: '16px' }}
+                      >
+                        <CountryFlag 
+                          title={region} 
+                          className="region-flag-svg"
+                          style={{ width: '100%', height: '100%', display: 'block' }}
+                        />
                       </span>
                     )}
                     <span>{region}</span>

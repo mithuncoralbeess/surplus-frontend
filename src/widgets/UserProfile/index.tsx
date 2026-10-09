@@ -174,7 +174,13 @@ export default function UserProfileWidget() {
     e.preventDefault();
     setIsSaving(true);
     setSaveError('');
-    
+
+    if (!businessLocation || !businessLocation.trim()) {
+      setSaveError('Business Location is required.');
+      setIsSaving(false);
+      return;
+    }
+
     try {
       const payload: any = {
         email: email,
@@ -554,9 +560,10 @@ export default function UserProfileWidget() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-1">Business Location</label>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">Business Location *</label>
                       <input 
                         type="text" 
+                        required
                         value={businessLocation} 
                         onChange={(e) => setBusinessLocation(e.target.value)}
                         placeholder="Enter business location (e.g. Dubai, UAE)"

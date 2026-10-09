@@ -16,7 +16,7 @@ export default function ToastContainer({ toasts, onDismiss }: ToastContainerProp
   return (
     <div
       aria-live="polite"
-      className="fixed bottom-5 right-5 z-[99999] flex flex-col gap-3 max-w-md w-full pointer-events-none px-4 sm:px-0"
+      className="fixed bottom-24 right-5 sm:bottom-24 sm:right-6 z-[99999] flex flex-col gap-3 max-w-md w-full pointer-events-none px-4 sm:px-0"
     >
       {toasts.map(toast => {
         const type = toast.type || 'info';

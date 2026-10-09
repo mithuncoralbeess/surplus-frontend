@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSession } from 'next-auth/react';
-import { X, UploadCloud, FileSpreadsheet, ChevronRight, Check, ArrowLeft, Download, Tag, Plus, Percent, Trash2, Edit2, User, CheckCircle2, Image as ImageIcon, Film, DollarSign, Info, ShieldCheck } from 'lucide-react';
+import { X, UploadCloud, FileSpreadsheet, ChevronRight, Check, ArrowLeft, Download, Tag, Plus, Percent, Trash2, Edit2, User, CheckCircle2, Image as ImageIcon, Film, DollarSign, Info, ShieldCheck, Eye, Sparkles, ExternalLink } from 'lucide-react';
 import { z } from 'zod';
 import { validateManifestUpload } from '../../lib/security/fileUploadValidator';
 import { sanitizeInput } from '../../lib/security/sanitizer';
@@ -160,9 +160,9 @@ const step3Schema = z.object({
   const retail = parseFloat(data.msrp || String(data.totalRetail || 0));
   if (isNaN(ask) || isNaN(retail) || retail <= 0) return true;
   const discountPercent = ((retail - ask) / retail) * 100;
-  return discountPercent >= 39.999;
+  return discountPercent >= 59.999;
 }, {
-  message: "Ask Price must have at least a 40% discount off Total Est. Retail Value (MSRP)",
+  message: "Ask Price must have at least a 60% discount off Total Est. Retail Value (MSRP)",
   path: ["askPrice"]
 });
 
@@ -439,6 +439,7 @@ const STEPS = [
 const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [manifestData, setManifestData] = useState<any[]>([]);
+  const [selectedPreviewItem, setSelectedPreviewItem] = useState<any | null>(null);
   const [mounted, setMounted] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [categoryAllocations, setCategoryAllocations] = useState<CategoryAllocation[]>([
@@ -537,7 +538,8 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       };
     }
 
-    const maxAllowedPrice = (retail * 0.6).toFixed(2);
+    // 60% discount off retail means max allowed price is 40% of retail (retail * 0.40)
+    const maxAllowedPrice = (retail * 0.40).toFixed(2);
 
     if (isNaN(ask) || ask <= 0) {
       return {
@@ -556,13 +558,13 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
 
     const discountPercent = Number((((retail - ask) / retail) * 100).toFixed(1));
     const isBelowRetail = ask < retail;
-    const meetsMinDiscount = isBelowRetail && discountPercent >= 39.99;
+    const meetsMinDiscount = isBelowRetail && discountPercent >= 59.99;
 
     let error = '';
     if (!isBelowRetail) {
       error = 'Ask price must be strictly below the Total Est. Retail Value (MSRP).';
     } else if (!meetsMinDiscount) {
-      error = `Ask price must have at least a 40% discount off MSRP (Max allowed: ${currSymbol} ${maxAllowedPrice}). Current discount: ${discountPercent}%.`;
+      error = `Ask price must have at least a 60% discount off MSRP (Max allowed: ${currSymbol} ${maxAllowedPrice}). Current discount: ${discountPercent}%.`;
     }
 
     return {
@@ -644,10 +646,11 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
 
           const workbook = XLSX.read(buffer, { type: 'array' });
 
-          // 1. Target specifically the 'Inventory' tab (case-insensitive check)
+          // 1. Target specifically the 'Inventory' tab (case-insensitive check) or the sole sheet for CSV files
+          const isCsv = selectedFile.name.toLowerCase().endsWith('.csv');
           const inventorySheetName = workbook.SheetNames.find(
             name => name.trim().toLowerCase() === 'inventory'
-          );
+          ) || (isCsv && workbook.SheetNames.length === 1 ? workbook.SheetNames[0] : null);
 
           if (!inventorySheetName) {
             setFormErrors(prev => ({
@@ -675,58 +678,79 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
             return;
           }
 
-          // 2. Header Validation Check
-          const rawHeaderRow = validRows[0].map(cell => String(cell || '').trim());
-          const normalizedHeaderRow = rawHeaderRow.map(h => h.replace(/\*+$/g, '').replace(/^\*+/g, '').trim().toLowerCase());
-
-          const REQUIRED_MANDATORY_HEADERS = [
-            { key: 'sno', label: 'S.No*', matches: ['s.no', 'sno', 'serial no', 's.no.'] },
-            { key: 'productName', label: 'Product Name*', matches: ['product name', 'title', 'item name'] },
-            { key: 'productDescription', label: 'Product Description*', matches: ['product description', 'description', 'notes'] },
-            { key: 'productCategory', label: 'Product Category*', matches: ['product category', 'category'] },
-            { key: 'subcategory', label: 'Subcategory*', matches: ['subcategory', 'sub category'] },
-            { key: 'quantity', label: 'Available Quantity*', matches: ['available quantity', 'quantity', 'qty'] },
+          // 2. Strict Header Validation Check
+          const TEMPLATE_HEADER_DEFINITIONS = [
+            { key: 'sno', label: 'S.No*', mandatory: true, matches: ['s.no', 'sno', 'serial no', 's.no.'] },
+            { key: 'productName', label: 'Product Name*', mandatory: true, matches: ['product name', 'title', 'item name'] },
+            { key: 'productDescription', label: 'Product Description*', mandatory: true, matches: ['product description', 'description', 'notes'] },
+            { key: 'productCategory', label: 'Product Category*', mandatory: true, matches: ['product category', 'category'] },
+            { key: 'subcategory', label: 'Subcategory*', mandatory: true, matches: ['subcategory', 'sub category'] },
+            { key: 'brand', label: 'Brand / Manufacturer', mandatory: false, matches: ['brand / manufacturer', 'brand', 'manufacturer'] },
+            { key: 'model', label: 'Model / Part Number', mandatory: false, matches: ['model / part number', 'model', 'part number', 'model no', 'part no'] },
+            { key: 'quantity', label: 'Available Quantity*', mandatory: true, matches: ['available quantity', 'quantity', 'qty'] },
+            { key: 'msrp', label: 'Original Price', mandatory: false, matches: ['original price', 'original msrp', 'msrp', 'retail price', 'original / retail msrp price'] },
+            { key: 'askPrice', label: 'Asking Price', mandatory: false, matches: ['asking price', 'surplus price', 'ask price', 'unit price'] },
+            { key: 'country', label: 'Country of Origin', mandatory: false, matches: ['country of origin', 'country', 'origin', 'manufacturing country'] },
+            { key: 'year', label: 'Year of Manufacture', mandatory: false, matches: ['year of manufacture', 'year', 'mfg year', 'manufacturing year'] },
+            { key: 'datasheet', label: 'Datasheet / Certificate Link', mandatory: false, matches: ['datasheet / certificate link', 'datasheet', 'certificate link', 'link', 'doc link'] },
+            { key: 'weight', label: 'Gross Weight per Unit', mandatory: false, matches: ['gross weight per unit', 'gross weight', 'weight', 'unit weight'] },
+            { key: 'length', label: 'Length', mandatory: false, matches: ['length'] },
+            { key: 'width', label: 'Width', mandatory: false, matches: ['width'] },
+            { key: 'height', label: 'Height', mandatory: false, matches: ['height'] },
+            { key: 'measurementUnit', label: 'Measurement Unit', mandatory: false, matches: ['measurement unit', 'dimension unit', 'unit of measure', 'unit'] },
+            { key: 'stockAge', label: 'Stock Age', mandatory: false, matches: ['stock age', 'age', 'inventory stock age'] },
+            { key: 'tested', label: 'Tested and verified', mandatory: false, matches: ['tested and verified', 'tested & verified', 'tested', 'verified'] },
+            { key: 'functionalStatus', label: 'Functional Status', mandatory: false, matches: ['functional status', 'functional'] },
+            { key: 'visibleDamage', label: 'Visible Damage?', mandatory: false, matches: ['visible damage?', 'visible damage', 'damage'] },
+            { key: 'missingParts', label: 'Missing Parts?', mandatory: false, matches: ['missing parts?', 'missing parts'] },
+            { key: 'warranty', label: 'Warranty Available?', mandatory: false, matches: ['warranty available?', 'warranty available', 'warranty'] },
+            { key: 'safetyCert', label: 'Safety Certificate Available?', mandatory: false, matches: ['safety certificate available?', 'safety certificate available', 'safety certificate'] },
+            { key: 'certificateType', label: 'Certificate Type', mandatory: false, matches: ['certificate type'] },
+            { key: 'regulatoryApproval', label: 'Regulatory Approval', mandatory: false, matches: ['regulatory approval', 'regulatory approvals', 'regulatory'] },
+            { key: 'hazardousMaterial', label: 'Hazardous Material?', mandatory: false, matches: ['hazardous material?', 'hazardous material', 'hazardous'] },
+            { key: 'recyclable', label: 'Recyclable?', mandatory: false, matches: ['recyclable?', 'recyclable'] },
+            { key: 'lifeRemaining', label: 'Estimated Product Life Remaining', mandatory: false, matches: ['estimated product life remaining', 'product life remaining', 'life remaining', 'estimated product life'] },
+            { key: 'sellerCustom1', label: 'Seller Custom Field 1', mandatory: false, matches: ['seller custom field 1', 'custom field 1', 'warehouse bay / shelf', 'bay / shelf', 'bay', 'shelf'] },
+            { key: 'sellerCustom2', label: 'Seller Custom Field 2', mandatory: false, matches: ['seller custom field 2', 'custom field 2'] },
           ];
 
-          const missingMandatoryHeaders: string[] = [];
+          const rawHeaderRow = validRows[0].map(cell => String(cell || '').trim());
           const colIndexMap: Record<string, number> = {};
 
-          REQUIRED_MANDATORY_HEADERS.forEach(mand => {
-            let foundIndex = -1;
-            for (let i = 0; i < normalizedHeaderRow.length; i++) {
-              const h = normalizedHeaderRow[i];
-              if (mand.matches.some(m => m === h) || h === mand.key.toLowerCase()) {
-                foundIndex = i;
-                break;
+          for (let i = 0; i < rawHeaderRow.length; i++) {
+            const rawH = rawHeaderRow[i];
+            if (!rawH) continue; // skip trailing empty cells
+
+            const normalizedH = rawH.replace(/[\uFEFF\u00A0]/g, ' ').replace(/\*+$/g, '').replace(/^\*+/g, '').replace(/\?+$/g, '').trim().toLowerCase();
+
+            // Match against allowed definitions
+            const matchedDef = TEMPLATE_HEADER_DEFINITIONS.find(def => 
+              def.matches.some(m => {
+                const normM = m.replace(/[\uFEFF\u00A0]/g, ' ').replace(/\*+$/g, '').replace(/^\*+/g, '').replace(/\?+$/g, '').trim().toLowerCase();
+                return normM === normalizedH || normalizedH === def.key.toLowerCase();
+              })
+            );
+
+            if (matchedDef) {
+              if (colIndexMap[matchedDef.key] === undefined) {
+                colIndexMap[matchedDef.key] = i;
               }
             }
-            if (foundIndex === -1) {
-              missingMandatoryHeaders.push(mand.label);
-            } else {
-              colIndexMap[mand.key] = foundIndex;
-            }
-          });
+          }
+
+          // Check ONLY the mandatory fields marked with *
+          const missingMandatoryHeaders = TEMPLATE_HEADER_DEFINITIONS
+            .filter(d => d.mandatory && colIndexMap[d.key] === undefined)
+            .map(d => d.label);
 
           if (missingMandatoryHeaders.length > 0) {
             setFormErrors(prev => ({
               ...prev,
-              manifestFile: `Header Validation Failed: Missing mandatory column header(s) in 'Inventory' sheet: [${missingMandatoryHeaders.join(', ')}]. Required mandatory headers: S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*.`
+              manifestFile: `Header Validation Error: Missing mandatory column header(s) with * in manifest: [${missingMandatoryHeaders.join(', ')}]. Required mandatory headers: S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*.`
             }));
             setManifestFile(null);
             setManifestData([]);
             return;
-          }
-
-          // Map optional columns
-          for (let i = 0; i < normalizedHeaderRow.length; i++) {
-            const h = normalizedHeaderRow[i];
-            if (h.includes('brand') || h.includes('manufacturer')) colIndexMap['brand'] = i;
-            if (h.includes('model') || h.includes('part number')) colIndexMap['model'] = i;
-            if (h.includes('original price') || h.includes('msrp')) colIndexMap['msrp'] = i;
-            if (h.includes('asking price') || h.includes('surplus price')) colIndexMap['askPrice'] = i;
-            if (h.includes('country')) colIndexMap['country'] = i;
-            if (h.includes('year')) colIndexMap['year'] = i;
-            if (h.includes('weight')) colIndexMap['weight'] = i;
           }
 
           // 3. Row-level Mandatory Data Validation Check
@@ -767,36 +791,123 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
               categoryCountMap[catVal] = (categoryCountMap[catVal] || 0) + qtyVal;
               totalQtySum += qtyVal;
 
-              const msrpVal = colIndexMap['msrp'] !== undefined ? (Number(row[colIndexMap['msrp']]) || 0) : 0;
-              const askVal = colIndexMap['askPrice'] !== undefined ? (Number(row[colIndexMap['askPrice']]) || 0) : 0;
+              const rawMsrpVal = colIndexMap['msrp'] !== undefined ? Number(row[colIndexMap['msrp']]) : 0;
+              const msrpVal = !isNaN(rawMsrpVal) ? Math.max(0, rawMsrpVal) : 0;
+
+              const rawAskVal = colIndexMap['askPrice'] !== undefined ? Number(row[colIndexMap['askPrice']]) : 0;
+              const askVal = !isNaN(rawAskVal) ? Math.max(0, rawAskVal) : 0;
 
               totalRetailSum += qtyVal * msrpVal;
               totalAskSum += qtyVal * askVal;
 
+              const modelVal = colIndexMap['model'] !== undefined ? String(row[colIndexMap['model']] || '').trim() : '';
+              const countryVal = colIndexMap['country'] !== undefined ? String(row[colIndexMap['country']] || '').trim() : '';
+              const yearVal = colIndexMap['year'] !== undefined ? String(row[colIndexMap['year']] || '').trim() : '';
+              const weightVal = colIndexMap['weight'] !== undefined ? String(row[colIndexMap['weight']] || '').trim() : '';
+              const lengthVal = colIndexMap['length'] !== undefined ? String(row[colIndexMap['length']] || '').trim() : '';
+              const widthVal = colIndexMap['width'] !== undefined ? String(row[colIndexMap['width']] || '').trim() : '';
+              const heightVal = colIndexMap['height'] !== undefined ? String(row[colIndexMap['height']] || '').trim() : '';
+              const unitVal = colIndexMap['measurementUnit'] !== undefined ? String(row[colIndexMap['measurementUnit']] || '').trim() : 'cm';
+              const stockAgeVal = colIndexMap['stockAge'] !== undefined ? String(row[colIndexMap['stockAge']] || '').trim() : '';
+              const testedVal = colIndexMap['tested'] !== undefined ? String(row[colIndexMap['tested']] || '').trim() : '';
+              const functionalVal = colIndexMap['functionalStatus'] !== undefined ? String(row[colIndexMap['functionalStatus']] || '').trim() : '';
+              const visibleDamageVal = colIndexMap['visibleDamage'] !== undefined ? String(row[colIndexMap['visibleDamage']] || '').trim() : '';
+              const missingPartsVal = colIndexMap['missingParts'] !== undefined ? String(row[colIndexMap['missingParts']] || '').trim() : '';
+              const warrantyVal = colIndexMap['warranty'] !== undefined ? String(row[colIndexMap['warranty']] || '').trim() : '';
+              const safetyVal = colIndexMap['safetyCert'] !== undefined ? String(row[colIndexMap['safetyCert']] || '').trim() : '';
+              const certTypeVal = colIndexMap['certificateType'] !== undefined ? String(row[colIndexMap['certificateType']] || '').trim() : '';
+              const regApprovalVal = colIndexMap['regulatoryApproval'] !== undefined ? String(row[colIndexMap['regulatoryApproval']] || '').trim() : '';
+              const hazardousVal = colIndexMap['hazardousMaterial'] !== undefined ? String(row[colIndexMap['hazardousMaterial']] || '').trim() : '';
+              const recyclableVal = colIndexMap['recyclable'] !== undefined ? String(row[colIndexMap['recyclable']] || '').trim() : '';
+              const lifeRemainingVal = colIndexMap['lifeRemaining'] !== undefined ? String(row[colIndexMap['lifeRemaining']] || '').trim() : '';
+              const custom1Val = colIndexMap['sellerCustom1'] !== undefined ? String(row[colIndexMap['sellerCustom1']] || '').trim() : '';
+              const custom2Val = colIndexMap['sellerCustom2'] !== undefined ? String(row[colIndexMap['sellerCustom2']] || '').trim() : '';
+              const datasheetVal = colIndexMap['datasheet'] !== undefined ? String(row[colIndexMap['datasheet']] || '').trim() : '';
+
               parsedItems.push({
                 id: r,
+                // SKU & Identifiers
                 sku: snoVal,
+                s_no: snoVal,
+                // Title / Name
                 title: nameVal,
+                product_name: nameVal,
+                name: nameVal,
+                // Description (Col 3 in Excel)
                 description: descVal,
+                product_description: descVal,
+                notes: descVal,
+                // Category & Hierarchy
                 category: catVal,
+                product_category: catVal,
                 subcategory: subcatVal,
+                // Brand & Model
                 brand: brandVal,
-                model: colIndexMap['model'] !== undefined ? String(row[colIndexMap['model']] || '').trim() : '',
+                manufacturer: brandVal,
+                model: modelVal,
+                model_part_number: modelVal,
+                // Quantity
                 qty: qtyVal,
+                available_quantity: qtyVal,
+                quantity: qtyVal,
+                // Pricing
                 msrp: msrpVal,
+                original_price: msrpVal,
                 askPrice: askVal,
-                condition: 'New'
+                asking_price: askVal,
+                price: askVal,
+                // Country & Year
+                country_of_origin: countryVal,
+                country: countryVal,
+                year_of_manufacture: yearVal,
+                year: yearVal,
+                // Dimensions & Weight
+                gross_weight_per_unit: weightVal,
+                weight: weightVal,
+                length: lengthVal,
+                width: widthVal,
+                height: heightVal,
+                measurement_unit: unitVal,
+                // Testing & Condition
+                stock_age: stockAgeVal,
+                tested_and_verified: testedVal,
+                functional_status: functionalVal,
+                visible_damage: visibleDamageVal,
+                missing_parts: missingPartsVal,
+                condition: 'New',
+                // Compliance & Warranty
+                warranty_available: warrantyVal,
+                safety_certificate_available: safetyVal,
+                certificate_type: certTypeVal,
+                regulatory_approval: regApprovalVal,
+                hazardous_material: hazardousVal,
+                recyclable: recyclableVal,
+                estimated_product_life_remaining: lifeRemainingVal,
+                // Custom fields & Datasheet
+                seller_custom_field_1: custom1Val,
+                seller_custom_field_2: custom2Val,
+                datasheet_certificate_link: datasheetVal,
               });
             }
           }
 
           if (rowErrorMessages.length > 0) {
             const summaryText = rowErrorMessages.length > 5
-              ? `${rowErrorMessages.slice(0, 5).join('; ')} ...and ${rowErrorMessages.length - 5} more row(s) with missing data.`
+              ? `${rowErrorMessages.slice(0, 5).join('; ')} ...and ${rowErrorMessages.length - 5} more row(s) with invalid data.`
               : rowErrorMessages.join('; ');
             setFormErrors(prev => ({
               ...prev,
-              manifestFile: `Mandatory Data Validation Failed in 'Inventory' sheet: ${summaryText} All mandatory fields (S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*) must be filled in for every item.`
+              manifestFile: `Data Validation Failed in 'Inventory' sheet: ${summaryText} All mandatory fields with * (S.No*, Product Name*, Product Description*, Product Category*, Subcategory*, Available Quantity*) must be filled in with valid data for every row.`
+            }));
+            setManifestFile(null);
+            setManifestData([]);
+            return;
+          }
+
+          if (parsedItems.length === 0) {
+            setFormErrors(prev => ({
+              ...prev,
+              manifestFile: "No valid inventory items found in 'Inventory' sheet. Please ensure your sheet contains at least 1 valid product row below the header."
             }));
             setManifestFile(null);
             setManifestData([]);
@@ -809,9 +920,10 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
 
           // Set primary Category Allocation from manifest top category
           const categoriesList = Object.keys(categoryCountMap);
+          let topCategory = '';
           if (categoriesList.length > 0 && totalQtySum > 0) {
             // Find category with highest unit count in Excel file
-            const topCategory = categoriesList.reduce((maxCat, cat) => 
+            topCategory = categoriesList.reduce((maxCat, cat) => 
               categoryCountMap[cat] > (categoryCountMap[maxCat] || 0) ? cat : maxCat, categoriesList[0]);
             
             // Match with available category options or use topCategory name
@@ -823,13 +935,25 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
             setCategoryAllocations([{ id: '1', category: matchedCategory, allocation: 100 }]);
           }
 
-          // Auto-fill Lot Form fields
+          // Auto-fill Lot Form fields with 60% liquidation discount validation
+          const maxAllowedAsk = totalRetailSum > 0 ? (totalRetailSum * 0.40) : 0;
+          let initialAsk = '';
+          if (totalAskSum > 0 && totalAskSum <= maxAllowedAsk) {
+            // Manifest's asking price already has 60% or higher discount (e.g. 70%, 80%)
+            initialAsk = totalAskSum.toFixed(2);
+          } else if (maxAllowedAsk > 0) {
+            // Default to the 60% discount price so seller starts with a valid liquidation price
+            initialAsk = maxAllowedAsk.toFixed(2);
+          }
+
           setFormData(prev => ({
             ...prev,
+            title: prev.title || (topCategory ? `${topCategory} Wholesale Surplus Lot (${totalQtySum} Units)` : prev.title),
+            description: prev.description || `Wholesale lot inventory consisting of ${totalQtySum.toLocaleString()} total units across ${parsedItems.length} distinct SKUs in ${topCategory || 'Surplus Inventory'}. Featuring top brands: ${Array.from(brandSet).slice(0, 5).join(', ') || 'Various'}. Verified itemized manifest attached with complete product descriptions and specifications.`,
             distinctSkus: String(parsedItems.length),
             manualUnits: String(totalQtySum),
             msrp: totalRetailSum > 0 ? String(totalRetailSum.toFixed(2)) : prev.msrp,
-            askPrice: totalAskSum > 0 ? String(totalAskSum.toFixed(2)) : prev.askPrice,
+            askPrice: initialAsk || (totalAskSum > 0 ? String(totalAskSum.toFixed(2)) : prev.askPrice),
             keyBrands: Array.from(brandSet).join(', ') || prev.keyBrands
           }));
 
@@ -942,6 +1066,18 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
   const validateStep = (step: number) => {
     try {
       if (step === 1) {
+        if (!manifestFile) {
+          setFormErrors({ manifestFile: "Please upload an inventory manifest file (.xlsx or .csv) to continue" });
+          return false;
+        }
+        if (formErrors.manifestFile) {
+          // If manifest upload has an active error, strictly do not continue to details
+          return false;
+        }
+        if (manifestData.length === 0) {
+          setFormErrors({ manifestFile: "No valid inventory items found in manifest. Please upload a valid manifest file using our standard template to continue" });
+          return false;
+        }
         step1Schema.parse({ manifestFile });
       } else if (step === 2) {
         step3Schema.parse({ ...formData, mediaFiles, totalRetail });
@@ -1150,6 +1286,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                   type="file" 
                   accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" 
                   className="hidden" 
+                  onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
                   onChange={handleFileChange}
                 />
                 <UploadCloud className={`w-12 h-12 mb-3 ${manifestFile ? 'text-[#0a5c48]' : 'text-[#0a5c48]/60'}`} />
@@ -1160,7 +1297,26 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                   {manifestFile ? 'File verified and ready' : 'Supports .XLSX and .CSV up to 10MB'}
                 </span>
               </label>
-              {renderError('manifestFile')}
+              
+              {/* Prominent Manifest Validation Error Banner */}
+              {formErrors.manifestFile && (
+                <div className="w-full max-w-2xl mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-800 text-xs sm:text-sm animate-in fade-in duration-200">
+                  <X className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <strong className="font-bold text-red-900 block">Manifest Validation Failed</strong>
+                    <p className="text-red-700 leading-relaxed">{formErrors.manifestFile}</p>
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={downloadStandardTemplate}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-red-800 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" /> Download Standard Template (.xlsx)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <a 
                 href={encodeURI('/Surplus Market XLSX Format.xlsx')}
@@ -1196,12 +1352,13 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                       </div>
                     </div>
 
-                    <div className="overflow-x-auto max-h-[350px] overflow-y-auto">
+                    <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
                       <table className="w-full text-left text-xs whitespace-nowrap">
                         <thead className="bg-gray-100/90 border-b border-gray-200 text-gray-600 font-bold uppercase tracking-wider text-[11px] sticky top-0 bg-gray-100 z-10">
                           <tr>
                             <th className="px-4 py-3">S.No*</th>
-                            <th className="px-4 py-3">Product Name*</th>
+                            <th className="px-4 py-3 min-w-[200px]">Product Name*</th>
+                            <th className="px-4 py-3 min-w-[240px] text-[#0a5c48]">Product Description*</th>
                             <th className="px-4 py-3">Category*</th>
                             <th className="px-4 py-3">Subcategory*</th>
                             <th className="px-4 py-3">Brand</th>
@@ -1209,23 +1366,48 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                             <th className="px-4 py-3 text-right">Available Qty*</th>
                             <th className="px-4 py-3 text-right">Original MSRP</th>
                             <th className="px-4 py-3 text-right">Asking Price</th>
+                            <th className="px-4 py-3">Origin</th>
+                            <th className="px-4 py-3">Mfg Year</th>
+                            <th className="px-4 py-3">Weight</th>
+                            <th className="px-4 py-3 text-center">Inspect</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                           {manifestData.map((item) => (
-                            <tr key={item.id} className="hover:bg-gray-50/70 transition-colors">
+                            <tr key={item.id} className="hover:bg-gray-50/70 transition-colors group">
                               <td className="px-4 py-2.5 font-mono text-gray-600">{item.sku}</td>
-                              <td className="px-4 py-2.5 font-bold text-gray-900 max-w-[220px] truncate" title={item.title}>{item.title}</td>
+                              <td className="px-4 py-2.5 font-bold text-gray-900 max-w-[200px] truncate" title={item.title}>{item.title}</td>
+                              <td className="px-4 py-2.5 text-gray-700 max-w-[240px] truncate" title={item.description || item.product_description}>
+                                {item.description || item.product_description || '-'}
+                              </td>
                               <td className="px-4 py-2.5 text-gray-700">{item.category}</td>
                               <td className="px-4 py-2.5 text-gray-600">{item.subcategory || '-'}</td>
                               <td className="px-4 py-2.5 text-gray-700 font-medium">{item.brand || '-'}</td>
                               <td className="px-4 py-2.5 text-gray-600 font-mono text-[11px]">{item.model || '-'}</td>
-                              <td className="px-4 py-2.5 text-right font-bold text-gray-900">{Number(item.qty).toLocaleString()}</td>
+                              <td className="px-4 py-2.5 text-right font-bold text-gray-900">
+                                <span className="bg-emerald-50 text-[#0a5c48] px-2 py-0.5 rounded-full border border-emerald-200/60 font-semibold">
+                                  {Number(item.qty).toLocaleString()}
+                                </span>
+                              </td>
                               <td className="px-4 py-2.5 text-right text-gray-600">
                                 {item.msrp ? `$${Number(item.msrp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '-'}
                               </td>
                               <td className="px-4 py-2.5 text-right font-semibold text-[#0a5c48]">
                                 {item.askPrice ? `$${Number(item.askPrice).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '-'}
+                              </td>
+                              <td className="px-4 py-2.5 text-gray-600">{item.country_of_origin || item.country || '-'}</td>
+                              <td className="px-4 py-2.5 text-gray-600">{item.year_of_manufacture || item.year || '-'}</td>
+                              <td className="px-4 py-2.5 text-gray-600">{item.gross_weight_per_unit ? `${item.gross_weight_per_unit} kg` : (item.weight ? `${item.weight} kg` : '-')}</td>
+                              <td className="px-4 py-2.5 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedPreviewItem(item)}
+                                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0a5c48] hover:text-[#084838] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-2 py-1 rounded-md transition-colors cursor-pointer"
+                                  title="View all parsed fields for this item"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>View</span>
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -1259,11 +1441,26 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Lot Description & Notes <span className="text-red-500">*</span></label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-semibold text-gray-700">Lot Description & Notes <span className="text-red-500">*</span></label>
+                      {manifestData.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const desc = `Wholesale lot inventory consisting of ${totalUnits.toLocaleString()} total units across ${manifestData.length} distinct SKUs in ${formData.category || 'Surplus Inventory'}. Prominent brands include: ${formData.keyBrands || 'Various'}. Est. Retail MSRP: $${totalRetail.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}. Verified inventory manifest with itemized SKUs, model numbers, and product descriptions attached.`;
+                            handleInputChange('description', desc);
+                          }}
+                          className="text-xs font-semibold text-[#0a5c48] hover:text-[#084838] flex items-center gap-1 hover:underline cursor-pointer"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Generate from manifest</span>
+                        </button>
+                      )}
+                    </div>
                     <FastTextarea 
                       rows={4} 
                       className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm placeholder-gray-400 resize-y" 
-                      placeholder="Describe the lot context, packaging condition, and any 'sold as-is' terms..."
+                      placeholder="Describe the lot context, packaging condition, and any 'sold as-is' terms..." 
                       value={formData.description}
                       onValueChange={val => handleInputChange('description', val)}
                     ></FastTextarea>
@@ -1731,7 +1928,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                             type="button"
                             onClick={() => handleInputChange('askPrice', pricingAnalysis.maxAllowedPrice)}
                             className="absolute right-2 px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-all cursor-pointer flex items-center gap-1 shadow-xs"
-                            title="Click to apply suggested max price (40% discount)"
+                            title="Click to apply suggested max price (60% discount)"
                           >
                             <span>Max: {pricingAnalysis.currSymbol} {pricingAnalysis.maxAllowedPrice}</span>
                           </button>
@@ -1748,7 +1945,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                         <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs sm:text-sm font-semibold">
                           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                           <span>
-                            Valid Liquidation Price: <strong>{pricingAnalysis.discountPercent}% discount</strong> off MSRP (meets minimum 40% requirement).
+                            Valid Liquidation Price: <strong>{pricingAnalysis.discountPercent}% discount</strong> off MSRP (meets minimum 60% requirement).
                           </span>
                         </div>
                       ) : (
@@ -2047,8 +2244,8 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
           <button
             type="button"
             onClick={currentStep === 3 ? submitListing : nextStep}
-            disabled={isSubmitting}
-            className="flex items-center px-8 py-2.5 bg-[#0a5c48] text-white rounded-full font-semibold hover:bg-[#084838] transition-colors shadow-sm disabled:opacity-70 cursor-pointer"
+            disabled={isSubmitting || (currentStep === 1 && (!manifestFile || manifestData.length === 0 || !!formErrors.manifestFile))}
+            className="flex items-center px-8 py-2.5 bg-[#0a5c48] text-white rounded-full font-semibold hover:bg-[#084838] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {currentStep === 3 ? (
               isSubmitting ? 'Submitting...' : 'Submit Listing'
@@ -2069,6 +2266,174 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
         )}
 
       </div>
+
+      {/* Item Details Inspection Modal */}
+      {selectedPreviewItem && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl flex flex-col border border-gray-200">
+            {/* Header */}
+            <div className="p-5 bg-gradient-to-r from-gray-50 to-emerald-50/40 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold bg-[#0a5c48] text-white px-2 py-0.5 rounded">
+                    #{selectedPreviewItem.sku}
+                  </span>
+                  <span className="text-xs text-gray-500 font-medium">Parsed Manifest Item Details</span>
+                </div>
+                <h3 className="text-base font-bold text-gray-900 mt-1 line-clamp-1">{selectedPreviewItem.title}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedPreviewItem(null)}
+                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200/60 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-gray-700">
+              {/* Product Description */}
+              <div className="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4">
+                <span className="font-bold text-[#0a5c48] uppercase tracking-wider text-[11px] block mb-1">
+                  Product Description* (Excel Column 3)
+                </span>
+                <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+                  {selectedPreviewItem.description || selectedPreviewItem.product_description || 'No description provided'}
+                </p>
+              </div>
+
+              {/* Categorization & Brand */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200">
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Category</span>
+                  <span className="font-semibold text-gray-900">{selectedPreviewItem.category || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Subcategory</span>
+                  <span className="font-semibold text-gray-900">{selectedPreviewItem.subcategory || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Brand</span>
+                  <span className="font-semibold text-gray-900">{selectedPreviewItem.brand || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Model / Part No</span>
+                  <span className="font-semibold text-gray-900 font-mono">{selectedPreviewItem.model || '—'}</span>
+                </div>
+              </div>
+
+              {/* Quantities & Pricing */}
+              <div className="grid grid-cols-3 gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200">
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Available Quantity</span>
+                  <span className="font-bold text-sm text-gray-900">{Number(selectedPreviewItem.qty).toLocaleString()} units</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Original MSRP (unit)</span>
+                  <span className="font-bold text-sm text-gray-600">
+                    {selectedPreviewItem.msrp ? `$${Number(selectedPreviewItem.msrp).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '—'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Asking Price (unit)</span>
+                  <span className="font-bold text-sm text-[#0a5c48]">
+                    {selectedPreviewItem.askPrice ? `$${Number(selectedPreviewItem.askPrice).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '—'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Origin, Specs, Dimensions */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200">
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Country of Origin</span>
+                  <span className="font-semibold text-gray-900">{selectedPreviewItem.country_of_origin || selectedPreviewItem.country || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Mfg Year</span>
+                  <span className="font-semibold text-gray-900">{selectedPreviewItem.year_of_manufacture || selectedPreviewItem.year || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Gross Weight</span>
+                  <span className="font-semibold text-gray-900">
+                    {selectedPreviewItem.gross_weight_per_unit ? `${selectedPreviewItem.gross_weight_per_unit} kg` : (selectedPreviewItem.weight ? `${selectedPreviewItem.weight} kg` : '—')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Dimensions</span>
+                  <span className="font-semibold text-gray-900">
+                    {selectedPreviewItem.length && selectedPreviewItem.width && selectedPreviewItem.height
+                      ? `${selectedPreviewItem.length} × ${selectedPreviewItem.width} × ${selectedPreviewItem.height} ${selectedPreviewItem.measurement_unit || 'cm'}`
+                      : '—'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Status, Inspection & Compliance */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200">
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Tested & Verified</span>
+                  <span className="font-semibold text-gray-900">{selectedPreviewItem.tested_and_verified || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Functional Status</span>
+                  <span className="font-semibold text-gray-900">{selectedPreviewItem.functional_status || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Warranty Available</span>
+                  <span className="font-semibold text-gray-900">{selectedPreviewItem.warranty_available || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Safety Certificate</span>
+                  <span className="font-semibold text-gray-900">{selectedPreviewItem.safety_certificate_available || selectedPreviewItem.certificate_type || '—'}</span>
+                </div>
+              </div>
+
+              {/* Warehouse Location & Datasheet */}
+              {(selectedPreviewItem.seller_custom_field_1 || selectedPreviewItem.seller_custom_field_2 || selectedPreviewItem.datasheet_certificate_link) && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-gray-50 p-3.5 rounded-xl border border-gray-200">
+                  {selectedPreviewItem.seller_custom_field_1 && (
+                    <div>
+                      <span className="text-gray-400 block text-[10px] uppercase font-bold">Bay / Location</span>
+                      <span className="font-mono font-bold text-gray-900">{selectedPreviewItem.seller_custom_field_1}</span>
+                    </div>
+                  )}
+                  {selectedPreviewItem.seller_custom_field_2 && (
+                    <div>
+                      <span className="text-gray-400 block text-[10px] uppercase font-bold">Custom Note</span>
+                      <span className="font-semibold text-gray-900">{selectedPreviewItem.seller_custom_field_2}</span>
+                    </div>
+                  )}
+                  {selectedPreviewItem.datasheet_certificate_link && (
+                    <div>
+                      <span className="text-gray-400 block text-[10px] uppercase font-bold">Datasheet Link</span>
+                      <a
+                        href={selectedPreviewItem.datasheet_certificate_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#0a5c48] font-bold underline flex items-center gap-1 mt-0.5 truncate"
+                      >
+                        <ExternalLink className="w-3 h-3 shrink-0" /> Open Link
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedPreviewItem(null)}
+                className="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg font-semibold transition-colors cursor-pointer text-xs"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>,
     document.body
   );

@@ -31,9 +31,9 @@ const CurrencySelector = () => {
           {activeOption.code === activeOption.symbol ? activeOption.code : `${activeOption.code} (${activeOption.symbol})`}
         </span>
         {isOpen ? (
-          <ChevronUp className="w-3 h-3 text-gray-500" />
+          <ChevronUp className="selector-chevron w-3 h-3 text-gray-500 shrink-0" style={{ width: '12px', height: '12px' }} />
         ) : (
-          <ChevronDown className="w-3 h-3 text-gray-500" />
+          <ChevronDown className="selector-chevron w-3 h-3 text-gray-500 shrink-0" style={{ width: '12px', height: '12px' }} />
         )}
       </div>
 

@@ -187,9 +187,9 @@ const listingFormSchema = z.object({
   const msrp = parseFloat(data.msrp);
   if (isNaN(liq) || isNaN(msrp) || msrp <= 0) return true;
   const discountPercent = ((msrp - liq) / msrp) * 100;
-  return discountPercent >= 39.999;
+  return discountPercent >= 59.999;
 }, {
-  message: "Liquidating price must have at least a 40% discount off Original MSRP",
+  message: "Liquidating price must have at least a 60% discount off Original MSRP",
   path: ["liquidatingPrice"]
 });
 
@@ -475,7 +475,8 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       };
     }
 
-    const maxAllowedPrice = (msrp * 0.6).toFixed(2);
+    // 60% discount off MSRP means max allowed price is 40% of MSRP (msrp * 0.40)
+    const maxAllowedPrice = (msrp * 0.40).toFixed(2);
 
     if (isNaN(liq) || liq <= 0) {
       return {
@@ -493,13 +494,13 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
 
     const discountPercent = Number((((msrp - liq) / msrp) * 100).toFixed(1));
     const isBelowMsrp = liq < msrp;
-    const meetsMinDiscount = isBelowMsrp && discountPercent >= 39.99;
+    const meetsMinDiscount = isBelowMsrp && discountPercent >= 59.99;
 
     let error = '';
     if (!isBelowMsrp) {
       error = 'Liquidating price must be strictly below the Original / Retail MSRP Price.';
     } else if (!meetsMinDiscount) {
-      error = `Liquidating price must have at least a 40% discount off MSRP (Max allowed: ${maxAllowedPrice}). Current discount: ${discountPercent}%.`;
+      error = `Liquidating price must have at least a 60% discount off MSRP (Max allowed: ${maxAllowedPrice}). Current discount: ${discountPercent}%.`;
     }
 
     return {
@@ -668,9 +669,9 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
         newErrors.liquidatingPrice = 'Liquidating price must be strictly below the Original / Retail MSRP Price';
       } else {
         const discount = ((msrp - liq) / msrp) * 100;
-        if (discount < 39.99) {
-          const maxAllowed = (msrp * 0.6).toFixed(2);
-          newErrors.liquidatingPrice = `Liquidating price must have at least a 40% discount off Original MSRP (Max allowed: ${maxAllowed})`;
+        if (discount < 59.99) {
+          const maxAllowed = (msrp * 0.40).toFixed(2);
+          newErrors.liquidatingPrice = `Liquidating price must have at least a 60% discount off Original MSRP (Max allowed: ${maxAllowed})`;
         }
       }
     }
@@ -1626,7 +1627,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                               } ${pricingAnalysis.hasMsrp ? 'pr-36' : ''} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                             placeholder={
                               pricingAnalysis.hasMsrp
-                                ? `Max: ${formData.currency?.split(' ')[0] || 'USD'} ${pricingAnalysis.maxAllowedPrice} (min. 40% off)`
+                                ? `Max: ${formData.currency?.split(' ')[0] || 'USD'} ${pricingAnalysis.maxAllowedPrice} (min. 60% off)`
                                 : "e.g. 150.00"
                             }
                             value={formData.liquidatingPrice}
@@ -1637,7 +1638,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                               type="button"
                               onClick={() => handleInputChange('liquidatingPrice', pricingAnalysis.maxAllowedPrice)}
                               className="absolute right-2 px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
-                              title="Click to apply suggested max price (40% discount)"
+                              title="Click to apply suggested max price (60% discount)"
                             >
                               <span>Max: {formData.currency?.split(' ')[0] || 'USD'} {pricingAnalysis.maxAllowedPrice}</span>
                             </button>
@@ -1653,7 +1654,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                             <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs md:text-sm font-semibold">
                               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                               <span>
-                                Valid Liquidation Price: <strong>{pricingAnalysis.discountPercent}% discount</strong> off MSRP (meets minimum 40% requirement).
+                                Valid Liquidation Price: <strong>{pricingAnalysis.discountPercent}% discount</strong> off MSRP (meets minimum 60% requirement).
                               </span>
                             </div>
                           ) : (

@@ -173,6 +173,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       setError('Company Name is required.');
       return;
     }
+    if (!businessLocation || !businessLocation.trim()) {
+      setError('Business Location is required.');
+      return;
+    }
     if (categories.length === 0) {
       setError('Please select at least one category.');
       return;
@@ -184,7 +188,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       email: emailOrPhone,
       account_entity_type: entityType === 'Company/Business' ? 'COMPANY' : 'INDIVIDUAL',
       company_name: entityType === 'Company/Business' ? companyName : undefined,
-      business_location: businessLocation || undefined,
+      business_location: businessLocation.trim(),
       user_type: role.toUpperCase(),
       category_interested: categories.join(', ') || undefined,
     });
@@ -199,7 +203,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       await update({
         vendor_id: assignedVendorId ? String(assignedVendorId) : undefined,
         company_name: entityType === 'Company/Business' ? companyName : '',
-        business_location: businessLocation,
+        business_location: businessLocation.trim(),
         business_type: role.toUpperCase(),
         account_entity_type: entityType === 'Company/Business' ? 'COMPANY' : 'INDIVIDUAL',
         category_interested: categories.join(', '),
@@ -350,8 +354,15 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                     </AnimatePresence>
 
                     <div>
-                      <label className={labelClass}>Business Location</label>
-                      <input type="text" value={businessLocation} onChange={e => setBusinessLocation(e.target.value)} className={inputClass} placeholder="New York, USA" />
+                      <label className={labelClass}>Business Location *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={businessLocation} 
+                        onChange={e => setBusinessLocation(e.target.value)} 
+                        className={inputClass} 
+                        placeholder="e.g. Dubai, UAE or New York, USA" 
+                      />
                     </div>
 
                     <div>

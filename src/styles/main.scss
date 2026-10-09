@@ -308,6 +308,40 @@ button {
 .header-auth-btn,
 .header-selector-btn {
   white-space: nowrap !important;
+
+  .region-flag-container {
+    width: 20px !important;
+    height: 14px !important;
+    min-width: 20px !important;
+    min-height: 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    border-radius: 2px !important;
+    flex-shrink: 0 !important;
+
+    svg,
+    .region-flag-svg {
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 100% !important;
+      min-height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      display: block !important;
+    }
+  }
+
+  svg.selector-chevron {
+    width: 12px !important;
+    height: 12px !important;
+    min-width: 12px !important;
+    min-height: 12px !important;
+    max-width: 12px !important;
+    max-height: 12px !important;
+    flex-shrink: 0 !important;
+  }
 }
 
 /* Base / Mobile & Small Tablet (< 992px) */
@@ -445,7 +479,7 @@ button {
   .header-right-actions {
     gap: 0.5rem;
 
-    svg {
+    svg:not(.region-flag-svg):not(.selector-chevron) {
       width: 19px !important;
       height: 19px !important;
     }
@@ -496,7 +530,7 @@ button {
   .header-right-actions {
     gap: 0.625rem;
 
-    svg {
+    svg:not(.region-flag-svg):not(.selector-chevron) {
       width: 20px !important;
       height: 20px !important;
     }
@@ -541,7 +575,7 @@ button {
   .header-right-actions {
     gap: 0.75rem;
 
-    svg {
+    svg:not(.region-flag-svg):not(.selector-chevron) {
       width: 21px !important;
       height: 21px !important;
     }

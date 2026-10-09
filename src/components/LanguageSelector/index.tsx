@@ -37,9 +37,9 @@ const LanguageSelector = () => {
         <Globe className="w-3 h-3 text-[#0f7a61]" />
         <span className="font-medium text-gray-800 text-[12px] uppercase">{activeLang.code}</span>
         {isOpen ? (
-          <ChevronUp className="w-3 h-3 text-gray-500" />
+          <ChevronUp className="selector-chevron w-3 h-3 text-gray-500 shrink-0" style={{ width: '12px', height: '12px' }} />
         ) : (
-          <ChevronDown className="w-3 h-3 text-gray-500" />
+          <ChevronDown className="selector-chevron w-3 h-3 text-gray-500 shrink-0" style={{ width: '12px', height: '12px' }} />
         )}
       </div>
 

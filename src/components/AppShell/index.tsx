@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Header from '../../widgets/Header';
 import Footer from '../Footer';
 import MaintenanceWidget from '../../widgets/Maintenance';
+import WhatsAppFloatingButton from '../WhatsAppFloatingButton';
 import { apiClient } from '../../services/apiClient';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -93,6 +94,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <Header />
       <div className="flex-1">{children}</div>
       <Footer />
+      <WhatsAppFloatingButton />
     </>
   );
 }

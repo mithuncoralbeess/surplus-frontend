@@ -21,7 +21,7 @@ export interface CompleteProfilePayload {
   business_address?: string;
   tax_registration_number?: string;
   business_type?: string;
-  business_location?: string;
+  business_location: string;
   user_type: string;
   category_interested?: string;
 }

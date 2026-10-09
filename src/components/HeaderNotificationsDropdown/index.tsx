@@ -175,9 +175,13 @@ export default function HeaderNotificationsDropdown() {
 
       {/* Flyout Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 rtl:right-auto rtl:left-0 mt-3 w-80 sm:w-96 bg-white border border-gray-100 rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.14)] z-50 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
+        <div 
+          data-lenis-prevent
+          onWheel={(e) => e.stopPropagation()}
+          className="absolute right-0 rtl:right-auto rtl:left-0 mt-3 w-80 sm:w-96 bg-white border border-gray-100 rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.14)] z-50 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150"
+        >
           {/* Header */}
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10 shrink-0">
             <div className="flex items-center gap-2">
               <h3 className="text-base font-bold text-gray-900">Notifications</h3>
               {unreadCount > 0 && (
@@ -200,7 +204,7 @@ export default function HeaderNotificationsDropdown() {
           </div>
 
           {/* Filter Pills */}
-          <div className="px-4 py-2 bg-gray-50/70 border-b border-gray-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <div className="px-4 py-2 bg-gray-50/70 border-b border-gray-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
             {(['all', 'unread', 'listing', 'rfq'] as const).map(tab => (
               <button
                 key={tab}
@@ -218,7 +222,13 @@ export default function HeaderNotificationsDropdown() {
           </div>
 
           {/* Notifications Scrollable List */}
-          <div className="overflow-y-auto flex-1 divide-y divide-gray-50 max-h-[380px]">
+          <div 
+            data-lenis-prevent
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            style={{ overscrollBehavior: 'contain' }}
+            className="overflow-y-auto flex-1 min-h-0 divide-y divide-gray-50 max-h-[380px] sm:max-h-[420px] overscroll-contain"
+          >
             {filteredNotifications.length === 0 ? (
               <div className="py-12 px-6 text-center flex flex-col items-center justify-center">
                 <div className="w-12 h-12 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center mb-3">
@@ -306,7 +316,7 @@ export default function HeaderNotificationsDropdown() {
           </div>
 
           {/* Footer Actions */}
-          <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/70 flex items-center justify-between text-xs">
+          <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/70 flex items-center justify-between text-xs shrink-0">
             {notifications.length > 0 ? (
               <button
                 type="button"
