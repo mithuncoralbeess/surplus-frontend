@@ -295,26 +295,57 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return id;
   }, [dismissToast]);
 
+  // Listen to window-level custom toast events for safe, decoupled toast triggering
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleCustomToast = (e: Event) => {
+      const customEvent = e as CustomEvent<Omit<ToastItem, 'id'>>;
+      if (customEvent.detail) {
+        showToast(customEvent.detail);
+      }
+    };
+    window.addEventListener('surplus-toast', handleCustomToast);
+    return () => window.removeEventListener('surplus-toast', handleCustomToast);
+  }, [showToast]);
+
+  const contextValue = useMemo(() => ({
+    notifications,
+    toasts,
+    unreadCount,
+    addNotification,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAll,
+    refreshNotifications,
+    showToast,
+    dismissToast,
+  }), [
+    notifications,
+    toasts,
+    unreadCount,
+    addNotification,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAll,
+    refreshNotifications,
+    showToast,
+    dismissToast,
+  ]);
+
   return (
-    <NotificationContext.Provider
-      value={{
-        notifications,
-        toasts,
-        unreadCount,
-        addNotification,
-        markAsRead,
-        markAllAsRead,
-        deleteNotification,
-        clearAll,
-        refreshNotifications,
-        showToast,
-        dismissToast,
-      }}
-    >
+    <NotificationContext.Provider value={contextValue}>
       {children}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </NotificationContext.Provider>
   );
+};
+
+export const triggerToast = (toastData: Omit<ToastItem, 'id'>) => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('surplus-toast', { detail: toastData }));
+  }
 };
 
 export const useNotifications = () => {

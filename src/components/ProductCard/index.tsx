@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ShieldCheck, Tag, CheckCircle2 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useCart } from '../../context/CartContext';
 import { createProductUrl } from '../../lib/slugs';
 
 export interface ProductCardProps {
@@ -41,7 +42,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onAddRfq,
 }) => {
   const { formatPrice } = useCurrency();
+  const { addToCart, isInCart } = useCart();
   const [isRfqAdded, setIsRfqAdded] = useState(false);
+
+  const inCart = id ? isInCart(id) : false;
 
   const formatOfferString = (raw?: string) => {
     if (!raw) return null;
@@ -67,8 +71,26 @@ const ProductCard: React.FC<ProductCardProps> = ({
     if (onAddRfq) {
       onAddRfq();
     } else {
+      const resolvedCategory = typeof category === 'object' && category !== null
+        ? (category as any).name || (category as any).title || (category as any).slug || 'General'
+        : String(category || 'General');
+
+      addToCart({
+        id: String(id || sku || title),
+        productId: id,
+        type: 'product',
+        title: title || 'Wholesale Surplus Lot',
+        category: resolvedCategory,
+        quantity: moq > 0 ? moq : 1,
+        unitPrice: price || 0,
+        image: image || 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&auto=format&fit=crop&q=80',
+        moq: moq || 1,
+        estQty: estQty,
+        sku: sku,
+      });
+
       setIsRfqAdded(true);
-      setTimeout(() => setIsRfqAdded(false), 3000);
+      setTimeout(() => setIsRfqAdded(false), 2500);
     }
   };
 
@@ -214,13 +236,24 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <button
             type="button"
             onClick={handleAddRfq}
-            className={`bg-[#0f7a61] text-white font-bold py-2.5 px-0 text-xs w-full rounded-full flex items-center justify-center gap-1 cursor-pointer transition-all ${isRfqAdded ? '!bg-emerald-700' : 'hover:bg-[#0c6651]'
-              }`}
+            className={`font-bold py-2.5 px-0 text-xs w-full rounded-full flex items-center justify-center gap-1 cursor-pointer transition-all ${
+              isRfqAdded
+                ? '!bg-emerald-700 text-white'
+                : inCart
+                ? 'bg-[#0f7a61]/90 hover:bg-[#0c6651] text-white'
+                : 'bg-[#0f7a61] hover:bg-[#0c6651] text-white'
+            }`}
+            title={inCart ? `In Basket (click to add ${moq > 0 ? moq : 1} more)` : 'Add to RFQ Basket'}
           >
             {isRfqAdded ? (
               <>
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Added</span>
+                <span>Added!</span>
+              </>
+            ) : inCart ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
+                <span>In Basket</span>
               </>
             ) : (
               <>

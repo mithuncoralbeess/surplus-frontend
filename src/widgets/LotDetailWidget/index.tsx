@@ -13,7 +13,9 @@ import {
   Box, ExternalLink, Globe, Clock, X
 } from 'lucide-react';
 import { catalogService, LotItem } from '../../services/catalogService';
+import { inquiryService } from '../../services/inquiryService';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useCart } from '../../context/CartContext';
 
 interface LotDetailWidgetProps {
   lotId: string;
@@ -22,6 +24,7 @@ interface LotDetailWidgetProps {
 export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
   const router = useRouter();
   const { formatPrice } = useCurrency();
+  const { addToCart, openCartDrawer } = useCart();
 
   const [lot, setLot] = useState<LotItem | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -65,19 +68,79 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
   }, [lotId]);
 
   const handleAddToCart = () => {
+    if (!lot) return;
+    const lotPrice = Number(lot.price) || 0;
+    const lotUnits = Number(lot.units) || 1;
+    const lotLocation = lot.location || lot.inventory_location || 'Warehouse';
+    const lotImage = selectedImage || lot.image || (lot.warehouse_images && lot.warehouse_images[0]) || '';
+
+    addToCart({
+      id: String(lot.id || lot.lot_number || lotId),
+      productId: lot.id,
+      type: 'lot',
+      title: lot.listing_title || lot.title || `Wholesale Surplus Lot #${lot.lot_number || lotId}`,
+      category: lot.category || 'Surplus Lot',
+      quantity: 1,
+      unitPrice: lotPrice,
+      image: lotImage,
+      moq: 1,
+      estQty: lotUnits,
+      sku: lot.lot_number,
+      location: lotLocation,
+    }, 1);
+
     setIsRfqSent(true);
     setTimeout(() => setIsRfqSent(false), 3500);
   };
 
-  const handleQuoteSubmit = (e: React.FormEvent) => {
+  const handleQuoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!lot || !userEmail) return;
+
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const lotQty = lot.units || lot.total_units_quantity || 1;
+      const lotPrice = Number(lot.price || lot.ask_price_surplus_payout || 0);
+
+      const res = await inquiryService.submitRfqEnquiry({
+        contact_person: userEmail.split('@')[0],
+        company_name: userEmail.split('@')[1]?.split('.')[0]?.toUpperCase() || 'Wholesale Buyer',
+        email: userEmail,
+        destination_port: lot.location || '',
+        additional_notes: notes || `Direct RFQ / Offer for Lot #${lot.lot_number}: ${lot.title}`,
+        currency: lot.currency || 'USD',
+        total_units: lotQty,
+        estimated_value: lotPrice,
+        items: [
+          {
+            id: `lot-${lot.id}`,
+            productId: lot.id,
+            title: lot.title || `Wholesale Lot #${lot.lot_number}`,
+            sku: lot.lot_number || `LOT-${lot.id}`,
+            category: lot.category || 'Wholesale Lot',
+            quantity: lotQty,
+            unitPrice: lotPrice,
+            notes: notes || undefined,
+          }
+        ]
+      });
+
+      if (res.success || res.status === 200 || res.status === 201) {
+        const refMsg = res.data?.reference ? ` Ref: ${res.data.reference}.` : '';
+        setQuoteSuccessMsg(`Quote enquiry submitted successfully!${refMsg} Our representative will contact ${userEmail} shortly.`);
+        setShowInlineQuoteForm(false);
+        setTimeout(() => setQuoteSuccessMsg(''), 7000);
+      } else {
+        setQuoteSuccessMsg(res.message || 'Failed to submit quote enquiry. Please try again.');
+        setTimeout(() => setQuoteSuccessMsg(''), 5000);
+      }
+    } catch (err: any) {
+      console.error('[LotDetailWidget] RFQ Submit error:', err);
+      setQuoteSuccessMsg('Error submitting enquiry. Please check your connection and try again.');
+      setTimeout(() => setQuoteSuccessMsg(''), 5000);
+    } finally {
       setIsSubmitting(false);
-      setQuoteSuccessMsg(`Quote request submitted successfully! Our representative will contact ${userEmail || 'you'} shortly.`);
-      setShowInlineQuoteForm(false);
-      setTimeout(() => setQuoteSuccessMsg(''), 6000);
-    }, 1000);
+    }
   };
 
   // Products array extraction
@@ -395,7 +458,7 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                     className="w-full py-3 px-4 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
-                    <span>{showInlineQuoteForm ? 'Close Inquiry Form' : 'Request Manifest / Offer'}</span>
+                    <span>{showInlineQuoteForm ? 'Close Enquiry Form' : 'Request Manifest / Offer'}</span>
                   </button>
                   <button
                     type="button"
@@ -414,11 +477,27 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                     ) : (
                       <>
                         <ShoppingCart className="w-4 h-4" />
-                        <span>+ Add Lot to Inquiry</span>
+                        <span>+ Add Lot to Enquiry</span>
                       </>
                     )}
                   </button>
                 </div>
+
+                {isRfqSent && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold text-[#0a5c48] text-center animate-fade-in flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Added wholesale lot to RFQ Basket!</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={openCartDrawer}
+                      className="px-3 py-1 bg-[#0f7a61] text-white rounded-full text-xs font-bold hover:bg-[#0c6651] transition-colors cursor-pointer shrink-0"
+                    >
+                      View Basket
+                    </button>
+                  </div>
+                )}
 
                 {/* Direct Manifest Download Button */}
                 {lot.file_url && (
@@ -440,7 +519,7 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                 <div className="p-5 sm:p-6 bg-gray-50 border border-emerald-200 rounded-2xl animate-fade-in space-y-4 mt-4">
                   <div className="flex items-center gap-2 font-extrabold text-[#0f7a61] text-xs sm:text-sm uppercase tracking-wider">
                     <Zap className="w-4 h-4" />
-                    <span>Inquire or Submit Offer For This Lot</span>
+                    <span>Enquire or Submit Offer For This Lot</span>
                   </div>
                   <form onSubmit={handleQuoteSubmit} className="space-y-3.5">
                     <div>
@@ -469,7 +548,7 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                       disabled={isSubmitting}
                       className="w-full py-3 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full font-extrabold text-xs sm:text-sm uppercase tracking-wider transition-colors shadow-sm flex items-center justify-center cursor-pointer"
                     >
-                      {isSubmitting ? 'Sending Request...' : 'Submit Inquiry'}
+                      {isSubmitting ? 'Sending Request...' : 'Submit Enquiry'}
                     </button>
                   </form>
                 </div>

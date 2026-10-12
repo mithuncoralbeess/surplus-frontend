@@ -133,7 +133,7 @@ const GOOD_TO_KNOW_QATAR_FAQS = [
   },
   {
     q: "How do I list my stock on Surplus Market?",
-    a: "Simply register your account, upload product details, quantities, and images, set your price, and wait for verified buyer inquiries."
+    a: "Simply register your account, upload product details, quantities, and images, set your price, and wait for verified buyer enquiries."
   },
   {
     q: "Does Surplus Market maintain an active buyer network for Qatar?",

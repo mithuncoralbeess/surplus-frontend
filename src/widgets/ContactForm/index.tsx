@@ -55,7 +55,7 @@ const contactFormSchema = z.object({
 type ContactFormData = z.infer<typeof contactFormSchema>;
 
 const enquiryOptions = [
-  { value: 'General Inquiry', label: 'General Inquiry' },
+  { value: 'General Enquiry', label: 'General Enquiry' },
   { value: 'Buying & Bidding Support', label: 'Buying & Bidding Support' },
   { value: 'Selling & Listing Inventory', label: 'Selling & Listing Inventory' },
   { value: 'Logistics & Shipping', label: 'Logistics & Shipping' },
@@ -371,7 +371,7 @@ export default function ContactForm() {
                         setErrors(prev => ({ ...prev, enquiryType: undefined }));
                       }
                     }}
-                    placeholder="Select inquiry topic..."
+                    placeholder="Select enquiry topic..."
                     styles={customSelectStyles(Boolean(errors.enquiryType))}
                   />
                   {errors.enquiryType && <p className="text-red-500 text-xs mt-1.5">{errors.enquiryType}</p>}
@@ -389,7 +389,7 @@ export default function ContactForm() {
                   rows={5}
                   value={formData.message}
                   onChange={handleChange}
-                  placeholder="Provide details about your inquiry..."
+                  placeholder="Provide details about your enquiry..."
                   className={getTextareaClass('message')}
                 ></textarea>
                 {errors.message && <p className="text-red-500 text-xs mt-1.5">{errors.message}</p>}

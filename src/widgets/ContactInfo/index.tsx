@@ -72,7 +72,7 @@ const CHANNELS = [
   {
     title: "Media & Press",
     icon: Newspaper,
-    description: "Press releases, brand assets, media inquiries, and conference requests.",
+    description: "Press releases, brand assets, media enquiries, and conference requests.",
     email: "press@surplusmarket.com",
     badge: "PR Team"
   }

@@ -623,7 +623,7 @@ const BrowseResults = () => {
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             type="button"
-                            onClick={() => router.push(`/contact?inquiry=${encodeURIComponent(item.sku)}`)}
+                            onClick={() => router.push(`/contact?enquiry=${encodeURIComponent(item.sku)}`)}
                             className="w-full py-2 px-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-xs font-semibold transition-colors cursor-pointer"
                           >
                             Details

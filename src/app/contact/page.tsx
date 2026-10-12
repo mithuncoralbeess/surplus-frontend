@@ -6,7 +6,7 @@ import { getPageMetadata } from '../../services/pageSeoService';
 
 const fallbackMetadata = {
   title: "Contact Us | Surplus Marketplace",
-  description: "Get in touch with our surplus inventory experts for buyer support, vendor onboarding, freight logistics, or general inquiries.",
+  description: "Get in touch with our surplus inventory experts for buyer support, vendor onboarding, freight logistics, or general enquiries.",
 };
 
 export async function generateMetadata() {

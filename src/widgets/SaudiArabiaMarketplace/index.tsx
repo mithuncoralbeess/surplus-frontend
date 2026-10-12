@@ -98,7 +98,7 @@ const GET_STARTED_STEPS = [
   {
     step: "03",
     title: "Connect with Buyers",
-    desc: "Receive instant inquiries and offers from verified surplus buyers in Saudi Arabia.",
+    desc: "Receive instant enquiries and offers from verified surplus buyers in Saudi Arabia.",
     icon: MessageSquareCheck
   },
   {
@@ -147,8 +147,8 @@ const GOOD_TO_KNOW_SAUDI_FAQS = [
     a: "Key active industries include construction materials, retail consumer goods, electronics, furniture, tools, hardware, and industrial supplies."
   },
   {
-    q: "How quickly do sellers receive inquiries after listing?",
-    a: "Many sellers receive buyer inquiries within days (or even hours) of listing, depending on product category, pricing competitiveness, and demand."
+    q: "How quickly do sellers receive enquiries after listing?",
+    a: "Many sellers receive buyer enquiries within days (or even hours) of listing, depending on product category, pricing competitiveness, and demand."
   },
   {
     q: "How is pricing determined for surplus stock in Saudi Arabia?",

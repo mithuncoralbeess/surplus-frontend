@@ -9,7 +9,7 @@ interface WhatsAppFloatingButtonProps {
 
 export default function WhatsAppFloatingButton({
   phoneNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+974 3026 9988',
-  defaultMessage = process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE || 'Hello Surplus Market, I have an inquiry about surplus inventory.',
+  defaultMessage = process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE || 'Hello Surplus Market, I have an enquiry about surplus inventory.',
 }: WhatsAppFloatingButtonProps) {
   const [mounted, setMounted] = useState(false);
 

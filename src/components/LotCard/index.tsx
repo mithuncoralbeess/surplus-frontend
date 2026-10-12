@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -11,9 +11,12 @@ import {
   TrendingUp,
   Boxes,
   Eye,
-  ArrowRight
+  ArrowRight,
+  ShoppingCart,
+  CheckCircle2,
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useCart } from '../../context/CartContext';
 import { createLotUrl } from '../../lib/slugs';
 
 export interface LotCardProps {
@@ -53,6 +56,29 @@ const LotCard: React.FC<LotCardProps> = ({
   onViewManifest,
 }) => {
   const { formatPrice } = useCurrency();
+  const { addToCart, isInCart } = useCart();
+  const [isAdded, setIsAdded] = useState(false);
+  const inCart = id ? isInCart(id) : false;
+
+  const handleAddLot = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    addToCart({
+      id: String(id || title),
+      productId: id,
+      type: 'lot',
+      title,
+      category: category || 'Surplus Lot',
+      quantity: 1,
+      unitPrice: price || 0,
+      image,
+      moq: 1,
+      estQty: units || 1,
+      location,
+    }, 1);
+    setIsAdded(true);
+    setTimeout(() => setIsAdded(false), 2500);
+  };
 
   if (isLoading) {
     return (
@@ -260,6 +286,24 @@ const LotCard: React.FC<LotCardProps> = ({
                 <Eye className="w-4 h-4" />
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={handleAddLot}
+              className={`p-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs ${
+                isAdded || inCart
+                  ? 'border-emerald-600 bg-emerald-50 text-[#0a5c48]'
+                  : 'border-slate-200 hover:border-[#0a5c48] text-slate-700 hover:text-[#0a5c48] hover:bg-emerald-50/50'
+              }`}
+              title={inCart ? "In RFQ Basket" : "Add Lot to RFQ Basket"}
+              aria-label="Add lot to RFQ basket"
+            >
+              {isAdded ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <ShoppingCart className="w-4 h-4" />
+              )}
+            </button>
 
             <Link
               href={lotLink}

@@ -14,6 +14,8 @@ import AnalyticsTracker from "../components/AnalyticsTracker";
 
 import { LanguageProvider } from "../context/LanguageContext";
 import { NotificationProvider } from "../context/NotificationContext";
+import { CartProvider } from "../context/CartContext";
+import CartDrawer from "../components/CartDrawer";
 import ReduxProvider from "../store/ReduxProvider";
 
 const inter = Inter({
@@ -48,13 +50,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <LanguageProvider>
               <CurrencyProvider>
                 <NotificationProvider>
-                  <AOSProvider>
-                    <SmoothScroll>
-                      <AppShell>
-                        {children}
-                      </AppShell>
-                    </SmoothScroll>
-                  </AOSProvider>
+                  <CartProvider>
+                    <AOSProvider>
+                      <SmoothScroll>
+                        <AppShell>
+                          {children}
+                        </AppShell>
+                        <CartDrawer />
+                      </SmoothScroll>
+                    </AOSProvider>
+                  </CartProvider>
                 </NotificationProvider>
               </CurrencyProvider>
             </LanguageProvider>

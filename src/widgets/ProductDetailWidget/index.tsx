@@ -11,7 +11,9 @@ import {
   List, MapPin, FileText, Info
 } from 'lucide-react';
 import { catalogService, ProductItem } from '../../services/catalogService';
+import { inquiryService } from '../../services/inquiryService';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard';
 
 interface ProductDetailWidgetProps {
@@ -21,6 +23,7 @@ interface ProductDetailWidgetProps {
 export default function ProductDetailWidget({ productId }: ProductDetailWidgetProps) {
   const router = useRouter();
   const { formatPrice } = useCurrency();
+  const { addToCart, openCartDrawer } = useCart();
 
   const [product, setProduct] = useState<ProductItem | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<ProductItem[]>([]);
@@ -120,19 +123,84 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
   };
 
   const handleAddToCart = () => {
+    if (!product) return;
+    const catName = typeof product.category === 'object' && product.category !== null
+      ? (product.category as any)?.name || (product.category as any)?.title || 'Surplus Inventory'
+      : String(product.category || 'Surplus Inventory');
+    const unitPrice = product.currentPrice || product.liquidatingPrice || product.price || 0;
+    const minQty = product.moq || 1;
+    const maxQty = product.quantity || product.estQty || 9999;
+    const prodImage = activeImage || product.image || (product.images && product.images[0]) || '';
+
+    addToCart({
+      id: String(product.id || product.product_id || product.sku || productId),
+      productId: product.id,
+      type: 'product',
+      title: product.title,
+      category: catName,
+      quantity: quantity,
+      unitPrice: unitPrice,
+      image: prodImage,
+      moq: minQty,
+      estQty: maxQty,
+      sku: product.product_id || product.sku,
+      location: product.inventory_location || product.location,
+    }, quantity);
+
     setIsRfqSent(true);
     setTimeout(() => setIsRfqSent(false), 3500);
   };
 
-  const handleQuoteSubmit = (e: React.FormEvent) => {
+  const handleQuoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!product || !userEmail) return;
+
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const parsedTarget = targetPrice ? parseFloat(targetPrice.replace(/[^0-9.]/g, '')) : undefined;
+      const effectiveUnitPrice = product.currentPrice || product.price || 0;
+      const estValue = (parsedTarget || effectiveUnitPrice) * quantity;
+
+      const res = await inquiryService.submitRfqEnquiry({
+        contact_person: userEmail.split('@')[0],
+        company_name: userEmail.split('@')[1]?.split('.')[0]?.toUpperCase() || 'Corporate Buyer',
+        email: userEmail,
+        destination_port: notes || '',
+        additional_notes: notes || `Direct RFQ for ${product.title} (SKU: ${product.product_id || product.sku || 'N/A'})`,
+        currency: product.currency || 'USD',
+        total_units: quantity,
+        estimated_value: estValue,
+        items: [
+          {
+            id: String(product.id),
+            productId: product.id,
+            title: product.title,
+            sku: product.product_id || product.sku || '',
+            category: product.category || 'General Surplus',
+            quantity: quantity,
+            unitPrice: effectiveUnitPrice,
+            targetPrice: parsedTarget,
+            notes: notes || undefined,
+          }
+        ]
+      });
+
+      if (res.success || res.status === 200 || res.status === 201) {
+        const refMsg = res.data?.reference ? ` Ref: ${res.data.reference}.` : '';
+        setQuoteSuccessMsg(`Quote request for ${quantity} unit(s) submitted successfully!${refMsg} Our representative will contact ${userEmail} shortly.`);
+        setShowInlineQuoteForm(false);
+        setTimeout(() => setQuoteSuccessMsg(''), 7000);
+      } else {
+        setQuoteSuccessMsg(res.message || 'Failed to submit quote request. Please try again.');
+        setTimeout(() => setQuoteSuccessMsg(''), 5000);
+      }
+    } catch (err: any) {
+      console.error('[ProductDetailWidget] RFQ Submit error:', err);
+      setQuoteSuccessMsg('Error submitting quote. Please check your connection and try again.');
+      setTimeout(() => setQuoteSuccessMsg(''), 5000);
+    } finally {
       setIsSubmitting(false);
-      setQuoteSuccessMsg(`Quote request for ${quantity} unit(s) submitted successfully! Our representative will contact ${userEmail || 'you'} shortly.`);
-      setShowInlineQuoteForm(false);
-      setTimeout(() => setQuoteSuccessMsg(''), 6000);
-    }, 1000);
+    }
   };
 
   if (loading) {
@@ -543,9 +611,18 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
                 </div>
 
                 {isRfqSent && (
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold text-[#0a5c48] text-center animate-fade-in flex items-center justify-center gap-2">
-                    <Check className="w-4 h-4 text-emerald-600" />
-                    <span>Added to your inquiry cart. Click &quot;Request Official Quote&quot; to finalize.</span>
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold text-[#0a5c48] text-center animate-fade-in flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Added {quantity} unit(s) to RFQ Basket!</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={openCartDrawer}
+                      className="px-3 py-1 bg-[#0f7a61] text-white rounded-full text-xs font-bold hover:bg-[#0c6651] transition-colors cursor-pointer shrink-0"
+                    >
+                      View Basket
+                    </button>
                   </div>
                 )}
               </div>
@@ -556,7 +633,7 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 font-extrabold text-[#0f7a61] text-xs sm:text-sm md:text-base uppercase tracking-wider">
                       <Zap className="w-4 h-4" />
-                      <span>Submit Instant RFQ Inquiry</span>
+                      <span>Submit Instant RFQ Enquiry</span>
                     </div>
                     <span className="text-[10px] sm:text-xs font-mono text-gray-500">SKU: {product.product_id || product.sku}</span>
                   </div>

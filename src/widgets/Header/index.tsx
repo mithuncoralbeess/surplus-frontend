@@ -93,6 +93,34 @@ const Header = () => {
             </nav>
           </div>
 
+        {/* Mobile Right Actions */}
+        <div className="flex lg:hidden items-center gap-1.5 header-mobile-actions">
+          <Link 
+            href="/browse"
+            className="text-gray-600 hover:text-gray-900 transition-colors p-1.5"
+            title="Search"
+          >
+            <Search className="w-5 h-5" />
+          </Link>
+          <HeaderCartDropdown />
+          {session ? (
+            <Link 
+              href="/profile"
+              className="flex items-center justify-center w-7 h-7 rounded-full bg-[#0f7a61] text-white font-bold text-xs ml-1"
+              title={session.user?.name || 'Profile'}
+            >
+              {session.user?.name?.[0]?.toUpperCase() || session.user?.email?.[0]?.toUpperCase() || 'U'}
+            </Link>
+          ) : (
+            <button 
+              onClick={() => openAuth('login')} 
+              className="text-gray-700 hover:text-[#0f7a61] text-xs font-bold px-2 py-1 ml-1"
+            >
+              Sign In
+            </button>
+          )}
+        </div>
+
         {/* Right Actions */}
         <div className="hidden lg:flex items-center header-right-actions">
           <Link 
