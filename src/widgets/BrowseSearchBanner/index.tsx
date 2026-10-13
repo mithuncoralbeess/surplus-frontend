@@ -3,14 +3,14 @@
 import React, { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { 
-  Sparkles, Search, Zap, Clock, TrendingUp, Mic, MicOff, 
+import {
+  Sparkles, Search, Zap, Clock, TrendingUp, Mic, MicOff,
   X, Check, ChevronRight, Cpu, Wrench, ShieldCheck, Tag, ArrowRight
 } from 'lucide-react';
-import { 
-  parseNaturalLanguageQuery, 
-  getInstantSuggestions, 
-  ParsedAiIntent 
+import {
+  parseNaturalLanguageQuery,
+  getInstantSuggestions,
+  ParsedAiIntent
 } from '../../lib/aiSearchEngine';
 import { useVoiceSearch } from '../../hooks/useVoiceSearch';
 
@@ -90,7 +90,7 @@ const BrowseSearchBanner = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
-  
+
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [searchMode, setSearchMode] = useState<'ai' | 'sku'>('ai');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -243,7 +243,7 @@ const BrowseSearchBanner = () => {
       saveRecentSearch(query);
       setIsDropdownOpen(false);
       startTransition(() => {
-        router.push(`/browse?q=${encodeURIComponent(query)}&mode=${searchMode}`);
+        router.push(`/browse?q=${encodeURIComponent(query)}`);
       });
     } else {
       router.push('/browse');
@@ -255,7 +255,7 @@ const BrowseSearchBanner = () => {
     saveRecentSearch(promptText);
     setIsDropdownOpen(false);
     startTransition(() => {
-      router.push(`/browse?q=${encodeURIComponent(promptText.trim())}&mode=${searchMode}`);
+      router.push(`/browse?q=${encodeURIComponent(promptText.trim())}`);
     });
   };
 
@@ -293,52 +293,22 @@ const BrowseSearchBanner = () => {
   };
 
   return (
-    <section className="w-full bg-gradient-to-b from-[#f9faf7] via-[#f7f9f6] to-[#f4f7f4] py-10 md:py-14 border-b border-emerald-950/5 relative overflow-visible">
+    <section className="w-full bg-gradient-to-b py-10 md:py-14 border-b border-emerald-950/5 relative overflow-visible">
       {/* Background Decorative Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-4xl h-48 bg-emerald-200/20 blur-3xl pointer-events-none rounded-full" />
 
       <div className="container max-w-5xl mx-auto px-4 relative z-10">
-        
-        {/* Header Badges & Latency Pill */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/70 border border-emerald-300/60 text-[#0a5c48] font-bold text-xs tracking-wider uppercase shadow-xs">
-              <Sparkles className="w-3.5 h-3.5 text-[#14b875] animate-pulse" />
-              <span>AI SMART SEARCH ENGINE 2.0</span>
-            </div>
-            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800/80 bg-white/80 border border-emerald-200/60 px-2.5 py-0.5 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-              ⚡ &lt; 10ms Hybrid Latency
-            </span>
-          </div>
 
-          {/* Mode Switcher */}
-          <div className="inline-flex p-1 bg-white/90 border border-gray-200/80 rounded-full shadow-xs text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => setSearchMode('ai')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all cursor-pointer ${
-                searchMode === 'ai' 
-                  ? 'bg-[#0f7a61] text-white shadow-xs' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Sparkles className="w-3 h-3" />
-              <span>AI Semantic</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setSearchMode('sku')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all cursor-pointer ${
-                searchMode === 'sku' 
-                  ? 'bg-[#0f7a61] text-white shadow-xs' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Cpu className="w-3 h-3" />
-              <span>Exact SKU / Part #</span>
-            </button>
+        {/* Header Badges & Latency Pill */}
+        <div className="flex items-center gap-2 mb-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/70 border border-emerald-300/60 text-[#0a5c48] font-bold text-xs tracking-wider uppercase shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-[#14b875] animate-pulse" />
+            <span>AI SMART SEARCH ENGINE 2.0</span>
           </div>
+          <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800/80 bg-white/80 border border-emerald-200/60 px-2.5 py-0.5 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+            ⚡ &lt; 10ms Hybrid Latency
+          </span>
         </div>
 
         {/* Main Title & Natural Subtitle */}
@@ -351,18 +321,17 @@ const BrowseSearchBanner = () => {
 
         {/* High-Performance Search Bar Container */}
         <div className="relative w-full" ref={dropdownRef}>
-          <form 
+          <form
             onSubmit={handleSearchSubmit}
-            className={`relative flex items-center w-full bg-white border ${
-              isDropdownOpen 
-                ? 'border-[#0f7a61] ring-3 ring-[#0f7a61]/15 shadow-2xl' 
+            className={`relative flex items-center w-full bg-white border ${isDropdownOpen
+                ? 'border-[#0f7a61] ring-3 ring-[#0f7a61]/15 shadow-2xl'
                 : 'border-gray-300/80 shadow-[0_4px_25px_rgba(0,0,0,0.06)] hover:border-gray-400'
-            } rounded-full transition-all p-1.5 sm:p-2 bg-white`}
+              } rounded-full transition-all p-1.5 sm:p-2 bg-white`}
           >
             <div className="flex items-center pl-3 sm:pl-4 text-gray-400 shrink-0">
               <Search className="w-5 h-5 text-gray-400" />
             </div>
-            
+
             <input
               ref={inputRef}
               type="text"
@@ -398,11 +367,10 @@ const BrowseSearchBanner = () => {
               <button
                 type="button"
                 onClick={toggleListening}
-                className={`relative p-2 rounded-full transition-all cursor-pointer mr-1 ${
-                  isListening 
-                    ? 'bg-rose-500 text-white animate-pulse ring-4 ring-rose-200' 
+                className={`relative p-2 rounded-full transition-all cursor-pointer mr-1 ${isListening
+                    ? 'bg-rose-500 text-white animate-pulse ring-4 ring-rose-200'
                     : 'text-gray-500 hover:text-[#0f7a61] hover:bg-emerald-50'
-                }`}
+                  }`}
                 title={isListening ? "Listening... speak now" : "Search by voice"}
               >
                 {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -487,7 +455,7 @@ const BrowseSearchBanner = () => {
 
           {/* High-Performance Attached Search Dropdown */}
           {isDropdownOpen && (
-            <div 
+            <div
               className="absolute left-0 right-0 top-full mt-3 bg-white rounded-3xl border border-gray-200/90 shadow-[0_20px_60px_rgba(0,0,0,0.15)] z-50 p-5 md:p-6 max-h-[min(82vh,580px)] overflow-y-auto overscroll-contain animate-in fade-in zoom-in-95 duration-150"
             >
               {/* STATE 1: Live Typeahead Results (When user has typed) */}
@@ -513,11 +481,11 @@ const BrowseSearchBanner = () => {
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200/70">
-                              <Image 
-                                src={item.image} 
-                                alt={item.title} 
-                                fill 
-                                className="object-cover group-hover:scale-105 transition-transform" 
+                              <Image
+                                src={item.image}
+                                alt={item.title}
+                                fill
+                                className="object-cover group-hover:scale-105 transition-transform"
                               />
                             </div>
                             <div className="min-w-0">
@@ -593,11 +561,10 @@ const BrowseSearchBanner = () => {
                             key={idx}
                             type="button"
                             onClick={() => setActivePromptCategory(idx)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                              isActive 
-                                ? 'bg-[#0f7a61] text-white shadow-xs' 
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${isActive
+                                ? 'bg-[#0f7a61] text-white shadow-xs'
                                 : 'bg-gray-100 hover:bg-gray-200/80 text-gray-600'
-                            }`}
+                              }`}
                           >
                             <Icon className="w-3 h-3" />
                             <span>{cat.category}</span>
@@ -639,7 +606,7 @@ const BrowseSearchBanner = () => {
                           <span>Recent Searches</span>
                         </div>
                         {recentSearches.length > 0 && (
-                          <button 
+                          <button
                             type="button"
                             onClick={clearAllRecent}
                             className="text-[11px] text-gray-400 hover:text-red-600 font-medium cursor-pointer"

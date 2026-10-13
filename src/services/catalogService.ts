@@ -436,8 +436,8 @@ export const catalogService = {
    * Connect to GET /api/products/ to fetch single product items (NOT lots).
    * Uses in-memory cache to prevent redundant backend roundtrips.
    */
-  async getProducts(params?: { category?: string; search?: string; vendor_id?: string }): Promise<ProductItem[]> {
-    const isDefaultQuery = (!params?.category || params.category === 'All') && !params?.search && !params?.vendor_id;
+  async getProducts(params?: { category?: string; search?: string; vendor_id?: string; collection?: string }): Promise<ProductItem[]> {
+    const isDefaultQuery = (!params?.category || params.category === 'All') && !params?.search && !params?.vendor_id && !params?.collection;
     
     if (isDefaultQuery && allProductsCache && (Date.now() - lastProductsFetchTime < CACHE_TTL_MS)) {
       return allProductsCache;
@@ -454,6 +454,9 @@ export const catalogService = {
       }
       if (params?.vendor_id) {
         queryParts.push(`vendor_id=${encodeURIComponent(params.vendor_id)}`);
+      }
+      if (params?.collection) {
+        queryParts.push(`collection=${encodeURIComponent(params.collection)}`);
       }
       if (queryParts.length > 0) {
         endpoint += `?${queryParts.join('&')}`;

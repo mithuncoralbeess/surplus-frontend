@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function BrowsePage() {
   return (
-    <div className="w-full flex flex-col min-h-screen bg-slate-50">
+    <div className="w-full flex flex-col min-h-screen">
       <Suspense fallback={<div className="p-8 text-center w-full">Loading Search Banner...</div>}>
         <BrowseSearchBanner />
       </Suspense>

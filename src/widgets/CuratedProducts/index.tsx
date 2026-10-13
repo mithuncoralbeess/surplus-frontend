@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, PackageSearch } from 'lucide-react';
 import { motion } from '../../lib/motion';
 import ProductCard from '../../components/ProductCard';
@@ -12,16 +12,44 @@ const CuratedProducts = () => {
   const [activeTab, setActiveTab] = useState('Best Sellers');
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const cacheRef = useRef<Record<string, ProductItem[]>>({});
 
   useEffect(() => {
     let isMounted = true;
+
+    // Check in-memory cache first for instant tab switching
+    if (cacheRef.current[activeTab]) {
+      setProducts(cacheRef.current[activeTab]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
-    catalogService.getProducts()
+    const collectionParam = 
+      activeTab === 'Best Sellers' ? 'best_selling' :
+      activeTab === 'New Arrivals' ? 'new_arrivals' :
+      'featured';
+
+    catalogService.getProducts({ collection: collectionParam })
       .then((data) => {
         if (isMounted) {
-          // Filter out lot items (display products not lots)
-          const singleProducts = data.filter((item) => item.type !== 'lot');
+          // Filter out lot items (display single products only)
+          let singleProducts = data.filter((item) => item.type !== 'lot');
+
+          // Strict curation filtering based on selected tab flag
+          if (activeTab === 'Best Sellers') {
+            const best = singleProducts.filter(item => item.isBestSelling);
+            if (best.length > 0) singleProducts = best;
+          } else if (activeTab === 'New Arrivals') {
+            const newArr = singleProducts.filter(item => item.isNewArrival);
+            if (newArr.length > 0) singleProducts = newArr;
+          } else if (activeTab === 'Featured Deals') {
+            const feat = singleProducts.filter(item => item.isFeatured);
+            if (feat.length > 0) singleProducts = feat;
+          }
+
+          cacheRef.current[activeTab] = singleProducts;
           setProducts(singleProducts);
           setLoading(false);
         }
@@ -67,7 +95,7 @@ const CuratedProducts = () => {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`
-                  px-6 py-2.5 rounded-full text-sm font-medium transition-all
+                  px-6 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer
                   ${activeTab === tab
                     ? 'bg-primary text-white shadow-md'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
@@ -111,8 +139,8 @@ const CuratedProducts = () => {
           ) : (
             <div className="col-span-full py-24 flex flex-col items-center justify-center text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
               <PackageSearch className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No products available</h3>
-              <p className="text-gray-500 text-sm max-w-sm">No product data was returned from the API (/api/products/). Please check back later or add new products.</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No {activeTab.toLowerCase()} found</h3>
+              <p className="text-gray-500 text-sm max-w-sm">No products currently match this curation filter. Please check back later or explore our full marketplace catalog.</p>
             </div>
           )}
         </motion.div>

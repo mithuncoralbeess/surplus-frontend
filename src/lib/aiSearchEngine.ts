@@ -17,6 +17,9 @@ export interface ParsedAiIntent {
 export interface AiSearchResultItem extends SurplusItem {
   aiMatchScore: number; // 0 - 100
   matchReasons: string[];
+  isLot?: boolean;
+  lotNumber?: string;
+  totalUnits?: number;
 }
 
 export interface AiSearchResponse {
@@ -547,9 +550,138 @@ export function mapBackendProductToAiItem(p: any): AiSearchResultItem {
   };
 }
 
+function mapBackendLotToAiItem(lot: any): AiSearchResultItem {
+  const price = parseFloat(lot.price || lot.ask_price_surplus_payout || lot.asking_price || lot.liquidating_price || 0) || 0;
+  const retailPrice = parseFloat(lot.msrp || lot.total_est_retail_value_msrp || lot.retail_price || 0) || Math.round(price * 1.5);
+  const discountPercent = retailPrice > price && retailPrice > 0 ? Math.round(((retailPrice - price) / retailPrice) * 100) : 0;
+
+  let img = lot.image || (Array.isArray(lot.warehouse_images) && lot.warehouse_images[0]) || (Array.isArray(lot.images) && lot.images[0]) || '';
+  if (!img) {
+    img = 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?auto=format&fit=crop&w=1200&q=80';
+  }
+
+  const sku = lot.lot_number || (lot.id ? `LOT-${lot.id}` : 'LOT-SURPLUS');
+  let catName = 'Wholesale Lot';
+  if (Array.isArray(lot.category_allocations) && lot.category_allocations.length > 0) {
+    catName = lot.category_allocations[0]?.category_name || catName;
+  } else if (typeof lot.category === 'object' && lot.category) {
+    catName = lot.category.name || lot.category.title || 'Wholesale Lot';
+  } else if (lot.category) {
+    catName = String(lot.category);
+  }
+
+  const brandName = lot.key_brands_included || lot.brand || 'Multiple Brands';
+  const totalUnits = lot.total_units_quantity || lot.quantity || 1;
+
+  return {
+    id: String(lot.id || sku),
+    sku: sku,
+    title: lot.listing_title || lot.title || lot.product_name || `Wholesale Surplus Lot (${totalUnits} Units)`,
+    brand: brandName,
+    category: catName,
+    subCategory: 'Wholesale Lot',
+    condition: 'Liquidation Lot',
+    price: price,
+    retailPrice: retailPrice,
+    discountPercent: discountPercent,
+    moq: 1,
+    estQty: totalUnits,
+    location: lot.inventory_location || 'Warehouse Location',
+    country: lot.country || 'UAE / GCC',
+    isCertified: Boolean(lot.third_party_certificate_available || lot.third_party_certificate),
+    isVerifiedSeller: true,
+    sellerRating: 4.9,
+    image: img,
+    description: lot.lot_description_and_notes || lot.description || '',
+    specs: {
+      'Type': 'Wholesale Lot',
+      'Lot Number': sku,
+      'Total Units': String(totalUnits),
+      'Load Type': lot.load_type || 'Pallet',
+      'Distinct SKUs': String(lot.number_of_distinct_skus || 1)
+    },
+    tags: ['lot', 'wholesale', catName, brandName, 'liquidation'].filter(Boolean),
+    warranty: lot.warranty || 'Surplus Manifest Verified',
+    aiMatchScore: Math.round(lot.similarity_score || 90),
+    matchReasons: Array.isArray(lot.match_reasons) && lot.match_reasons.length > 0
+      ? lot.match_reasons
+      : ['Wholesale surplus lot match'],
+    isLot: true,
+    lotNumber: sku,
+    totalUnits: totalUnits
+  };
+}
+
 /**
- * Executes a Live Semantic Natural Language Search against the Neon DB pgvector backend.
- * Falls back gracefully to local client hybrid search if the server is offline or empty.
+ * Normalizes any backend item into an AiSearchResultItem, detecting whether it is a wholesale lot or a single product.
+ */
+function normalizeBackendItem(item: any): AiSearchResultItem {
+  if (!item) return mapBackendProductToAiItem({});
+
+  const isLot = Boolean(
+    item.is_lot === true ||
+    item.isLot === true ||
+    item.type === 'lot' ||
+    item.lot_number ||
+    (item.sku && String(item.sku).startsWith('LOT-')) ||
+    (item.product_id && String(item.product_id).startsWith('LOT-')) ||
+    item.total_units_quantity !== undefined ||
+    item.listing_title ||
+    item.ask_price_surplus_payout
+  );
+
+  return isLot ? mapBackendLotToAiItem(item) : mapBackendProductToAiItem(item);
+}
+
+/**
+ * Universal extractor for Unified API Responses returning products and lots in one payload.
+ * Supports:
+ * - { success: true, results: [...] } containing both products and lots
+ * - { success: true, products: [...], lots: [...] }
+ * - { success: true, results: { products: [...], lots: [...] } }
+ * - { success: true, data: [...] }
+ */
+function parseUnifiedSearchPayload(data: any): AiSearchResultItem[] {
+  if (!data) return [];
+
+  // Case 1: results array containing unified items
+  if (Array.isArray(data.results)) {
+    return data.results.map(normalizeBackendItem);
+  }
+
+  // Case 2: separate products and lots arrays
+  if (Array.isArray(data.products) || Array.isArray(data.lots)) {
+    const prods = Array.isArray(data.products) ? data.products.map(mapBackendProductToAiItem) : [];
+    const lots = Array.isArray(data.lots) ? data.lots.map(mapBackendLotToAiItem) : [];
+    return [...prods, ...lots];
+  }
+
+  // Case 3: results object with products and lots
+  if (data.results && typeof data.results === 'object') {
+    const prods = Array.isArray(data.results.products) ? data.results.products.map(mapBackendProductToAiItem) : [];
+    const lots = Array.isArray(data.results.lots) ? data.results.lots.map(mapBackendLotToAiItem) : [];
+    if (prods.length || lots.length) {
+      return [...prods, ...lots];
+    }
+  }
+
+  // Case 4: data array
+  if (Array.isArray(data.data)) {
+    return data.data.map(normalizeBackendItem);
+  }
+
+  // Case 5: Root array
+  if (Array.isArray(data)) {
+    return data.map(normalizeBackendItem);
+  }
+
+  return [];
+}
+
+/**
+ * Executes a Unified Live Natural Language Search across both Products and Wholesale Lots.
+ * Connects to unified endpoints GET /api/search/?q=... and GET /api/products/semantic-search/?q=...
+ * If query is empty, returns an empty result set (no products or lots displayed).
  */
 export async function fetchSemanticSearchResults(
   query: string,
@@ -558,108 +690,141 @@ export async function fetchSemanticSearchResults(
   const startTime = performance.now();
   const trimmed = query.trim();
 
-  // If query is empty, return standard client response
+  // If no search query, return empty response immediately
   if (!trimmed) {
-    return performAiSearch('', options);
+    return {
+      query: '',
+      intent: { rawQuery: '', cleanedQuery: '', confidence: 1 },
+      results: [],
+      totalCount: 0,
+      executionMs: 0,
+      mode: 'ai',
+      availableCategories: [],
+      priceRange: { min: 0, max: 0 }
+    };
   }
 
   try {
     const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
-    const endpoint = apiBase + '/api/products/semantic-search/?q=' + encodeURIComponent(trimmed) + '&limit=36';
+    let liveResults: AiSearchResultItem[] = [];
+    let parsedIntentFromApi: any = null;
 
-    const res = await fetch(endpoint, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
+    // 1. Primary Unified Endpoint: GET /api/search/?q=...
+    try {
+      const searchRes = await fetch(`${apiBase}/api/search/?q=${encodeURIComponent(trimmed)}&limit=36`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        const extracted = parseUnifiedSearchPayload(searchData);
+        if (extracted.length > 0) {
+          liveResults = extracted;
+          parsedIntentFromApi = searchData.parsed_intent;
+        }
+      }
+    } catch (e) {
+      // Continue to next endpoint
+    }
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.success && Array.isArray(data.results) && data.results.length > 0) {
-        const liveResults: AiSearchResultItem[] = data.results.map(mapBackendProductToAiItem);
-
-        // Apply client-side filters if active
-        let filtered = liveResults.filter(item => {
-          if (options.category && options.category !== 'All' && item.category !== options.category) {
-            return false;
-          }
-          if (options.condition && options.condition !== 'All' && item.condition !== options.condition) {
-            return false;
-          }
-          if (options.isCertifiedOnly && !item.isCertified) {
-            return false;
-          }
-          if (options.minPrice !== undefined && item.price < options.minPrice) {
-            return false;
-          }
-          if (options.maxPrice !== undefined && item.price > options.maxPrice) {
-            return false;
-          }
-          return true;
+    // 2. Unified Semantic Endpoint: GET /api/products/semantic-search/?q=...
+    if (liveResults.length === 0) {
+      try {
+        const semRes = await fetch(`${apiBase}/api/products/semantic-search/?q=${encodeURIComponent(trimmed)}&limit=36`, {
+          headers: { 'Accept': 'application/json' }
         });
-
-        // Apply sorting
-        const sortBy = options.sortBy || 'relevance';
-        filtered.sort((a, b) => {
-          switch (sortBy) {
-            case 'price_asc':
-              return a.price - b.price;
-            case 'price_desc':
-              return b.price - a.price;
-            case 'discount_desc':
-              return b.discountPercent - a.discountPercent;
-            case 'relevance':
-            default:
-              return b.aiMatchScore - a.aiMatchScore;
+        if (semRes.ok) {
+          const semData = await semRes.json();
+          const extracted = parseUnifiedSearchPayload(semData);
+          if (extracted.length > 0) {
+            liveResults = extracted;
+            parsedIntentFromApi = semData.parsed_intent;
           }
-        });
-
-        const executionMs = Math.round((performance.now() - startTime) * 10) / 10;
-
-        const categoryCounts: Record<string, number> = {};
-        liveResults.forEach(item => {
-          categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
-        });
-        const availableCategories = Object.entries(categoryCounts).map(([name, count]) => ({
-          name,
-          count
-        }));
-
-        const prices = liveResults.map(i => i.price);
-        const priceRange = {
-          min: prices.length ? Math.min(...prices) : 0,
-          max: prices.length ? Math.max(...prices) : 10000
-        };
-
-        const parsed = data.parsed_intent || {};
-        const intent: ParsedAiIntent = {
-          rawQuery: query,
-          cleanedQuery: parsed.semantic_keywords || query,
-          brand: parsed.brand || undefined,
-          location: parsed.location || undefined,
-          maxPrice: parsed.max_price != null ? parsed.max_price : undefined,
-          minPrice: parsed.min_price != null ? parsed.min_price : undefined,
-          confidence: 0.98
-        };
-
-        return {
-          query,
-          intent,
-          results: filtered,
-          totalCount: filtered.length,
-          executionMs,
-          mode: 'ai',
-          availableCategories,
-          priceRange
-        };
+        }
+      } catch (e) {
+        // Continue to fallback
       }
     }
+
+    // 3. Fallback: Concurrently query individual catalog & lot search endpoints
+    if (liveResults.length === 0) {
+      const [productsSettled, lotsSettled] = await Promise.allSettled([
+        fetch(`${apiBase}/api/products/?search=${encodeURIComponent(trimmed)}`, {
+          headers: { 'Accept': 'application/json' }
+        }).then(r => r.ok ? r.json() : null),
+        fetch(`${apiBase}/api/lots/?search=${encodeURIComponent(trimmed)}`, {
+          headers: { 'Accept': 'application/json' }
+        }).then(r => r.ok ? r.json() : null)
+      ]);
+
+      const prodData = productsSettled.status === 'fulfilled' ? productsSettled.value : null;
+      const lotData = lotsSettled.status === 'fulfilled' ? lotsSettled.value : null;
+
+      const prods = parseUnifiedSearchPayload(prodData);
+      const lots = parseUnifiedSearchPayload(lotData);
+      liveResults = [...prods, ...lots];
+    }
+
+    if (liveResults.length > 0) {
+      // Apply client-side sorting
+      const sortBy = options.sortBy || 'relevance';
+      liveResults.sort((a, b) => {
+        switch (sortBy) {
+          case 'price_asc':
+            return a.price - b.price;
+          case 'price_desc':
+            return b.price - a.price;
+          case 'discount_desc':
+            return b.discountPercent - a.discountPercent;
+          case 'relevance':
+          default:
+            return b.aiMatchScore - a.aiMatchScore;
+        }
+      });
+
+      const executionMs = Math.round((performance.now() - startTime) * 10) / 10;
+
+      const categoryCounts: Record<string, number> = {};
+      liveResults.forEach(item => {
+        categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
+      });
+      const availableCategories = Object.entries(categoryCounts).map(([name, count]) => ({
+        name,
+        count
+      }));
+
+      const prices = liveResults.map(i => i.price);
+      const priceRange = {
+        min: prices.length ? Math.min(...prices) : 0,
+        max: prices.length ? Math.max(...prices) : 10000
+      };
+
+      const intent: ParsedAiIntent = {
+        rawQuery: query,
+        cleanedQuery: parsedIntentFromApi?.semantic_keywords || trimmed,
+        brand: parsedIntentFromApi?.brand || undefined,
+        location: parsedIntentFromApi?.location || undefined,
+        maxPrice: parsedIntentFromApi?.max_price != null ? parsedIntentFromApi.max_price : undefined,
+        minPrice: parsedIntentFromApi?.min_price != null ? parsedIntentFromApi.min_price : undefined,
+        confidence: 0.98
+      };
+
+      return {
+        query,
+        intent,
+        results: liveResults,
+        totalCount: liveResults.length,
+        executionMs,
+        mode: 'ai',
+        availableCategories,
+        priceRange
+      };
+    }
   } catch (err) {
-    console.warn('Live semantic search error, using local fallback:', err);
+    console.warn('Unified search error, checking local fallback:', err);
   }
 
-  // Graceful fallback to client-side search engine
-  return performAiSearch(query, options);
+  // Fallback to client-side search engine if backend offline
+  const fallbackRes = performAiSearch(query, options);
+  return fallbackRes;
 }
 
