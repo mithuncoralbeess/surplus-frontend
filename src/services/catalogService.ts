@@ -436,8 +436,8 @@ export const catalogService = {
    * Connect to GET /api/products/ to fetch single product items (NOT lots).
    * Uses in-memory cache to prevent redundant backend roundtrips.
    */
-  async getProducts(params?: { category?: string; search?: string }): Promise<ProductItem[]> {
-    const isDefaultQuery = (!params?.category || params.category === 'All') && !params?.search;
+  async getProducts(params?: { category?: string; search?: string; vendor_id?: string }): Promise<ProductItem[]> {
+    const isDefaultQuery = (!params?.category || params.category === 'All') && !params?.search && !params?.vendor_id;
     
     if (isDefaultQuery && allProductsCache && (Date.now() - lastProductsFetchTime < CACHE_TTL_MS)) {
       return allProductsCache;
@@ -451,6 +451,9 @@ export const catalogService = {
       }
       if (params?.search) {
         queryParts.push(`search=${encodeURIComponent(params.search)}`);
+      }
+      if (params?.vendor_id) {
+        queryParts.push(`vendor_id=${encodeURIComponent(params.vendor_id)}`);
       }
       if (queryParts.length > 0) {
         endpoint += `?${queryParts.join('&')}`;
@@ -504,7 +507,7 @@ export const catalogService = {
    * Connect to GET /api/lots/ to fetch wholesale lot batch items.
    * If no lot data is returned from the API, returns an empty array.
    */
-  async getLots(params?: { category?: string; search?: string }): Promise<LotItem[]> {
+  async getLots(params?: { category?: string; search?: string; vendor_id?: string }): Promise<LotItem[]> {
     try {
       let endpoint = '/api/lots/';
       const queryParts: string[] = [];
@@ -513,6 +516,9 @@ export const catalogService = {
       }
       if (params?.search) {
         queryParts.push(`search=${encodeURIComponent(params.search)}`);
+      }
+      if (params?.vendor_id) {
+        queryParts.push(`vendor_id=${encodeURIComponent(params.vendor_id)}`);
       }
       if (queryParts.length > 0) {
         endpoint += `?${queryParts.join('&')}`;

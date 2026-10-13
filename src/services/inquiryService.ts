@@ -128,6 +128,21 @@ ${payload.additional_notes || 'None'}
       }),
     });
   },
+
+  async getUserRfqs(email?: string, vendorId?: string): Promise<ApiResponse> {
+    try {
+      const params = new URLSearchParams();
+      if (email) params.append('email', email);
+      if (vendorId) params.append('vendor_id', vendorId);
+      const query = params.toString() ? `?${params.toString()}` : '';
+      return await apiClient(`/api/enquiries/rfq/${query}`, {
+        method: 'GET',
+      });
+    } catch (err: any) {
+      console.warn('[inquiryService] Error fetching user RFQs:', err);
+      return { success: false, data: [] };
+    }
+  },
 };
 
 export const enquiryService = inquiryService;

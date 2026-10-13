@@ -102,6 +102,7 @@ const handler = NextAuth({
               user_type: rawUserType || 'BUYER',
               mobile: mobileNum,
               phone: mobileNum,
+              country: data.country || data.region || '',
               location: loc,
               business_location: loc,
               company_name: comp,
@@ -136,6 +137,7 @@ const handler = NextAuth({
         if (session.name !== undefined) token.name = session.name;
         if (session.mobile !== undefined) token.mobile = session.mobile;
         if (session.phone !== undefined) token.phone = session.phone;
+        if (session.country !== undefined) token.country = session.country;
         if (session.company_name !== undefined) token.company_name = session.company_name;
         if (session.business_location !== undefined) token.business_location = session.business_location;
         if (session.business_type !== undefined) token.business_type = session.business_type;
@@ -153,6 +155,7 @@ const handler = NextAuth({
         token.user_type = u.user_type;
         token.mobile = u.mobile;
         token.phone = u.phone;
+        token.country = u.country;
         token.location = u.location;
         token.business_location = u.business_location;
         token.company_name = u.company_name;
@@ -176,6 +179,7 @@ const handler = NextAuth({
         u.user_type = token.user_type;
         u.mobile = token.mobile;
         u.phone = token.phone || token.mobile;
+        u.country = token.country;
         u.location = token.location;
         u.business_location = token.business_location || token.location;
         u.company_name = token.company_name;

@@ -31,9 +31,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
   const [otp, setOtp] = useState('');
   
   // Onboarding State
+  const [country, setCountry] = useState('United Arab Emirates');
   const [businessLocation, setBusinessLocation] = useState('');
   const [companyName, setCompanyName] = useState('');
-  const [entityType, setEntityType] = useState('Company/Business');
+  const [entityType, setEntityType] = useState('Individual');
   const [categories, setCategories] = useState<string[]>([]);
   const [role, setRole] = useState('Buyer');
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
@@ -41,6 +42,40 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
 
   const AVAILABLE_CATEGORIES = ['Electronics', 'Machinery', 'Vehicles', 'Raw Materials', 'Textiles', 'Other', 'Agricultural', 'Medical Equipment', 'Industrial Tools', 'Computers', 'Furniture', 'Plastics', 'Metals'];
   const filteredCategories = AVAILABLE_CATEGORIES.filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase()));
+
+  const COUNTRY_LIST = [
+    'United Arab Emirates',
+    'Saudi Arabia',
+    'Qatar',
+    'Kuwait',
+    'Oman',
+    'Bahrain',
+    'India',
+    'United Kingdom',
+    'United States',
+    'Germany',
+    'China',
+    'Japan',
+    'Singapore',
+    'Australia',
+    'Canada',
+    'France',
+    'Italy',
+    'Turkey',
+    'Egypt',
+    'Pakistan',
+    'Bangladesh',
+    'South Africa',
+    'Netherlands',
+    'Spain',
+    'Switzerland',
+    'South Korea',
+    'Brazil',
+    'Mexico',
+    'Malaysia',
+    'Indonesia',
+    'Other / Worldwide',
+  ];
 
   // Shared Styles
   const labelClass = "block text-sm font-semibold text-gray-700 mb-1.5";
@@ -169,16 +204,25 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     e.preventDefault();
     setError('');
     
-    if (entityType === 'Company/Business' && !companyName) {
-      setError('Company Name is required.');
+    // Only non-buyers (Sellers / Both) strictly require company name when registering as a business
+    if (role !== 'Buyer' && entityType === 'Company/Business' && !companyName) {
+      setError('Company Name is required for seller accounts.');
+      return;
+    }
+    if (!country || !country.trim()) {
+      setError('Please select your Country.');
       return;
     }
     if (!businessLocation || !businessLocation.trim()) {
       setError('Business Location is required.');
       return;
     }
-    if (categories.length === 0) {
-      setError('Please select at least one category.');
+    if (categories.length < 1) {
+      setError('Please select at least 1 category interested (up to 3).');
+      return;
+    }
+    if (categories.length > 3) {
+      setError('Please select a maximum of 3 categories.');
       return;
     }
     
@@ -187,7 +231,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     const res = await authService.completeProfile({
       email: emailOrPhone,
       account_entity_type: entityType === 'Company/Business' ? 'COMPANY' : 'INDIVIDUAL',
-      company_name: entityType === 'Company/Business' ? companyName : undefined,
+      company_name: entityType === 'Company/Business' ? (companyName || undefined) : undefined,
+      country: country.trim(),
       business_location: businessLocation.trim(),
       user_type: role.toUpperCase(),
       category_interested: categories.join(', ') || undefined,
@@ -198,11 +243,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       const assignedVendorId = resData.vendor_id || resData.vendorId || resData.raw_vendor_id || resData.id || res.data?.vendor_id;
       if (assignedVendorId && typeof window !== 'undefined') {
         localStorage.setItem('vendor_id', String(assignedVendorId));
-              }
+      }
 
       await update({
         vendor_id: assignedVendorId ? String(assignedVendorId) : undefined,
-        company_name: entityType === 'Company/Business' ? companyName : '',
+        company_name: entityType === 'Company/Business' ? (companyName || '') : '',
+        country: country.trim(),
         business_location: businessLocation.trim(),
         business_type: role.toUpperCase(),
         account_entity_type: entityType === 'Company/Business' ? 'COMPANY' : 'INDIVIDUAL',
@@ -327,9 +373,30 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                   <form onSubmit={handleCompleteOnboarding} className="space-y-5">
                     
                     <div>
+                      <label className={labelClass}>Account Role *</label>
+                      <div className="flex bg-gray-100 p-1 rounded-xl mt-2">
+                        {['Buyer', 'Seller', 'Both'].map(r => (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => {
+                              setRole(r);
+                              if (r === 'Buyer' && entityType === 'Company/Business' && !companyName) {
+                                setEntityType('Individual');
+                              }
+                            }}
+                            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${role === r ? 'bg-white text-[#0a5c48] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                          >
+                            {r}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
                       <label className={labelClass}>Account Entity Type *</label>
                       <div className="flex bg-gray-100 p-1 rounded-xl mt-2">
-                        {['Company/Business', 'Individual'].map(type => (
+                        {['Individual', 'Company/Business'].map(type => (
                           <button
                             key={type}
                             type="button"
@@ -346,43 +413,61 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                       {entityType === 'Company/Business' && (
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                           <div className="pt-1">
-                            <label className={labelClass}>Company Name *</label>
-                            <input type="text" required value={companyName} onChange={e => setCompanyName(e.target.value)} className={inputClass} placeholder="Acme Corp" />
+                            <label className={labelClass}>
+                              Company Name {role === 'Buyer' ? <span className="text-gray-400 font-normal">(Optional for Buyers)</span> : '*'}
+                            </label>
+                            <input 
+                              type="text" 
+                              required={role !== 'Buyer'} 
+                              value={companyName} 
+                              onChange={e => setCompanyName(e.target.value)} 
+                              className={inputClass} 
+                              placeholder={role === 'Buyer' ? "Acme Corp (optional)" : "Acme Corp"} 
+                            />
                           </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
 
                     <div>
-                      <label className={labelClass}>Business Location *</label>
-                      <input 
-                        type="text" 
-                        required 
-                        value={businessLocation} 
-                        onChange={e => setBusinessLocation(e.target.value)} 
-                        className={inputClass} 
-                        placeholder="e.g. Dubai, UAE or New York, USA" 
-                      />
-                    </div>
-
-                    <div>
-                      <label className={labelClass}>Account Role *</label>
-                      <div className="flex bg-gray-100 p-1 rounded-xl mt-2">
-                        {['Buyer', 'Seller', 'Both'].map(r => (
-                          <button
-                            key={r}
-                            type="button"
-                            onClick={() => setRole(r)}
-                            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${role === r ? 'bg-white text-[#0a5c48] shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                          >
-                            {r}
-                          </button>
-                        ))}
+                      <label className={labelClass}>
+                        Country *
+                      </label>
+                      <div className="relative">
+                        <select 
+                          required
+                          value={country} 
+                          onChange={e => setCountry(e.target.value)} 
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-all outline-none text-gray-900 appearance-none pr-10 cursor-pointer text-sm font-medium" 
+                        >
+                          <option value="">-- Select Country --</option>
+                          {country && !COUNTRY_LIST.includes(country) && (
+                            <option value={country}>{country}</option>
+                          )}
+                          {COUNTRY_LIST.map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>
                     </div>
 
                     <div>
-                      <label className={labelClass}>Categories Interested * (Max 3)</label>
+                      <label className={labelClass}>
+                        Business Location *
+                      </label>
+                      <input 
+                        type="text" 
+                        required
+                        value={businessLocation} 
+                        onChange={e => setBusinessLocation(e.target.value)} 
+                        className={inputClass} 
+                        placeholder="e.g. Dubai, Jebel Ali Free Zone, Riyadh, Mumbai" 
+                      />
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>Categories Interested * (Min 1, Max 3)</label>
                       
                       {/* Selected Pills */}
                       {categories.length > 0 && (

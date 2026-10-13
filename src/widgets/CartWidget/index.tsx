@@ -1,17 +1,20 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
   ShoppingBag, Trash2, Plus, Minus, ArrowRight, ShieldCheck, 
   Send, CheckCircle2, ChevronRight, Package, AlertCircle, 
   Truck, Building2, User, Mail, Phone, Globe, FileText, Check,
-  RefreshCw, DollarSign, Download, Printer
+  RefreshCw, DollarSign, Download, Printer, Sparkles
 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useCart, CartItem } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { inquiryService } from '../../services/inquiryService';
+import { authService } from '../../services/authService';
+import AuthModal from '../../components/AuthModal';
 
 const INCOTERMS = [
   { value: 'EXW', label: 'EXW - Ex Works (Buyer arranges all transport)' },
@@ -26,7 +29,87 @@ const PAYMENT_METHODS = [
   { value: 'LetterOfCredit', label: 'Irrevocable Commercial Letter of Credit (L/C)' },
 ];
 
+const matchCountry = (locationStr?: string): string | null => {
+  if (!locationStr) return null;
+  const s = locationStr.toLowerCase();
+  
+  if (s.includes('emirates') || s.includes('uae') || s.includes('dubai') || s.includes('abu dhabi') || s.includes('sharjah') || s.includes('ajman') || s.includes('al ain') || s.includes('ras al khaimah') || s.includes('fujairah')) {
+    return 'United Arab Emirates';
+  }
+  if (s.includes('saudi') || s.includes('ksa') || s.includes('riyadh') || s.includes('jeddah') || s.includes('dammam') || s.includes('khobar') || s.includes('mecca') || s.includes('medina')) {
+    return 'Saudi Arabia';
+  }
+  if (s.includes('qatar') || s.includes('doha')) {
+    return 'Qatar';
+  }
+  if (s.includes('kuwait')) {
+    return 'Kuwait';
+  }
+  if (s.includes('oman') || s.includes('muscat')) {
+    return 'Oman';
+  }
+  if (s.includes('bahrain') || s.includes('manama')) {
+    return 'Bahrain';
+  }
+  if (s.includes('india') || s.includes('mumbai') || s.includes('delhi') || s.includes('bengaluru') || s.includes('bangalore') || s.includes('chennai') || s.includes('kolkata') || s.includes('hyderabad') || s.includes('pune') || s.includes('ahmedabad') || s.includes('surat')) {
+    return 'India';
+  }
+  if (s.includes('kingdom') || s.includes('uk') || s.includes('britain') || s.includes('london') || s.includes('england') || s.includes('scotland')) {
+    return 'United Kingdom';
+  }
+  if (s.includes('united states') || s.includes('usa') || s.includes('u.s.') || s.includes('america') || s.includes('new york') || s.includes('california') || s.includes('texas')) {
+    return 'United States';
+  }
+
+  const knownCountries = [
+    'United Arab Emirates', 'Saudi Arabia', 'Qatar', 'Kuwait', 'Oman',
+    'Bahrain', 'India', 'United Kingdom', 'United States',
+  ];
+  const found = knownCountries.find(c => c.toLowerCase() === s.trim());
+  if (found) return found;
+
+  return null;
+};
+
+const extractPortOrCity = (locationStr?: string): string => {
+  if (!locationStr) return '';
+  const trimmed = locationStr.trim();
+  const parts = trimmed.split(',').map(p => p.trim()).filter(Boolean);
+  const countryKeywords = ['united arab emirates', 'uae', 'saudi arabia', 'ksa', 'india', 'united kingdom', 'uk', 'united states', 'usa', 'qatar', 'kuwait', 'oman', 'bahrain'];
+
+  if (parts.length > 1) {
+    const firstPart = parts[0];
+    if (!countryKeywords.includes(firstPart.toLowerCase())) {
+      return firstPart;
+    }
+  }
+
+  const knownCities = [
+    'Dubai', 'Jebel Ali', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah',
+    'Riyadh', 'Jeddah', 'Dammam', 'Khobar', 'Jubail',
+    'Doha', 'Hamad Port',
+    'Kuwait City', 'Shuwaikh', 'Shuaiba',
+    'Muscat', 'Sohar', 'Salalah',
+    'Manama', 'Khalifa Bin Salman',
+    'Mumbai', 'Nhava Sheva', 'Delhi', 'Chennai', 'Mundra',
+    'London', 'Felixstowe', 'Southampton',
+    'New York', 'Los Angeles', 'Houston', 'Long Beach'
+  ];
+  for (const city of knownCities) {
+    if (trimmed.toLowerCase().includes(city.toLowerCase())) {
+      return city;
+    }
+  }
+
+  if (!countryKeywords.includes(trimmed.toLowerCase()) && trimmed.length <= 40) {
+    return trimmed;
+  }
+
+  return '';
+};
+
 export default function CartWidget() {
+  const { data: session, status } = useSession();
   const {
     items,
     totalCount,
@@ -41,6 +124,9 @@ export default function CartWidget() {
   } = useCart();
   const { formatPrice, currency } = useCurrency();
 
+  // Modal State for unauthenticated users
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   // Form State
   const [companyName, setCompanyName] = useState('');
   const [contactPerson, setContactPerson] = useState('');
@@ -52,6 +138,9 @@ export default function CartWidget() {
   const [paymentMethod, setPaymentMethod] = useState('Escrow');
   const [additionalNotes, setAdditionalNotes] = useState('');
 
+  // Track if user has manually edited any fields so we don't overwrite manual inputs
+  const editedFieldsRef = useRef<Set<string>>(new Set());
+
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -62,12 +151,82 @@ export default function CartWidget() {
     estimatedValue: number;
   } | null>(null);
 
+  // Auto-fill Commercial RFQ enquiry form with logged-in user details
+  useEffect(() => {
+    if (session?.user) {
+      const u = session.user as any;
+
+      if (!editedFieldsRef.current.has('companyName')) {
+        const comp = u.company_name || u.companyName || u.company || u.business_name || (u.account_entity_type === 'INDIVIDUAL' ? (u.full_name || u.name || '') : '');
+        if (comp) setCompanyName(comp);
+      }
+
+      if (!editedFieldsRef.current.has('contactPerson')) {
+        const person = u.full_name || u.name || (u.first_name && u.last_name ? `${u.first_name} ${u.last_name}`.trim() : u.first_name) || '';
+        if (person) setContactPerson(person);
+      }
+
+      if (!editedFieldsRef.current.has('email')) {
+        if (u.email) setEmail(u.email);
+      }
+
+      if (!editedFieldsRef.current.has('phone')) {
+        const ph = u.phone || u.mobile || u.mobile_number || u.phone_number || '';
+        if (ph) setPhone(ph);
+      }
+
+      const loc = u.business_location || u.location || u.country || u.business_address || u.address || '';
+      if (loc || u.country) {
+        if (!editedFieldsRef.current.has('country')) {
+          const matchedCountry = u.country ? (matchCountry(u.country) || u.country) : matchCountry(loc);
+          if (matchedCountry) setCountry(matchedCountry);
+        }
+        if (!editedFieldsRef.current.has('destinationPort')) {
+          const city = u.business_location ? extractPortOrCity(u.business_location) : extractPortOrCity(loc);
+          if (city) setDestinationPort(city);
+        }
+      }
+
+      // Proactively synchronize with real-time backend profile to fetch full details
+      if (u.email) {
+        authService.getProfile(u.email).then((res) => {
+          if (res?.success && res.data) {
+            const vData = res.data;
+            if (!editedFieldsRef.current.has('companyName')) {
+              const comp = vData.company_name || vData.companyName || vData.business_name || (vData.account_entity_type === 'INDIVIDUAL' ? (vData.full_name || vData.name || '') : '');
+              if (comp) setCompanyName(comp);
+            }
+            if (!editedFieldsRef.current.has('contactPerson')) {
+              const person = vData.full_name || vData.fullName || vData.name || (vData.first_name && vData.last_name ? `${vData.first_name} ${vData.last_name}`.trim() : vData.first_name);
+              if (person) setContactPerson(person);
+            }
+            if (!editedFieldsRef.current.has('phone')) {
+              const ph = vData.phone || vData.mobile_number || vData.mobile || vData.phone_number;
+              if (ph) setPhone(ph);
+            }
+            const freshLoc = vData.business_location || vData.location || vData.country || vData.business_address || vData.address || '';
+            if (freshLoc || vData.country) {
+              if (!editedFieldsRef.current.has('country')) {
+                const matchedCountry = vData.country ? (matchCountry(vData.country) || vData.country) : matchCountry(freshLoc);
+                if (matchedCountry) setCountry(matchedCountry);
+              }
+              if (!editedFieldsRef.current.has('destinationPort')) {
+                const city = vData.business_location ? extractPortOrCity(vData.business_location) : extractPortOrCity(freshLoc);
+                if (city) setDestinationPort(city);
+              }
+            }
+          }
+        }).catch(() => {});
+      }
+    }
+  }, [session, status]);
+
   const handleSubmitRfq = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
 
-    if (!email || !companyName || !contactPerson) {
-      setSubmitError('Please fill in your company name, contact person, and email address.');
+    if (!email || !contactPerson) {
+      setSubmitError('Please fill in your contact person name and email address.');
       return;
     }
 
@@ -76,11 +235,12 @@ export default function CartWidget() {
 
     try {
       const reference = `RFQ-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+      const userObj = (session?.user || {}) as any;
 
       const res = await inquiryService.submitRfqEnquiry({
         reference,
         contact_person: contactPerson,
-        company_name: companyName,
+        company_name: companyName.trim() || contactPerson || 'Individual Buyer',
         email,
         phone,
         country,
@@ -102,6 +262,9 @@ export default function CartWidget() {
         total_units: totalUnits,
         estimated_value: totalPrice,
         currency,
+        vendor_id: userObj.vendor_id || userObj.id || (typeof window !== 'undefined' ? (localStorage.getItem('vendor_id') || undefined) : undefined),
+        user_id: userObj.id || userObj.vendor_id,
+        user_type: userObj.user_type,
       });
 
       if (!res.success && res.status !== 200 && res.status !== 201) {
@@ -110,6 +273,46 @@ export default function CartWidget() {
       }
 
       const assignedReference = res.data?.reference || reference;
+
+      // Persist newly submitted RFQ into local history for immediate client display
+      try {
+        if (typeof window !== 'undefined') {
+          const stored = localStorage.getItem('surplus_rfqs_history');
+          const existing = stored ? JSON.parse(stored) : [];
+          const newRecord = {
+            id: res.data?.id || assignedReference,
+            reference: assignedReference,
+            created_at: new Date().toISOString(),
+            status: 'PENDING',
+            contact_person: contactPerson,
+            company_name: companyName.trim() || contactPerson || 'Individual Buyer',
+            email,
+            phone,
+            country,
+            destination_port: destinationPort,
+            incoterm,
+            payment_method: paymentMethod,
+            additional_notes: additionalNotes,
+            total_units: totalUnits,
+            estimated_value: totalPrice,
+            currency,
+            items: items.map(item => ({
+              id: item.id,
+              productId: item.productId,
+              title: item.title,
+              sku: item.sku,
+              category: item.category,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              targetPrice: item.targetPrice,
+              notes: item.notes,
+            })),
+          };
+          localStorage.setItem('surplus_rfqs_history', JSON.stringify([newRecord, ...existing]));
+        }
+      } catch (localErr) {
+        console.warn('[CartWidget] Failed to save RFQ to local history:', localErr);
+      }
 
       setSubmittedRfq({
         reference: assignedReference,
@@ -519,7 +722,7 @@ export default function CartWidget() {
             </div>
           </div>
 
-          {/* Submission Form */}
+            {/* Submission Form */}
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
               <div className="w-7 h-7 rounded-lg bg-[#e6f7ef] text-[#0f7a61] flex items-center justify-center">
@@ -531,6 +734,36 @@ export default function CartWidget() {
               </div>
             </div>
 
+            {session?.user ? (
+              <div className="flex items-center justify-between p-3 mb-4 bg-emerald-50/80 border border-emerald-200/70 rounded-2xl text-xs">
+                <div className="flex items-center gap-2 text-emerald-800">
+                  <CheckCircle2 className="w-4 h-4 text-[#0f7a61] shrink-0" />
+                  <span className="text-[11px] leading-tight font-medium">
+                    Auto-filled from your profile (<strong className="font-semibold text-[#0f7a61]">{session.user.name || session.user.email}</strong>)
+                  </span>
+                </div>
+                <span className="text-[10px] text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full font-bold shrink-0">
+                  Logged In
+                </span>
+              </div>
+            ) : status !== 'loading' ? (
+              <div className="flex items-center justify-between p-3 mb-4 bg-amber-50/80 border border-amber-200/60 rounded-2xl text-xs">
+                <div className="flex items-center gap-2 text-amber-900">
+                  <User className="w-4 h-4 text-amber-700 shrink-0" />
+                  <span className="text-[11px] leading-tight text-amber-800 font-medium">
+                    Sign in to auto-fill your company and contact details
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="text-[11px] font-bold text-[#0f7a61] hover:underline cursor-pointer shrink-0 ml-2"
+                >
+                  Sign In
+                </button>
+              </div>
+            ) : null}
+
             {submitError && (
               <div className="p-3 mb-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
@@ -541,16 +774,18 @@ export default function CartWidget() {
             <form onSubmit={handleSubmitRfq} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Company / Organization Name *
+                  Company / Organization Name <span className="text-gray-400 font-normal">(Optional for Buyers)</span>
                 </label>
                 <div className="relative">
                   <Building2 className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
                   <input
                     type="text"
-                    required
-                    placeholder="e.g. Al-Mansoor Trading LLC"
+                    placeholder="e.g. Al-Mansoor Trading LLC (optional)"
                     value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
+                    onChange={(e) => {
+                      editedFieldsRef.current.add('companyName');
+                      setCompanyName(e.target.value);
+                    }}
                     className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-[#0f7a61]"
                   />
                 </div>
@@ -567,7 +802,10 @@ export default function CartWidget() {
                     required
                     placeholder="e.g. Tariq Al-Sayed"
                     value={contactPerson}
-                    onChange={(e) => setContactPerson(e.target.value)}
+                    onChange={(e) => {
+                      editedFieldsRef.current.add('contactPerson');
+                      setContactPerson(e.target.value);
+                    }}
                     className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-[#0f7a61]"
                   />
                 </div>
@@ -584,7 +822,10 @@ export default function CartWidget() {
                     required
                     placeholder="buyer@company.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      editedFieldsRef.current.add('email');
+                      setEmail(e.target.value);
+                    }}
                     className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-[#0f7a61]"
                   />
                 </div>
@@ -600,7 +841,10 @@ export default function CartWidget() {
                     type="tel"
                     placeholder="+971 50 123 4567"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => {
+                      editedFieldsRef.current.add('phone');
+                      setPhone(e.target.value);
+                    }}
                     className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-[#0f7a61]"
                   />
                 </div>
@@ -613,7 +857,10 @@ export default function CartWidget() {
                   </label>
                   <select
                     value={country}
-                    onChange={(e) => setCountry(e.target.value)}
+                    onChange={(e) => {
+                      editedFieldsRef.current.add('country');
+                      setCountry(e.target.value);
+                    }}
                     className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-[#0f7a61]"
                   >
                     <option value="United Arab Emirates">United Arab Emirates</option>
@@ -637,7 +884,10 @@ export default function CartWidget() {
                     type="text"
                     placeholder="e.g. Jebel Ali / Dammam"
                     value={destinationPort}
-                    onChange={(e) => setDestinationPort(e.target.value)}
+                    onChange={(e) => {
+                      editedFieldsRef.current.add('destinationPort');
+                      setDestinationPort(e.target.value);
+                    }}
                     className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-[#0f7a61]"
                   />
                 </div>
@@ -715,6 +965,12 @@ export default function CartWidget() {
           </div>
         </div>
       </div>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => setIsAuthModalOpen(false)}
+      />
     </div>
   );
 }
