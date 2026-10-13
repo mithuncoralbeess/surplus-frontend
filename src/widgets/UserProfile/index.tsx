@@ -50,14 +50,18 @@ import Link from 'next/link';
 import SimpleListingModal from '../../components/SimpleListingModal';
 import LotImportModal from '../../components/LotImportModal';
 import { useAppSelector } from '../../store';
+import { scrollToTop } from '../../lib/scroll';
+import Select, { components } from 'react-select';
 
 const COUNTRY_LIST = [
+  // Primary GCC & Regional Hubs
   'United Arab Emirates',
   'Saudi Arabia',
   'Qatar',
   'Kuwait',
   'Oman',
   'Bahrain',
+  // Key Global Trade Partners
   'India',
   'United Kingdom',
   'United States',
@@ -82,8 +86,164 @@ const COUNTRY_LIST = [
   'Mexico',
   'Malaysia',
   'Indonesia',
+  'Algeria',
+  'Argentina',
+  'Austria',
+  'Belgium',
+  'Chile',
+  'Colombia',
+  'Cyprus',
+  'Czech Republic',
+  'Denmark',
+  'Finland',
+  'Greece',
+  'Hong Kong',
+  'Hungary',
+  'Iraq',
+  'Ireland',
+  'Jordan',
+  'Kenya',
+  'Lebanon',
+  'Morocco',
+  'New Zealand',
+  'Nigeria',
+  'Norway',
+  'Philippines',
+  'Poland',
+  'Portugal',
+  'Romania',
+  'Sweden',
+  'Taiwan',
+  'Thailand',
+  'Vietnam',
   'Other / Worldwide',
 ];
+
+const customCountrySelectStyles = {
+  control: (provided: any, state: any) => ({
+    ...provided,
+    borderRadius: '0.75rem',
+    border: state.isFocused
+      ? '1px solid #0f7a61'
+      : '1px solid #e5e7eb',
+    boxShadow: state.isFocused ? '0 0 0 1px #0f7a61' : 'none',
+    padding: '2px 4px',
+    backgroundColor: 'white',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+    minHeight: '42px',
+    transition: 'all 0.15s ease',
+    '&:hover': {
+      borderColor: state.isFocused ? '#0f7a61' : '#d1d5db',
+    },
+  }),
+  valueContainer: (provided: any) => ({
+    ...provided,
+    padding: '2px 8px',
+  }),
+  input: (provided: any) => ({
+    ...provided,
+    color: '#111827',
+    margin: 0,
+    padding: 0,
+  }),
+  placeholder: (provided: any) => ({
+    ...provided,
+    color: '#9ca3af',
+    fontWeight: '400',
+  }),
+  singleValue: (provided: any) => ({
+    ...provided,
+    color: '#111827',
+    fontWeight: '500',
+  }),
+  menu: (provided: any) => ({
+    ...provided,
+    borderRadius: '0.75rem',
+    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+    border: '1px solid #e5e7eb',
+    overflow: 'hidden',
+    zIndex: 60,
+    marginTop: '4px',
+  }),
+  menuList: (provided: any) => ({
+    ...provided,
+    padding: '4px',
+    maxHeight: '260px',
+    overflowY: 'auto',
+    overscrollBehavior: 'contain',
+    WebkitOverflowScrolling: 'touch',
+  }),
+  option: (provided: any, state: any) => ({
+    ...provided,
+    borderRadius: '0.5rem',
+    margin: '2px 0',
+    padding: '8px 12px',
+    fontSize: '0.875rem',
+    cursor: 'pointer',
+    fontWeight: state.isSelected ? '600' : '500',
+    backgroundColor: state.isSelected
+      ? '#0f7a61'
+      : state.isFocused
+        ? '#e6f7ef'
+        : 'transparent',
+    color: state.isSelected
+      ? '#ffffff'
+      : state.isFocused
+        ? '#0a5c48'
+        : '#1f2937',
+    '&:active': {
+      backgroundColor: '#0f7a61',
+      color: '#ffffff',
+    },
+  }),
+  indicatorSeparator: () => ({
+    display: 'none',
+  }),
+  dropdownIndicator: (provided: any, state: any) => ({
+    ...provided,
+    color: state.isFocused ? '#0f7a61' : '#9ca3af',
+    padding: '6px',
+    '&:hover': {
+      color: '#0f7a61',
+    },
+  }),
+};
+
+// Custom Menu & MenuList components with data-lenis-prevent and onWheel stopPropagation
+// to ensure mouse wheel scrolling operates natively without Lenis smooth-scroll interference.
+const CountryMenu = (props: any) => {
+  return (
+    <div
+      data-lenis-prevent
+      onWheel={(e) => e.stopPropagation()}
+      style={{ overscrollBehavior: 'contain' }}
+    >
+      <components.Menu {...props}>
+        {props.children}
+      </components.Menu>
+    </div>
+  );
+};
+
+const CountryMenuList = (props: any) => {
+  return (
+    <components.MenuList
+      {...props}
+      innerProps={{
+        ...props.innerProps,
+        'data-lenis-prevent': 'true',
+        onWheel: (e: any) => {
+          e.stopPropagation();
+          props.innerProps?.onWheel?.(e);
+        },
+      }}
+    >
+      {props.children}
+    </components.MenuList>
+  );
+};
 
 const DEFAULT_CATEGORIES = [
   'Electronics',
@@ -156,6 +316,15 @@ export default function UserProfileWidget() {
   );
   const [address, setAddress] = useState(u.address || u.business_address || u.location || '');
   const [isSavedNotice, setIsSavedNotice] = useState(false);
+
+  // Memoized country options for react-select searchable dropdown
+  const countryOptions = useMemo(() => {
+    const list = [...COUNTRY_LIST];
+    if (country && !list.includes(country)) {
+      return [{ value: country, label: country }, ...list.map(c => ({ value: c, label: c }))];
+    }
+    return list.map(c => ({ value: c, label: c }));
+  }, [country]);
 
   // Redux Categories & Dropdown State
   const { categories: reduxCategories } = useAppSelector((state) => state.categories);
@@ -417,6 +586,7 @@ export default function UserProfileWidget() {
         });
         
         setIsSavedNotice(true);
+        scrollToTop({ behavior: 'smooth' });
         setTimeout(() => setIsSavedNotice(false), 3000);
         showToast({
           type: 'success',
@@ -1086,23 +1256,25 @@ export default function UserProfileWidget() {
                       <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Country *
                       </label>
-                      <div className="relative">
-                        <select 
-                          required
-                          value={country} 
-                          onChange={(e) => setCountry(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] appearance-none pr-10 cursor-pointer text-gray-900 font-medium" 
-                        >
-                          <option value="">-- Select Country --</option>
-                          {country && !COUNTRY_LIST.includes(country) && (
-                            <option value={country}>{country}</option>
-                          )}
-                          {COUNTRY_LIST.map((c) => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
-                        <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      </div>
+                      <Select
+                        instanceId="user-profile-country-select"
+                        isSearchable={true}
+                        isClearable={false}
+                        placeholder="Search or select country..."
+                        options={countryOptions}
+                        value={country ? { value: country, label: country } : null}
+                        onChange={(selected: any) => {
+                          setCountry(selected ? selected.value : '');
+                        }}
+                        styles={customCountrySelectStyles}
+                        components={{
+                          Menu: CountryMenu,
+                          MenuList: CountryMenuList,
+                        }}
+                        noOptionsMessage={({ inputValue }) =>
+                          inputValue ? `No country matching "${inputValue}"` : 'No countries available'
+                        }
+                      />
                     </div>
 
                     <div>

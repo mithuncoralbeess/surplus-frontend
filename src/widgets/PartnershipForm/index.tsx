@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 
 import { sanitizeInput } from '../../lib/security/sanitizer';
+import { scrollToTop } from '../../lib/scroll';
 
 const nameRegex = /^[a-zA-Z\s'\-]{2,50}$/;
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -134,9 +135,11 @@ const PartnershipForm = () => {
       setIsSuccess(true);
       setFormData({ name: '', email: '', location: '', interest: '', subject: '', message: '' });
       setErrors({});
+      scrollToTop({ behavior: 'smooth' });
     } else {
       setIsSubmitting(false);
       setSubmitError(res.message || 'Failed to submit enquiry. Please try again.');
+      scrollToTop({ behavior: 'smooth' });
     }
   };
 

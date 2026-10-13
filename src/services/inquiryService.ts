@@ -44,6 +44,7 @@ export interface RfqEnquiryPayload {
   email: string;
   phone?: string;
   destination_port?: string;
+  business_location?: string;
   country?: string;
   incoterm?: string;
   payment_method?: string;

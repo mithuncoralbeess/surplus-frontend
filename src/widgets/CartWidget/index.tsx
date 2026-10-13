@@ -15,6 +15,7 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { inquiryService } from '../../services/inquiryService';
 import { authService } from '../../services/authService';
 import AuthModal from '../../components/AuthModal';
+import { scrollToTop } from '../../lib/scroll';
 
 const INCOTERMS = [
   { value: 'EXW', label: 'EXW - Ex Works (Buyer arranges all transport)' },
@@ -239,11 +240,13 @@ export default function CartWidget() {
 
       const res = await inquiryService.submitRfqEnquiry({
         reference,
+        vendor_id: userObj.vendor_id || userObj.id || undefined,
         contact_person: contactPerson,
         company_name: companyName.trim() || contactPerson || 'Individual Buyer',
         email,
         phone,
         country,
+        business_location: userObj.business_location || userObj.location || destinationPort || '',
         destination_port: destinationPort,
         incoterm,
         payment_method: paymentMethod,
@@ -323,9 +326,11 @@ export default function CartWidget() {
 
       // Clear the cart once submitted
       clearCart();
+      scrollToTop({ behavior: 'smooth' });
     } catch (err: any) {
       console.error('[CartWidget] Submit error:', err);
       setSubmitError('Failed to submit quote enquiry. Please verify your connection or try again.');
+      scrollToTop({ behavior: 'smooth' });
     } finally {
       setIsSubmitting(false);
     }

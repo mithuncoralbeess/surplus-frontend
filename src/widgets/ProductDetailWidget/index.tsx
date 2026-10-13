@@ -15,6 +15,7 @@ import { inquiryService } from '../../services/inquiryService';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard';
+import { scrollToTop } from '../../lib/scroll';
 
 interface ProductDetailWidgetProps {
   productId: string;
@@ -189,9 +190,11 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
         const refMsg = res.data?.reference ? ` Ref: ${res.data.reference}.` : '';
         setQuoteSuccessMsg(`Quote request for ${quantity} unit(s) submitted successfully!${refMsg} Our representative will contact ${userEmail} shortly.`);
         setShowInlineQuoteForm(false);
+        scrollToTop({ behavior: 'smooth' });
         setTimeout(() => setQuoteSuccessMsg(''), 7000);
       } else {
         setQuoteSuccessMsg(res.message || 'Failed to submit quote request. Please try again.');
+        scrollToTop({ behavior: 'smooth' });
         setTimeout(() => setQuoteSuccessMsg(''), 5000);
       }
     } catch (err: any) {

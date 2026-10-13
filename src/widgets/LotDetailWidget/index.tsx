@@ -16,6 +16,7 @@ import { catalogService, LotItem } from '../../services/catalogService';
 import { inquiryService } from '../../services/inquiryService';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
+import { scrollToTop } from '../../lib/scroll';
 
 interface LotDetailWidgetProps {
   lotId: string;
@@ -129,9 +130,11 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
         const refMsg = res.data?.reference ? ` Ref: ${res.data.reference}.` : '';
         setQuoteSuccessMsg(`Quote enquiry submitted successfully!${refMsg} Our representative will contact ${userEmail} shortly.`);
         setShowInlineQuoteForm(false);
+        scrollToTop({ behavior: 'smooth' });
         setTimeout(() => setQuoteSuccessMsg(''), 7000);
       } else {
         setQuoteSuccessMsg(res.message || 'Failed to submit quote enquiry. Please try again.');
+        scrollToTop({ behavior: 'smooth' });
         setTimeout(() => setQuoteSuccessMsg(''), 5000);
       }
     } catch (err: any) {
