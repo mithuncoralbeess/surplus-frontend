@@ -95,6 +95,7 @@ const BrowseResults = () => {
   };
 
   const trimmedQuery = query.trim();
+  const isSearching = isLoading || (Boolean(trimmedQuery) && searchResult.query !== trimmedQuery);
 
   // IF NO SEARCH QUERY: DO NOT SHOW PRODUCTS OR LOTS
   if (!trimmedQuery) {
@@ -141,7 +142,7 @@ const BrowseResults = () => {
                 Semantic Search
               </span>
               <span className="text-[11px] font-mono text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                {isLoading ? (
+                {isSearching ? (
                   <>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
                     <span>Searching catalog...</span>
@@ -163,7 +164,7 @@ const BrowseResults = () => {
             </h2>
 
             <p className="text-sm text-gray-500 mt-1">
-              {isLoading ? (
+              {isSearching ? (
                 <span className="inline-flex items-center gap-1.5 text-gray-500">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block"></span>
                   Searching verified industrial catalogs and wholesale lots...
@@ -222,7 +223,7 @@ const BrowseResults = () => {
 
       {/* Results Container - Full Width (No Filter Sidebar) */}
       <div className="w-full">
-        {isLoading ? (
+        {isSearching ? (
           /* SKELETON LOADING STATE WHILE FETCHING API */
           <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-4"}>
             {Array.from({ length: 8 }).map((_, idx) => (
