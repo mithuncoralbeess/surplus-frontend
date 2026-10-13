@@ -38,7 +38,7 @@ const BrowseResults = () => {
     availableCategories: [],
     priceRange: { min: 0, max: 0 }
   });
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(() => Boolean(query.trim()));
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -163,7 +163,16 @@ const BrowseResults = () => {
             </h2>
 
             <p className="text-sm text-gray-500 mt-1">
-              Found <strong className="text-gray-900 font-semibold">{searchResult.totalCount}</strong> matching items across verified industrial catalogs and wholesale lots.
+              {isLoading ? (
+                <span className="inline-flex items-center gap-1.5 text-gray-500">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block"></span>
+                  Searching verified industrial catalogs and wholesale lots...
+                </span>
+              ) : (
+                <>
+                  Found <strong className="text-gray-900 font-semibold">{searchResult.totalCount}</strong> matching items across verified industrial catalogs and wholesale lots.
+                </>
+              )}
             </p>
           </div>
 
@@ -213,7 +222,32 @@ const BrowseResults = () => {
 
       {/* Results Container - Full Width (No Filter Sidebar) */}
       <div className="w-full">
-        {searchResult.results.length > 0 ? (
+        {isLoading ? (
+          /* SKELETON LOADING STATE WHILE FETCHING API */
+          <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-4"}>
+            {Array.from({ length: 8 }).map((_, idx) => (
+              <div key={idx} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-xs animate-pulse">
+                <div className="aspect-[16/10] bg-gray-200/70 w-full" />
+                <div className="p-4 sm:p-5 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <div className="h-3 bg-gray-200 rounded w-20" />
+                    <div className="h-3 bg-gray-200 rounded w-16" />
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded w-5/6" />
+                  <div className="h-3 bg-gray-200 rounded w-1/2" />
+                  <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
+                    <div className="h-5 bg-gray-200 rounded w-24" />
+                    <div className="h-3 bg-gray-200 rounded w-16" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div className="h-8 bg-gray-200 rounded-full" />
+                    <div className="h-8 bg-gray-200 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : searchResult.results.length > 0 ? (
           <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-4"}>
             {searchResult.results.map((item) => {
               const isHighlighted = item.id === highlightId;
@@ -269,8 +303,12 @@ const BrowseResults = () => {
                         </h3>
 
                         <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
-                          <span>{item.isLot ? 'Lot #:' : 'SKU:'} <strong className="font-mono text-gray-700">{item.sku}</strong></span>
-                          <span>•</span>
+                          {item.isLot && (
+                            <>
+                              <span>Lot #: <strong className="font-mono text-gray-700">{item.sku}</strong></span>
+                              <span>•</span>
+                            </>
+                          )}
                           <span className="flex items-center gap-1">
                             <MapPin className="w-3 h-3 text-gray-400" />
                             {item.location}
@@ -401,8 +439,17 @@ const BrowseResults = () => {
                     </h3>
 
                     {/* Specs snippet */}
-                    <div className="text-[11px] text-gray-500 font-mono mb-3">
-                      {item.isLot ? 'Lot #:' : 'SKU:'} <span className="text-gray-800 font-medium">{item.sku}</span> • {item.location}
+                    <div className="text-[11px] text-gray-500 mb-3">
+                      {item.isLot ? (
+                        <div className="font-mono">
+                          Lot #: <span className="text-gray-800 font-medium">{item.sku}</span> • {item.location}
+                        </div>
+                      ) : (
+                        <span className="flex items-center gap-1 text-gray-500 font-sans">
+                          <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <span>{item.location}</span>
+                        </span>
+                      )}
                     </div>
 
                     {/* Price Section */}

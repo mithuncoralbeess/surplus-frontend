@@ -211,7 +211,6 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
           {/* Breadcrumbs Skeleton */}
           <div className="mb-6 flex items-center justify-between">
             <div className="h-4 bg-gray-200 rounded-lg w-64"></div>
-            <div className="hidden md:block h-4 bg-gray-200 rounded-lg w-32"></div>
           </div>
 
           {/* Product Hero Card Skeleton */}
@@ -356,10 +355,6 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
             )}
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
             <span className="text-gray-900 font-bold truncate max-w-[180px] sm:max-w-[240px] md:max-w-xs lg:max-w-md">{product.title}</span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-4 text-xs sm:text-sm font-mono text-gray-500 shrink-0 ml-4">
-            <span>SKU: <strong className="text-gray-900">{product.product_id || product.sku}</strong></span>
           </div>
         </div>
 
@@ -874,7 +869,7 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
                       <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
                         MODEL NO. / PART NO.
                       </span>
-                      <span className="text-xs sm:text-sm md:text-base font-extrabold text-gray-900 font-mono">{product.model || product.product_id || product.sku || 'N/A'}</span>
+                      <span className="text-xs sm:text-sm md:text-base font-extrabold text-gray-900 font-mono">{product.model || 'N/A'}</span>
                     </div>
 
                     {/* Manufacturing Country */}
