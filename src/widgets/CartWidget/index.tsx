@@ -240,7 +240,7 @@ export default function CartWidget() {
 
       const res = await inquiryService.submitRfqEnquiry({
         reference,
-        vendor_id: userObj.vendor_id || userObj.id || undefined,
+        vendor_id: userObj.vendor_id || userObj.id || (typeof window !== 'undefined' ? (localStorage.getItem('vendor_id') || undefined) : undefined),
         contact_person: contactPerson,
         company_name: companyName.trim(),
         email,
@@ -265,7 +265,6 @@ export default function CartWidget() {
         total_units: totalUnits,
         estimated_value: totalPrice,
         currency,
-        vendor_id: userObj.vendor_id || userObj.id || (typeof window !== 'undefined' ? (localStorage.getItem('vendor_id') || undefined) : undefined),
         user_id: userObj.id || userObj.vendor_id,
         user_type: userObj.user_type,
       });
