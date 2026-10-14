@@ -158,7 +158,7 @@ export default function CartWidget() {
       const u = session.user as any;
 
       if (!editedFieldsRef.current.has('companyName')) {
-        const comp = u.company_name || u.companyName || u.company || u.business_name || (u.account_entity_type === 'INDIVIDUAL' ? (u.full_name || u.name || '') : '');
+        const comp = u.company_name || u.companyName || u.company || u.business_name || '';
         if (comp) setCompanyName(comp);
       }
 
@@ -194,7 +194,7 @@ export default function CartWidget() {
           if (res?.success && res.data) {
             const vData = res.data;
             if (!editedFieldsRef.current.has('companyName')) {
-              const comp = vData.company_name || vData.companyName || vData.business_name || (vData.account_entity_type === 'INDIVIDUAL' ? (vData.full_name || vData.name || '') : '');
+              const comp = vData.company_name || vData.companyName || vData.business_name || '';
               if (comp) setCompanyName(comp);
             }
             if (!editedFieldsRef.current.has('contactPerson')) {
@@ -242,7 +242,7 @@ export default function CartWidget() {
         reference,
         vendor_id: userObj.vendor_id || userObj.id || undefined,
         contact_person: contactPerson,
-        company_name: companyName.trim() || contactPerson || 'Individual Buyer',
+        company_name: companyName.trim(),
         email,
         phone,
         country,
@@ -288,7 +288,7 @@ export default function CartWidget() {
             created_at: new Date().toISOString(),
             status: 'PENDING',
             contact_person: contactPerson,
-            company_name: companyName.trim() || contactPerson || 'Individual Buyer',
+            company_name: companyName.trim(),
             email,
             phone,
             country,
