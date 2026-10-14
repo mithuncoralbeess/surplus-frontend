@@ -310,25 +310,6 @@ const HomeBanner = () => {
                   </div>
                 </div>
 
-                {/* Stats Row */}
-                <div className="grid grid-cols-4 gap-2 pt-4 border-t border-dashboard-border">
-                  <div className="text-center">
-                    <p className="text-white font-semibold text-lg">24,800+</p>
-                    <p className="text-dashboard-text text-[0.65rem] font-bold tracking-wider mt-1 uppercase">Transactions</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-white font-semibold text-lg">$412M</p>
-                    <p className="text-dashboard-text text-[0.65rem] font-bold tracking-wider mt-1 uppercase">Value Recovered</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-white font-semibold text-lg">3,200+</p>
-                    <p className="text-dashboard-text text-[0.65rem] font-bold tracking-wider mt-1 uppercase">Businesses</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-white font-semibold text-lg">42</p>
-                    <p className="text-dashboard-text text-[0.65rem] font-bold tracking-wider mt-1 uppercase">Countries</p>
-                  </div>
-                </div>
 
               </div>
             </div>
