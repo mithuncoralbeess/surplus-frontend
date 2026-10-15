@@ -909,6 +909,33 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
         if (typeof window !== 'undefined') {
           try {
             localStorage.removeItem(DRAFT_STORAGE_KEY);
+            const stored = localStorage.getItem('surplus_product_submissions');
+            const existing = stored ? JSON.parse(stored) : [];
+            const newRecord = {
+              id: `PRD-SUB-${Date.now()}`,
+              reference: `PRD-${Date.now().toString().slice(-6)}`,
+              title: formData.productName,
+              type: 'single',
+              category: formData.category,
+              subCategory: formData.subCategory,
+              brand: formData.brandName || '',
+              model: formData.modelNo || '',
+              units: parseInt(formData.quantity, 10) || 1,
+              liquidatingPrice: parseFloat(formData.liquidatingPrice) || 0,
+              msrp: parseFloat(formData.msrp) || 0,
+              currency: formData.currency || 'USD',
+              condition: 'Brand New Surplus',
+              status: 'Pending Verification',
+              submittedAt: new Date().toISOString(),
+              location: formData.country !== '-- Select Country --' ? formData.country : 'UAE Warehouse',
+              reasonToSell: formData.reasonToSell,
+              hasWarranty: formData.hasWarranty,
+              warranty: formData.warranty,
+              description: formData.description,
+              vendor_id: currentVendorId,
+              user_email: session?.user?.email || (session?.user as any)?.email || ''
+            };
+            localStorage.setItem('surplus_product_submissions', JSON.stringify([newRecord, ...existing]));
           } catch {
             // Ignore
           }

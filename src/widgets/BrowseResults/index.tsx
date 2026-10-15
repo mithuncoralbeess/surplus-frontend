@@ -14,6 +14,9 @@ import {
 } from '../../lib/aiSearchEngine';
 import { useCurrency } from '../../context/CurrencyContext';
 import { slugify } from '../../lib/slugs';
+import WhatsAppAlertBanner from '../../components/WhatsAppAlertBanner';
+import ProductCard from '../../components/ProductCard';
+import LotCard from '../../components/LotCard';
 
 const BrowseResults = () => {
   const router = useRouter();
@@ -125,6 +128,11 @@ const BrowseResults = () => {
             ))}
           </div>
         </div>
+
+        {/* WhatsApp Real-Time Drops Banner (Bottom CTA) */}
+        <div className="mt-10">
+          <WhatsAppAlertBanner />
+        </div>
       </section>
     );
   }
@@ -225,284 +233,65 @@ const BrowseResults = () => {
       <div className="w-full">
         {isSearching ? (
           /* SKELETON LOADING STATE WHILE FETCHING API */
-          <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-4"}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, idx) => (
-              <div key={idx} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-xs animate-pulse">
-                <div className="aspect-[16/10] bg-gray-200/70 w-full" />
-                <div className="p-4 sm:p-5 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <div className="h-3 bg-gray-200 rounded w-20" />
-                    <div className="h-3 bg-gray-200 rounded w-16" />
-                  </div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6" />
-                  <div className="h-3 bg-gray-200 rounded w-1/2" />
-                  <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
-                    <div className="h-5 bg-gray-200 rounded w-24" />
-                    <div className="h-3 bg-gray-200 rounded w-16" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <div className="h-8 bg-gray-200 rounded-full" />
-                    <div className="h-8 bg-gray-200 rounded-full" />
-                  </div>
-                </div>
-              </div>
+              <ProductCard
+                key={`skel-${idx}`}
+                image=""
+                category=""
+                title=""
+                moq={0}
+                estQty={0}
+                price={0}
+                isLoading={true}
+              />
             ))}
           </div>
         ) : searchResult.results.length > 0 ? (
-          <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-4"}>
+          <div className={viewMode === 'list' ? "grid grid-cols-1 md:grid-cols-2 gap-6" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"}>
             {searchResult.results.map((item) => {
-              const isHighlighted = item.id === highlightId;
-              const isRfqSent = rfqSubmittedMap[item.id];
+              const isLot = Boolean(item.isLot || item.condition === 'Liquidation Lot' || item.subCategory === 'Wholesale Lots');
 
-              if (viewMode === 'list') {
-                // LIST VIEW
+              if (isLot) {
                 return (
-                  <div 
-                    key={item.id}
-                    className={`bg-white rounded-2xl border transition-all p-4 md:p-5 flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between ${
-                      isHighlighted 
-                        ? 'border-[#0f7a61] ring-2 ring-[#0f7a61]/20 shadow-md' 
-                        : 'border-gray-200/80 hover:border-gray-300 hover:shadow-sm'
-                    }`}
-                  >
-                    <div className="flex items-start gap-4 min-w-0">
-                      <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gray-50 border border-gray-200/70 shrink-0">
-                        <Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 96px, 112px" className="object-cover" />
-                        {item.discountPercent >= 10 && (
-                          <span className="absolute top-2 left-2 bg-rose-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full shadow-xs">
-                            -{item.discountPercent}%
-                          </span>
-                        )}
-                        {item.isLot && (
-                          <span className="absolute bottom-2 left-2 bg-blue-600 text-white font-bold text-[9px] px-1.5 py-0.5 rounded shadow-xs uppercase">
-                            Lot
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                          <span className="text-[10px] font-bold text-[#0a5c48] bg-emerald-50 px-2 py-0.5 rounded uppercase">
-                            {item.category}
-                          </span>
-                          <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                            {item.condition}
-                          </span>
-                          {item.isLot && (
-                            <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded flex items-center gap-1">
-                              <Layers className="w-3 h-3" />
-                              Wholesale Lot
-                            </span>
-                          )}
-                        </div>
-
-                        <h3 
-                          onClick={() => handleCardClick(item)}
-                          className="font-bold text-gray-900 text-base mb-1 hover:text-[#0f7a61] cursor-pointer"
-                        >
-                          {item.title}
-                        </h3>
-
-                        <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
-                          {item.isLot && (
-                            <>
-                              <span>Lot #: <strong className="font-mono text-gray-700">{item.sku}</strong></span>
-                              <span>•</span>
-                            </>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-gray-400" />
-                            {item.location}
-                          </span>
-                          <span>•</span>
-                          <span>{item.isLot ? `Total Units: ${item.estQty.toLocaleString()}` : `MOQ: ${item.moq} unit(s)`}</span>
-                        </div>
-
-                        <div className="text-[11px] text-gray-500 line-clamp-1">
-                          {item.description}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100">
-                      <div className="text-left sm:text-right">
-                        <div className="text-xl font-extrabold text-primary">
-                          {formatPrice(item.price)}
-                        </div>
-                        {item.retailPrice > item.price && (
-                          <div className="text-xs text-gray-400 line-through">
-                            MSRP {formatPrice(item.retailPrice)}
-                          </div>
-                        )}
-                        {item.retailPrice > item.price && (
-                          <div className="text-[11px] font-semibold text-emerald-700">
-                            Save {formatPrice(item.retailPrice - item.price)}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex gap-2 mt-3">
-                        <button
-                          type="button"
-                          onClick={() => handleCardClick(item)}
-                          className="px-4 py-2 rounded-full font-semibold text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 transition-all cursor-pointer"
-                        >
-                          Details
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRfqClick(item.id)}
-                          className={`px-4 py-2 rounded-full font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
-                            isRfqSent 
-                              ? 'bg-emerald-600 text-white' 
-                              : 'bg-[#0f7a61] hover:bg-[#0c6651] text-white'
-                          }`}
-                        >
-                          {isRfqSent ? (
-                            <>
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>RFQ Added!</span>
-                            </>
-                          ) : (
-                            <span>+ Add to RFQ</span>
-                          )}
-                        </button>
-                      </div>
-                    </div>
+                  <div key={item.id} className="h-full">
+                    <LotCard
+                      id={item.id}
+                      image={item.image}
+                      title={item.title}
+                      condition={item.condition}
+                      units={item.totalUnits || item.estQty || 1}
+                      pallets={Math.max(1, Math.round((item.totalUnits || item.estQty || 1) / 50))}
+                      price={item.price}
+                      msrp={item.retailPrice}
+                      originalPrice={item.retailPrice}
+                      offer={item.discountPercent >= 10 ? `${item.discountPercent}% OFF` : undefined}
+                      location={item.location}
+                      category={item.category}
+                      isLoading={false}
+                    />
                   </div>
                 );
               }
 
-              // GRID VIEW CARD
               return (
-                <div
-                  key={item.id}
-                  className={`bg-white rounded-2xl border overflow-hidden flex flex-col group transition-all duration-300 ${
-                    isHighlighted
-                      ? 'border-[#0f7a61] ring-2 ring-[#0f7a61]/20 shadow-lg'
-                      : 'border-gray-200/80 hover:border-gray-300 hover:shadow-md'
-                  }`}
-                >
-                  {/* Image Container with Badges */}
-                  <div 
-                    onClick={() => handleCardClick(item)}
-                    className="relative aspect-[16/10] w-full bg-gray-50 overflow-hidden cursor-pointer"
-                  >
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-
-                    {/* Discount Badge */}
-                    {item.discountPercent >= 10 && (
-                      <div className="absolute top-2.5 right-2.5 bg-rose-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full shadow-xs">
-                        -{item.discountPercent}% OFF
-                      </div>
-                    )}
-
-                    {/* Lot Tag (Top Left) */}
-                    {item.isLot && (
-                      <div className="absolute top-2.5 left-2.5 bg-blue-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1">
-                        <Layers className="w-3 h-3" />
-                        <span>Wholesale Lot</span>
-                      </div>
-                    )}
-
-                    {/* Certified Seller Badge */}
-                    {item.isCertified && (
-                      <div className="absolute bottom-2.5 left-2.5 bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded-full border border-gray-100 flex items-center gap-1 shadow-xs">
-                        <ShieldCheck className="w-3 h-3 text-[#0f7a61]" />
-                        <span className="text-[9px] font-bold text-gray-700 tracking-wide uppercase">SM Certified</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="p-4 sm:p-5 flex flex-col flex-1">
-                    {/* Category & Condition tags */}
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#0a5c48] truncate">
-                        {item.category}
-                      </span>
-                      <span className="text-[10px] font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
-                        {item.condition}
-                      </span>
-                    </div>
-
-                    {/* Title */}
-                    <h3 
-                      onClick={() => handleCardClick(item)}
-                      className="font-bold text-gray-900 text-sm sm:text-[15px] leading-snug mb-2 line-clamp-2 group-hover:text-[#0f7a61] transition-colors cursor-pointer"
-                    >
-                      {item.title}
-                    </h3>
-
-                    {/* Specs snippet */}
-                    <div className="text-[11px] text-gray-500 mb-3">
-                      {item.isLot ? (
-                        <div className="font-mono">
-                          Lot #: <span className="text-gray-800 font-medium">{item.sku}</span> • {item.location}
-                        </div>
-                      ) : (
-                        <span className="flex items-center gap-1 text-gray-500 font-sans">
-                          <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                          <span>{item.location}</span>
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Price Section */}
-                    <div className="mt-auto pt-3 border-t border-gray-100">
-                      <div className="flex items-baseline justify-between mb-1">
-                        <div className="text-xl font-extrabold text-primary">
-                          {formatPrice(item.price)}
-                        </div>
-                        {item.retailPrice > item.price && (
-                          <div className="text-xs text-gray-400 line-through">
-                            MSRP {formatPrice(item.retailPrice)}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between text-[11px] text-gray-500 mb-4">
-                        <span>{item.isLot ? 'Min Order: 1 Lot' : `MOQ: ${item.moq} unit`}</span>
-                        <span>{item.isLot ? `Total Units: ${item.estQty.toLocaleString()}` : `Est. Qty: ${item.estQty.toLocaleString()}`}</span>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleCardClick(item)}
-                          className="w-full py-2 px-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-xs font-semibold transition-colors cursor-pointer"
-                        >
-                          Details
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleRfqClick(item.id)}
-                          className={`w-full py-2 px-1 text-center rounded-full text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                            isRfqSent 
-                              ? 'bg-emerald-600 text-white' 
-                              : 'bg-[#0f7a61] hover:bg-[#0c6651] text-white shadow-xs'
-                          }`}
-                        >
-                          {isRfqSent ? (
-                            <>
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>Added</span>
-                            </>
-                          ) : (
-                            <span>+ Add RFQ</span>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                  </div>
+                <div key={item.id} className="h-full">
+                  <ProductCard
+                    id={item.id}
+                    sku={item.sku}
+                    image={item.image}
+                    category={item.category}
+                    title={item.title}
+                    moq={item.moq || 1}
+                    estQty={item.estQty || item.totalUnits || 1}
+                    price={item.price}
+                    originalPrice={item.retailPrice}
+                    offer={item.discountPercent >= 10 ? `${item.discountPercent}% OFF` : undefined}
+                    isCertified={item.isCertified}
+                    isNew={Boolean(item.condition?.toLowerCase().includes('new'))}
+                    isLoading={false}
+                    onAddRfq={() => handleRfqClick(item.id)}
+                  />
                 </div>
               );
             })}
@@ -532,6 +321,11 @@ const BrowseResults = () => {
             </div>
           </div>
         )}
+
+        {/* WhatsApp Liquidation Alert Banner (Bottom of the results) */}
+        <div className="mt-12 sm:mt-16">
+          <WhatsAppAlertBanner />
+        </div>
       </div>
     </section>
   );

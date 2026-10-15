@@ -73,6 +73,10 @@ export interface LotItem {
   offer?: string;
   location: string;
   inventory_location?: string;
+  inventory_country?: string;
+  inventory_city?: string;
+  country?: string;
+  city?: string;
   image: string;
   warehouse_images?: string[];
   category?: string;
@@ -141,7 +145,12 @@ export interface LotRequestPayload {
   pallet_count?: number;
   condition?: string;
   category?: string;
-  location: string;
+  location?: string;
+  inventory_location?: string;
+  inventory_country?: string;
+  inventory_city?: string;
+  country?: string;
+  city?: string;
   notes?: string;
 }
 
@@ -317,7 +326,18 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
   }
 
   const conditionName = extractStringValue(item.condition, 'New');
-  const locationName = extractStringValue(item.inventory_location || item.location || item.country, 'Dubai, UAE');
+  
+  const inventoryCountry = extractStringValue(item.inventory_country || item.country, '');
+  const inventoryCity = extractStringValue(item.inventory_city || item.city, '');
+  let resolvedLocation = '';
+  if (inventoryCity && inventoryCountry) {
+    resolvedLocation = `${inventoryCity}, ${inventoryCountry}`;
+  } else if (inventoryCity || inventoryCountry) {
+    resolvedLocation = inventoryCity || inventoryCountry;
+  } else {
+    resolvedLocation = extractStringValue(item.inventory_location || item.location, 'Dubai, UAE');
+  }
+  const locationName = resolvedLocation;
 
   const rawLotOffer = item.offer !== undefined && item.offer !== null && String(item.offer).trim() !== '' ? String(item.offer).trim() : undefined;
   let lotOfferTag: string | undefined = undefined;
@@ -391,6 +411,10 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     offer: lotOfferTag,
     location: locationName,
     inventory_location: locationName,
+    inventory_country: inventoryCountry,
+    inventory_city: inventoryCity,
+    country: inventoryCountry,
+    city: inventoryCity,
     image: image,
     warehouse_images: Array.isArray(item.warehouse_images)
       ? item.warehouse_images.map((wh: string) => {
@@ -682,6 +706,10 @@ export const catalogService = {
       ? payload.offer
       : (discount > 0 ? `${discount}% Off MSRP` : '');
 
+    const resolvedLoc = payload.inventory_city && payload.inventory_country
+      ? `${payload.inventory_city}, ${payload.inventory_country}`
+      : (payload.inventory_city || payload.inventory_country || payload.location || payload.inventory_location || '');
+
     const enrichedPayload = {
       ...payload,
       title: payload.lot_title,
@@ -693,7 +721,12 @@ export const catalogService = {
       total_est_retail_value_msrp: retailMsrp,
       total_units: payload.total_units,
       total_units_quantity: payload.total_units,
-      inventory_location: payload.location,
+      inventory_country: payload.inventory_country || payload.country || '',
+      inventory_city: payload.inventory_city || payload.city || '',
+      country: payload.inventory_country || payload.country || '',
+      city: payload.inventory_city || payload.city || '',
+      inventory_location: resolvedLoc,
+      location: resolvedLoc,
       offer: computedOffer,
       currency: payload.currency || 'USD',
     };
@@ -702,6 +735,30 @@ export const catalogService = {
       method: 'POST',
       body: JSON.stringify(enrichedPayload),
     });
+  },
+
+  async getUserProductSubmissions(email?: string, vendorId?: string): Promise<ApiResponse> {
+    try {
+      const params = new URLSearchParams();
+      if (email) params.append('email', email);
+      if (vendorId) params.append('vendor_id', vendorId);
+      const query = params.toString() ? `?${params.toString()}` : '';
+      return await apiClient(`/api/submit-product-request/${query}`, { method: 'GET' });
+    } catch (err: any) {
+      return { success: false, data: [] };
+    }
+  },
+
+  async getUserLotSubmissions(email?: string, vendorId?: string): Promise<ApiResponse> {
+    try {
+      const params = new URLSearchParams();
+      if (email) params.append('email', email);
+      if (vendorId) params.append('vendor_id', vendorId);
+      const query = params.toString() ? `?${params.toString()}` : '';
+      return await apiClient(`/api/submit-lot-request/${query}`, { method: 'GET' });
+    } catch (err: any) {
+      return { success: false, data: [] };
+    }
   },
 };
 

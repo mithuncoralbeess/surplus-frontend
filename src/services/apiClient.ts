@@ -3,7 +3,11 @@
  * Centralized, secure HTTP client with error handling, URL resolution, and request sanitization.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = 
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  (typeof process !== 'undefined' && process.env?.VITE_API_URL) ||
+  (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_API_URL) ||
+  'https://surplus-backend-uhg0.onrender.com';
 
 export interface ApiResponse<T = any> {
   success: boolean;

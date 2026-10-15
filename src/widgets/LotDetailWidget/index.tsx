@@ -17,6 +17,7 @@ import { inquiryService } from '../../services/inquiryService';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
 import { scrollToTop } from '../../lib/scroll';
+import VirtualWarehouseExplorer from '../../components/VirtualWarehouseExplorer';
 
 interface LotDetailWidgetProps {
   lotId: string;
@@ -31,9 +32,6 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Table search & filter state
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   // Quote Request State
   const [showInlineQuoteForm, setShowInlineQuoteForm] = useState<boolean>(false);
@@ -72,7 +70,9 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
     if (!lot) return;
     const lotPrice = Number(lot.price) || 0;
     const lotUnits = Number(lot.units) || 1;
-    const lotLocation = lot.location || lot.inventory_location || 'Warehouse';
+    const lotLocation = (lot.inventory_city && lot.inventory_country)
+      ? `${lot.inventory_city}, ${lot.inventory_country}`
+      : (lot.location || lot.inventory_location || 'Warehouse');
     const lotImage = selectedImage || lot.image || (lot.warehouse_images && lot.warehouse_images[0]) || '';
 
     addToCart({
@@ -146,6 +146,17 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
     }
   };
 
+  const handleWhatsAppInquiry = () => {
+    if (!lot) return;
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const cleanNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+974 3026 9988').replace(/[^0-9]/g, '');
+    const lotPrice = Number(lot.price || lot.ask_price_surplus_payout || 0);
+    const lotUnits = lot.units || lot.total_units_quantity || 0;
+    const cur = lot.currency || 'USD';
+    const message = `Hello Surplus Market Deals Desk,\n\nI want to make an inquiry / offer on this wholesale surplus lot:\n• Lot: ${lot.title || lot.listing_title || 'Wholesale Lot'}\n• Lot No: ${lot.lot_number || `LOT-${lot.id}`}\n• Lot Price: ${formatPrice(lotPrice, cur)}\n• Units: ${lotUnits.toLocaleString()} units (${lot.pallets || 1} pallet(s))\n• Location: ${lot.location || 'GCC'}\n• Link: ${currentUrl}\n\nPlease share manifest details and discuss offer terms.`;
+    window.open(`https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
   // Products array extraction
   const productsList: any[] = useMemo(() => {
     if (!lot) return [];
@@ -155,47 +166,7 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
     return [];
   }, [lot]);
 
-  // Extract distinct categories from products
-  const productCategories: string[] = useMemo(() => {
-    const set = new Set<string>();
-    productsList.forEach((p) => {
-      const cat = p.product_category || p.category;
-      if (cat && typeof cat === 'string' && cat.trim() !== '') {
-        set.add(cat.trim());
-      }
-    });
-    return Array.from(set);
-  }, [productsList]);
-
-  // Filter products by search and category
-  const filteredProducts = useMemo(() => {
-    return productsList.filter((p) => {
-      const cat = p.product_category || p.category || '';
-      if (selectedCategory !== 'All' && cat.toLowerCase() !== selectedCategory.toLowerCase()) {
-        return false;
-      }
-      if (!searchTerm.trim()) return true;
-
-      const q = searchTerm.toLowerCase().trim();
-      const name = String(p.product_name || p.title || p.name || '').toLowerCase();
-      const brand = String(p.brand || '').toLowerCase();
-      const model = String(p.model_part_number || p.sku || '').toLowerCase();
-      const desc = String(p.product_description || p.description || '').toLowerCase();
-      const bay = String(p.seller_custom_field_1 || '').toLowerCase();
-      const sub = String(p.subcategory || '').toLowerCase();
-
-      return name.includes(q) || brand.includes(q) || model.includes(q) || desc.includes(q) || bay.includes(q) || sub.includes(q);
-    });
-  }, [productsList, searchTerm, selectedCategory]);
-
   const currencyCode = lot?.currency || 'USD';
-
-  const formatProductPrice = (val: any) => {
-    if (val === undefined || val === null || val === '-' || val === '' || val === 'NIL') return '—';
-    const num = parseFloat(String(val).replace(/[^0-9.]/g, ''));
-    if (isNaN(num)) return '—';
-    return formatPrice(num, currencyCode);
-  };
 
   const getExtPrice = (qty: any, price: any) => {
     const q = Number(qty || 0);
@@ -263,7 +234,10 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
     );
   }
 
-  const { title, image, price, msrp, units, pallets, condition, location, category, offer } = lot;
+  const { title, image, price, msrp, units, pallets, condition, category, offer } = lot;
+  const location = (lot.inventory_city && lot.inventory_country)
+    ? `${lot.inventory_city}, ${lot.inventory_country}`
+    : (lot.inventory_country || lot.inventory_city || lot.location || lot.inventory_location || 'Warehouse');
   const buyerSavings = msrp > price ? msrp - price : 0;
   const unitCost = units > 0 ? price / units : 0;
   const brandsList = lot.key_brands_included 
@@ -486,6 +460,18 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                   </button>
                 </div>
 
+                {/* Direct WhatsApp Instant Deal Button */}
+                <button
+                  type="button"
+                  onClick={handleWhatsAppInquiry}
+                  className="w-full py-3 px-4 bg-[#0a5c48] hover:bg-[#084838] text-white rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <svg viewBox="0 0 32 32" className="w-4 h-4 fill-current shrink-0">
+                    <path d="M16 2C8.28 2 2 8.28 2 16c0 2.62.72 5.08 1.98 7.18L2 30l7.04-1.93A13.91 13.91 0 0016 30c7.72 0 14-6.28 14-14S23.72 2 16 2zm8.17 19.86c-.34.97-1.7 1.8-2.38 1.88-.63.07-1.42.1-4.07-.98-3.39-1.39-5.59-4.83-5.76-5.06-.17-.23-1.38-1.84-1.38-3.51 0-1.67.87-2.49 1.18-2.83.31-.34.68-.43.91-.43.23 0 .45.01.65.02.21.01.49-.08.77.59.29.68.98 2.39 1.07 2.56.09.17.15.37.03.6-.12.23-.18.37-.36.58-.18.21-.38.47-.54.63-.18.18-.37.38-.16.74.21.36.93 1.54 2 2.49 1.38 1.23 2.54 1.61 2.9 1.79.36.18.57.15.78-.09.21-.24.9-1.05 1.14-1.41.24-.36.48-.3.8-.18.33.12 2.07.98 2.42 1.15.36.18.6.27.69.42.09.15.09.89-.25 1.86z" />
+                  </svg>
+                  <span>Inquire / Offer on WhatsApp</span>
+                </button>
+
                 {isRfqSent && (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold text-[#0a5c48] text-center animate-fade-in flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -647,323 +633,16 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
           ) : null}
         </div>
 
-        {/* Manifest Products Table Section */}
-        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200/90 shadow-sm p-4 sm:p-6 lg:p-8 mb-8 sm:mb-10 overflow-hidden space-y-5">
-          
-          {/* Header & Controls */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-100">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <List className="w-5 h-5 text-[#0f7a61]" />
-                <h2 className="text-lg sm:text-xl font-extrabold text-gray-900">
-                  Itemized Manifest Inventory
-                </h2>
-                <span className="bg-[#0f7a61]/10 text-[#0f7a61] px-2.5 py-0.5 rounded-full text-xs font-bold">
-                  {productsList.length} SKUs Listed
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-gray-500">
-                Verified item-level breakdown including unit counts, asking prices, serial/part numbers, and warehouse bay tags.
-              </p>
-            </div>
-
-            {/* Quick Actions: Download + Search */}
-            <div className="flex items-center gap-3 flex-wrap">
-              {lot.file_url && (
-                <a
-                  href={lot.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#0f7a61] border border-emerald-200 rounded-xl text-xs font-extrabold transition-colors cursor-pointer"
-                >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  <span>Download XLSX</span>
-                </a>
-              )}
-
-              {/* Search Bar */}
-              <div className="relative min-w-[260px] sm:min-w-[320px]">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search by product, brand, part #..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0f7a61]"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Category Filter Chips */}
-          {productCategories.length > 1 && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-              <button
-                onClick={() => setSelectedCategory('All')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
-                  selectedCategory === 'All'
-                    ? 'bg-[#0f7a61] text-white shadow-xs'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                All Categories ({productsList.length})
-              </button>
-              {productCategories.map((cat, i) => {
-                const count = productsList.filter(p => (p.product_category || p.category) === cat).length;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
-                      selectedCategory === cat
-                        ? 'bg-[#0f7a61] text-white shadow-xs'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {cat} ({count})
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Table Container */}
-          {filteredProducts.length > 0 ? (
-            <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-xs">
-              <table className="w-full text-left border-collapse min-w-[3400px]">
-                <thead className="bg-[#f8faf9] border-b border-gray-200 text-gray-600">
-                  <tr>
-                    <th className="py-3.5 px-3 text-xs font-bold uppercase tracking-wider sticky left-0 bg-[#f8faf9] z-20 shadow-[1px_0_0_#e5e7eb] w-[50px] text-center">#</th>
-                    <th className="py-3.5 px-3 text-xs font-bold uppercase tracking-wider sticky left-[50px] bg-[#f8faf9] z-20 shadow-[1px_0_0_#e5e7eb] w-[65px] text-center">Image</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider sticky left-[115px] bg-[#f8faf9] z-20 shadow-[1px_0_0_#e5e7eb] min-w-[280px]">Product Name & Model</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider min-w-[140px]">Brand</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider min-w-[180px]">Category / Subcategory</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-center min-w-[100px]">Available Qty</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-right min-w-[130px]">Asking Price</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-right min-w-[130px]">Original MSRP</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider text-right min-w-[140px]">Ext. Asking Value</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider min-w-[150px]">Verification & Status</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider min-w-[160px]">Origin & Mfg Year</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider min-w-[180px]">Dimensions & Weight</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider min-w-[200px]">Safety & Certificate</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider min-w-[220px]">Warehouse Bay / Shelf</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider min-w-[280px]">Description</th>
-                    <th className="py-3.5 px-4 text-xs font-bold uppercase tracking-wider min-w-[130px]">Datasheet</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 text-gray-800 text-xs sm:text-sm">
-                  {filteredProducts.map((prod: any, idx: number) => {
-                    const sNo = prod.s_no || idx + 1;
-                    const name = prod.product_name || prod.name || prod.title || 'Product Item';
-                    const brand = prod.brand || '—';
-                    const model = prod.model_part_number || prod.sku || '';
-                    const cat = prod.product_category || prod.category || 'General';
-                    const subcat = prod.subcategory || '';
-                    const qty = prod.available_quantity || prod.quantity || 0;
-                    const asking = prod.asking_price || prod.price;
-                    const orig = prod.original_price || prod.msrp;
-                    const extVal = getExtPrice(qty, asking);
-                    const tested = prod.tested_and_verified === 'Yes' || prod.functional_status === 'Yes';
-                    const origin = prod.country_of_origin && prod.country_of_origin !== '-' ? prod.country_of_origin : '—';
-                    const year = prod.year_of_manufacture && prod.year_of_manufacture !== '-' ? prod.year_of_manufacture : '—';
-                    const weight = prod.gross_weight_per_unit && prod.gross_weight_per_unit !== '-' ? `${prod.gross_weight_per_unit} kg` : '—';
-                    const dimensions = (prod.length && prod.length !== '-') 
-                      ? `${prod.length} × ${prod.width} × ${prod.height} ${prod.measurement_unit || 'cm'}`
-                      : '—';
-                    const certType = prod.certificate_type && prod.certificate_type !== '-' ? prod.certificate_type : '';
-                    const bay = prod.seller_custom_field_1 && prod.seller_custom_field_1 !== '-' ? prod.seller_custom_field_1 : '';
-                    const note2 = prod.seller_custom_field_2 && prod.seller_custom_field_2 !== '-' ? prod.seller_custom_field_2 : '';
-                    const link = prod.datasheet_certificate_link && prod.datasheet_certificate_link !== '-' && !prod.datasheet_certificate_link.includes('link removed') ? prod.datasheet_certificate_link : null;
-
-                    return (
-                      <tr key={idx} className="hover:bg-emerald-50/30 transition-colors group">
-                        {/* Sticky S.No */}
-                        <td className="py-3 px-3 text-xs font-mono text-gray-500 text-center sticky left-0 bg-white group-hover:bg-[#f6faf8] z-10 shadow-[1px_0_0_#e5e7eb]">
-                          {sNo}
-                        </td>
-
-                        {/* Sticky Row Image */}
-                        <td className="py-2 px-2.5 sticky left-[50px] bg-white group-hover:bg-[#f6faf8] z-10 shadow-[1px_0_0_#e5e7eb] w-[65px]">
-                          <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 shrink-0">
-                            <Image
-                              src={prod.image || prod.image_url || prod.photo || lot.image}
-                              alt={name}
-                              fill
-                              sizes="40px"
-                              className="object-cover"
-                            />
-                          </div>
-                        </td>
-
-                        {/* Sticky Product Name & Model */}
-                        <td className="py-3 px-4 sticky left-[115px] bg-white group-hover:bg-[#f6faf8] z-10 shadow-[1px_0_0_#e5e7eb]">
-                          <div className="font-bold text-gray-900 leading-snug line-clamp-2" title={name}>
-                            {name}
-                          </div>
-                          {model && (
-                            <div className="text-[11px] font-mono text-gray-500 mt-0.5">
-                              Part #: <span className="text-gray-700 font-semibold">{model}</span>
-                            </div>
-                          )}
-                        </td>
-
-                        {/* Brand */}
-                        <td className="py-3 px-4">
-                          <span className="font-semibold text-gray-900 bg-gray-100 px-2 py-0.5 rounded text-xs">
-                            {brand}
-                          </span>
-                        </td>
-
-                        {/* Category / Subcategory */}
-                        <td className="py-3 px-4 text-gray-700">
-                          <div className="font-medium text-gray-900">{cat}</div>
-                          {subcat && <div className="text-[11px] text-gray-500">{subcat}</div>}
-                        </td>
-
-                        {/* Quantity */}
-                        <td className="py-3 px-4 text-center">
-                          <span className="inline-block bg-emerald-50 border border-emerald-200 text-[#0f7a61] px-2.5 py-1 rounded-full text-xs font-black">
-                            {qty} units
-                          </span>
-                        </td>
-
-                        {/* Asking Price */}
-                        <td className="py-3 px-4 text-right font-black text-[#0f7a61]">
-                          {formatProductPrice(asking)}
-                        </td>
-
-                        {/* Original MSRP */}
-                        <td className="py-3 px-4 text-right text-gray-500">
-                          {formatProductPrice(orig)}
-                        </td>
-
-                        {/* Ext. Asking Value */}
-                        <td className="py-3 px-4 text-right font-black text-gray-900">
-                          {extVal}
-                        </td>
-
-                        {/* Verification & Status */}
-                        <td className="py-3 px-4">
-                          <div className="flex flex-col gap-1 text-[11px]">
-                            {tested ? (
-                              <span className="inline-flex items-center gap-1 text-emerald-700 font-bold">
-                                <Check className="w-3 h-3 text-emerald-600" /> Tested & Verified
-                              </span>
-                            ) : (
-                              <span className="text-gray-500">Visual Inspection</span>
-                            )}
-                            {prod.stock_age && prod.stock_age !== '-' && (
-                              <span className="text-gray-500">Age: {prod.stock_age}</span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Origin & Mfg Year */}
-                        <td className="py-3 px-4 text-gray-700">
-                          <div>Origin: <strong className="text-gray-900">{origin}</strong></div>
-                          <div>Year: <strong className="text-gray-900">{year}</strong></div>
-                        </td>
-
-                        {/* Dimensions & Weight */}
-                        <td className="py-3 px-4 text-gray-700">
-                          <div>Wt: <span className="font-semibold">{weight}</span></div>
-                          <div className="text-[11px] text-gray-500">{dimensions}</div>
-                        </td>
-
-                        {/* Safety & Certificate */}
-                        <td className="py-3 px-4 text-gray-700">
-                          {certType ? (
-                            <span className="inline-block bg-blue-50 border border-blue-200 text-blue-700 px-2 py-0.5 rounded text-[11px] font-bold">
-                              {certType}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
-                        </td>
-
-                        {/* Warehouse Bay / Notes */}
-                        <td className="py-3 px-4">
-                          {bay && (
-                            <div className="font-mono text-[11px] font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded inline-block">
-                              {bay}
-                            </div>
-                          )}
-                          {note2 && (
-                            <div className="text-[11px] text-gray-600 mt-0.5">
-                              {note2}
-                            </div>
-                          )}
-                          {!bay && !note2 && <span className="text-gray-400">—</span>}
-                        </td>
-
-                        {/* Description */}
-                        <td className="py-3 px-4 text-gray-600 max-w-[280px]">
-                          <p className="line-clamp-2 text-xs" title={prod.product_description}>
-                            {prod.product_description || '—'}
-                          </p>
-                        </td>
-
-                        {/* Datasheet Link */}
-                        <td className="py-3 px-4">
-                          {link ? (
-                            <a
-                              href={link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[#0f7a61] hover:underline font-bold text-xs"
-                            >
-                              <span>Doc</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="py-12 text-center bg-gray-50 rounded-2xl border border-gray-100">
-              <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <h4 className="text-sm font-bold text-gray-700">No products match your search criteria</h4>
-              <p className="text-xs text-gray-500 mt-1">Try resetting the filter or search keyword.</p>
-              <button
-                onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}
-                className="mt-3 px-4 py-1.5 bg-[#0f7a61] text-white rounded-full text-xs font-bold cursor-pointer"
-              >
-                Clear Search & Filters
-              </button>
-            </div>
-          )}
-
-          {/* Table Footer Summary Bar */}
-          {filteredProducts.length > 0 && (
-            <div className="flex items-center justify-between text-xs text-gray-500 pt-2 flex-wrap gap-2">
-              <span>
-                Showing <strong>{filteredProducts.length}</strong> of <strong>{productsList.length}</strong> manifested products
-              </span>
-              <div className="flex items-center gap-4">
-                <span>
-                  Total Units: <strong className="text-gray-900">{filteredProducts.reduce((acc, p) => acc + Number(p.available_quantity || p.quantity || 0), 0)}</strong>
-                </span>
-              </div>
-            </div>
-          )}
-
-        </div>
+        {/* Virtual Warehouse Explorer (Interactive Lot SKU Grid & Valuation) */}
+        <VirtualWarehouseExplorer
+          lotId={lot.id}
+          initialLot={lot}
+          currency={currencyCode}
+          className="mb-8 sm:mb-10"
+        />
 
       </div>
     </main>
   );
 }
+

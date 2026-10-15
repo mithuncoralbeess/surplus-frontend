@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSession } from 'next-auth/react';
-import { X, UploadCloud, FileSpreadsheet, ChevronRight, Check, ArrowLeft, Download, Tag, Plus, Percent, Trash2, Edit2, User, CheckCircle2, Image as ImageIcon, Film, DollarSign, Info, ShieldCheck, Eye, Sparkles, ExternalLink } from 'lucide-react';
+import { X, UploadCloud, FileSpreadsheet, ChevronRight, Check, ArrowLeft, Download, Tag, Plus, Percent, Trash2, Edit2, User, CheckCircle2, Image as ImageIcon, Film, DollarSign, Info, ShieldCheck, Eye, Sparkles, ExternalLink, MapPin } from 'lucide-react';
 import { z } from 'zod';
 import { validateManifestUpload } from '../../lib/security/fileUploadValidator';
 import { sanitizeInput } from '../../lib/security/sanitizer';
@@ -64,10 +64,15 @@ const step2Schema = z.object({
     .min(1, "Mobile Number is required")
     .max(25, "Mobile Number cannot exceed 25 characters")
     .refine(cyberAttackFilter, "Security Violation: Invalid characters in mobile number"),
+  inventoryCountry: z.string()
+    .min(1, "Inventory Country is required")
+    .max(100, "Inventory Country cannot exceed 100 characters")
+    .refine(cyberAttackFilter, "Security Violation: Malicious payload detected in country"),
   location: z.string()
     .min(1, "Inventory Location is required")
-    .max(150, "Inventory Location cannot exceed 150 characters")
+    .max(250, "Inventory Location cannot exceed 250 characters")
     .refine(cyberAttackFilter, "Security Violation: HTML, script tags or SQL injection detected"),
+  inventoryCity: z.string().optional(),
 });
 
 const step3Schema = z.object({
@@ -79,10 +84,15 @@ const step3Schema = z.object({
     .min(1, "Lot Description & Notes are required")
     .max(3000, "Lot Description cannot exceed 3000 characters")
     .refine(val => !/<script[^>]*>[\s\S]*?<\/script>/gi.test(val) && !/on\w+\s*=/gi.test(val) && !/javascript\s*:/gi.test(val) && !/<iframe[^>]*>/gi.test(val), "Security Violation: Script execution payloads, inline handlers, and iframe tags are strictly prohibited"),
+  inventoryCountry: z.string()
+    .min(1, "Inventory Country is required")
+    .max(100, "Inventory Country cannot exceed 100 characters")
+    .refine(cyberAttackFilter, "Security Violation: Malicious payload detected in country"),
   location: z.string()
     .min(1, "Inventory Location is required")
-    .max(150, "Inventory Location cannot exceed 150 characters")
+    .max(250, "Inventory Location cannot exceed 250 characters")
     .refine(cyberAttackFilter, "Security Violation: Malicious payload or HTML tags detected in location"),
+  inventoryCity: z.string().optional(),
   category: z.string().optional(),
   condition: z.string()
     .min(1, "Condition is required")
@@ -167,6 +177,7 @@ const step3Schema = z.object({
 });
 
 import Select from 'react-select';
+import { getGlobalCountries, searchRealLocation, RealLocationSuggestion, LocationOption } from '../../services/locationService';
 
 const CATEGORY_OPTIONS = [
   'Electricals',
@@ -274,6 +285,10 @@ const customSelectStyles = {
     '&:hover': {
       borderColor: state.isFocused ? '#0a5c48' : '#9ca3af'
     }
+  }),
+  menu: (provided: any) => ({
+    ...provided,
+    zIndex: 9999,
   }),
   option: (provided: any, state: any) => ({
     ...provided,
@@ -478,6 +493,8 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
     fullName: '', 
     email: '', 
     mobile: '', 
+    inventoryCountry: '',
+    inventoryCity: '',
     location: '',
     title: '',
     description: '',
@@ -514,6 +531,80 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
   const totalRetail = useMemo(() => {
     return manifestData.reduce((acc, row) => acc + ((Number(row.qty) || 0) * (Number(row.msrp) || 0)), 0);
   }, [manifestData]);
+
+  // Dynamic country list
+  const [countryOptions] = useState<LocationOption[]>(() => getGlobalCountries());
+
+  // Real location search autocomplete state
+  const [locationSuggestions, setLocationSuggestions] = useState<RealLocationSuggestion[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const locationSearchRef = useRef<HTMLDivElement>(null);
+  const locationDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Close location suggestions on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (locationSearchRef.current && !locationSearchRef.current.contains(e.target as Node)) {
+        setShowLocationSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (locationDebounceTimer.current) clearTimeout(locationDebounceTimer.current);
+    };
+  }, []);
+
+  const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    handleInputChange('location', val);
+
+    if (locationDebounceTimer.current) {
+      clearTimeout(locationDebounceTimer.current);
+    }
+
+    if (!val || val.trim().length < 2) {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+      setIsSearchingLocation(false);
+      return;
+    }
+
+    setIsSearchingLocation(true);
+    setShowLocationSuggestions(true);
+    locationDebounceTimer.current = setTimeout(async () => {
+      try {
+        const results = await searchRealLocation(val, formData.inventoryCountry);
+        setLocationSuggestions(results);
+        setShowLocationSuggestions(true);
+      } catch (err) {
+        console.warn('Real location search error:', err);
+      } finally {
+        setIsSearchingLocation(false);
+      }
+    }, 250);
+  };
+
+  const handleSelectLocationSuggestion = (item: RealLocationSuggestion) => {
+    handleInputChange('location', item.displayName);
+    handleInputChange('inventoryCity', item.cityOrTown || item.shortName);
+    
+    // Auto-match and set country if empty
+    if (!formData.inventoryCountry && item.country) {
+      const matched = countryOptions.find(c => 
+        c.value.toLowerCase() === item.country.toLowerCase() ||
+        c.label.toLowerCase().includes(item.country.toLowerCase())
+      );
+      if (matched) {
+        handleInputChange('inventoryCountry', matched.value);
+      } else {
+        handleInputChange('inventoryCountry', item.country);
+      }
+    }
+
+    setShowLocationSuggestions(false);
+  };
 
   // Real-time pricing validation and discount calculation (matching SimpleListingModal)
   const pricingAnalysis = useMemo(() => {
@@ -588,6 +679,8 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
         fullName: prev.fullName || session.user?.name || '', 
         email: prev.email || session.user?.email || '', 
         mobile: prev.mobile || (session.user as any)?.mobile || '', 
+        inventoryCountry: prev.inventoryCountry || (session.user as any)?.country || (session.user as any)?.business_location || '',
+        inventoryCity: prev.inventoryCity || (session.user as any)?.city || '',
         location: prev.location || (session.user as any)?.location || ''
       }));
     }
@@ -1153,7 +1246,16 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       }
 
       // --- 11-15. Location, Units, & Metrics ---
-      data.append('inventory_location', sanitizeInput(String(formData.location || '')));
+      const resolvedLocation = formData.location || (formData.inventoryCity && formData.inventoryCountry
+        ? `${formData.inventoryCity}, ${formData.inventoryCountry}`
+        : (formData.inventoryCity || formData.inventoryCountry || ''));
+
+      data.append('inventory_location', sanitizeInput(resolvedLocation));
+      data.append('location', sanitizeInput(resolvedLocation));
+      data.append('inventory_country', sanitizeInput(String(formData.inventoryCountry || '')));
+      data.append('country', sanitizeInput(String(formData.inventoryCountry || '')));
+      data.append('inventory_city', sanitizeInput(String(formData.inventoryCity || formData.location || '')));
+      data.append('city', sanitizeInput(String(formData.inventoryCity || formData.location || '')));
       data.append('number_of_distinct_skus', String(formData.distinctSkus || manifestData.length || 0));
       data.append('total_units_quantity', String(totalUnits || formData.manualUnits || 0));
       data.append('primary_unit_type', sanitizeInput(String(formData.unitType || '')));
@@ -1202,6 +1304,44 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       if (response.ok) {
         setIsSubmitting(false);
         setIsSuccess(true);
+
+        if (typeof window !== 'undefined') {
+          try {
+            const stored = localStorage.getItem('surplus_product_submissions');
+            const existing = stored ? JSON.parse(stored) : [];
+            const newRecord = {
+              id: `LOT-SUB-${Date.now()}`,
+              reference: `LOT-${Date.now().toString().slice(-6)}`,
+              title: formData.title || 'Wholesale Lot Import Batch',
+              type: 'lot',
+              category: formData.category || 'Wholesale Lots & Batches',
+              units: parseInt(formData.manualUnits || String(totalUnits), 10) || totalUnits || 1,
+              distinctSkus: parseInt(formData.distinctSkus || String(manifestData.length), 10) || manifestData.length || 1,
+              liquidatingPrice: parseFloat(formData.askPrice) || 0,
+              msrp: parseFloat(formData.msrp) || 0,
+              currency: 'USD',
+              condition: formData.condition || 'Factory Sealed Wholesale',
+              status: 'Under Verification',
+              submittedAt: new Date().toISOString(),
+              inventoryCountry: formData.inventoryCountry,
+              inventoryCity: formData.inventoryCity,
+              inventory_country: formData.inventoryCountry,
+              inventory_city: formData.inventoryCity,
+              country: formData.inventoryCountry,
+              city: formData.inventoryCity,
+              location: resolvedLocation || 'Regional Liquidation Center',
+              inventory_location: resolvedLocation || 'Regional Liquidation Center',
+              manifestFileName: manifestFile?.name || 'manifest.xlsx',
+              manifestItemsCount: manifestData.length,
+              description: formData.description,
+              vendor_id: session?.user ? (session.user as any).vendor_id : undefined,
+              user_email: session?.user?.email || formData.email
+            };
+            localStorage.setItem('surplus_product_submissions', JSON.stringify([newRecord, ...existing]));
+          } catch (e) {
+            console.warn('Could not save lot submission to history', e);
+          }
+        }
       } else {
         let errorMessage = 'Failed to submit lot. Please try again.';
         try {
@@ -1766,15 +1906,110 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                   Metrics & Logistics
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Inventory Location <span className="text-red-500">*</span></label>
-                    <FastInput 
-                      type="text" 
-                      className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm placeholder-gray-400" 
-                      placeholder="e.g. Austin, TX, USA or Dubai Industrial City, UAE" 
-                      value={formData.location}
-                      onValueChange={val => handleInputChange('location', val)}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Inventory Country <span className="text-red-500">*</span>
+                    </label>
+                    <Select
+                      options={countryOptions}
+                      styles={customSelectStyles}
+                      value={countryOptions.find(c => c.value === formData.inventoryCountry) || (formData.inventoryCountry ? { value: formData.inventoryCountry, label: formData.inventoryCountry } : null)}
+                      onChange={(option: any) => {
+                        const val = option ? option.value : '';
+                        handleInputChange('inventoryCountry', val);
+                      }}
+                      placeholder="Select Country"
+                      isSearchable={true}
+                      isClearable={true}
                     />
+                    {renderError('inventoryCountry')}
+                  </div>
+                  <div className={`relative ${showLocationSuggestions ? 'z-30' : ''}`} ref={locationSearchRef}>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Inventory Location <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type="text"
+                        className="w-full bg-white border border-gray-300 rounded-lg pl-9 pr-9 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm placeholder-gray-400 text-sm"
+                        placeholder={formData.inventoryCountry ? `Search area, town, or city in ${formData.inventoryCountry}...` : "Type real location (e.g. Kakkodi, Jebel Ali)..."}
+                        value={formData.location}
+                        onChange={handleLocationInputChange}
+                        onFocus={() => {
+                          if (locationSuggestions.length > 0 || isSearchingLocation) setShowLocationSuggestions(true);
+                        }}
+                      />
+                      <MapPin className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+                      {isSearchingLocation ? (
+                        <div className="w-4 h-4 border-2 border-[#0a5c48] border-t-transparent rounded-full animate-spin absolute right-3 top-3"></div>
+                      ) : formData.location ? (
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            handleInputChange('location', '');
+                            setLocationSuggestions([]);
+                            setShowLocationSuggestions(false);
+                          }}
+                          className="text-gray-400 hover:text-gray-600 absolute right-3 top-2.5 p-0.5"
+                          title="Clear location"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      ) : null}
+                    </div>
+
+                    {/* Real Location Autocomplete Floating Dropdown */}
+                    {showLocationSuggestions && (
+                      <div className="absolute z-50 left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto">
+                        <div className="p-2.5 bg-gray-50 border-b border-gray-100 text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-[#0a5c48]" />
+                            Location Suggestions
+                          </span>
+                          {formData.inventoryCountry && (
+                            <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[10px]">
+                              {formData.inventoryCountry}
+                            </span>
+                          )}
+                        </div>
+
+                        {isSearchingLocation && locationSuggestions.length === 0 ? (
+                          <div className="p-4 text-center text-sm text-gray-500 flex items-center justify-center gap-2">
+                            <div className="w-4 h-4 border-2 border-[#0a5c48] border-t-transparent rounded-full animate-spin"></div>
+                            <span>Searching locations for &quot;{formData.location}&quot;...</span>
+                          </div>
+                        ) : locationSuggestions.length > 0 ? (
+                          locationSuggestions.map((item, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50/70 border-b border-gray-100 last:border-b-0 flex items-start gap-2.5 transition-colors group cursor-pointer"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleSelectLocationSuggestion(item);
+                              }}
+                              onClick={() => handleSelectLocationSuggestion(item)}
+                            >
+                              <div className="w-6 h-6 rounded-full bg-emerald-100/60 group-hover:bg-[#0a5c48] flex items-center justify-center shrink-0 mt-0.5 transition-colors">
+                                <MapPin className="w-3.5 h-3.5 text-[#0a5c48] group-hover:text-white transition-colors" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-gray-900 group-hover:text-[#0a5c48] truncate">
+                                  {item.shortName}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate mt-0.5">
+                                  {item.displayName}
+                                </p>
+                              </div>
+                            </button>
+                          ))
+                        ) : !isSearchingLocation && formData.location?.trim().length >= 2 ? (
+                          <div className="p-3.5 text-center text-xs text-gray-500">
+                            No specific place found. You can keep &quot;{formData.location}&quot; as custom location.
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
                     {renderError('location')}
                   </div>
                   <div>
@@ -2192,8 +2427,10 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                     <div className="space-y-3.5 text-xs">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <span className="text-gray-500 block">Location:</span>
-                          <span className="font-bold text-gray-900">{formData.location || 'N/A'}</span>
+                          <span className="text-gray-500 block">Inventory Location:</span>
+                          <span className="font-bold text-gray-900">
+                            {formData.location || (formData.inventoryCountry ? `${formData.inventoryCountry}` : 'N/A')}
+                          </span>
                         </div>
                         <div>
                           <span className="text-gray-500 block">Distinct SKUs / Units:</span>

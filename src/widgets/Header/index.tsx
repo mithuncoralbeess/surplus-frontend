@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ShoppingBag, User, LogOut } from 'lucide-react';
+import { User, LogOut } from 'lucide-react';
 import { motion } from '../../lib/motion';
 import RegionSelector from '../../components/RegionSelector';
 import CurrencySelector from '../../components/CurrencySelector';
@@ -68,7 +68,7 @@ const Header = () => {
               <BuyMegamenu />
               <Link 
                 href="/sell" 
-                className={`font-medium text-[14px] transition-all py-1 header-nav-link whitespace-nowrap ${
+                className={`font-medium text-[16px] transition-all py-1 header-nav-link whitespace-nowrap ${
                   isActive('/sell') ? 'text-[#0f7a61] font-semibold' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -76,7 +76,7 @@ const Header = () => {
               </Link>
               <Link 
                 href="/partnership" 
-                className={`font-medium text-[14px] transition-all py-1 header-nav-link whitespace-nowrap ${
+                className={`font-medium text-[16px] transition-all py-1 header-nav-link whitespace-nowrap ${
                   isActive('/partnership') ? 'text-[#0f7a61] font-semibold' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -84,7 +84,7 @@ const Header = () => {
               </Link>
               <Link 
                 href="/sustainability" 
-                className={`font-medium text-[14px] transition-all py-1 header-nav-link whitespace-nowrap ${
+                className={`font-medium text-[16px] transition-all py-1 header-nav-link whitespace-nowrap ${
                   isActive('/sustainability') ? 'text-[#0f7a61] font-semibold' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -95,13 +95,6 @@ const Header = () => {
 
         {/* Mobile Right Actions */}
         <div className="flex lg:hidden items-center gap-1.5 header-mobile-actions">
-          <Link 
-            href="/browse"
-            className="text-gray-600 hover:text-gray-900 transition-colors p-1.5"
-            title="Search"
-          >
-            <Search className="w-5 h-5" />
-          </Link>
           <HeaderCartDropdown />
           {session ? (
             <Link 
@@ -123,13 +116,6 @@ const Header = () => {
 
         {/* Right Actions */}
         <div className="hidden lg:flex items-center header-right-actions">
-          <Link 
-            href="/browse"
-            className="text-gray-600 hover:text-gray-900 transition-colors p-1"
-          >
-            <Search className="w-[18px] h-[18px]" />
-          </Link>
-          
           <LanguageSelector />
           <RegionSelector />
           <CurrencySelector />

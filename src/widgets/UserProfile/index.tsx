@@ -42,7 +42,9 @@ import {
   Eye,
   Info,
   Calendar,
-  DollarSign
+  DollarSign,
+  UploadCloud,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useNotifications } from '../../context/NotificationContext';
@@ -280,7 +282,10 @@ export default function UserProfileWidget() {
       router.replace('/');
     }
   }, [status, router]);
-  const [activeTab, setActiveTab] = useState<'profile' | 'rfqs' | 'listings' | 'saved' | 'settings'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'rfqs' | 'submissions' | 'listings' | 'saved' | 'settings'>('profile');
+
+  // Submissions Type Filter State
+  const [submissionFilter, setSubmissionFilter] = useState<'all' | 'single' | 'lot'>('all');
 
   // Listing Type Filter State inside Tab 3
   const [listingFilter, setListingFilter] = useState<'all' | 'single' | 'lot'>('all');
@@ -646,6 +651,35 @@ export default function UserProfileWidget() {
     }>;
   }
 
+  interface UserSubmissionItem {
+    id: string | number;
+    reference: string;
+    title: string;
+    type: 'single' | 'lot';
+    category?: string;
+    subCategory?: string;
+    brand?: string;
+    model?: string;
+    units: number;
+    distinctSkus?: number;
+    liquidatingPrice: number;
+    msrp?: number;
+    currency?: string;
+    condition: string;
+    status: string;
+    submittedAt: string;
+    location?: string;
+    reasonToSell?: string;
+    hasWarranty?: string;
+    warranty?: string;
+    description?: string;
+    manifestFileName?: string;
+    manifestItemsCount?: number;
+    vendor_id?: string;
+    user_email?: string;
+    rawItem?: any;
+  }
+
   interface UserListingItem {
     id: string | number;
     displayId: string;
@@ -679,6 +713,11 @@ export default function UserProfileWidget() {
   const [isLoadingRfqs, setIsLoadingRfqs] = useState(false);
   const [selectedRfqDetail, setSelectedRfqDetail] = useState<UserRfqItem | null>(null);
 
+  // Submissions State
+  const [submissionsList, setSubmissionsList] = useState<UserSubmissionItem[]>([]);
+  const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(false);
+  const [selectedSubmissionDetail, setSelectedSubmissionDetail] = useState<UserSubmissionItem | null>(null);
+
   // Listings State
   const [listingsList, setListingsList] = useState<UserListingItem[]>([]);
   const [isLoadingListings, setIsLoadingListings] = useState(false);
@@ -686,7 +725,7 @@ export default function UserProfileWidget() {
   // Saved Deals State
   const [savedDeals, setSavedDeals] = useState<UserSavedDeal[]>([]);
 
-  // Fetch real RFQs from backend and local history
+  // Fetch real RFQs from backend and local history strictly for logged-in user
   const fetchUserRfqs = async () => {
     setIsLoadingRfqs(true);
     try {
@@ -729,7 +768,21 @@ export default function UserProfileWidget() {
           try {
             const parsed = JSON.parse(localHistory);
             if (Array.isArray(parsed)) {
+              const uEmail = (userEmail || '').toLowerCase().trim();
+              const vIdStr = String(vId || '').trim();
+
               parsed.forEach((item: any) => {
+                const itemEmail = (item.email || item.user_email || '').toLowerCase().trim();
+                const itemVendor = String(item.vendor_id || item.vendorId || '').trim();
+
+                // Strict isolation: only include RFQs matching the logged user's credentials
+                const isOwner =
+                  (uEmail && itemEmail === uEmail) ||
+                  (vIdStr && itemVendor === vIdStr) ||
+                  (!itemEmail && !itemVendor);
+
+                if (!isOwner) return;
+
                 const alreadyExists = combined.some(
                   c => (c.reference && c.reference === item.reference) || (c.id && String(c.id) === String(item.id))
                 );
@@ -771,6 +824,153 @@ export default function UserProfileWidget() {
     }
   };
 
+  // Fetch submitted product & wholesale lot requests (pending verification / curation)
+  const fetchUserSubmissions = async () => {
+    setIsLoadingSubmissions(true);
+    try {
+      let combined: UserSubmissionItem[] = [];
+      const userEmail = (email || session?.user?.email || '').toLowerCase().trim();
+      const vId = String(vendorId || (session?.user as any)?.vendor_id || '').trim();
+
+      // 1. Backend API query (safe fallback)
+      try {
+        const [prodSubRes, lotSubRes] = await Promise.allSettled([
+          catalogService.getUserProductSubmissions(userEmail || undefined, vId || undefined),
+          catalogService.getUserLotSubmissions(userEmail || undefined, vId || undefined)
+        ]);
+
+        if (prodSubRes.status === 'fulfilled' && prodSubRes.value?.success && prodSubRes.value?.data) {
+          const rawProds = Array.isArray(prodSubRes.value.data) ? prodSubRes.value.data : (prodSubRes.value.data.results || []);
+          rawProds.forEach((p: any) => {
+            combined.push({
+              id: p.id || `PRD-SUB-${p.reference || Date.now()}`,
+              reference: p.reference || `PRD-${p.id || String(Date.now()).slice(-6)}`,
+              title: p.title || p.product_name || p.productName || 'Surplus Single Product',
+              type: 'single',
+              category: p.category || '',
+              subCategory: p.subCategory || p.sub_category || '',
+              brand: p.brand || p.brandName || '',
+              model: p.model || p.modelNo || '',
+              units: Number(p.quantity || p.units || 1),
+              liquidatingPrice: Number(p.liquidatingPrice || p.price || 0),
+              msrp: Number(p.msrp || p.originalPrice || 0),
+              currency: p.currency || 'USD',
+              condition: p.condition || 'Brand New Surplus',
+              status: p.status || (p.is_verified ? 'Approved' : 'Pending Verification'),
+              submittedAt: p.submittedAt || p.created_at || new Date().toISOString(),
+              location: p.location || p.inventory_location || 'UAE Warehouse',
+              reasonToSell: p.reasonToSell || p.reason_to_sell || '',
+              hasWarranty: p.hasWarranty || p.has_warranty || '',
+              warranty: p.warranty || '',
+              description: p.description || '',
+              vendor_id: p.vendor_id || vId,
+              user_email: p.user_email || p.email || userEmail,
+              rawItem: p
+            });
+          });
+        }
+
+        if (lotSubRes.status === 'fulfilled' && lotSubRes.value?.success && lotSubRes.value?.data) {
+          const rawLots = Array.isArray(lotSubRes.value.data) ? lotSubRes.value.data : (lotSubRes.value.data.results || []);
+          rawLots.forEach((l: any) => {
+            combined.push({
+              id: l.id || `LOT-SUB-${l.reference || Date.now()}`,
+              reference: l.reference || `LOT-${l.id || String(Date.now()).slice(-6)}`,
+              title: l.title || l.lot_title || 'Wholesale Liquidation Lot Batch',
+              type: 'lot',
+              category: l.category || 'Wholesale Liquidation',
+              units: Number(l.total_units || l.total_units_quantity || l.units || 1),
+              distinctSkus: Number(l.distinctSkus || l.number_of_distinct_skus || l.manifest_items?.length || 0),
+              liquidatingPrice: Number(l.asking_price || l.ask_price_surplus_payout || l.price || 0),
+              msrp: Number(l.msrp || l.total_retail || l.total_est_retail_value_msrp || 0),
+              currency: l.currency || 'USD',
+              condition: l.condition || 'Factory Sealed Wholesale',
+              status: l.status || (l.is_verified ? 'Approved' : 'Under Verification'),
+              submittedAt: l.submittedAt || l.created_at || new Date().toISOString(),
+              location: l.location || l.inventory_location || 'Regional Liquidation Center',
+              manifestFileName: l.manifestFileName || l.file_name || 'manifest.xlsx',
+              manifestItemsCount: Number(l.manifestItemsCount || l.manifest_items?.length || 0),
+              description: l.description || l.lot_description_and_notes || '',
+              vendor_id: l.vendor_id || vId,
+              user_email: l.user_email || l.email || userEmail,
+              rawItem: l
+            });
+          });
+        }
+      } catch (backendErr) {
+        console.warn('Backend submissions fetch fallback to localStorage', backendErr);
+      }
+
+      // 2. Local storage submissions filtered strictly for this logged-in user
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('surplus_product_submissions');
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((item: any) => {
+                const itemEmail = (item.user_email || item.email || '').toLowerCase().trim();
+                const itemVendor = String(item.vendor_id || item.vendorId || '').trim();
+
+                const isOwner =
+                  (userEmail && itemEmail === userEmail) ||
+                  (vId && itemVendor === vId) ||
+                  (!itemEmail && !itemVendor);
+
+                if (!isOwner) return;
+
+                const alreadyExists = combined.some(
+                  c => (c.reference && c.reference === item.reference) || (c.id && String(c.id) === String(item.id))
+                );
+
+                if (!alreadyExists) {
+                  combined.push({
+                    id: item.id || `SUB-${Date.now()}`,
+                    reference: item.reference || `SUB-${String(Date.now()).slice(-6)}`,
+                    title: item.title || 'Submitted Surplus Listing',
+                    type: item.type === 'lot' ? 'lot' : 'single',
+                    category: item.category || '',
+                    subCategory: item.subCategory || '',
+                    brand: item.brand || '',
+                    model: item.model || '',
+                    units: Number(item.units || 1),
+                    distinctSkus: Number(item.distinctSkus || 0),
+                    liquidatingPrice: Number(item.liquidatingPrice || 0),
+                    msrp: Number(item.msrp || 0),
+                    currency: item.currency || 'USD',
+                    condition: item.condition || 'Verified Surplus',
+                    status: item.status || 'Pending Verification',
+                    submittedAt: item.submittedAt || new Date().toISOString(),
+                    location: item.location || 'UAE Warehouse',
+                    reasonToSell: item.reasonToSell,
+                    hasWarranty: item.hasWarranty,
+                    warranty: item.warranty,
+                    description: item.description,
+                    manifestFileName: item.manifestFileName,
+                    manifestItemsCount: item.manifestItemsCount,
+                    vendor_id: item.vendor_id,
+                    user_email: item.user_email,
+                    rawItem: item
+                  });
+                }
+              });
+            }
+          } catch (e) {
+            console.warn('Could not parse local submissions history', e);
+          }
+        }
+      }
+
+      // Sort newest submissions first
+      combined.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+      setSubmissionsList(combined);
+    } catch (err) {
+      console.error('Error fetching submissions:', err);
+    } finally {
+      setIsLoadingSubmissions(false);
+    }
+  };
+
   // Fetch real listings (single products & lots) from backend
   const fetchUserListings = async () => {
     setIsLoadingListings(true);
@@ -784,7 +984,8 @@ export default function UserProfileWidget() {
       const items: UserListingItem[] = [];
 
       if (productsRes.status === 'fulfilled' && Array.isArray(productsRes.value)) {
-        productsRes.value.forEach((p) => {
+        productsRes.value.forEach((p: any) => {
+          if (vId && p.vendor_id && String(p.vendor_id) !== String(vId)) return;
           items.push({
             id: p.id,
             displayId: p.product_id || p.sku || `PRD-${p.id}`,
@@ -804,7 +1005,8 @@ export default function UserProfileWidget() {
       }
 
       if (lotsRes.status === 'fulfilled' && Array.isArray(lotsRes.value)) {
-        lotsRes.value.forEach((l) => {
+        lotsRes.value.forEach((l: any) => {
+          if (vId && l.vendor_id && String(l.vendor_id) !== String(vId)) return;
           items.push({
             id: l.id,
             displayId: l.lot_number || `LOT-${l.id}`,
@@ -902,10 +1104,11 @@ export default function UserProfileWidget() {
 
   const handleClearCache = () => {
     if (typeof window !== 'undefined') {
-      const keysToClear = ['surplus_rfqs_history', 'surplus_saved_deals', 'surplus_account_settings'];
+      const keysToClear = ['surplus_rfqs_history', 'surplus_product_submissions', 'surplus_saved_deals', 'surplus_account_settings'];
       keysToClear.forEach(k => localStorage.removeItem(k));
       loadSavedDeals();
       fetchUserRfqs();
+      fetchUserSubmissions();
       showToast({
         type: 'info',
         title: 'Local Cache Cleared',
@@ -933,6 +1136,8 @@ export default function UserProfileWidget() {
       },
       rfqs_count: rfqsList.length,
       rfqs: rfqsList,
+      submissions_count: submissionsList.length,
+      submissions: submissionsList,
       listings_count: listingsList.length,
       saved_deals_count: savedDeals.length,
       exported_at: new Date().toISOString(),
@@ -967,12 +1172,35 @@ export default function UserProfileWidget() {
     return { bg: 'bg-amber-100 text-amber-700 border border-amber-200', label: status || 'Pending Review' };
   };
 
+  const getSubmissionStatusBadge = (status: string = 'Pending Verification') => {
+    const s = (status || '').toUpperCase();
+    if (s.includes('APPROV') || s.includes('VERIFIED') || s.includes('PUBLISH') || s.includes('ACTIVE')) {
+      return { bg: 'bg-emerald-100 text-[#0f7a61] border border-emerald-200', label: status || 'Approved & Published', dot: 'bg-[#0f7a61]' };
+    }
+    if (s.includes('REJECT') || s.includes('DECLIN') || s.includes('CANCEL')) {
+      return { bg: 'bg-red-100 text-red-700 border border-red-200', label: status || 'Declined', dot: 'bg-red-500' };
+    }
+    if (s.includes('REVIEW') || s.includes('PROCESS')) {
+      return { bg: 'bg-blue-100 text-blue-700 border border-blue-200', label: status || 'Under Review', dot: 'bg-blue-500' };
+    }
+    return { bg: 'bg-amber-100 text-amber-800 border border-amber-200', label: status || 'Pending Verification', dot: 'bg-amber-500' };
+  };
+
   // Sync and fetch on mount & profile change
   useEffect(() => {
     fetchUserRfqs();
+    fetchUserSubmissions();
     fetchUserListings();
     loadSavedDeals();
   }, [email, vendorId]);
+
+  const filteredSubmissions = useMemo(() => {
+    return submissionsList.filter(item => {
+      if (submissionFilter === 'single') return item.type === 'single';
+      if (submissionFilter === 'lot') return item.type === 'lot';
+      return true;
+    });
+  }, [submissionsList, submissionFilter]);
 
   const filteredListings = useMemo(() => {
     return listingsList.filter(item => {
@@ -1080,30 +1308,38 @@ export default function UserProfileWidget() {
             </div>
 
             {/* Quick Metrics */}
-            <div className="grid grid-cols-3 gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-gray-50/80 p-3.5 rounded-2xl border border-gray-100 text-center">
               <button
                 type="button"
                 onClick={() => setActiveTab('rfqs')}
-                className="hover:opacity-80 transition-opacity text-center cursor-pointer group"
+                className="p-2 rounded-xl hover:bg-white hover:shadow-2xs transition-all text-center cursor-pointer group"
               >
                 <div className="text-lg font-bold text-gray-900 group-hover:text-[#0f7a61] transition-colors">{rfqsList.length}</div>
                 <div className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Active RFQs</div>
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('listings')}
-                className="border-x border-gray-200 hover:opacity-80 transition-opacity text-center cursor-pointer group"
+                onClick={() => setActiveTab('submissions')}
+                className="p-2 rounded-xl hover:bg-white hover:shadow-2xs transition-all text-center cursor-pointer group"
               >
-                <div className="text-lg font-bold text-[#0f7a61]">{listingsList.length}</div>
-                <div className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Listings</div>
+                <div className="text-lg font-bold text-amber-600 group-hover:text-amber-700 transition-colors">{submissionsList.length}</div>
+                <div className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Submissions</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('listings')}
+                className="p-2 rounded-xl hover:bg-white hover:shadow-2xs transition-all text-center cursor-pointer group"
+              >
+                <div className="text-lg font-bold text-[#0f7a61] group-hover:text-[#0c6651] transition-colors">{listingsList.length}</div>
+                <div className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Live Listings</div>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('saved')}
-                className="hover:opacity-80 transition-opacity text-center cursor-pointer group"
+                className="p-2 rounded-xl hover:bg-white hover:shadow-2xs transition-all text-center cursor-pointer group"
               >
                 <div className="text-lg font-bold text-gray-900 group-hover:text-rose-600 transition-colors">{savedDeals.length}</div>
-                <div className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Saved</div>
+                <div className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Saved Deals</div>
               </button>
             </div>
 
@@ -1141,38 +1377,78 @@ export default function UserProfileWidget() {
 
               <button
                 onClick={() => setActiveTab('rfqs')}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
                   activeTab === 'rfqs'
                     ? 'bg-[#0f7a61] text-white shadow-sm'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                <FileText className="w-4 h-4" />
-                <span>My RFQs & Quotes</span>
+                <div className="flex items-center space-x-3">
+                  <FileText className="w-4 h-4" />
+                  <span>My RFQs & Quotes</span>
+                </div>
+                {rfqsList.length > 0 && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTab === 'rfqs' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-700'}`}>
+                    {rfqsList.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setActiveTab('submissions')}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                  activeTab === 'submissions'
+                    ? 'bg-[#0f7a61] text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <UploadCloud className="w-4 h-4" />
+                  <span>Product Submissions</span>
+                </div>
+                {submissionsList.length > 0 && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTab === 'submissions' ? 'bg-amber-400 text-gray-900' : 'bg-amber-100 text-amber-800'}`}>
+                    {submissionsList.length}
+                  </span>
+                )}
               </button>
 
               <button
                 onClick={() => setActiveTab('listings')}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
                   activeTab === 'listings'
                     ? 'bg-[#0f7a61] text-white shadow-sm'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                <Layers className="w-4 h-4" />
-                <span>My Surplus Inventory</span>
+                <div className="flex items-center space-x-3">
+                  <Layers className="w-4 h-4" />
+                  <span>Live Inventory Listings</span>
+                </div>
+                {listingsList.length > 0 && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTab === 'listings' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-[#0f7a61]'}`}>
+                    {listingsList.length}
+                  </span>
+                )}
               </button>
 
               <button
                 onClick={() => setActiveTab('saved')}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
                   activeTab === 'saved'
                     ? 'bg-[#0f7a61] text-white shadow-sm'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                <Heart className="w-4 h-4" />
-                <span>Saved Deals</span>
+                <div className="flex items-center space-x-3">
+                  <Heart className="w-4 h-4" />
+                  <span>Saved Deals</span>
+                </div>
+                {savedDeals.length > 0 && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${activeTab === 'saved' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-600'}`}>
+                    {savedDeals.length}
+                  </span>
+                )}
               </button>
 
               <button
@@ -1659,15 +1935,310 @@ export default function UserProfileWidget() {
               </div>
             )}
 
+            {/* TAB: Product & Lot Submissions */}
+            {activeTab === 'submissions' && (
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm space-y-6">
+                
+                {/* Header Actions */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-xl font-bold text-gray-900">Product & Lot Submissions</h2>
+                      <span className="bg-amber-100 text-amber-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-amber-700" /> Pending Curation ({submissionsList.length})
+                      </span>
+                    </div>
+                    <p className="text-gray-500 text-xs mt-0.5">
+                      Track inventory submissions pending curation, technical verification, and official catalog publication.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={fetchUserSubmissions}
+                      disabled={isLoadingSubmissions}
+                      className="p-2 rounded-full border border-gray-200 text-gray-600 hover:text-[#0f7a61] hover:border-[#0f7a61] transition-colors disabled:opacity-50"
+                      title="Refresh Submissions"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isLoadingSubmissions ? 'animate-spin' : ''}`} />
+                    </button>
+                    <button 
+                      onClick={() => setIsSimpleModalOpen(true)} 
+                      className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 font-semibold text-xs px-3.5 py-2 rounded-full flex items-center gap-1.5 transition-colors shadow-2xs"
+                    >
+                      <Box className="w-3.5 h-3.5 text-purple-600" />
+                      <span>+ Add Single Product</span>
+                    </button>
+                    <button 
+                      onClick={() => setIsLotModalOpen(true)} 
+                      className="bg-[#0f7a61] hover:bg-[#0c6651] text-white font-semibold text-xs px-4 py-2 rounded-full flex items-center gap-1.5 transition-colors shadow-sm"
+                    >
+                      <Boxes className="w-3.5 h-3.5" />
+                      <span>+ Import Lot Batch</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sub-Tabs Filter (All / Single Products / Lot Batches) */}
+                <div className="flex items-center space-x-2 border-b border-gray-100 pb-4 overflow-x-auto">
+                  <button
+                    onClick={() => setSubmissionFilter('all')}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                      submissionFilter === 'all'
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    All Submissions ({submissionsList.length})
+                  </button>
+
+                  <button
+                    onClick={() => setSubmissionFilter('single')}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
+                      submissionFilter === 'single'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                    }`}
+                  >
+                    <Box className="w-3 h-3" />
+                    Single Products ({submissionsList.filter(i => i.type === 'single').length})
+                  </button>
+
+                  <button
+                    onClick={() => setSubmissionFilter('lot')}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
+                      submissionFilter === 'lot'
+                        ? 'bg-[#0f7a61] text-white'
+                        : 'bg-[#e6f7ef] text-[#0f7a61] hover:bg-green-100'
+                    }`}
+                  >
+                    <Boxes className="w-3 h-3" />
+                    Wholesale Lots & Batches ({submissionsList.filter(i => i.type === 'lot').length})
+                  </button>
+                </div>
+
+                {/* Verification Notice Banner */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-blue-50/50 border border-emerald-100/80 flex items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-start sm:items-center space-x-3">
+                    <div className="w-9 h-9 rounded-xl bg-white shadow-2xs text-[#0f7a61] flex items-center justify-center shrink-0 border border-emerald-100">
+                      <ShieldCheck className="w-5 h-5 text-[#0f7a61]" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900">2-Tier Quality & Authenticity Verification</h4>
+                      <p className="text-[11px] text-gray-600 mt-0.5">
+                        Our engineering and valuation team verifies specifications, manifest lines, and compliance documents before moving items to your live catalog.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="hidden md:flex items-center gap-1 text-[11px] font-bold text-[#0f7a61] bg-white/80 border border-emerald-200/60 px-3 py-1 rounded-full shrink-0">
+                    <Clock className="w-3 h-3" /> Turnaround: 24-48h
+                  </div>
+                </div>
+
+                {isLoadingSubmissions ? (
+                  <div className="py-16 text-center">
+                    <div className="animate-spin w-8 h-8 border-3 border-[#0f7a61] border-t-transparent rounded-full mx-auto mb-3" />
+                    <p className="text-xs text-gray-500 font-medium">Loading your submissions...</p>
+                  </div>
+                ) : filteredSubmissions.length === 0 ? (
+                  <div className="text-center py-16 px-4 border border-dashed border-gray-200 rounded-3xl bg-gray-50/50">
+                    <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4">
+                      <UploadCloud className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-base font-bold text-gray-900 mb-1">No Product Submissions Found</h3>
+                    <p className="text-xs text-gray-500 max-w-md mx-auto mb-6">
+                      You haven't submitted any surplus inventory for curation yet. Upload manifest spreadsheets or enter single product specs to list your liquidation assets across our global institutional buyer network.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      <button 
+                        onClick={() => setIsLotModalOpen(true)}
+                        className="bg-[#0f7a61] hover:bg-[#0c6651] text-white text-xs font-semibold px-4 py-2.5 rounded-full flex items-center gap-1.5 transition-colors shadow-sm"
+                      >
+                        <Boxes className="w-3.5 h-3.5" /> + Import Wholesale Lot Batch
+                      </button>
+                      <button 
+                        onClick={() => setIsSimpleModalOpen(true)}
+                        className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 text-xs font-semibold px-4 py-2.5 rounded-full flex items-center gap-1.5 transition-colors shadow-2xs"
+                      >
+                        <Box className="w-3.5 h-3.5 text-purple-600" /> + Add Single Product
+                      </button>
+                    </div>
+
+                    {/* How Verification Works 3-Step Flow */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-8 pt-6 border-t border-gray-200/80 text-left">
+                      <div className="p-3.5 rounded-xl bg-white border border-gray-100">
+                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Step 1: Manifest Submission</div>
+                        <div className="text-xs font-bold text-gray-900">Upload Inventory & Specs</div>
+                        <p className="text-[11px] text-gray-500 mt-1">Submit product details, asking liquidation price, and manifest spreadsheets.</p>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-white border border-gray-100">
+                        <div className="text-[10px] font-bold text-[#0f7a61] uppercase tracking-wider mb-1">Step 2: Valuation & Review</div>
+                        <div className="text-xs font-bold text-gray-900">Engineering Curation</div>
+                        <p className="text-[11px] text-gray-500 mt-1">Our analysts verify pricing, certifications, and inventory authenticity within 24-48h.</p>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-white border border-gray-100">
+                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Step 3: Marketplace Publication</div>
+                        <div className="text-xs font-bold text-gray-900">Live Global Liquidation</div>
+                        <p className="text-[11px] text-gray-500 mt-1">Approved lots appear live on the catalog to receive proforma purchase bids & RFQs.</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredSubmissions.map((item) => {
+                      const badge = getSubmissionStatusBadge(item.status);
+                      const formattedDate = item.submittedAt
+                        ? new Date(item.submittedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                        : 'Recent';
+
+                      return (
+                        <div 
+                          key={item.id} 
+                          className="p-5 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-gray-200 hover:shadow-2xs transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                        >
+                          <div className="min-w-0 flex-1">
+                            {/* Badges Line */}
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <span className="font-mono font-bold text-gray-900 text-xs bg-white border border-gray-200 px-2 py-0.5 rounded-md">
+                                {item.reference}
+                              </span>
+                              
+                              {item.type === 'single' ? (
+                                <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                  <Box className="w-3 h-3" /> Single Product
+                                </span>
+                              ) : (
+                                <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                  <Boxes className="w-3 h-3" /> Wholesale Lot Batch
+                                </span>
+                              )}
+
+                              <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 ${badge.bg}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+                                {badge.label}
+                              </span>
+
+                              {item.location && (
+                                <span className="text-[11px] text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                  <MapPin className="w-3 h-3 text-gray-400" /> {item.location}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Title & Metadata */}
+                            <h4 className="text-sm font-bold text-gray-900 truncate">{item.title}</h4>
+                            
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-gray-400" /> Submitted on {formattedDate}
+                              </span>
+                              <span>&bull;</span>
+                              <span className="font-medium text-gray-700">
+                                {item.units.toLocaleString()} total units
+                              </span>
+                              {item.distinctSkus ? (
+                                <>
+                                  <span>&bull;</span>
+                                  <span>{item.distinctSkus} distinct SKUs</span>
+                                </>
+                              ) : null}
+                              {item.brand ? (
+                                <>
+                                  <span>&bull;</span>
+                                  <span>Brand: <strong>{item.brand}</strong></span>
+                                </>
+                              ) : null}
+                              {item.category ? (
+                                <>
+                                  <span>&bull;</span>
+                                  <span>{item.category}</span>
+                                </>
+                              ) : null}
+                              {item.manifestFileName ? (
+                                <>
+                                  <span>&bull;</span>
+                                  <span className="flex items-center gap-1 text-[#0f7a61] font-medium">
+                                    <FileSpreadsheet className="w-3 h-3" /> {item.manifestFileName}
+                                  </span>
+                                </>
+                              ) : null}
+                            </div>
+
+                            {/* Curation micro-status note */}
+                            <div className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-800 bg-amber-50/80 border border-amber-200/60 px-2.5 py-0.5 rounded-lg">
+                              <Sparkles className="w-3 h-3 text-amber-600" />
+                              <span>Curation Phase: Specification inspection & authenticity verification in queue.</span>
+                            </div>
+                          </div>
+
+                          {/* Right Side: Financials & Action */}
+                          <div className="flex items-center justify-between sm:justify-end gap-5 border-t sm:border-0 pt-3 sm:pt-0 border-gray-200 shrink-0">
+                            <div className="text-left sm:text-right">
+                              <div className="text-[11px] text-gray-400 font-medium">Asking Liquidation Payout</div>
+                              <div className="text-base font-extrabold text-[#0f7a61]">
+                                {formatPrice(item.liquidatingPrice)}
+                              </div>
+                              {item.msrp ? (
+                                <div className="text-[10px] text-gray-400">
+                                  Est. MSRP: {formatPrice(item.msrp)}
+                                </div>
+                              ) : null}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setSelectedSubmissionDetail(item)}
+                              className="bg-white hover:bg-gray-100 border border-gray-200 text-gray-800 text-xs font-semibold px-3.5 py-2 rounded-full flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                            >
+                              <span>View Submission</span>
+                              <Eye className="w-3.5 h-3.5 text-gray-500" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+              </div>
+            )}
+
             {/* TAB 3: My Surplus Inventory & Listings (Single Product + Lot Batch) */}
             {activeTab === 'listings' && (
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm">
                 
+                {/* Pending Submissions Callout Banner */}
+                {submissionsList.length > 0 && (
+                  <div className="mb-6 p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                        <Clock className="w-5 h-5 text-amber-700" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-gray-900">
+                          You have {submissionsList.length} product submission{submissionsList.length > 1 ? 's' : ''} under verification
+                        </h4>
+                        <p className="text-[11px] text-gray-600">
+                          Items currently under curation will appear here in your live inventory catalog once verified and approved.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('submissions')}
+                      className="self-start sm:self-auto text-xs font-bold text-amber-800 bg-amber-200/60 hover:bg-amber-200 px-3.5 py-1.5 rounded-full transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
+                    >
+                      <span>View Submissions ({submissionsList.length})</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
                 {/* Header Actions */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">My Surplus Inventory</h2>
-                    <p className="text-gray-500 text-xs mt-0.5">Manage your single product listings and wholesale lot batches listed for liquidation.</p>
+                    <h2 className="text-xl font-bold text-gray-900">Live Surplus Inventory</h2>
+                    <p className="text-gray-500 text-xs mt-0.5">Manage your active single product listings and wholesale lot batches listed on the live marketplace.</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
@@ -1766,14 +2337,27 @@ export default function UserProfileWidget() {
                     </div>
                   ) : (
                     <div className="text-center py-12 px-4 border border-dashed border-gray-200 rounded-3xl bg-gray-50/50">
-                      <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-[#0f7a61] flex items-center justify-center mx-auto mb-4">
-                        <Package className="w-8 h-8" />
+                      <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4">
+                        <Clock className="w-8 h-8" />
                       </div>
-                      <h3 className="text-base font-bold text-gray-900 mb-1">No Surplus Inventory Listed Yet</h3>
+                      <h3 className="text-base font-bold text-gray-900 mb-1">
+                        {submissionsList.length > 0 ? 'Submissions Under Verification' : 'No Live Surplus Inventory Listed Yet'}
+                      </h3>
                       <p className="text-xs text-gray-500 max-w-md mx-auto mb-6">
-                        Upload manifest spreadsheets or list individual industrial surplus items to begin connecting with institutional buyers across our network.
+                        {submissionsList.length > 0
+                          ? `You currently have ${submissionsList.length} product submission${submissionsList.length > 1 ? 's' : ''} in the verification pipeline. Once our engineers verify manifest details and condition, they will be published live to our marketplace catalog.`
+                          : 'Upload manifest spreadsheets or list individual industrial surplus items to begin connecting with institutional buyers across our network.'}
                       </p>
                       <div className="flex flex-wrap items-center justify-center gap-3">
+                        {submissionsList.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab('submissions')}
+                            className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-4 py-2.5 rounded-full flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                          >
+                            <UploadCloud className="w-3.5 h-3.5" /> View {submissionsList.length} Pending Submission{submissionsList.length > 1 ? 's' : ''}
+                          </button>
+                        )}
                         <button 
                           onClick={() => setIsLotModalOpen(true)}
                           className="bg-[#0f7a61] hover:bg-[#0c6651] text-white text-xs font-semibold px-4 py-2.5 rounded-full flex items-center gap-1.5 transition-colors shadow-sm"
@@ -2134,11 +2718,171 @@ export default function UserProfileWidget() {
         </div>
       )}
 
+      {/* Product Submission Detail Modal */}
+      {selectedSubmissionDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6 sm:p-8 animate-scale-up">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-gray-900">{selectedSubmissionDetail.reference}</h3>
+                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${getSubmissionStatusBadge(selectedSubmissionDetail.status).bg}`}>
+                    {selectedSubmissionDetail.status}
+                  </span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${selectedSubmissionDetail.type === 'single' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                    {selectedSubmissionDetail.type === 'single' ? 'Single Product' : 'Wholesale Lot Batch'}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Submitted on {selectedSubmissionDetail.submittedAt ? new Date(selectedSubmissionDetail.submittedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedSubmissionDetail(null)}
+                className="p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Title & Core Specs */}
+            <div className="my-5">
+              <h4 className="text-base font-bold text-gray-900">{selectedSubmissionDetail.title}</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3 p-4 rounded-2xl bg-gray-50 border border-gray-100 text-xs">
+                <div>
+                  <span className="text-gray-400 block font-medium">Quantity</span>
+                  <span className="font-bold text-gray-900 text-sm">{selectedSubmissionDetail.units.toLocaleString()} units</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block font-medium">Condition</span>
+                  <span className="font-semibold text-gray-900">{selectedSubmissionDetail.condition}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block font-medium">Category</span>
+                  <span className="font-semibold text-gray-900">{selectedSubmissionDetail.category || 'Surplus'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block font-medium">Warehouse Hub</span>
+                  <span className="font-semibold text-gray-900">{selectedSubmissionDetail.location || 'UAE Warehouse'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Financial Overview Card */}
+            <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-100/90 flex items-center justify-between text-xs mb-5">
+              <div>
+                <span className="text-gray-600 block">Requested Liquidation Payout</span>
+                <span className="font-extrabold text-[#0f7a61] text-xl">
+                  {formatPrice(selectedSubmissionDetail.liquidatingPrice)}
+                </span>
+              </div>
+              {selectedSubmissionDetail.msrp ? (
+                <div className="text-right">
+                  <span className="text-gray-600 block">Original Estimated Retail / MSRP</span>
+                  <span className="font-bold text-gray-700 text-base">{formatPrice(selectedSubmissionDetail.msrp)}</span>
+                </div>
+              ) : null}
+            </div>
+
+            {/* Product Specifications & Manifest */}
+            <div className="space-y-3 text-xs mb-6">
+              {selectedSubmissionDetail.brand && (
+                <div className="flex justify-between py-1.5 border-b border-gray-100">
+                  <span className="text-gray-400">Brand / Manufacturer:</span>
+                  <span className="font-semibold text-gray-900">{selectedSubmissionDetail.brand}</span>
+                </div>
+              )}
+              {selectedSubmissionDetail.model && (
+                <div className="flex justify-between py-1.5 border-b border-gray-100">
+                  <span className="text-gray-400">Model / Part Number:</span>
+                  <span className="font-semibold text-gray-900">{selectedSubmissionDetail.model}</span>
+                </div>
+              )}
+              {selectedSubmissionDetail.subCategory && (
+                <div className="flex justify-between py-1.5 border-b border-gray-100">
+                  <span className="text-gray-400">Sub-Category:</span>
+                  <span className="font-semibold text-gray-900">{selectedSubmissionDetail.subCategory}</span>
+                </div>
+              )}
+              {selectedSubmissionDetail.distinctSkus ? (
+                <div className="flex justify-between py-1.5 border-b border-gray-100">
+                  <span className="text-gray-400">Distinct Manifest SKUs:</span>
+                  <span className="font-semibold text-gray-900">{selectedSubmissionDetail.distinctSkus} items</span>
+                </div>
+              ) : null}
+              {selectedSubmissionDetail.manifestFileName && (
+                <div className="flex justify-between py-1.5 border-b border-gray-100">
+                  <span className="text-gray-400">Attached Manifest:</span>
+                  <span className="font-semibold text-[#0f7a61] flex items-center gap-1">
+                    <FileSpreadsheet className="w-3.5 h-3.5" /> {selectedSubmissionDetail.manifestFileName}
+                  </span>
+                </div>
+              )}
+              {selectedSubmissionDetail.warranty && (
+                <div className="flex justify-between py-1.5 border-b border-gray-100">
+                  <span className="text-gray-400">Warranty Coverage:</span>
+                  <span className="font-semibold text-gray-900">{selectedSubmissionDetail.warranty}</span>
+                </div>
+              )}
+              {selectedSubmissionDetail.reasonToSell && (
+                <div className="py-2 border-b border-gray-100">
+                  <span className="text-gray-400 block mb-1">Reason for Liquidation:</span>
+                  <p className="text-gray-800">{selectedSubmissionDetail.reasonToSell}</p>
+                </div>
+              )}
+              {selectedSubmissionDetail.description && (
+                <div className="py-2">
+                  <span className="text-gray-400 block mb-1">Detailed Technical Description & Notes:</span>
+                  <p className="text-gray-800 bg-gray-50 p-3 rounded-xl whitespace-pre-wrap">{selectedSubmissionDetail.description}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Verification Stage Timeline */}
+            <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 text-xs mb-6">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-3">Verification Pipeline</span>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-2 rounded-xl bg-emerald-100/70 text-[#0f7a61] border border-emerald-200/80">
+                  <CheckCircle2 className="w-4 h-4 mx-auto mb-1 text-[#0f7a61]" />
+                  <div className="font-bold text-[11px]">1. Received</div>
+                  <div className="text-[10px] text-gray-500">Logged & Indexed</div>
+                </div>
+                <div className="p-2 rounded-xl bg-amber-100/70 text-amber-800 border border-amber-200/80">
+                  <Clock className="w-4 h-4 mx-auto mb-1 text-amber-700 animate-spin" />
+                  <div className="font-bold text-[11px]">2. Verification</div>
+                  <div className="text-[10px] text-amber-700">Specs & Documents</div>
+                </div>
+                <div className="p-2 rounded-xl bg-gray-100 text-gray-400 border border-gray-200/60">
+                  <ExternalLink className="w-4 h-4 mx-auto mb-1 text-gray-400" />
+                  <div className="font-bold text-[11px]">3. Catalog Go-Live</div>
+                  <div className="text-[10px] text-gray-400">Live for Inquiries</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedSubmissionDetail(null)}
+                className="bg-gray-900 hover:bg-black text-white text-xs font-semibold px-5 py-2.5 rounded-full transition-colors cursor-pointer"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Listing Modals */}
       <SimpleListingModal 
         isOpen={isSimpleModalOpen} 
         onClose={() => {
           setIsSimpleModalOpen(false);
+          fetchUserSubmissions();
           fetchUserListings();
         }} 
       />
@@ -2146,6 +2890,7 @@ export default function UserProfileWidget() {
         isOpen={isLotModalOpen} 
         onClose={() => {
           setIsLotModalOpen(false);
+          fetchUserSubmissions();
           fetchUserListings();
         }} 
       />

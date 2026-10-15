@@ -157,17 +157,17 @@ export default function HeaderNotificationsDropdown() {
       <button
         type="button"
         onClick={() => setIsOpen(prev => !prev)}
-        className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-colors focus:outline-none ${
+        className={`relative flex items-center justify-center w-8 h-8 lg:w-9 lg:h-9 rounded-full transition-colors focus:outline-none cursor-pointer ${
           isOpen ? 'bg-emerald-50 text-[#0f7a61]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
         }`}
         aria-label="View notifications"
         title="Notifications"
       >
-        <Bell className="w-4 h-4" />
+        <Bell className="w-4 h-4 lg:w-5 lg:h-5" />
 
         {/* Unread Badge Counter */}
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-3.5 min-w-3.5 px-0.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-xs animate-pulse">
+          <span className="absolute -top-0.5 -right-0.5 flex h-3.5 min-w-3.5 lg:h-4 lg:min-w-4 px-0.5 items-center justify-center rounded-full bg-red-500 text-[9px] lg:text-[10px] font-bold text-white shadow-xs animate-pulse">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}

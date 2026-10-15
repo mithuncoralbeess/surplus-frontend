@@ -36,14 +36,14 @@ const RegionSelector = () => {
     <div className="relative" ref={dropdownRef}>
       {/* Toggle Button */}
       <div
-        className="flex items-center gap-1 cursor-pointer text-gray-600 hover:text-gray-900 font-medium text-[12px] bg-gray-50 hover:bg-gray-100 px-2 py-1 rounded-full border border-gray-200/80 transition-colors header-selector-btn"
+        className="flex items-center gap-1.5 cursor-pointer text-gray-600 hover:text-gray-900 font-medium text-[12px] lg:text-[13.5px] bg-gray-50 hover:bg-gray-100 px-2 lg:px-2.5 py-1 lg:py-1.5 rounded-full border border-gray-200/80 transition-colors header-selector-btn"
         onClick={() => setIsOpen(!isOpen)}
         title="Change shopping region"
       >
         {ActiveFlag ? (
           <span 
             className="region-flag-container relative inline-flex items-center justify-center shrink-0 overflow-hidden rounded-[2px] border border-black/15 shadow-xs bg-white"
-            style={{ width: '20px', height: '14px', minWidth: '20px', minHeight: '14px' }}
+            style={{ width: '22px', height: '15px', minWidth: '22px', minHeight: '15px' }}
           >
             <ActiveFlag 
               title={selectedRegion} 
@@ -52,13 +52,13 @@ const RegionSelector = () => {
             />
           </span>
         ) : (
-          <Globe className="w-3.5 h-3.5 text-gray-500" />
+          <Globe className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />
         )}
-        <span className="font-medium text-gray-800 text-[12px]">{getShortRegionName(selectedRegion)}</span>
+        <span className="font-medium text-gray-800 text-[12px] lg:text-[13.5px]">{getShortRegionName(selectedRegion)}</span>
         {isOpen ? (
-          <ChevronUp className="selector-chevron w-3 h-3 text-gray-500 shrink-0" style={{ width: '12px', height: '12px' }} />
+          <ChevronUp className="selector-chevron w-3 h-3 lg:w-3.5 lg:h-3.5 text-gray-500 shrink-0" />
         ) : (
-          <ChevronDown className="selector-chevron w-3 h-3 text-gray-500 shrink-0" style={{ width: '12px', height: '12px' }} />
+          <ChevronDown className="selector-chevron w-3 h-3 lg:w-3.5 lg:h-3.5 text-gray-500 shrink-0" />
         )}
       </div>
 

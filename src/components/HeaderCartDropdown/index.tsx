@@ -28,13 +28,13 @@ const HeaderCartDropdown: React.FC = () => {
       {/* Shopping Bag Button with Badge */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="relative text-gray-600 hover:text-gray-900 transition-colors p-1 focus:outline-none cursor-pointer"
+        className="relative text-gray-600 hover:text-gray-900 transition-colors p-1.5 focus:outline-none cursor-pointer flex items-center justify-center w-8 h-8 lg:w-9 lg:h-9 rounded-full hover:bg-gray-100"
         title="View RFQ Basket"
         aria-label={`RFQ Basket with ${totalCount} items`}
       >
-        <ShoppingBag className="w-[18px] h-[18px]" />
+        <ShoppingBag className="w-[18px] h-[18px] lg:w-5 lg:h-5" />
         {totalCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-[#0f7a61] text-white text-[9px] font-bold min-w-[15px] h-[15px] px-0.5 rounded-full flex items-center justify-center animate-pulse shadow-xs">
+          <span className="absolute -top-0.5 -right-0.5 bg-[#0f7a61] text-white text-[9px] lg:text-[10px] font-bold min-w-[15px] lg:min-w-[17px] h-[15px] lg:h-[17px] px-0.5 rounded-full flex items-center justify-center animate-pulse shadow-xs">
             {totalCount > 99 ? '99+' : totalCount}
           </span>
         )}

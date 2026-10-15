@@ -30,16 +30,16 @@ const LanguageSelector = () => {
     <div className="relative" ref={dropdownRef}>
       {/* Toggle Button */}
       <div
-        className="flex items-center gap-1 cursor-pointer text-gray-600 hover:text-gray-900 font-medium text-[12px] bg-gray-50 hover:bg-gray-100 px-2 py-1 rounded-full border border-gray-200/80 transition-colors header-selector-btn"
+        className="flex items-center gap-1.5 cursor-pointer text-gray-600 hover:text-gray-900 font-medium text-[12px] lg:text-[13.5px] bg-gray-50 hover:bg-gray-100 px-2 lg:px-2.5 py-1 lg:py-1.5 rounded-full border border-gray-200/80 transition-colors header-selector-btn"
         onClick={() => setIsOpen(!isOpen)}
         title={t('common.language', 'Language')}
       >
-        <Globe className="w-3 h-3 text-[#0f7a61]" />
-        <span className="font-medium text-gray-800 text-[12px] uppercase">{activeLang.code}</span>
+        <Globe className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-[#0f7a61]" />
+        <span className="font-medium text-gray-800 text-[12px] lg:text-[13.5px] uppercase">{activeLang.code}</span>
         {isOpen ? (
-          <ChevronUp className="selector-chevron w-3 h-3 text-gray-500 shrink-0" style={{ width: '12px', height: '12px' }} />
+          <ChevronUp className="selector-chevron w-3 h-3 lg:w-3.5 lg:h-3.5 text-gray-500 shrink-0" />
         ) : (
-          <ChevronDown className="selector-chevron w-3 h-3 text-gray-500 shrink-0" style={{ width: '12px', height: '12px' }} />
+          <ChevronDown className="selector-chevron w-3 h-3 lg:w-3.5 lg:h-3.5 text-gray-500 shrink-0" />
         )}
       </div>
 

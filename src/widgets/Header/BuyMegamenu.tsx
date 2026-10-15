@@ -108,7 +108,7 @@ const BuyMegamenu = () => {
       onMouseLeave={() => setIsOpen(false)}
     >
       {/* Trigger */}
-      <div className={`flex items-center font-medium text-[14px] transition-all py-1 header-nav-link whitespace-nowrap ${
+      <div className={`flex items-center font-medium text-[16px] transition-all py-1 header-nav-link whitespace-nowrap ${
         isBuyActive || isOpen 
           ? 'text-[#0f7a61] font-semibold' 
           : 'text-gray-600 hover:text-gray-900'
