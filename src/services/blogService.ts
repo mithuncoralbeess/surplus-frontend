@@ -1,4 +1,5 @@
 import { BlogPost, MOCK_BLOG_POSTS } from '../data/blogData';
+import { apiClient } from './apiClient';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -202,27 +203,20 @@ export function mapApiBlogToBlogPost(apiPost: ApiBlogPost): BlogPost {
 
 /**
  * Fetch all blogs from API: GET /api/blogs/
+ * Cached with 5-minute TTL and fallback to local posts.
  */
 export async function getBlogs(): Promise<BlogPost[]> {
   try {
-    if (!API_BASE_URL) {
-      return MOCK_BLOG_POSTS;
-    }
-
-    const url = `${API_BASE_URL}/api/blogs/`;
-    const res = await fetch(url, {
-      cache: 'no-store',
-      headers: {
-        'Accept': 'application/json',
-      },
+    const res = await apiClient('/api/blogs/', {
+      cacheTtl: 5 * 60 * 1000,
+      silent: true,
     });
 
-    if (!res.ok) {
-      console.warn(`[Blog API] Failed to fetch blogs (${res.status}), falling back to local posts.`);
+    if (!res.success || !res.data) {
       return MOCK_BLOG_POSTS;
     }
 
-    const json = await res.json();
+    const json = res.data;
     let rawPosts: ApiBlogPost[] = [];
 
     if (Array.isArray(json)) {
@@ -250,26 +244,20 @@ export async function getBlogs(): Promise<BlogPost[]> {
 
 /**
  * Fetch a single blog by slug from API: GET /api/blogs/<slug>/
+ * Cached with 5-minute TTL and fallback to local posts.
  */
 export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
   try {
-    if (!API_BASE_URL) {
-      return MOCK_BLOG_POSTS.find((p) => p.slug === slug) || null;
-    }
-
-    const url = `${API_BASE_URL}/api/blogs/${slug}/`;
-    const res = await fetch(url, {
-      cache: 'no-store',
-      headers: {
-        'Accept': 'application/json',
-      },
+    const res = await apiClient(`/api/blogs/${slug}/`, {
+      cacheTtl: 5 * 60 * 1000,
+      silent: true,
     });
 
-    if (!res.ok) {
+    if (!res.success || !res.data) {
       return MOCK_BLOG_POSTS.find((p) => p.slug === slug) || null;
     }
 
-    const json = await res.json();
+    const json = res.data;
     const rawPost: ApiBlogPost = json.blog || json.data || json;
 
     if (!rawPost || !rawPost.title) {

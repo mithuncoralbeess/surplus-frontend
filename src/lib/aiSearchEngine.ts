@@ -216,9 +216,19 @@ export function parseNaturalLanguageQuery(query: string): ParsedAiIntent {
 export interface SearchOptions {
   mode?: 'ai' | 'sku';
   category?: string;
+  subcategory?: string;
   condition?: string;
+  brand?: string;
+  location?: string;
+  country?: string;
+  city?: string;
   minPrice?: number;
   maxPrice?: number;
+  currency?: string;
+  type?: 'all' | 'product' | 'lot';
+  isBulkLot?: boolean;
+  page?: number;
+  limit?: number;
   isCertifiedOnly?: boolean;
   sortBy?: 'relevance' | 'price_asc' | 'price_desc' | 'discount_desc' | 'newest';
 }
@@ -481,6 +491,72 @@ export function getInstantSuggestions(query: string, limit = 5) {
   };
 }
 
+const suggestionsCache = new Map<string, { data: any; expiresAt: number }>();
+
+/**
+ * Asynchronous Instant Typeahead Autocomplete using Typesense GET /api/search/suggestions/
+ * Cached with in-memory TTL to avoid duplicate keystroke fetches.
+ */
+export async function fetchInstantSuggestions(query: string, limit = 5): Promise<{
+  products: any[];
+  categories: string[];
+  suggestions: string[];
+}> {
+  const trimmed = query.trim().toLowerCase();
+  if (trimmed.length < 2) {
+    return { products: [], categories: [], suggestions: [] };
+  }
+
+  const cacheKey = `${trimmed}_${limit}`;
+  const cached = suggestionsCache.get(cacheKey);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.data;
+  }
+
+  try {
+    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://surplus-backend-uhg0.onrender.com').replace(/\/$/, '');
+    const res = await fetch(`${apiBase}/api/search/suggestions/?q=${encodeURIComponent(trimmed)}&limit=${limit}`, {
+      headers: { 'Accept': 'application/json' },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.suggestions) && data.suggestions.length > 0) {
+        const matchedProducts = data.suggestions.map((s: any) => ({
+          id: String(s.id),
+          title: s.title,
+          category: s.category || 'Surplus',
+          brand: s.brand || '',
+          price: s.price,
+          currency: s.currency,
+          image: s.image,
+          url: s.url,
+          sku: s.title
+        }));
+
+        const matchedCategories = Array.from(
+          new Set(matchedProducts.map((p: any) => p.category).filter(Boolean))
+        ) as string[];
+
+        const suggestions = matchedProducts.map((p: any) => p.title).slice(0, 3);
+
+        const result = {
+          products: matchedProducts,
+          categories: matchedCategories,
+          suggestions
+        };
+        suggestionsCache.set(cacheKey, { data: result, expiresAt: Date.now() + 60000 });
+        return result;
+      }
+    }
+  } catch (err) {
+    console.debug('Live suggestions fetch note:', err);
+  }
+
+  // Fallback to local synchronous match
+  return getInstantSuggestions(query, limit);
+}
+
+
 
 /**
  * Maps raw backend Neon DB product results into frontend AiSearchResultItem format
@@ -500,7 +576,7 @@ export function mapBackendProductToAiItem(p: any): AiSearchResultItem {
 
   let img = p.image || '';
   if (img && !img.startsWith('http')) {
-    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
+    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://surplus-backend-uhg0.onrender.com').replace(/\/$/, '');
     const prefix = img.startsWith('/') ? '' : '/';
     img = apiBase + prefix + img;
   }
@@ -705,13 +781,35 @@ export async function fetchSemanticSearchResults(
   }
 
   try {
-    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
+    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://surplus-backend-uhg0.onrender.com').replace(/\/$/, '');
     let liveResults: AiSearchResultItem[] = [];
     let parsedIntentFromApi: any = null;
 
-    // 1. Primary Unified Endpoint: GET /api/search/?q=...
+    // 1. Primary Unified Typesense Endpoint: GET /api/search/?q=...
     try {
-      const searchRes = await fetch(`${apiBase}/api/search/?q=${encodeURIComponent(trimmed)}&limit=36`, {
+      const searchParams = new URLSearchParams();
+      searchParams.set('q', trimmed);
+      searchParams.set('limit', String(options.limit || 36));
+      if (options.page) searchParams.set('page', String(options.page));
+      if (options.type) searchParams.set('type', options.type);
+      else if (options.isBulkLot) searchParams.set('type', 'lot');
+      if (options.category && options.category !== 'All') searchParams.set('category', options.category);
+      if (options.subcategory) searchParams.set('subcategory', options.subcategory);
+      if (options.brand) searchParams.set('brand', options.brand);
+      if (options.condition && options.condition !== 'All') searchParams.set('condition', options.condition);
+      if (options.country) searchParams.set('country', options.country);
+      if (options.city) searchParams.set('city', options.city);
+      if (options.minPrice !== undefined) searchParams.set('min_price', String(options.minPrice));
+      if (options.maxPrice !== undefined) searchParams.set('max_price', String(options.maxPrice));
+      if (options.currency) searchParams.set('currency', options.currency);
+      if (options.sortBy) {
+        if (options.sortBy === 'price_asc') searchParams.set('sort_by', 'price:asc');
+        else if (options.sortBy === 'price_desc') searchParams.set('sort_by', 'price:desc');
+        else if (options.sortBy === 'discount_desc') searchParams.set('sort_by', 'discount:desc');
+        else if (options.sortBy === 'newest') searchParams.set('sort_by', 'created_at:desc');
+      }
+
+      const searchRes = await fetch(`${apiBase}/api/search/?${searchParams.toString()}`, {
         headers: { 'Accept': 'application/json' }
       });
       if (searchRes.ok) {

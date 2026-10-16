@@ -10,6 +10,7 @@ import {
 import {
   parseNaturalLanguageQuery,
   getInstantSuggestions,
+  fetchInstantSuggestions,
   ParsedAiIntent
 } from '../../lib/aiSearchEngine';
 import { useVoiceSearch } from '../../hooks/useVoiceSearch';
@@ -210,19 +211,30 @@ const BrowseSearchBanner = () => {
 
   // Real-time AI Intent Parsing & Instant Typeahead suggestions with debouncing
   useEffect(() => {
+    let isCancelled = false;
     const timer = setTimeout(() => {
       if (searchQuery.trim()) {
         const intent = parseNaturalLanguageQuery(searchQuery);
         setParsedIntent(intent);
-        const instant = getInstantSuggestions(searchQuery, 4);
-        setInstantMatches(instant);
+        fetchInstantSuggestions(searchQuery, 4).then(instant => {
+          if (!isCancelled) {
+            setInstantMatches(instant);
+          }
+        }).catch(() => {
+          if (!isCancelled) {
+            setInstantMatches(getInstantSuggestions(searchQuery, 4));
+          }
+        });
       } else {
         setParsedIntent(null);
         setInstantMatches({ products: [], categories: [], suggestions: [] });
       }
-    }, 120);
+    }, 140);
 
-    return () => clearTimeout(timer);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
   }, [searchQuery]);
 
   // Voice Search Handler

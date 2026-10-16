@@ -43,28 +43,40 @@ export interface PageApiResponse {
   message?: string;
 }
 
+const seoCache = new Map<string, { data: PageResponseData | null; expiresAt: number }>();
+const SEO_CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
 /**
  * Fetches page details & SEO metadata from backend API for a given slug.
  * Endpoint: GET /api/pages/{slug}/
  */
 export async function fetchPageData(slug: string): Promise<PageResponseData | null> {
+  const cached = seoCache.get(slug);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.data;
+  }
+
   try {
     const url = `${API_BASE_URL}/api/pages/${slug}/`;
     const res = await fetch(url, {
-      cache: 'no-store', // Always fetch fresh SEO data instantly from backend
+      next: { revalidate: 300 }, // Cache with 5-minute background revalidation
       headers: {
         'Accept': 'application/json',
       },
     });
 
     if (!res.ok) {
+      seoCache.set(slug, { data: null, expiresAt: Date.now() + 60000 });
       return null;
     }
 
     const data: PageApiResponse = await res.json();
     if (data.success && data.page) {
+      seoCache.set(slug, { data: data.page, expiresAt: Date.now() + SEO_CACHE_TTL });
       return data.page;
     }
+
+    seoCache.set(slug, { data: null, expiresAt: Date.now() + 60000 });
     return null;
   } catch (error) {
     console.warn(`[SEO API] Could not fetch dynamic SEO for '${slug}':`, error);

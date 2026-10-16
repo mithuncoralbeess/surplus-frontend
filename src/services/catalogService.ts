@@ -465,6 +465,11 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
 const productCache = new Map<string, ProductItem>();
 let allProductsCache: ProductItem[] | null = null;
 let lastProductsFetchTime = 0;
+
+const lotCache = new Map<string, LotItem>();
+let allLotsCache: LotItem[] | null = null;
+let lastLotsFetchTime = 0;
+
 const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes cache TTL
 
 export const catalogService = {
@@ -547,6 +552,12 @@ export const catalogService = {
    * If no lot data is returned from the API, returns an empty array.
    */
   async getLots(params?: { category?: string; search?: string; vendor_id?: string }): Promise<LotItem[]> {
+    const isDefaultQuery = (!params?.category || params.category === 'All' || params.category === 'View All') && !params?.search && !params?.vendor_id;
+
+    if (isDefaultQuery && allLotsCache && (Date.now() - lastLotsFetchTime < CACHE_TTL_MS)) {
+      return allLotsCache;
+    }
+
     try {
       let endpoint = '/api/lots/';
       const queryParts: string[] = [];
@@ -565,7 +576,7 @@ export const catalogService = {
 
       const response = await apiClient(endpoint, { silent: true });
       if (!response.success || !response.data) {
-        return [];
+        return allLotsCache || [];
       }
 
       let rawList: any[] = [];
@@ -580,18 +591,35 @@ export const catalogService = {
         rawList = data.data;
       }
 
-      return rawList.map(mapApiLotToLotItem);
+      const mappedLots = rawList.map(mapApiLotToLotItem);
+
+      if (isDefaultQuery) {
+        allLotsCache = mappedLots;
+        lastLotsFetchTime = Date.now();
+        mappedLots.forEach((l) => {
+          lotCache.set(String(l.id), l);
+          if (l.lot_number) lotCache.set(String(l.lot_number), l);
+          const slug = slugify(l.title);
+          if (slug) lotCache.set(slug, l);
+        });
+      }
+
+      return mappedLots;
     } catch (error) {
       console.warn('[catalogService] Error fetching /api/lots/:', error);
-      return [];
+      return allLotsCache || [];
     }
   },
 
   async submitProductRequest(payload: ProductRequestPayload): Promise<ApiResponse> {
-    return apiClient('/api/submit-product-request/', {
+    const res = await apiClient('/api/submit-product-request/', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    if (res.success) {
+      this.clearProductCache();
+    }
+    return res;
   },
 
   /**
@@ -668,6 +696,7 @@ export const catalogService = {
 
   /**
    * Fetch single lot by ID, lot_id, or slugified title
+   * Optimized with instant in-memory cache and parallel execution.
    */
   async getLotById(id: string | number): Promise<LotItem | null> {
     if (!id) return null;
@@ -675,22 +704,49 @@ export const catalogService = {
     const keyLower = key.toLowerCase().trim();
     const targetSlug = slugify(key);
 
+    // 1. Instant Cache Lookup (0ms latency if already loaded)
+    if (lotCache.has(key)) {
+      return lotCache.get(key)!;
+    }
+    if (targetSlug && lotCache.has(targetSlug)) {
+      return lotCache.get(targetSlug)!;
+    }
+    if (allLotsCache) {
+      const match = allLotsCache.find(
+        (l) =>
+          String(l.id) === key ||
+          String(l.lot_number || '').toLowerCase() === keyLower ||
+          (targetSlug && slugify(l.title) === targetSlug) ||
+          l.title.toLowerCase().trim() === keyLower ||
+          encodeURIComponent(l.title) === key
+      );
+      if (match) {
+        lotCache.set(key, match);
+        if (targetSlug) lotCache.set(targetSlug, match);
+        return match;
+      }
+    }
+
     try {
       const isNumericId = /^\d+$/.test(key);
       const isLotNum = /^lot-?\d+/i.test(key);
       const [singleRes, listRes] = await Promise.allSettled([
         (isNumericId || isLotNum) ? apiClient(`/api/lots/${id}/`, { silent: true }) : Promise.resolve(null),
-        this.getLots()
+        allLotsCache ? Promise.resolve(null) : this.getLots()
       ]);
 
       if (singleRes.status === 'fulfilled' && singleRes.value && singleRes.value.success) {
         const payload = singleRes.value.data?.lot || singleRes.value.data?.data || singleRes.value.data;
         if (payload) {
-          return mapApiLotToLotItem(payload, 0);
+          const mapped = mapApiLotToLotItem(payload, 0);
+          lotCache.set(key, mapped);
+          if (mapped.lot_number) lotCache.set(String(mapped.lot_number), mapped);
+          if (targetSlug) lotCache.set(targetSlug, mapped);
+          return mapped;
         }
       }
 
-      const list = listRes.status === 'fulfilled' && Array.isArray(listRes.value) ? listRes.value : [];
+      const list = listRes.status === 'fulfilled' && Array.isArray(listRes.value) ? listRes.value : (allLotsCache || []);
       const match = list.find(
         (l) =>
           String(l.id).toLowerCase() === keyLower ||
@@ -699,7 +755,11 @@ export const catalogService = {
           l.title.toLowerCase().trim() === keyLower ||
           encodeURIComponent(l.title) === key
       );
-      if (match) return match;
+      if (match) {
+        lotCache.set(key, match);
+        if (targetSlug) lotCache.set(targetSlug, match);
+        return match;
+      }
       
     } catch (err) {
       console.warn(`[catalogService] Error fetching lot ${id}:`, err);
@@ -743,10 +803,14 @@ export const catalogService = {
       currency: payload.currency || 'USD',
     };
 
-    return apiClient('/api/submit-lot-request/', {
+    const res = await apiClient('/api/submit-lot-request/', {
       method: 'POST',
       body: JSON.stringify(enrichedPayload),
     });
+    if (res.success) {
+      this.clearLotCache();
+    }
+    return res;
   },
 
   async getUserProductSubmissions(email?: string, vendorId?: string): Promise<ApiResponse> {
@@ -771,6 +835,26 @@ export const catalogService = {
     } catch (err: any) {
       return { success: false, data: [] };
     }
+  },
+
+  clearProductCache(): void {
+    allProductsCache = null;
+    lastProductsFetchTime = 0;
+    productCache.clear();
+    apiClient.invalidate(/products/i);
+  },
+
+  clearLotCache(): void {
+    allLotsCache = null;
+    lastLotsFetchTime = 0;
+    lotCache.clear();
+    apiClient.invalidate(/lots/i);
+  },
+
+  clearAllCache(): void {
+    this.clearProductCache();
+    this.clearLotCache();
+    apiClient.clearCache();
   },
 };
 
