@@ -98,7 +98,7 @@ export default function BuyHeroBanner({
               type="submit"
               className="bg-[#0a5c48] hover:bg-[#074737] text-white px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm tracking-wide transition-all shadow-sm flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-[0.98]"
             >
-              <span>Search Lots</span>
+              <span>Search</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </form>

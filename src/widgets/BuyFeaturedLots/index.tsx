@@ -23,7 +23,11 @@ import {
   ExternalLink, 
   ShoppingBag, 
   RotateCw,
-  Server
+  Server,
+  SlidersHorizontal,
+  Filter,
+  Flame,
+  Star
 } from 'lucide-react';
 import { catalogService, LotItem, ProductItem } from '../../services/catalogService';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -57,6 +61,43 @@ export default function BuyFeaturedLots() {
   const [selectedLotForManifest, setSelectedLotForManifest] = useState<LotItem | null>(null);
   const [downloadSuccess, setDownloadSuccess] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<"discount" | "price-asc" | "price-desc" | "units">("discount");
+
+  // Advanced Filter Panel State
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
+  const [minPrice, setMinPrice] = useState<string>('');
+  const [maxPrice, setMaxPrice] = useState<string>('');
+  const [selectedCondition, setSelectedCondition] = useState<string>('all');
+  const [selectedCountry, setSelectedCountry] = useState<string>('all');
+  const [minDiscount, setMinDiscount] = useState<number>(0);
+  const [shippingSizeFilter, setShippingSizeFilter] = useState<string>('all');
+  const [moqFilter, setMoqFilter] = useState<string>('all');
+  const [selectedCuration, setSelectedCuration] = useState<'all' | 'best_sellers' | 'featured' | 'new_arrivals'>('all');
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (minPrice.trim() !== '') count++;
+    if (maxPrice.trim() !== '') count++;
+    if (selectedCondition !== 'all') count++;
+    if (selectedCountry !== 'all') count++;
+    if (minDiscount > 0) count++;
+    if (shippingSizeFilter !== 'all') count++;
+    if (moqFilter !== 'all') count++;
+    if (selectedCuration !== 'all') count++;
+    return count;
+  }, [minPrice, maxPrice, selectedCondition, selectedCountry, minDiscount, shippingSizeFilter, moqFilter, selectedCuration]);
+
+  const availableCountries = useMemo(() => {
+    const set = new Set<string>();
+    lots.forEach(lot => {
+      const c = lot.inventory_country || lot.country || (lot.location ? lot.location.split(',').pop()?.trim() : null);
+      if (c && c.length > 2) set.add(c);
+    });
+    products.forEach(p => {
+      const c = p.manufacturing_country || (p.location ? p.location.split(',').pop()?.trim() : null);
+      if (c && c.length > 2) set.add(c);
+    });
+    return Array.from(set).sort();
+  }, [lots, products]);
 
   // Sync with URL params
   useEffect(() => {
@@ -149,9 +190,62 @@ export default function BuyFeaturedLots() {
     fetchData();
   }, [fetchData, refreshTrigger]);
 
-  // Sort Dynamic Products
+  // Filter & Sort Dynamic Products
   const sortedProducts = useMemo(() => {
-    return [...products].sort((a, b) => {
+    let filtered = products.filter(product => {
+      // Price Filter
+      const price = Number(product.price) || 0;
+      if (minPrice !== '' && price < Number(minPrice)) return false;
+      if (maxPrice !== '' && price > Number(maxPrice)) return false;
+
+      // Condition Filter
+      if (selectedCondition !== 'all') {
+        const cond = (product.condition || '').toLowerCase();
+        if (selectedCondition === 'new' && !cond.includes('new') && !cond.includes('surplus')) return false;
+        if (selectedCondition === 'refurbished' && !cond.includes('refurb') && !cond.includes('like new') && !cond.includes('open')) return false;
+        if (selectedCondition === 'returns' && !cond.includes('return') && !cond.includes('used') && !cond.includes('mixed')) return false;
+        if (selectedCondition === 'salvage' && !cond.includes('salvage')) return false;
+      }
+
+      // Country / Location Filter
+      if (selectedCountry !== 'all') {
+        const pCountry = (product.manufacturing_country || product.location || '').toLowerCase();
+        if (!pCountry.includes(selectedCountry.toLowerCase())) return false;
+      }
+
+      // Minimum Discount Filter
+      if (minDiscount > 0) {
+        const orig = Number(product.originalPrice || product.previousPrice || product.msrp || product.price);
+        const disc = orig > price ? ((orig - price) / orig) * 100 : 0;
+        if (disc < minDiscount) return false;
+      }
+
+      // MOQ Filter
+      if (moqFilter !== 'all') {
+        const moq = Number(product.moq) || 0;
+        if (moqFilter === 'under_50' && moq >= 50) return false;
+        if (moqFilter === '50_200' && (moq < 50 || moq > 200)) return false;
+        if (moqFilter === '200_plus' && moq < 200) return false;
+      }
+
+      // Curation Filter (Best Sellers, Featured Deals, New Arrivals)
+      if (selectedCuration !== 'all') {
+        if (selectedCuration === 'best_sellers') {
+          const isBest = product.isBestSelling || Boolean(product.offer?.toLowerCase().includes('best')) || (product.views_count && product.views_count > 30);
+          if (!isBest) return false;
+        } else if (selectedCuration === 'featured') {
+          const isFeat = product.isFeatured || product.isCertified;
+          if (!isFeat) return false;
+        } else if (selectedCuration === 'new_arrivals') {
+          const isNew = product.isNewArrival || product.isNew;
+          if (!isNew) return false;
+        }
+      }
+
+      return true;
+    });
+
+    return filtered.sort((a, b) => {
       const origA = Number(a.originalPrice || a.previousPrice || a.msrp || a.price);
       const origB = Number(b.originalPrice || b.previousPrice || b.msrp || b.price);
       if (sortBy === 'discount') {
@@ -164,11 +258,67 @@ export default function BuyFeaturedLots() {
       if (sortBy === 'units') return (b.estQty || 0) - (a.estQty || 0);
       return 0;
     });
-  }, [products, sortBy]);
+  }, [products, sortBy, minPrice, maxPrice, selectedCondition, selectedCountry, minDiscount, moqFilter, selectedCuration]);
 
-  // Sort Dynamic Lots
+  // Filter & Sort Dynamic Lots
   const sortedLots = useMemo(() => {
-    return [...lots].sort((a, b) => {
+    let filtered = lots.filter(lot => {
+      // Price Filter
+      const price = Number(lot.price) || 0;
+      if (minPrice !== '' && price < Number(minPrice)) return false;
+      if (maxPrice !== '' && price > Number(maxPrice)) return false;
+
+      // Condition Filter
+      if (selectedCondition !== 'all') {
+        const cond = (lot.condition || '').toLowerCase();
+        if (selectedCondition === 'new' && !cond.includes('new') && !cond.includes('surplus') && !cond.includes('overstock')) return false;
+        if (selectedCondition === 'refurbished' && !cond.includes('refurb') && !cond.includes('like new') && !cond.includes('graded')) return false;
+        if (selectedCondition === 'returns' && !cond.includes('return') && !cond.includes('mixed') && !cond.includes('raw')) return false;
+        if (selectedCondition === 'salvage' && !cond.includes('salvage')) return false;
+      }
+
+      // Country / Location Filter
+      if (selectedCountry !== 'all') {
+        const lCountry = (lot.inventory_country || lot.country || lot.location || '').toLowerCase();
+        if (!lCountry.includes(selectedCountry.toLowerCase())) return false;
+      }
+
+      // Minimum Discount Filter
+      if (minDiscount > 0) {
+        const msrp = Number(lot.msrp) || 0;
+        const disc = msrp > price ? ((msrp - price) / msrp) * 100 : 0;
+        if (disc < minDiscount) return false;
+      }
+
+      // Shipping Size Filter
+      if (shippingSizeFilter !== 'all') {
+        const size = (lot.shipping_size || lot.load_type || '').toLowerCase();
+        if (shippingSizeFilter === 'pallet' && !size.includes('pallet')) return false;
+        if (shippingSizeFilter === 'truckload' && !size.includes('truckload') && !size.includes('ftl')) return false;
+        if (shippingSizeFilter === 'ltl' && !size.includes('ltl') && !size.includes('multi')) return false;
+      }
+
+      // Curation Filter (Best Sellers, Featured Deals, New Arrivals)
+      if (selectedCuration !== 'all') {
+        if (selectedCuration === 'best_sellers') {
+          const isBest = lot.is_best_selling || lot.isBestSelling || lot.sale_method === 'buy_now' || (lot.offer && lot.offer.toLowerCase().includes('best'));
+          if (!isBest) return false;
+        } else if (selectedCuration === 'featured') {
+          const msrpVal = Number(lot.msrp) || 0;
+          const disc = msrpVal > price && msrpVal > 0 ? (msrpVal - price) / msrpVal : 0;
+          const isFeat = lot.is_featured || lot.isFeatured || disc >= 0.5;
+          if (!isFeat) return false;
+        } else if (selectedCuration === 'new_arrivals') {
+          const age = (lot.inventory_stock_age || '').toLowerCase();
+          const isNew = lot.is_new_arrival || lot.isNewArrival || age.includes('< 6') || age.includes('current');
+          if (!isNew) return false;
+        }
+      }
+
+      return true;
+    });
+
+    return filtered.sort((a, b) => {
       if (sortBy === 'discount') {
         const discA = a.msrp > a.price ? (a.msrp - a.price) / a.msrp : 0;
         const discB = b.msrp > b.price ? (b.msrp - b.price) / b.msrp : 0;
@@ -179,7 +329,7 @@ export default function BuyFeaturedLots() {
       if (sortBy === 'units') return (b.units || 0) - (a.units || 0);
       return 0;
     });
-  }, [lots, sortBy]);
+  }, [lots, sortBy, minPrice, maxPrice, selectedCondition, selectedCountry, minDiscount, shippingSizeFilter, selectedCuration]);
 
   const handleDownloadManifest = (lotTitle: string) => {
     setDownloadSuccess(true);
@@ -192,6 +342,14 @@ export default function BuyFeaturedLots() {
     setSelectedCategory("All Categories");
     setSearchFilter("");
     setDebouncedSearch("");
+    setMinPrice("");
+    setMaxPrice("");
+    setSelectedCondition("all");
+    setSelectedCountry("all");
+    setMinDiscount(0);
+    setShippingSizeFilter("all");
+    setMoqFilter("all");
+    setSelectedCuration("all");
   };
 
   return (
@@ -327,6 +485,26 @@ export default function BuyFeaturedLots() {
                 <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#0a5c48]' : ''}`} />
               </button>
 
+              {/* Filter Button */}
+              <button
+                type="button"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer ${
+                  isFilterOpen || activeFiltersCount > 0
+                    ? 'bg-[#0a5c48] text-white border-[#0a5c48] shadow-xs'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                }`}
+                title="Filter by Price, Condition, Location & More"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>Filter</span>
+                {activeFiltersCount > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-white text-[#0a5c48] text-[10px] font-black flex items-center justify-center shrink-0">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
+
               <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5 text-xs">
                 <span className="text-slate-500 font-medium">Sort:</span>
                 <select
@@ -342,6 +520,334 @@ export default function BuyFeaturedLots() {
               </div>
             </div>
           </div>
+
+          {/* Expandable Advanced Filter Panel */}
+          {isFilterOpen && (
+            <div className="mt-4 pt-4 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4 text-[#0a5c48]" />
+                  <span className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider">
+                    Catalog Filters
+                  </span>
+                  {activeFiltersCount > 0 && (
+                    <span className="bg-emerald-100 text-[#0a5c48] text-[11px] font-bold px-2 py-0.5 rounded-full">
+                      {activeFiltersCount} active
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {activeFiltersCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleResetFilters}
+                      className="text-xs text-red-500 hover:text-red-700 font-semibold cursor-pointer underline"
+                    >
+                      Clear all filters
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsFilterOpen(false)}
+                    className="p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Curated Highlights Strip */}
+              <div className="mb-5 pb-4 border-b border-slate-100">
+                <label className="font-bold text-slate-800 text-xs block mb-2">Curated Highlights</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'all', label: 'All Items', icon: Boxes },
+                    { id: 'best_sellers', label: 'Best Sellers', icon: Flame, color: 'text-amber-500' },
+                    { id: 'featured', label: 'Featured Deals', icon: Star, color: 'text-emerald-600' },
+                    { id: 'new_arrivals', label: 'New Arrivals', icon: Sparkles, color: 'text-blue-500' },
+                  ].map((cur) => {
+                    const Icon = cur.icon;
+                    const isSelected = selectedCuration === cur.id;
+                    return (
+                      <button
+                        key={cur.id}
+                        type="button"
+                        onClick={() => setSelectedCuration(cur.id as any)}
+                        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#0a5c48] text-white border-[#0a5c48] font-bold shadow-xs'
+                            : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : cur.color || 'text-slate-500'}`} />
+                        <span>{cur.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Filter Grids */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 text-xs">
+                {/* 1. Price Range */}
+                <div className="space-y-2">
+                  <label className="font-bold text-slate-800 block">Price Range</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      placeholder="Min $"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-[#0a5c48]"
+                    />
+                    <span className="text-slate-400">-</span>
+                    <input
+                      type="number"
+                      placeholder="Max $"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-[#0a5c48]"
+                    />
+                  </div>
+                  {/* Quick price chips */}
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {[
+                      { label: '<$1K', min: '', max: '1000' },
+                      { label: '$1K-$5K', min: '1000', max: '5000' },
+                      { label: '$5K-$20K', min: '5000', max: '20000' },
+                      { label: '$20K+', min: '20000', max: '' },
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => { setMinPrice(preset.min); setMaxPrice(preset.max); }}
+                        className={`text-[10px] px-2 py-0.5 rounded border transition-colors cursor-pointer ${
+                          minPrice === preset.min && maxPrice === preset.max
+                            ? 'bg-[#0a5c48] text-white border-[#0a5c48]'
+                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. Condition */}
+                <div className="space-y-2">
+                  <label className="font-bold text-slate-800 block">Inventory Condition</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { value: 'all', label: 'All' },
+                      { value: 'new', label: 'Brand New / Surplus' },
+                      { value: 'refurbished', label: 'Refurbished' },
+                      { value: 'returns', label: 'Customer Returns' },
+                      { value: 'salvage', label: 'Salvage / Mixed' },
+                    ].map((c) => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => setSelectedCondition(c.value)}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
+                          selectedCondition === c.value
+                            ? 'bg-[#0a5c48] text-white border-[#0a5c48] font-bold'
+                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Location / Country */}
+                <div className="space-y-2">
+                  <label className="font-bold text-slate-800 block">Warehouse Location</label>
+                  <select
+                    value={selectedCountry}
+                    onChange={(e) => setSelectedCountry(e.target.value)}
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-[#0a5c48] cursor-pointer"
+                  >
+                    <option value="all">All Locations / Global</option>
+                    {availableCountries.map((country) => (
+                      <option key={country} value={country}>
+                        {country}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-slate-400">Filter inventory by origin depot</p>
+                </div>
+
+                {/* 4. Mode-specific & Discounts */}
+                <div className="space-y-2">
+                  <label className="font-bold text-slate-800 block">
+                    {purchaseMode === 'lot' ? 'Load & Shipping Size' : 'Minimum Order Qty (MOQ)'}
+                  </label>
+                  {purchaseMode === 'lot' ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { value: 'all', label: 'All Sizes' },
+                        { value: 'pallet', label: 'Pallet Lots' },
+                        { value: 'ltl', label: 'Multi-Pallet / LTL' },
+                        { value: 'truckload', label: 'Full Truckload' },
+                      ].map((s) => (
+                        <button
+                          key={s.value}
+                          type="button"
+                          onClick={() => setShippingSizeFilter(s.value)}
+                          className={`text-xs px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
+                            shippingSizeFilter === s.value
+                              ? 'bg-[#0a5c48] text-white border-[#0a5c48] font-bold'
+                              : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { value: 'all', label: 'All MOQs' },
+                        { value: 'under_50', label: '< 50 pcs' },
+                        { value: '50_200', label: '50 - 200 pcs' },
+                        { value: '200_plus', label: '200+ pcs' },
+                      ].map((m) => (
+                        <button
+                          key={m.value}
+                          type="button"
+                          onClick={() => setMoqFilter(m.value)}
+                          className={`text-xs px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
+                            moqFilter === m.value
+                              ? 'bg-[#0a5c48] text-white border-[#0a5c48] font-bold'
+                              : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Minimum Savings */}
+                  <div className="pt-1">
+                    <span className="text-[11px] font-bold text-slate-700 block mb-1">Minimum Savings %</span>
+                    <div className="flex flex-wrap gap-1">
+                      {[
+                        { value: 0, label: 'Any' },
+                        { value: 30, label: '30%+' },
+                        { value: 50, label: '50%+' },
+                        { value: 70, label: '70%+' },
+                      ].map((d) => (
+                        <button
+                          key={d.value}
+                          type="button"
+                          onClick={() => setMinDiscount(d.value)}
+                          className={`text-[10px] px-2 py-0.5 rounded border transition-colors cursor-pointer ${
+                            minDiscount === d.value
+                              ? 'bg-[#0a5c48] text-white border-[#0a5c48] font-bold'
+                              : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          {d.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filter Panel Footer */}
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs text-slate-500 font-medium">
+                  Showing <strong className="text-slate-900">{purchaseMode === 'lot' ? sortedLots.length : sortedProducts.length}</strong> matching {purchaseMode === 'lot' ? 'lots' : 'products'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsFilterOpen(false)}
+                  className="px-5 py-1.5 bg-[#0a5c48] hover:bg-[#074737] text-white rounded-full text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                >
+                  Done / Apply
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Active Filter Pills Bar */}
+          {activeFiltersCount > 0 && (
+            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2 flex-wrap text-xs">
+              <span className="text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Active Filters:</span>
+              
+              {selectedCuration !== 'all' && (
+                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/80 px-2.5 py-0.5 rounded-full text-xs font-bold">
+                  {selectedCuration === 'best_sellers' && '🔥 Best Sellers'}
+                  {selectedCuration === 'featured' && '⭐ Featured Deals'}
+                  {selectedCuration === 'new_arrivals' && '✨ New Arrivals'}
+                  <button onClick={() => setSelectedCuration('all')} className="hover:text-amber-950 cursor-pointer ml-0.5">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+
+              {minPrice && (
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  Min: ${minPrice}
+                  <button onClick={() => setMinPrice('')} className="hover:text-emerald-950 cursor-pointer"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+
+              {maxPrice && (
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  Max: ${maxPrice}
+                  <button onClick={() => setMaxPrice('')} className="hover:text-emerald-950 cursor-pointer"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+
+              {selectedCondition !== 'all' && (
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-medium capitalize">
+                  Condition: {selectedCondition}
+                  <button onClick={() => setSelectedCondition('all')} className="hover:text-emerald-950 cursor-pointer"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+
+              {selectedCountry !== 'all' && (
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  Location: {selectedCountry}
+                  <button onClick={() => setSelectedCountry('all')} className="hover:text-emerald-950 cursor-pointer"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+
+              {minDiscount > 0 && (
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  Savings: {minDiscount}%+
+                  <button onClick={() => setMinDiscount(0)} className="hover:text-emerald-950 cursor-pointer"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+
+              {shippingSizeFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-medium capitalize">
+                  Size: {shippingSizeFilter}
+                  <button onClick={() => setShippingSizeFilter('all')} className="hover:text-emerald-950 cursor-pointer"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+
+              {moqFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  MOQ: {moqFilter.replace('_', ' ')}
+                  <button onClick={() => setMoqFilter('all')} className="hover:text-emerald-950 cursor-pointer"><X className="w-3 h-3" /></button>
+                </span>
+              )}
+
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="text-[11px] text-red-500 hover:text-red-700 font-bold ml-1 cursor-pointer hover:underline"
+              >
+                Reset All
+              </button>
+            </div>
+          )}
         </div>
 
         {/* CONDITION 1: WHOLESALE PRODUCTS (USING ProductCard) */}

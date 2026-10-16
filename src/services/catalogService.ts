@@ -98,6 +98,12 @@ export interface LotItem {
   enquiry_status?: string;
   active_status?: string;
   is_active?: boolean;
+  is_featured?: boolean;
+  is_best_selling?: boolean;
+  is_new_arrival?: boolean;
+  isFeatured?: boolean;
+  isBestSelling?: boolean;
+  isNewArrival?: boolean;
   type?: 'lot';
 }
 
@@ -445,6 +451,12 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     enquiry_status: item.enquiry_status || 'approved',
     active_status: item.active_status || 'active',
     is_active: Boolean(item.is_active ?? true),
+    is_featured: Boolean(item.is_featured || item.featured),
+    is_best_selling: Boolean(item.is_best_selling || item.best_selling),
+    is_new_arrival: Boolean(item.is_new_arrival || item.new_arrival),
+    isFeatured: Boolean(item.is_featured || item.featured),
+    isBestSelling: Boolean(item.is_best_selling || item.best_selling),
+    isNewArrival: Boolean(item.is_new_arrival || item.new_arrival),
     type: 'lot',
   };
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, PackageSearch } from 'lucide-react';
+import Link from 'next/link';
+import { Sparkles, PackageSearch, ArrowRight } from 'lucide-react';
 import { motion } from '../../lib/motion';
 import ProductCard from '../../components/ProductCard';
 import { catalogService, ProductItem } from '../../services/catalogService';
@@ -49,8 +50,10 @@ const CuratedProducts = () => {
             if (feat.length > 0) singleProducts = feat;
           }
 
-          cacheRef.current[activeTab] = singleProducts;
-          setProducts(singleProducts);
+          // Limit to maximum 8 items per tab
+          const curatedList = singleProducts.slice(0, 8);
+          cacheRef.current[activeTab] = curatedList;
+          setProducts(curatedList);
           setLoading(false);
         }
       })
@@ -129,7 +132,7 @@ const CuratedProducts = () => {
               />
             ))
           ) : products.length > 0 ? (
-            products.map((product) => (
+            products.slice(0, 8).map((product) => (
               <ProductCard
                 key={product.id}
                 {...product}
@@ -143,6 +146,23 @@ const CuratedProducts = () => {
               <p className="text-gray-500 text-sm max-w-sm">No products currently match this curation filter. Please check back later or explore our full marketplace catalog.</p>
             </div>
           )}
+        </motion.div>
+
+        {/* View All Action */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mt-12 flex justify-center"
+        >
+          <Link
+            href="/buy"
+            className="inline-flex items-center gap-2 px-8 py-3.5 bg-primary hover:bg-primary-dark text-white rounded-full font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
+          >
+            <span>View All</span>
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </Link>
         </motion.div>
 
       </div>

@@ -304,7 +304,7 @@ const HomeBanner = () => {
                   type="submit"
                   className="bg-primary hover:bg-primary-dark text-white font-semibold text-xs sm:text-sm px-4 sm:px-5 py-2.5 rounded-full flex items-center gap-1.5 shadow-sm hover:shadow-md transition-all cursor-pointer shrink-0"
                 >
-                  <span>Search Lots</span>
+                  <span>Search</span>
                   <ArrowRight className="w-3.5 h-3.5 hidden sm:inline-block" />
                 </button>
               </form>

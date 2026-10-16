@@ -16,6 +16,7 @@ import { validateImageUpload, validateFileUpload } from '../../lib/security/file
 import { sanitizeInput } from '../../lib/security/sanitizer';
 import { authService } from '../../services/authService';
 import { useNotifications } from '../../context/NotificationContext';
+import { getGlobalCountries, searchRealLocation, RealLocationSuggestion, LocationOption } from '../../services/locationService';
 import AuthModal from '../AuthModal';
 
 // Security regex patterns for threat detection (XSS, SQLi, CRLF, Path Traversal, Command Injection)
@@ -57,9 +58,13 @@ const listingFormSchema = z.object({
   email: z.string().max(100, "Email cannot exceed 100 characters").refine(val => !val || /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val.trim()), {
     message: "Please enter a valid email address"
   }).optional(),
-  location: z.string().max(150, "Location cannot exceed 150 characters").refine(val => !detectCyberAttackPayload(val), {
-    message: "Invalid characters detected in Location"
-  }).optional(),
+  location: z.string()
+    .min(1, "Inventory Location is required")
+    .max(250, "Inventory Location cannot exceed 250 characters")
+    .refine(val => !detectCyberAttackPayload(val), {
+      message: "Security alert: HTML tags, scripts, or injection payloads are strictly prohibited in Inventory Location"
+    }),
+  inventoryCity: z.string().optional(),
 
   productName: z.string()
     .min(2, "Product Name must be at least 2 characters")
@@ -91,9 +96,9 @@ const listingFormSchema = z.object({
     .optional(),
 
   country: z.string()
-    .min(1, "Manufacturing Country is required")
+    .min(1, "Inventory Country is required")
     .max(100, "Country cannot exceed 100 characters")
-    .refine(val => val !== '-- Select Country --' && val !== '', "Please select a country")
+    .refine(val => val !== '-- Select Country --' && val !== '', "Please select an inventory country")
     .refine(val => !detectCyberAttackPayload(val), "Invalid country selection"),
 
   year: z.string()
@@ -251,16 +256,7 @@ const defaultSubCategoryOptions = [
   { value: 'Spare Parts & Accessories', label: 'Spare Parts & Accessories' },
 ];
 
-const countryOptions = [
-  { value: 'United States', label: 'United States' },
-  { value: 'Germany', label: 'Germany' },
-  { value: 'United Arab Emirates', label: 'United Arab Emirates' },
-  { value: 'Saudi Arabia', label: 'Saudi Arabia' },
-  { value: 'United Kingdom', label: 'United Kingdom' },
-  { value: 'China', label: 'China' },
-  { value: 'Japan', label: 'Japan' },
-  { value: 'India', label: 'India' },
-];
+const countryOptions: LocationOption[] = getGlobalCountries();
 
 const currencyOptions = [
   { value: 'USD - US Dollar', label: 'USD - US Dollar' },
@@ -376,7 +372,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
 
   const [formData, setFormData] = useState({
     productName: '', category: '-- Select Category --', subCategory: '', brandName: '', modelNo: '',
-    country: '-- Select Country --', year: '', dimensions: '', expiry: '',
+    country: '-- Select Country --', location: '', inventoryCity: '', year: '', dimensions: '', expiry: '',
     quantity: '', currency: 'USD - US Dollar', liquidatingPrice: '', msrp: '', excludedCountries: [] as string[],
     description: '', reasonToSell: 'Surplus Inventory', warranty: 'No', hasWarranty: false, warrantyDocument: null as File | null,
     certificate: false, certificateDocument: null as File | null, imagesUploaded: false,
@@ -385,6 +381,78 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [mounted, setMounted] = useState(false);
+
+  // Real location search autocomplete states
+  const [locationSuggestions, setLocationSuggestions] = useState<RealLocationSuggestion[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const locationSearchRef = useRef<HTMLDivElement>(null);
+  const locationDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Close location suggestions on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (locationSearchRef.current && !locationSearchRef.current.contains(e.target as Node)) {
+        setShowLocationSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (locationDebounceTimer.current) clearTimeout(locationDebounceTimer.current);
+    };
+  }, []);
+
+  const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    handleInputChange('location', val);
+
+    if (locationDebounceTimer.current) {
+      clearTimeout(locationDebounceTimer.current);
+    }
+
+    if (!val || val.trim().length < 2) {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+      setIsSearchingLocation(false);
+      return;
+    }
+
+    setIsSearchingLocation(true);
+    setShowLocationSuggestions(true);
+    locationDebounceTimer.current = setTimeout(async () => {
+      try {
+        const countryFilter = formData.country && formData.country !== '-- Select Country --' ? formData.country : undefined;
+        const results = await searchRealLocation(val, countryFilter);
+        setLocationSuggestions(results);
+        setShowLocationSuggestions(true);
+      } catch (err) {
+        console.warn('Real location search error:', err);
+      } finally {
+        setIsSearchingLocation(false);
+      }
+    }, 250);
+  };
+
+  const handleSelectLocationSuggestion = (item: RealLocationSuggestion) => {
+    handleInputChange('location', item.displayName);
+    handleInputChange('inventoryCity', item.cityOrTown || item.shortName);
+
+    // Auto-match and set country if empty or default
+    if ((!formData.country || formData.country === '-- Select Country --') && item.country) {
+      const matched = countryOptions.find(c =>
+        c.value.toLowerCase() === item.country.toLowerCase() ||
+        c.label.toLowerCase().includes(item.country.toLowerCase())
+      );
+      if (matched) {
+        handleInputChange('country', matched.value);
+      } else {
+        handleInputChange('country', item.country);
+      }
+    }
+
+    setShowLocationSuggestions(false);
+  };
 
   // Derive dynamic categories from Redux store, falling back to localStorage cache or default
   const availableCategories = useMemo(() => {
@@ -612,12 +680,14 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
     }
     setFormData({
       productName: '', category: '-- Select Category --', subCategory: '', brandName: '', modelNo: '',
-      country: '-- Select Country --', year: '', dimensions: '', expiry: '',
+      country: '-- Select Country --', location: '', inventoryCity: '', year: '', dimensions: '', expiry: '',
       quantity: '', currency: 'USD - US Dollar', liquidatingPrice: '', msrp: '', excludedCountries: [],
       description: '', reasonToSell: 'Surplus Inventory', warranty: 'No', hasWarranty: false, warrantyDocument: null,
       certificate: false, certificateDocument: null, imagesUploaded: false,
       images: [] as File[]
     });
+    setLocationSuggestions([]);
+    setShowLocationSuggestions(false);
     setFormErrors({});
     setIsReviewMode(false);
   };
@@ -628,6 +698,8 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
     formData.subCategory ||
     formData.brandName ||
     formData.modelNo ||
+    formData.location ||
+    (formData.country && formData.country !== '-- Select Country --') ||
     formData.quantity ||
     formData.liquidatingPrice ||
     formData.msrp ||
@@ -828,8 +900,15 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       data.append('brand_name', sanitizeInput(formData.brandName || ''));
       data.append('model_no', sanitizeInput(formData.modelNo || ''));
 
-      // Origin & Specs
+      // Logistics & Specs
       data.append('country', sanitizeInput(formData.country));
+      data.append('inventory_country', sanitizeInput(formData.country));
+      data.append('location', sanitizeInput(formData.location || formData.country));
+      data.append('inventory_location', sanitizeInput(formData.location || formData.country));
+      if (formData.inventoryCity) {
+        data.append('city', sanitizeInput(formData.inventoryCity));
+        data.append('inventory_city', sanitizeInput(formData.inventoryCity));
+      }
       if (formData.year) {
         data.append('manufacturing_year', sanitizeInput(formData.year));
       }
@@ -851,6 +930,9 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       data.append('raw_data', JSON.stringify({
         vendor_id: currentVendorId,
         ...cleanPayload,
+        inventory_country: formData.country,
+        inventory_location: formData.location,
+        inventory_city: formData.inventoryCity || '',
         offer: pricingAnalysis.discountPercent || 0,
         warranty_document_name: formData.warrantyDocument?.name || null,
         certificate_document_name: formData.certificateDocument?.name || null,
@@ -927,7 +1009,10 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
               condition: 'Brand New Surplus',
               status: 'Pending Verification',
               submittedAt: new Date().toISOString(),
-              location: formData.country !== '-- Select Country --' ? formData.country : 'UAE Warehouse',
+              location: formData.location || (formData.country !== '-- Select Country --' ? formData.country : 'UAE Warehouse'),
+              inventory_location: formData.location,
+              inventory_country: formData.country !== '-- Select Country --' ? formData.country : '',
+              inventory_city: formData.inventoryCity || '',
               reasonToSell: formData.reasonToSell,
               hasWarranty: formData.hasWarranty,
               warranty: formData.warranty,
@@ -1134,7 +1219,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                           <MapPin className="w-4 h-4" />
                         </div>
                         <h4 className="text-base font-bold text-gray-900">
-                          2. Origin & Specifications
+                          2. Logistics & Specifications
                         </h4>
                       </div>
                       <button
@@ -1146,10 +1231,14 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
                       <div>
-                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Manufacturing Country</span>
+                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Inventory Country</span>
                         <p className="font-medium text-gray-900">{formData.country}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Inventory Location</span>
+                        <p className="font-medium text-gray-900">{formData.location || 'N/A'}</p>
                       </div>
                       <div>
                         <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Manufacturing Year</span>
@@ -1536,21 +1625,112 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                         <MapPin className="w-4 h-4" />
                       </div>
                       <h4 className="text-base font-bold text-gray-900">
-                        2. Origin & Specifications
+                        2. Inventory Logistics & Specifications
                       </h4>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div data-field="country">
-                        <label className={labelClass}>Manufacturing Country *</label>
+                        <label className={labelClass}>Inventory Country *</label>
                         <Select
                           options={countryOptions}
                           styles={customSelectStyles}
-                          value={countryOptions.find(c => c.value === formData.country) || null}
+                          value={countryOptions.find(c => c.value === formData.country) || (formData.country && formData.country !== '-- Select Country --' ? { value: formData.country, label: formData.country } : null)}
                           onChange={(option: any) => handleInputChange('country', option?.value || '')}
                           placeholder="-- Select Country --"
+                          isSearchable={true}
+                          isClearable={true}
                         />
                         {renderError('country')}
+                      </div>
+
+                      <div className={`relative ${showLocationSuggestions ? 'z-30' : ''}`} ref={locationSearchRef} data-field="location">
+                        <label className={labelClass}>
+                          Inventory Location <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            className={`${inputClass} pl-9 pr-9`}
+                            placeholder={formData.country && formData.country !== '-- Select Country --' ? `Search area, town, or city in ${formData.country}...` : "Type real location (e.g. Kakkodi, Jebel Ali)..."}
+                            value={formData.location}
+                            onChange={handleLocationInputChange}
+                            onFocus={() => {
+                              if (locationSuggestions.length > 0 || isSearchingLocation) setShowLocationSuggestions(true);
+                            }}
+                          />
+                          <MapPin className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+                          {isSearchingLocation ? (
+                            <div className="w-4 h-4 border-2 border-[#0a5c48] border-t-transparent rounded-full animate-spin absolute right-3 top-3.5"></div>
+                          ) : formData.location ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleInputChange('location', '');
+                                setLocationSuggestions([]);
+                                setShowLocationSuggestions(false);
+                              }}
+                              className="text-gray-400 hover:text-gray-600 absolute right-3 top-3 p-0.5"
+                              title="Clear location"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          ) : null}
+                        </div>
+
+                        {/* Real Location Autocomplete Floating Dropdown */}
+                        {showLocationSuggestions && (
+                          <div className="absolute z-50 left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto">
+                            <div className="p-2.5 bg-gray-50 border-b border-gray-100 text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center justify-between">
+                              <span className="flex items-center gap-1.5">
+                                <MapPin className="w-3.5 h-3.5 text-[#0a5c48]" />
+                                Location Suggestions
+                              </span>
+                              {formData.country && formData.country !== '-- Select Country --' && (
+                                <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[10px]">
+                                  {formData.country}
+                                </span>
+                              )}
+                            </div>
+
+                            {isSearchingLocation && locationSuggestions.length === 0 ? (
+                              <div className="p-4 text-center text-sm text-gray-500 flex items-center justify-center gap-2">
+                                <div className="w-4 h-4 border-2 border-[#0a5c48] border-t-transparent rounded-full animate-spin"></div>
+                                <span>Searching locations for &quot;{formData.location}&quot;...</span>
+                              </div>
+                            ) : locationSuggestions.length > 0 ? (
+                              locationSuggestions.map((item, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50/70 border-b border-gray-100 last:border-b-0 flex items-start gap-2.5 transition-colors group cursor-pointer"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    handleSelectLocationSuggestion(item);
+                                  }}
+                                  onClick={() => handleSelectLocationSuggestion(item)}
+                                >
+                                  <div className="w-6 h-6 rounded-full bg-emerald-100/60 group-hover:bg-[#0a5c48] flex items-center justify-center shrink-0 mt-0.5 transition-colors">
+                                    <MapPin className="w-3.5 h-3.5 text-[#0a5c48] group-hover:text-white transition-colors" />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-semibold text-gray-900 group-hover:text-[#0a5c48] truncate">
+                                      {item.shortName}
+                                    </p>
+                                    <p className="text-xs text-gray-500 truncate mt-0.5">
+                                      {item.displayName}
+                                    </p>
+                                  </div>
+                                </button>
+                              ))
+                            ) : !isSearchingLocation && formData.location?.trim().length >= 2 ? (
+                              <div className="p-3.5 text-center text-xs text-gray-500">
+                                No specific place found. You can keep &quot;{formData.location}&quot; as custom location.
+                              </div>
+                            ) : null}
+                          </div>
+                        )}
+                        {renderError('location')}
                       </div>
 
                       <div data-field="year">
