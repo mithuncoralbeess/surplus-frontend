@@ -56,18 +56,21 @@ const FORMATS = [
     badge: 'Fresh',
     desc: 'Fresh verified inventory added this...',
     icon: Sparkles,
+    href: '/buy',
   },
   {
     title: 'Verified Deals',
     badge: 'Hot Deals',
     desc: 'Discounted liquidation inventory rea...',
     icon: Tag,
+    href: '/buy',
   },
   {
     title: 'Wholesale Lots & Pallets',
     badge: '> 10 SKUs',
     desc: 'Full container & pallet batch manifests',
     icon: Package,
+    href: '/buy',
   },
 ];
 
@@ -107,14 +110,18 @@ const BuyMegamenu = () => {
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
     >
-      {/* Trigger */}
-      <div className={`flex items-center font-medium text-[16px] transition-all py-1 header-nav-link whitespace-nowrap ${
-        isBuyActive || isOpen 
-          ? 'text-[#0f7a61] font-semibold' 
-          : 'text-gray-600 hover:text-gray-900'
-      }`}>
+      {/* Trigger: Clickable Link to /buy */}
+      <Link 
+        href="/buy"
+        onClick={() => setIsOpen(false)}
+        className={`flex items-center font-medium text-[16px] transition-all py-1 header-nav-link whitespace-nowrap ${
+          isBuyActive || isOpen 
+            ? 'text-[#0f7a61] font-semibold' 
+            : 'text-gray-600 hover:text-gray-900'
+        }`}
+      >
         {t('nav.buy', 'Buy')} <ChevronDown className={`ml-1 w-4 h-4 transition-colors ${isBuyActive || isOpen ? 'text-[#0f7a61]' : 'text-gray-400'}`} />
-      </div>
+      </Link>
 
       {/* Dropdown Container */}
       <div className={`absolute top-full left-0 w-full transition-all duration-300 ease-out z-50 ${isOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-4'}`}>
@@ -132,9 +139,14 @@ const BuyMegamenu = () => {
                   Shop by Category
                 </h3>
               </div>
-              <Link href="/shop-by-category" className="text-sm font-bold text-primary hover:text-primary-dark flex items-center transition-colors pb-1">
-                All Categories <ArrowRight className="w-4 h-4 ml-1" />
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link href="/buy" className="text-xs font-bold text-white bg-[#0f7a61] hover:bg-[#0c6651] px-3.5 py-1.5 rounded-lg flex items-center transition-all shadow-xs">
+                  All Buy Lots <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </Link>
+                <Link href="/shop-by-category" className="text-sm font-bold text-primary hover:text-primary-dark flex items-center transition-colors pb-1">
+                  All Categories <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </div>
             </div>
 
             <div className="grid grid-cols-4 gap-4">
@@ -174,7 +186,7 @@ const BuyMegamenu = () => {
                 {FORMATS.map((format, idx) => {
                   const Icon = format.icon;
                   return (
-                    <Link href="/browse" key={idx} className="flex items-start gap-5 group/format p-3 -ml-3 rounded-2xl hover:bg-white/60 transition-colors">
+                    <Link href={format.href || "/buy"} key={idx} className="flex items-start gap-5 group/format p-3 -ml-3 rounded-2xl hover:bg-white/60 transition-colors">
                       <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-primary shadow-sm border border-gray-50 group-hover/format:scale-110 group-hover/format:shadow-md transition-all duration-300">
                         <Icon className="w-5 h-5" strokeWidth={1.5} />
                       </div>

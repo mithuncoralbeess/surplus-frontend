@@ -95,6 +95,12 @@ const Header = () => {
 
         {/* Mobile Right Actions */}
         <div className="flex lg:hidden items-center gap-1.5 header-mobile-actions">
+          <Link 
+            href="/buy" 
+            className="text-xs font-bold text-[#0f7a61] bg-[#e6f7ef] hover:bg-[#d0f0e4] px-2.5 py-1 rounded-full transition-colors flex items-center gap-1"
+          >
+            {t('nav.buy', 'Buy')}
+          </Link>
           <HeaderCartDropdown />
           {session ? (
             <Link 
