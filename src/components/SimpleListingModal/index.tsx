@@ -956,11 +956,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
         });
       }
 
-      const rawApiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-      const apiBase = rawApiBase.replace(/\/$/, '');
-      const endpoint = apiBase
-        ? (apiBase.endsWith('/api') ? `${apiBase}/submit-product-request/` : `${apiBase}/api/submit-product-request/`)
-        : '/api/submit-product-request/';
+      const endpoint = '/api/submit-product-request/';
 
       const response = await fetch(endpoint, {
         method: 'POST',

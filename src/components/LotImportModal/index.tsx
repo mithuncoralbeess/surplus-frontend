@@ -1290,11 +1290,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       }
       data.append('manifest_items', JSON.stringify(manifestData || []));
       
-      const rawApiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-      const apiBase = rawApiBase.replace(/\/$/, '');
-      const endpoint = apiBase
-        ? (apiBase.endsWith('/api') ? `${apiBase}/submit-lot-request/` : `${apiBase}/api/submit-lot-request/`)
-        : '/api/submit-lot-request/';
+      const endpoint = '/api/submit-lot-request/';
 
       const response = await fetch(endpoint, {
         method: 'POST',

@@ -89,7 +89,7 @@ export const analyticsService = {
   updateDwellTime(logId: number | string, durationSeconds: number, isStuck = false): void {
     if (typeof window === 'undefined' || !logId) return;
 
-    const endpoint = (process.env.NEXT_PUBLIC_API_BASE_URL || '') + '/api/analytics/track-view/';
+    const endpoint = '/api/analytics/track-view/';
     const data = JSON.stringify({
       log_id: logId,
       duration_seconds: Math.round(durationSeconds),

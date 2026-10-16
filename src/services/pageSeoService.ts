@@ -1,6 +1,13 @@
 import { Metadata } from 'next';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const getBackendUrl = (): string => {
+  return (
+    process.env.BACKEND_API_URL ||
+    process.env.INTERNAL_BACKEND_URL ||
+    process.env.API_BASE_URL ||
+    ''
+  ).replace(/\/$/, '');
+};
 
 export interface PageSeoData {
   focus_keyphrase?: string;
@@ -57,7 +64,7 @@ export async function fetchPageData(slug: string): Promise<PageResponseData | nu
   }
 
   try {
-    const url = `${API_BASE_URL}/api/pages/${slug}/`;
+    const url = `${getBackendUrl()}/api/pages/${slug}/`;
     const res = await fetch(url, {
       next: { revalidate: 300 }, // Cache with 5-minute background revalidation
       headers: {

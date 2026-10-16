@@ -312,9 +312,7 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
       if (firstWh.startsWith('http://') || firstWh.startsWith('https://')) {
         image = firstWh;
       } else if (firstWh.startsWith('/')) {
-        const rawApiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-        const base = rawApiBase.replace(/\/$/, '');
-        image = `${base}${firstWh}`;
+        image = firstWh;
       }
     }
   }
@@ -425,9 +423,7 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     warehouse_images: Array.isArray(item.warehouse_images)
       ? item.warehouse_images.map((wh: string) => {
           if (typeof wh === 'string' && wh.startsWith('/')) {
-            const rawApiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-            const base = rawApiBase.replace(/\/$/, '');
-            return `${base}${wh}`;
+            return wh;
           }
           return wh;
         })

@@ -1,7 +1,6 @@
 import { BlogPost, MOCK_BLOG_POSTS } from '../data/blogData';
 import { apiClient } from './apiClient';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export interface ApiBlogPost {
   id?: string | number;
@@ -123,12 +122,11 @@ export function stripFaqFromContent(content: string): string {
 
 export function fixContentImageUrls(content: string): string {
   if (!content) return '';
-  const apiBase = API_BASE_URL || 'http://127.0.0.1:8000';
   const fallbackImg = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80';
 
-  // 1. Rewrite media URLs (e.g. https://surplusmarket.com/media/... or /media/...) to current API_BASE_URL/media/...
+  // 1. Rewrite media URLs to relative /media/...
   let fixed = content.replace(/src=["'](?:https?:\/\/[^\/]+)?\/media\/([^"']+)["']/gi, (match, path) => {
-    return `src="${apiBase}/media/${path}" onerror="this.onerror=null;this.src='${fallbackImg}';"`;
+    return `src="/media/${path}" onerror="this.onerror=null;this.src='${fallbackImg}';"`;
   });
 
   // 2. Add fallback onerror to any other <img> tag missing an error handler
@@ -146,8 +144,7 @@ export function mapApiBlogToBlogPost(apiPost: ApiBlogPost): BlogPost {
 
   let coverImage = apiPost.coverImage || apiPost.cover_image || '';
   if (coverImage && coverImage.includes('/media/')) {
-    const mediaPath = coverImage.substring(coverImage.indexOf('/media/'));
-    coverImage = `${API_BASE_URL || 'http://127.0.0.1:8000'}${mediaPath}`;
+    coverImage = coverImage.substring(coverImage.indexOf('/media/'));
   }
   if (!coverImage) {
     coverImage = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1600&q=80';

@@ -40,7 +40,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: blob: https: http:",
-      "connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 https://surplus-backend-uhg0.onrender.com https://open.er-api.com https://*.r2.cloudflarestorage.com https://*.cloudflarestorage.com",
+      "connect-src 'self' https://open.er-api.com https://*.r2.cloudflarestorage.com https://*.cloudflarestorage.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -61,6 +61,39 @@ const nextConfig: NextConfig = {
         hostname: '**',
       },
     ],
+  },
+  async rewrites() {
+    const backendTarget = (
+      process.env.BACKEND_API_URL ||
+      process.env.INTERNAL_BACKEND_URL ||
+      process.env.API_BASE_URL ||
+      'https://surplus-backend-uhg0.onrender.com'
+    ).replace(/\/$/, '');
+
+    return {
+      fallback: [
+        {
+          source: '/api/:path*',
+          destination: `${backendTarget}/api/:path*`,
+        },
+        {
+          source: '/categories/:path*',
+          destination: `${backendTarget}/categories/:path*`,
+        },
+        {
+          source: '/media/:path*',
+          destination: `${backendTarget}/media/:path*`,
+        },
+        {
+          source: '/submit-product-request/:path*',
+          destination: `${backendTarget}/submit-product-request/:path*`,
+        },
+        {
+          source: '/submit-lot-request/:path*',
+          destination: `${backendTarget}/submit-lot-request/:path*`,
+        },
+      ],
+    };
   },
   async headers() {
     return [

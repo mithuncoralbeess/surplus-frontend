@@ -514,8 +514,7 @@ export async function fetchInstantSuggestions(query: string, limit = 5): Promise
   }
 
   try {
-    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://surplus-backend-uhg0.onrender.com').replace(/\/$/, '');
-    const res = await fetch(`${apiBase}/api/search/suggestions/?q=${encodeURIComponent(trimmed)}&limit=${limit}`, {
+    const res = await fetch(`/api/search/suggestions/?q=${encodeURIComponent(trimmed)}&limit=${limit}`, {
       headers: { 'Accept': 'application/json' },
     });
     if (res.ok) {
@@ -576,9 +575,8 @@ export function mapBackendProductToAiItem(p: any): AiSearchResultItem {
 
   let img = p.image || '';
   if (img && !img.startsWith('http')) {
-    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://surplus-backend-uhg0.onrender.com').replace(/\/$/, '');
     const prefix = img.startsWith('/') ? '' : '/';
-    img = apiBase + prefix + img;
+    img = prefix + img;
   }
   if (!img) {
     img = 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80';
@@ -781,7 +779,6 @@ export async function fetchSemanticSearchResults(
   }
 
   try {
-    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://surplus-backend-uhg0.onrender.com').replace(/\/$/, '');
     let liveResults: AiSearchResultItem[] = [];
     let parsedIntentFromApi: any = null;
 
@@ -809,7 +806,7 @@ export async function fetchSemanticSearchResults(
         else if (options.sortBy === 'newest') searchParams.set('sort_by', 'created_at:desc');
       }
 
-      const searchRes = await fetch(`${apiBase}/api/search/?${searchParams.toString()}`, {
+      const searchRes = await fetch(`/api/search/?${searchParams.toString()}`, {
         headers: { 'Accept': 'application/json' }
       });
       if (searchRes.ok) {
@@ -827,7 +824,7 @@ export async function fetchSemanticSearchResults(
     // 2. Unified Semantic Endpoint: GET /api/products/semantic-search/?q=...
     if (liveResults.length === 0) {
       try {
-        const semRes = await fetch(`${apiBase}/api/products/semantic-search/?q=${encodeURIComponent(trimmed)}&limit=36`, {
+        const semRes = await fetch(`/api/products/semantic-search/?q=${encodeURIComponent(trimmed)}&limit=36`, {
           headers: { 'Accept': 'application/json' }
         });
         if (semRes.ok) {
@@ -846,10 +843,10 @@ export async function fetchSemanticSearchResults(
     // 3. Fallback: Concurrently query individual catalog & lot search endpoints
     if (liveResults.length === 0) {
       const [productsSettled, lotsSettled] = await Promise.allSettled([
-        fetch(`${apiBase}/api/products/?search=${encodeURIComponent(trimmed)}`, {
+        fetch(`/api/products/?search=${encodeURIComponent(trimmed)}`, {
           headers: { 'Accept': 'application/json' }
         }).then(r => r.ok ? r.json() : null),
-        fetch(`${apiBase}/api/lots/?search=${encodeURIComponent(trimmed)}`, {
+        fetch(`/api/lots/?search=${encodeURIComponent(trimmed)}`, {
           headers: { 'Accept': 'application/json' }
         }).then(r => r.ok ? r.json() : null)
       ]);

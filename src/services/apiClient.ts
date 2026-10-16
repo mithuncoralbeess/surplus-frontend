@@ -4,11 +4,28 @@
  * offline persistence, URL resolution, and request sanitization.
  */
 
-const API_BASE_URL = 
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  (typeof process !== 'undefined' && process.env?.VITE_API_URL) ||
-  (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_API_URL) ||
-  'https://surplus-backend-uhg0.onrender.com';
+/**
+ * Resolves request URL.
+ * In browser: strictly uses relative path ('/api/...') so all requests proxy through Next.js
+ * reverse proxy without exposing the backend domain.
+ * On server: resolves to internal backend target.
+ */
+function resolveRequestUrl(endpoint: string): string {
+  if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+    return endpoint;
+  }
+  if (typeof window !== 'undefined') {
+    return endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  }
+  const serverTarget = (
+    process.env.BACKEND_API_URL ||
+    process.env.INTERNAL_BACKEND_URL ||
+    process.env.API_BASE_URL ||
+    ''
+  ).replace(/\/$/, '');
+
+  return `${serverTarget}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+}
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -283,10 +300,7 @@ export async function apiClient<T = any>(
   const method = (fetchOptions.method || 'GET').toUpperCase();
   const isGetRequest = method === 'GET';
 
-  const base = API_BASE_URL.replace(/\/$/, '');
-  const url = endpoint.startsWith('http')
-    ? endpoint
-    : `${base}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+  const url = resolveRequestUrl(endpoint);
 
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
