@@ -46,27 +46,6 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 const STORAGE_KEY = 'surplus_market_notifications_v1';
 
-const INITIAL_DEFAULT_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'notif-1',
-    title: 'Welcome to Surplus Market',
-    message: 'Your vendor account is active. Explore verified listings and submit inventory to buyers worldwide.',
-    type: 'system',
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    read: false,
-    link: '/profile'
-  },
-  {
-    id: 'notif-2',
-    title: 'Listing Guidelines & Verification',
-    message: 'Ensure all products include model numbers, warranty terms, and authentic photos for rapid approval.',
-    type: 'info',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-    read: false,
-    link: '/sell'
-  }
-];
-
 function mapBackendTypeToLocal(backendType: string): NotificationType {
   const norm = String(backendType || '').toUpperCase();
   if (norm === 'LISTING') return 'listing';
@@ -100,6 +79,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Resolved active vendor identifier
   const userObj = (session?.user || {}) as any;
   const vendorId = useMemo(() => {
+    if (!session) return '';
     const rawVid = userObj.vendor_id;
     if (rawVid && (String(rawVid).toUpperCase().startsWith('USR-') || !isNaN(Number(rawVid)))) {
       return String(rawVid);
@@ -109,49 +89,51 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
     if (userObj.user_id) return String(userObj.user_id);
     if (rawVid) return String(rawVid);
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('vendor_id') || localStorage.getItem('user_id') || localStorage.getItem('email');
-      if (stored) return stored;
-    }
     return userObj.id ? String(userObj.id) : '';
-  }, [userObj]);
+  }, [userObj, session]);
 
-  // Load from localStorage on mount
+  // Load from localStorage only when user is logged in
   useEffect(() => {
+    if (!session) {
+      setNotifications([]);
+      setIsHydrated(true);
+      return;
+    }
+
     if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        const stored = localStorage.getItem(`${STORAGE_KEY}_${vendorId || 'user'}`);
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setNotifications(parsed);
           } else {
-            setNotifications(INITIAL_DEFAULT_NOTIFICATIONS);
+            setNotifications([]);
           }
         } else {
-          setNotifications(INITIAL_DEFAULT_NOTIFICATIONS);
+          setNotifications([]);
         }
       } catch (err) {
-        setNotifications(INITIAL_DEFAULT_NOTIFICATIONS);
+        setNotifications([]);
       }
       setIsHydrated(true);
     }
-  }, []);
+  }, [session, vendorId]);
 
-  // Save to localStorage when notifications update (after hydration)
+  // Save to localStorage when notifications update (only when session exists)
   useEffect(() => {
-    if (isHydrated && typeof window !== 'undefined') {
+    if (session && isHydrated && typeof window !== 'undefined') {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
+        localStorage.setItem(`${STORAGE_KEY}_${vendorId || 'user'}`, JSON.stringify(notifications));
       } catch (err) {
         console.error('Failed to save notifications to localStorage:', err);
       }
     }
-  }, [notifications, isHydrated]);
+  }, [notifications, isHydrated, session, vendorId]);
 
   // Fetch notifications from Backend for the active vendor
   const refreshNotifications = useCallback(async () => {
-    if (!vendorId || isFetchingRef.current) return;
+    if (!session || !vendorId || isFetchingRef.current) return;
     isFetchingRef.current = true;
 
     try {
@@ -170,18 +152,20 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       isFetchingRef.current = false;
     }
-  }, [vendorId]);
+  }, [session, vendorId]);
 
   // Fetch from backend when vendorId becomes available
   useEffect(() => {
-    if (vendorId) {
+    if (session && vendorId) {
       refreshNotifications();
+    } else if (!session) {
+      setNotifications([]);
     }
-  }, [vendorId, refreshNotifications]);
+  }, [session, vendorId, refreshNotifications]);
 
-  // Periodic lightweight unread count check (every 45s)
+  // Periodic lightweight unread count check (every 45s, only when logged in)
   useEffect(() => {
-    if (!vendorId) return;
+    if (!session || !vendorId) return;
 
     const intervalId = setInterval(async () => {
       try {
@@ -200,11 +184,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, 45000);
 
     return () => clearInterval(intervalId);
-  }, [vendorId, notifications, refreshNotifications]);
+  }, [session, vendorId, notifications, refreshNotifications]);
 
   const unreadCount = useMemo(() => {
+    if (!session) return 0;
     return notifications.filter(n => !n.read).length;
-  }, [notifications]);
+  }, [notifications, session]);
 
   // Add Notification
   const addNotification = useCallback((item: Omit<NotificationItem, 'id' | 'createdAt' | 'read'> & Partial<Pick<NotificationItem, 'id' | 'createdAt' | 'read'>>) => {

@@ -125,19 +125,41 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     setError('');
     
     if (mode === 'register') {
-      if (!fullName || !fullName.trim()) {
-        setError('Please enter your full name.');
+      const trimmedName = fullName.trim();
+      if (!trimmedName) {
+        setError('Full Name is mandatory.');
         setLoading(false);
         return;
       }
-      if (!mobileNumber) {
-        setError('Please enter your mobile number.');
+      if (trimmedName.length < 2) {
+        setError('Full Name must be at least 2 characters.');
         setLoading(false);
         return;
       }
+
+      const trimmedEmail = emailOrPhone.trim();
+      if (!trimmedEmail) {
+        setError('Email ID is mandatory.');
+        setLoading(false);
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        setError('Please enter a valid email address.');
+        setLoading(false);
+        return;
+      }
+
+      const phoneDigits = (mobileNumber || '').replace(/[^0-9]/g, '');
+      if (!mobileNumber || phoneDigits.length < 7) {
+        setError('Mobile Number is mandatory. Please enter a valid mobile number with country code.');
+        setLoading(false);
+        return;
+      }
+
       const res = await authService.sendRegistrationOtp({
-        full_name: fullName,
-        email: emailOrPhone,
+        full_name: trimmedName,
+        email: trimmedEmail.toLowerCase(),
         mobile_number: mobileNumber,
       });
 
@@ -145,11 +167,27 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
         setLoading(false);
         setStep(2);
       } else {
-        setError(res.message || 'Failed to send OTP.');
+        let errMsg = res.message || 'Failed to send OTP.';
+        if ((res as any).errors) {
+          const errList = Object.values((res as any).errors)
+            .map(v => Array.isArray(v) ? v.join(' ') : String(v))
+            .filter(Boolean);
+          if (errList.length > 0) {
+            errMsg = errList.join(' ');
+          }
+        }
+        setError(errMsg);
         setLoading(false);
       }
     } else {
-      const res = await authService.sendLoginOtp(emailOrPhone);
+      const trimmedLogin = emailOrPhone.trim();
+      if (!trimmedLogin) {
+        setError('Please enter your Email ID or Mobile Number.');
+        setLoading(false);
+        return;
+      }
+
+      const res = await authService.sendLoginOtp(trimmedLogin);
 
       if (res.success) {
         setLoading(false);
@@ -307,26 +345,62 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                   <form onSubmit={handleGetCode} className="space-y-5">
                     {mode === 'register' && (
                       <div>
-                        <label className={labelClass}>Full Name</label>
-                        <input type="text" required value={fullName} onChange={e => setFullName(e.target.value)} className={inputClass} placeholder="John Doe" />
+                        <label className={labelClass}>
+                          Full Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={fullName}
+                          onChange={e => {
+                            setFullName(e.target.value);
+                            if (error) setError('');
+                          }}
+                          className={inputClass}
+                          placeholder="John Doe"
+                        />
                       </div>
                     )}
                     
                     <div>
-                      <label className={labelClass}>{mode === 'login' ? 'Email ID / Mobile Number' : 'Email ID'}</label>
-                      <input type="text" required value={emailOrPhone} onChange={e => setEmailOrPhone(e.target.value)} className={inputClass} placeholder="john@example.com" />
+                      <label className={labelClass}>
+                        {mode === 'login' ? (
+                          'Email ID / Mobile Number'
+                        ) : (
+                          <>
+                            Email ID <span className="text-red-500">*</span>
+                          </>
+                        )}
+                      </label>
+                      <input
+                        type={mode === 'register' ? 'email' : 'text'}
+                        required
+                        value={emailOrPhone}
+                        onChange={e => {
+                          setEmailOrPhone(e.target.value);
+                          if (error) setError('');
+                        }}
+                        className={inputClass}
+                        placeholder="john@example.com"
+                      />
                     </div>
 
                     {mode === 'register' && (
                       <div>
-                        <label className={labelClass}>Mobile Number</label>
+                        <label className={labelClass}>
+                          Mobile Number <span className="text-red-500">*</span>
+                        </label>
                         <PhoneInput
                           international
                           defaultCountry="US"
                           flags={flags}
                           value={mobileNumber}
-                          onChange={setMobileNumber}
+                          onChange={val => {
+                            setMobileNumber(val);
+                            if (error) setError('');
+                          }}
                           className="w-full auth-phone-input"
+                          required
                         />
                       </div>
                     )}

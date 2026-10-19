@@ -24,6 +24,10 @@ export interface ApiBlogPost {
   readTime?: string;
   cover_image?: string;
   coverImage?: string;
+  image?: string;
+  image_url?: string;
+  featured_image?: string;
+  featured_image_url?: string;
   featured?: boolean;
   tags?: string[] | string;
   key_takeaways?: string[];
@@ -142,7 +146,14 @@ export function mapApiBlogToBlogPost(apiPost: ApiBlogPost): BlogPost {
   const authorRole = apiPost.author?.role || apiPost.author_role || 'Supply Chain Specialist';
   const authorAvatar = apiPost.author?.avatar || apiPost.author_avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80';
 
-  let coverImage = apiPost.coverImage || apiPost.cover_image || '';
+  let coverImage =
+    apiPost.coverImage ||
+    apiPost.cover_image ||
+    apiPost.image ||
+    apiPost.image_url ||
+    apiPost.featured_image_url ||
+    apiPost.featured_image ||
+    '';
   if (coverImage && coverImage.includes('/media/')) {
     coverImage = coverImage.substring(coverImage.indexOf('/media/'));
   }

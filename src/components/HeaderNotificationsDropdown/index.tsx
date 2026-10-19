@@ -19,8 +19,10 @@ import {
   Inbox
 } from 'lucide-react';
 import { useNotifications, NotificationItem, NotificationType } from '../../context/NotificationContext';
+import { useSession } from 'next-auth/react';
 
 export default function HeaderNotificationsDropdown() {
+  const { data: session } = useSession();
   const router = useRouter();
   const {
     notifications,
@@ -150,6 +152,11 @@ export default function HeaderNotificationsDropdown() {
       router.push(item.link);
     }
   };
+
+  // If no user is logged in, no need of notification alert or dropdown
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="relative" ref={dropdownRef}>
