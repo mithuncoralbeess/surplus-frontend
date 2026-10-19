@@ -20,15 +20,16 @@ import {
   Minus,
   HelpCircle
 } from 'lucide-react';
-import { BlogPost, MOCK_BLOG_POSTS } from '../../data/blogData';
+import { BlogPost } from '../../data/blogData';
 import { extractFaqsFromContent, stripFaqFromContent, fixContentImageUrls } from '../../services/blogService';
 import { useTrackView } from '../../hooks/useTrackView';
 
 interface BlogDetailProps {
   post: BlogPost;
+  relatedPosts?: BlogPost[];
 }
 
-export default function BlogDetail({ post }: BlogDetailProps) {
+export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps) {
   const [copied, setCopied] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
@@ -41,7 +42,7 @@ export default function BlogDetail({ post }: BlogDetailProps) {
     path: typeof window !== 'undefined' ? window.location.pathname : `/blog/${post.slug}`,
   });
 
-  const relatedPosts = MOCK_BLOG_POSTS.filter(p => p.id !== post.id && p.slug !== post.slug).slice(0, 3);
+  const related = (relatedPosts || []).filter(p => p.id !== post.id && p.slug !== post.slug).slice(0, 3);
 
   // Extract FAQs from post object or content
   const faqs = (post.faqs && post.faqs.length > 0) 
@@ -118,15 +119,21 @@ export default function BlogDetail({ post }: BlogDetailProps) {
             {/* Author & Share Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 border-y border-gray-200">
               <div className="flex items-center gap-3" itemProp="author" itemScope itemType="https://schema.org/Person">
-                <Image 
-                  src={post.author.avatar} 
-                  alt={post.author.name} 
-                  width={48}
-                  height={48}
-                  sizes="48px"
-                  itemProp="image"
-                  className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full object-cover border-2 border-[#0a5c48]/20 shrink-0 aspect-square"
-                />
+                {post.author.avatar ? (
+                  <Image 
+                    src={post.author.avatar} 
+                    alt={post.author.name} 
+                    width={48}
+                    height={48}
+                    sizes="48px"
+                    itemProp="image"
+                    className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full object-cover border-2 border-[#0a5c48]/20 shrink-0 aspect-square"
+                  />
+                ) : (
+                  <div className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-[#0a5c48]/10 text-[#0a5c48] flex items-center justify-center font-bold text-base shrink-0 border border-[#0a5c48]/20 aspect-square">
+                    {post.author.name?.[0]?.toUpperCase() || 'S'}
+                  </div>
+                )}
                 <div>
                   <span className="block text-sm font-bold text-gray-900" itemProp="name">{post.author.name}</span>
                   <span className="block text-xs text-gray-500 font-medium" itemProp="jobTitle">{post.author.role}</span>
@@ -157,18 +164,20 @@ export default function BlogDetail({ post }: BlogDetailProps) {
           </motion.div>
         </header>
 
-        {/* Hero Cover Image */}
-        <div className="relative rounded-3xl overflow-hidden shadow-lg mb-12 border border-gray-200 h-[400px] sm:h-[480px]">
-          <Image 
-            src={post.coverImage} 
-            alt={post.title} 
-            fill
-            sizes="(max-width: 1280px) 100vw, 1200px"
-            priority
-            itemProp="image"
-            className="object-cover"
-          />
-        </div>
+        {/* Hero Cover Image (only when available from API) */}
+        {post.coverImage && (
+          <div className="relative rounded-3xl overflow-hidden shadow-lg mb-12 border border-gray-200 h-[400px] sm:h-[480px]">
+            <Image 
+              src={post.coverImage} 
+              alt={post.title} 
+              fill
+              sizes="(max-width: 1280px) 100vw, 1200px"
+              priority
+              itemProp="image"
+              className="object-cover"
+            />
+          </div>
+        )}
 
         {/* Key Takeaways Card */}
         {post.keyTakeaways && post.keyTakeaways.length > 0 && (
@@ -281,14 +290,20 @@ export default function BlogDetail({ post }: BlogDetailProps) {
 
         {/* Author Bio Footer Box */}
         <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-16">
-          <Image 
-            src={post.author.avatar} 
-            alt={post.author.name}
-            width={64}
-            height={64}
-            sizes="64px"
-            className="w-16 h-16 min-w-[64px] min-h-[64px] rounded-full object-cover border-2 border-[#0a5c48]/30 shrink-0 aspect-square" 
-          />
+          {post.author.avatar ? (
+            <Image 
+              src={post.author.avatar} 
+              alt={post.author.name}
+              width={64}
+              height={64}
+              sizes="64px"
+              className="w-16 h-16 min-w-[64px] min-h-[64px] rounded-full object-cover border-2 border-[#0a5c48]/30 shrink-0 aspect-square" 
+            />
+          ) : (
+            <div className="w-16 h-16 min-w-[64px] min-h-[64px] rounded-full bg-[#0a5c48]/10 text-[#0a5c48] flex items-center justify-center font-bold text-xl shrink-0 border border-[#0a5c48]/20 aspect-square">
+              {post.author.name?.[0]?.toUpperCase() || 'S'}
+            </div>
+          )}
           <div>
             <span className="text-xs font-bold text-[#0a5c48] uppercase tracking-wider block mb-1">Written By</span>
             <h4 className="text-[25px] font-bold text-gray-900 mb-1 leading-snug">{post.author.name}</h4>
@@ -299,42 +314,48 @@ export default function BlogDetail({ post }: BlogDetailProps) {
           </div>
         </div>
 
-        {/* Related Articles Grid */}
-        <div>
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-[25px] font-bold text-gray-900 leading-tight">Related Insights & Articles</h3>
-            <Link href="/blog" className="text-xs font-bold text-[#0a5c48] hover:underline flex items-center gap-1">
-              View All <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {relatedPosts.map(rel => (
-              <Link 
-                key={rel.id} 
-                href={`/blog/${rel.slug}`}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all group"
-              >
-                <div className="h-36 overflow-hidden bg-gray-100">
-                  <img 
-                    src={rel.coverImage} 
-                    alt={rel.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                  />
-                </div>
-                <div className="p-4">
-                  <span className="text-[10px] font-bold text-[#0a5c48] uppercase tracking-wider block mb-1">
-                    {rel.category}
-                  </span>
-                  <h4 className="text-[16px] font-bold text-gray-900 group-hover:text-[#0a5c48] transition-colors line-clamp-2 mb-2">
-                    {rel.title}
-                  </h4>
-                  <span className="text-xs text-gray-400 font-medium">{rel.readTime}</span>
-                </div>
+        {/* Related Articles Grid (API only) */}
+        {related.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-[25px] font-bold text-gray-900 leading-tight">Related Insights & Articles</h3>
+              <Link href="/blog" className="text-xs font-bold text-[#0a5c48] hover:underline flex items-center gap-1">
+                View All <ChevronRight className="w-4 h-4" />
               </Link>
-            ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {related.map(rel => (
+                <Link 
+                  key={rel.id} 
+                  href={`/blog/${rel.slug}`}
+                  className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all group"
+                >
+                  <div className="h-36 overflow-hidden bg-gray-100 flex items-center justify-center">
+                    {rel.coverImage ? (
+                      <img 
+                        src={rel.coverImage} 
+                        alt={rel.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                      />
+                    ) : (
+                      <BookOpen className="w-8 h-8 text-[#0a5c48]/30" />
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <span className="text-[10px] font-bold text-[#0a5c48] uppercase tracking-wider block mb-1">
+                      {rel.category}
+                    </span>
+                    <h4 className="text-[16px] font-bold text-gray-900 group-hover:text-[#0a5c48] transition-colors line-clamp-2 mb-2">
+                      {rel.title}
+                    </h4>
+                    <span className="text-xs text-gray-400 font-medium">{rel.readTime}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
       </div>
     </article>

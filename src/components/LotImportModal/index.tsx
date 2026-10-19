@@ -47,7 +47,7 @@ const step1Schema = z.object({
       if (!file) return false;
       const res = validateManifestUpload(file);
       return res.valid;
-    }, { message: "Security Violation: Invalid or unsafe file format. Only safe .XLSX and .CSV under 10MB are permitted." })
+    }, { message: "Security Violation: Invalid or unsafe file format. Only safe .XLSX and .CSV files are permitted." })
 });
 
 const step2Schema = z.object({
@@ -532,6 +532,15 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
     return manifestData.reduce((acc, row) => acc + ((Number(row.qty) || 0) * (Number(row.msrp) || 0)), 0);
   }, [manifestData]);
 
+  // Manifest table pagination to prevent client-side DOM freeze on large files (e.g. 5,000+ SKUs)
+  const [manifestPage, setManifestPage] = useState(1);
+  const ITEMS_PER_PAGE = 50;
+  const totalManifestPages = Math.max(1, Math.ceil(manifestData.length / ITEMS_PER_PAGE));
+  const paginatedManifestItems = useMemo(() => {
+    const start = (manifestPage - 1) * ITEMS_PER_PAGE;
+    return manifestData.slice(start, start + ITEMS_PER_PAGE);
+  }, [manifestData, manifestPage]);
+
   // Dynamic country list
   const [countryOptions] = useState<LocationOption[]>(() => getGlobalCountries());
 
@@ -1010,6 +1019,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
           // Validation Passed cleanly!
           setManifestFile(selectedFile);
           setManifestData(parsedItems);
+          setManifestPage(1);
 
           // Set primary Category Allocation from manifest top category
           const categoriesList = Object.keys(categoryCountMap);
@@ -1217,13 +1227,11 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       data.append('key_brands_included', sanitizeInput(String(formData.keyBrands || '')));
 
       // --- 4. Warehouse Images & Media ---
-      // Send raw binary files via FormData under all recognized keys so backend receives actual UploadedFiles in request.FILES
+      // Send raw binary files via FormData without duplicate keys to avoid inflating upload size
       if (Array.isArray(mediaFiles) && mediaFiles.length > 0) {
         mediaFiles.forEach((file) => {
           if (file) {
             data.append('warehouse_images', file, file.name);
-            data.append('images', file, file.name);
-            data.append('media_files', file, file.name);
           }
         });
       }
@@ -1288,7 +1296,55 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       if (manifestFile) {
         data.append('manifest_file', manifestFile);
       }
-      data.append('manifest_items', JSON.stringify(manifestData || []));
+
+      // Compact manifest items: strip empty values and duplicate aliases to minimize request body size
+      const compactManifestItems = (manifestData || []).map((item, idx) => {
+        const compact: Record<string, any> = {
+          id: item.id || idx + 1,
+          sku: item.sku || item.s_no || `SKU-${idx + 1}`,
+          title: item.title || item.product_name || item.name || '',
+          qty: Number(item.qty ?? item.quantity ?? item.available_quantity) || 0,
+        };
+
+        const desc = item.description || item.product_description || item.notes;
+        if (desc && typeof desc === 'string' && desc.trim()) compact.description = desc.trim();
+
+        const cat = item.category || item.product_category;
+        if (cat && typeof cat === 'string' && cat.trim()) compact.category = cat.trim();
+
+        if (item.subcategory && typeof item.subcategory === 'string' && item.subcategory.trim()) {
+          compact.subcategory = item.subcategory.trim();
+        }
+
+        const brand = item.brand || item.manufacturer;
+        if (brand && typeof brand === 'string' && brand.trim()) compact.brand = brand.trim();
+
+        const model = item.model || item.model_part_number;
+        if (model && typeof model === 'string' && model.trim()) compact.model = model.trim();
+
+        const msrp = item.msrp ?? item.original_price;
+        if (msrp !== undefined && msrp !== null && Number(msrp) > 0) compact.msrp = Number(msrp);
+
+        const price = item.askPrice ?? item.asking_price ?? item.price;
+        if (price !== undefined && price !== null && Number(price) > 0) compact.price = Number(price);
+
+        const country = item.country_of_origin || item.country;
+        if (country && typeof country === 'string' && country.trim()) compact.country = country.trim();
+
+        const year = item.year_of_manufacture || item.year;
+        if (year && String(year).trim()) compact.year = String(year).trim();
+
+        const weight = item.gross_weight_per_unit || item.weight;
+        if (weight && String(weight).trim()) compact.weight = String(weight).trim();
+
+        if (item.condition && typeof item.condition === 'string' && item.condition.trim() && item.condition !== 'New') {
+          compact.condition = item.condition.trim();
+        }
+
+        return compact;
+      });
+
+      data.append('manifest_items', JSON.stringify(compactManifestItems));
       
       const endpoint = '/api/submit-lot-request/';
 
@@ -1342,10 +1398,27 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
         let errorMessage = 'Failed to submit lot. Please try again.';
         try {
           const errData = await response.json();
-          errorMessage = errData.message || JSON.stringify(errData) || errorMessage;
+          if (typeof errData === 'string') {
+            errorMessage = errData;
+          } else if (errData.message) {
+            errorMessage = errData.message;
+          } else if (errData.error) {
+            errorMessage = errData.error;
+          } else {
+            errorMessage = JSON.stringify(errData);
+          }
         } catch (e) {
-          errorMessage = `Server Error (${response.status}): ${response.statusText}`;
+          if (response.status === 413) {
+            errorMessage = 'Payload Too Large (413): The manifest or media files exceed the server upload limit.';
+          } else {
+            errorMessage = `Server Error (${response.status}): ${response.statusText}`;
+          }
         }
+
+        if (errorMessage.includes('DATA_UPLOAD_MAX_MEMORY_SIZE') || errorMessage.includes('RequestDataTooBig')) {
+          errorMessage = 'The manifest request body exceeded the server limit. Please ensure DATA_UPLOAD_MAX_MEMORY_SIZE is configured in the backend settings.py.';
+        }
+
         setSubmitError(errorMessage);
         setIsSubmitting(false);
       }
@@ -1432,7 +1505,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                   {manifestFile ? manifestFile.name : 'Click to browse or drag & drop'}
                 </span>
                 <span className="text-sm mt-1 text-gray-500">
-                  {manifestFile ? 'File verified and ready' : 'Supports .XLSX and .CSV up to 10MB'}
+                  {manifestFile ? 'File verified and ready' : 'Supports .XLSX and .CSV (any file size)'}
                 </span>
               </label>
               
@@ -1522,7 +1595,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                          {manifestData.map((item) => (
+                          {paginatedManifestItems.map((item) => (
                             <tr key={item.id} className="hover:bg-gray-50/70 transition-colors group">
                               <td className="px-4 py-2.5 font-mono text-gray-600">{item.sku}</td>
                               <td className="px-4 py-2.5 font-bold text-gray-900 max-w-[200px] truncate" title={item.title}>{item.title}</td>
@@ -1563,6 +1636,36 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                         </tbody>
                       </table>
                     </div>
+
+                    {/* Pagination controls for large manifests */}
+                    {manifestData.length > ITEMS_PER_PAGE && (
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-gray-50 border-t border-gray-200">
+                        <span className="text-xs text-gray-600 font-medium">
+                          Showing <strong className="text-gray-900">{((manifestPage - 1) * ITEMS_PER_PAGE) + 1}</strong> to <strong className="text-gray-900">{Math.min(manifestPage * ITEMS_PER_PAGE, manifestData.length)}</strong> of <strong className="text-[#0a5c48]">{manifestData.length.toLocaleString()}</strong> parsed SKUs
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setManifestPage(p => Math.max(1, p - 1))}
+                            disabled={manifestPage === 1}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-xs"
+                          >
+                            Previous
+                          </button>
+                          <span className="text-xs text-gray-600 px-2 font-mono">
+                            Page {manifestPage} of {totalManifestPages}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setManifestPage(p => Math.min(totalManifestPages, p + 1))}
+                            disabled={manifestPage === totalManifestPages}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-xs"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

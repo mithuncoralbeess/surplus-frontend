@@ -16,7 +16,7 @@ export interface FileValidationResult {
 }
 
 export interface FileValidationOptions {
-  maxSizeBytes?: number; // Default: 5MB for images, 10MB for documents
+  maxSizeBytes?: number | null; // Set to null for unlimited file size
   allowedExtensions?: string[];
   allowedMimeTypes?: string[];
   preventDoubleExtension?: boolean;
@@ -94,14 +94,16 @@ export function validateFileUpload(
 
   const fileName = file.name || '';
   const sanitized = sanitizeFileName(fileName);
-  const maxSizeBytes = options.maxSizeBytes || 10 * 1024 * 1024; // Default 10MB
+  const maxSizeBytes: number | null = (options.maxSizeBytes !== undefined) 
+    ? options.maxSizeBytes 
+    : 10 * 1024 * 1024; // Default 10MB unless null
 
   // 1. File Size Validation
   if (file.size <= 0) {
     return { valid: false, error: 'File is empty or corrupted (0 bytes).' };
   }
 
-  if (file.size > maxSizeBytes) {
+  if (typeof maxSizeBytes === 'number' && file.size > maxSizeBytes) {
     const maxMb = (maxSizeBytes / (1024 * 1024)).toFixed(1);
     return {
       valid: false,
@@ -181,11 +183,11 @@ export function validateImageUpload(file: File): FileValidationResult {
 }
 
 /**
- * Validates inventory manifest document (Max 10MB, CSV/XLSX/PDF only)
+ * Validates inventory manifest document (Any size allowed, CSV/XLSX/PDF only)
  */
 export function validateManifestUpload(file: File): FileValidationResult {
   return validateFileUpload(file, {
-    maxSizeBytes: 10 * 1024 * 1024, // 10MB max
+    maxSizeBytes: null, // Unlimited: Excel sheet can be any size
     allowedExtensions: SAFE_DOCUMENT_EXTENSIONS,
     allowedMimeTypes: SAFE_DOCUMENT_MIME_TYPES,
     preventDoubleExtension: true,

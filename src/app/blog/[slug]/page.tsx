@@ -1,6 +1,5 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { MOCK_BLOG_POSTS } from '../../../data/blogData';
 import { getBlogs, getBlogBySlug } from '../../../services/blogService';
 import BlogDetail from '../../../widgets/BlogDetail';
 import { Metadata } from 'next';
@@ -56,20 +55,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       publishedTime: post.publishedAt,
       authors: [post.author.name],
       tags: post.tags,
-      images: [
-        {
-          url: post.coverImage,
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        },
-      ],
+      ...(post.coverImage ? {
+        images: [
+          {
+            url: post.coverImage,
+            width: 1200,
+            height: 630,
+            alt: post.title,
+          },
+        ],
+      } : {}),
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description: post.excerpt,
-      images: [post.coverImage],
+      ...(post.coverImage ? { images: [post.coverImage] } : {}),
     },
   };
 }
@@ -82,22 +83,26 @@ export default async function BlogDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  // Fetch API blogs for related articles
+  const allPosts = await getBlogs();
+  const relatedPosts = allPosts.filter(p => p.id !== post.id && p.slug !== post.slug).slice(0, 3);
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://surplusmarket.com';
   const canonicalUrl = `${siteUrl}/blog/${post.slug}`;
 
   // JSON-LD BlogPosting Schema
-  const blogPostingSchema = {
+  const blogPostingSchema: Record<string, any> = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: post.title,
     description: post.excerpt,
-    image: [post.coverImage],
+    ...(post.coverImage ? { image: [post.coverImage] } : {}),
     datePublished: post.publishedAt,
     author: {
       '@type': 'Person',
       name: post.author.name,
       jobTitle: post.author.role,
-      image: post.author.avatar,
+      ...(post.author.avatar ? { image: post.author.avatar } : {}),
     },
     publisher: {
       '@type': 'Organization',
@@ -173,7 +178,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
         />
       )}
 
-      <BlogDetail post={post} />
+      <BlogDetail post={post} relatedPosts={relatedPosts} />
     </main>
   );
 }

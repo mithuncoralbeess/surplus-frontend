@@ -28,14 +28,16 @@ const CommonBanner: React.FC<CommonBannerProps> = ({
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a1f]/95 via-[#0d2a1f]/80 to-transparent z-10"></div>
-        <Image 
-          src={image} 
-          alt={title || "Banner background"} 
-          fill
-          sizes="100vw"
-          priority
-          className="object-cover opacity-50 mix-blend-luminosity"
-        />
+        {image && image.trim() !== '' && (
+          <Image 
+            src={image} 
+            alt={title || "Banner background"} 
+            fill
+            sizes="100vw"
+            priority
+            className="object-cover opacity-50 mix-blend-luminosity"
+          />
+        )}
       </div>
 
       <div className={`container mx-auto px-4 lg:px-8 max-w-[1600px] relative z-20 ${align === 'center' ? 'text-center flex flex-col items-center' : 'text-left'}`}>

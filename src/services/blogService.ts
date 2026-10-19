@@ -1,4 +1,4 @@
-import { BlogPost, MOCK_BLOG_POSTS } from '../data/blogData';
+import { BlogPost } from '../data/blogData';
 import { apiClient } from './apiClient';
 
 
@@ -126,25 +126,14 @@ export function stripFaqFromContent(content: string): string {
 
 export function fixContentImageUrls(content: string): string {
   if (!content) return '';
-  const fallbackImg = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1200&q=80';
-
-  // 1. Rewrite media URLs to relative /media/...
-  let fixed = content.replace(/src=["'](?:https?:\/\/[^\/]+)?\/media\/([^"']+)["']/gi, (match, path) => {
-    return `src="/media/${path}" onerror="this.onerror=null;this.src='${fallbackImg}';"`;
-  });
-
-  // 2. Add fallback onerror to any other <img> tag missing an error handler
-  fixed = fixed.replace(/<img\s+(?![^>]*\bonerror=)([^>]+)>/gi, (match, p1) => {
-    return `<img ${p1} onerror="this.onerror=null;this.src='${fallbackImg}';">`;
-  });
-
-  return fixed;
+  // Normalize any backend host prefix to relative /media/ path without injecting static fallbacks
+  return content.replace(/src=["'](?:https?:\/\/[^\/]+)?\/media\/([^"']+)["']/gi, 'src="/media/$1"');
 }
 
 export function mapApiBlogToBlogPost(apiPost: ApiBlogPost): BlogPost {
   const authorName = apiPost.author?.name || apiPost.author_name || 'Surplus Market Team';
   const authorRole = apiPost.author?.role || apiPost.author_role || 'Supply Chain Specialist';
-  const authorAvatar = apiPost.author?.avatar || apiPost.author_avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80';
+  const authorAvatar = apiPost.author?.avatar || apiPost.author_avatar || '';
 
   let coverImage =
     apiPost.coverImage ||
@@ -153,12 +142,10 @@ export function mapApiBlogToBlogPost(apiPost: ApiBlogPost): BlogPost {
     apiPost.image_url ||
     apiPost.featured_image_url ||
     apiPost.featured_image ||
+    (apiPost as any).absolute_image_url ||
     '';
   if (coverImage && coverImage.includes('/media/')) {
     coverImage = coverImage.substring(coverImage.indexOf('/media/'));
-  }
-  if (!coverImage) {
-    coverImage = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1600&q=80';
   }
 
   let tagsArray: string[] = [];
@@ -211,7 +198,7 @@ export function mapApiBlogToBlogPost(apiPost: ApiBlogPost): BlogPost {
 
 /**
  * Fetch all blogs from API: GET /api/blogs/
- * Cached with 5-minute TTL and fallback to local posts.
+ * Cached with 5-minute TTL - uses API data only.
  */
 export async function getBlogs(): Promise<BlogPost[]> {
   try {
@@ -221,7 +208,7 @@ export async function getBlogs(): Promise<BlogPost[]> {
     });
 
     if (!res.success || !res.data) {
-      return MOCK_BLOG_POSTS;
+      return [];
     }
 
     const json = res.data;
@@ -240,19 +227,19 @@ export async function getBlogs(): Promise<BlogPost[]> {
     }
 
     if (rawPosts.length === 0) {
-      return MOCK_BLOG_POSTS;
+      return [];
     }
 
     return rawPosts.map(mapApiBlogToBlogPost);
   } catch (error) {
     console.warn('[Blog API] Network error fetching blogs:', error);
-    return MOCK_BLOG_POSTS;
+    return [];
   }
 }
 
 /**
  * Fetch a single blog by slug from API: GET /api/blogs/<slug>/
- * Cached with 5-minute TTL and fallback to local posts.
+ * Cached with 5-minute TTL - uses API data only.
  */
 export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
   try {
@@ -262,19 +249,19 @@ export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
     });
 
     if (!res.success || !res.data) {
-      return MOCK_BLOG_POSTS.find((p) => p.slug === slug) || null;
+      return null;
     }
 
     const json = res.data;
     const rawPost: ApiBlogPost = json.blog || json.data || json;
 
     if (!rawPost || !rawPost.title) {
-      return MOCK_BLOG_POSTS.find((p) => p.slug === slug) || null;
+      return null;
     }
 
     return mapApiBlogToBlogPost(rawPost);
   } catch (error) {
     console.warn(`[Blog API] Network error fetching blog detail for '${slug}':`, error);
-    return MOCK_BLOG_POSTS.find((p) => p.slug === slug) || null;
+    return null;
   }
 }

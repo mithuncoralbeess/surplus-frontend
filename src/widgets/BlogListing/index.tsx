@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion, Variants } from '../../lib/motion';
 import { Search, Clock, ArrowRight, Sparkles, Tag, ChevronRight, BookOpen } from 'lucide-react';
-import { MOCK_BLOG_POSTS, BLOG_CATEGORIES, BlogPost } from '../../data/blogData';
+import { BLOG_CATEGORIES, BlogPost } from '../../data/blogData';
 import { getBlogs } from '../../services/blogService';
 
 interface BlogListingProps {
@@ -30,7 +30,7 @@ const itemVariants: Variants = {
 };
 
 export default function BlogListing({ initialPosts }: BlogListingProps) {
-  const [posts, setPosts] = useState<BlogPost[]>(initialPosts || MOCK_BLOG_POSTS);
+  const [posts, setPosts] = useState<BlogPost[]>(initialPosts || []);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -72,15 +72,21 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
             className="mb-16 bg-white rounded-3xl border border-gray-200 shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
           >
             <div className="grid grid-cols-1 lg:grid-cols-12">
-              <div className="lg:col-span-7 relative h-72 sm:h-96 lg:h-auto min-h-[350px]">
-                <Image 
-                  src={featuredPost.coverImage} 
-                  alt={featuredPost.title} 
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 60vw"
-                  priority
-                  className="object-cover"
-                />
+              <div className="lg:col-span-7 relative h-72 sm:h-96 lg:h-auto min-h-[350px] bg-gray-100 flex items-center justify-center">
+                {featuredPost.coverImage ? (
+                  <Image 
+                    src={featuredPost.coverImage} 
+                    alt={featuredPost.title} 
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 60vw"
+                    priority
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full min-h-[350px] bg-gradient-to-br from-[#0a5c48]/15 via-emerald-50 to-gray-100 flex items-center justify-center text-[#0a5c48]">
+                    <BookOpen className="w-16 h-16 opacity-30" />
+                  </div>
+                )}
                 <div className="absolute top-4 left-4 bg-[#0a5c48] text-white px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md">
                   <Sparkles className="w-3.5 h-3.5" /> Featured Insights
                 </div>
@@ -109,14 +115,20 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
 
                 <div className="pt-6 border-t border-gray-100 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Image 
-                      src={featuredPost.author.avatar} 
-                      alt={featuredPost.author.name}
-                      width={40}
-                      height={40}
-                      sizes="40px"
-                      className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full object-cover border border-gray-200 shrink-0 aspect-square" 
-                    />
+                    {featuredPost.author.avatar ? (
+                      <Image 
+                        src={featuredPost.author.avatar} 
+                        alt={featuredPost.author.name}
+                        width={40}
+                        height={40}
+                        sizes="40px"
+                        className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full object-cover border border-gray-200 shrink-0 aspect-square" 
+                      />
+                    ) : (
+                      <div className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-[#0a5c48]/10 text-[#0a5c48] font-bold text-sm flex items-center justify-center shrink-0 border border-[#0a5c48]/20">
+                        {featuredPost.author.name?.[0]?.toUpperCase() || 'S'}
+                      </div>
+                    )}
                     <div>
                       <span className="block text-sm font-bold text-gray-900">{featuredPost.author.name}</span>
                       <span className="block text-xs text-gray-500">{featuredPost.publishedAt}</span>
@@ -195,14 +207,20 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
               >
                 <div>
                   {/* Card Image */}
-                  <div className="relative h-48 sm:h-52 overflow-hidden bg-gray-100">
-                    <Image 
-                      src={post.coverImage} 
-                      alt={post.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
+                  <div className="relative h-48 sm:h-52 overflow-hidden bg-gray-100 flex items-center justify-center">
+                    {post.coverImage ? (
+                      <Image 
+                        src={post.coverImage} 
+                        alt={post.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[#0a5c48]/10 via-emerald-50 to-gray-100 flex items-center justify-center text-[#0a5c48]">
+                        <BookOpen className="w-10 h-10 opacity-30" />
+                      </div>
+                    )}
                     <span className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm text-[#0a5c48] text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
                       {post.category}
                     </span>
@@ -233,14 +251,20 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
                 {/* Card Footer */}
                 <div className="px-5 sm:px-6 py-3.5 border-t border-gray-100 flex items-center justify-between mt-auto">
                   <div className="flex items-center gap-2.5">
-                    <Image 
-                      src={post.author.avatar} 
-                      alt={post.author.name}
-                      width={32}
-                      height={32}
-                      sizes="32px"
-                      className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full object-cover border border-gray-200 shrink-0 aspect-square" 
-                    />
+                    {post.author.avatar ? (
+                      <Image 
+                        src={post.author.avatar} 
+                        alt={post.author.name}
+                        width={32}
+                        height={32}
+                        sizes="32px"
+                        className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full object-cover border border-gray-200 shrink-0 aspect-square" 
+                      />
+                    ) : (
+                      <div className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-[#0a5c48]/10 text-[#0a5c48] font-bold text-xs flex items-center justify-center shrink-0 border border-[#0a5c48]/20">
+                        {post.author.name?.[0]?.toUpperCase() || 'S'}
+                      </div>
+                    )}
                     <span className="text-xs font-semibold text-gray-800">{post.author.name}</span>
                   </div>
 

@@ -40,7 +40,7 @@ export default async function BlogPage() {
         title="Market Insights & Supply Chain Intelligence"
         subtitle="Expert perspectives on excess inventory liquidation, ESG carbon reporting, circular economy models, and secondary market trends."
         align="center"
-        image="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2000&q=80"
+        image=""
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: 'Blog' }
