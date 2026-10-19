@@ -244,9 +244,9 @@ const LotCard: React.FC<LotCardProps> = ({
 
           <div className="h-px bg-slate-200/80 my-1" />
 
-          {/* Retail Value (MSRP) */}
+          {/* MSRP */}
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">Retail Value (MSRP)</span>
+            <span className="text-slate-500 font-medium">MSRP</span>
             <span suppressHydrationWarning className="font-semibold text-slate-500 line-through">
               {formatPrice(effectiveMsrp, currency)}
             </span>
@@ -268,7 +268,7 @@ const LotCard: React.FC<LotCardProps> = ({
         <div className="pt-3 border-t border-slate-100 flex items-end justify-between gap-3">
           <div>
             <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Wholesale Lot Price
+              Price
             </div>
             <div suppressHydrationWarning className="text-2xl sm:text-[26px] font-black text-[#0a5c48] tracking-tight leading-none mt-0.5">
               {formatPrice(effectivePrice, currency)}

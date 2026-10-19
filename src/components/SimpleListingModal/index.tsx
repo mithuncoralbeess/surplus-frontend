@@ -921,6 +921,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       data.append('quantity', sanitizeInput(formData.quantity));
       data.append('currency', sanitizeInput(formData.currency.substring(0, 3)));
       data.append('liquidating_price', sanitizeInput(formData.liquidatingPrice));
+      data.append('liquidation_price', sanitizeInput(formData.liquidatingPrice));
       data.append('msrp', sanitizeInput(formData.msrp));
       data.append('offer', String(pricingAnalysis.discountPercent || 0));
       data.append('excluded_countries', JSON.stringify(formData.excludedCountries.map(c => sanitizeInput(c))));
@@ -1279,13 +1280,13 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                         </p>
                       </div>
                       <div>
-                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Original MSRP</span>
+                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">MSRP</span>
                         <p className="text-xl font-bold text-gray-400 line-through">
                           {formData.currency.substring(0, 3)} {parseFloat(formData.msrp || '0').toFixed(2)}
                         </p>
                       </div>
                       <div>
-                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Your Surplus Price</span>
+                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Liquidation Price</span>
                         <p className="text-xl font-extrabold text-[#0a5c48]">
                           {formData.currency.substring(0, 3)} {parseFloat(formData.liquidatingPrice || '0').toFixed(2)}
                         </p>
@@ -1294,7 +1295,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Public Listing Price</span>
+                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Price</span>
                         <p className="text-xl font-extrabold text-blue-700">
                           {formData.currency.substring(0, 3)} {pricingAnalysis.publicPrice || (parseFloat(formData.liquidatingPrice || '0') * 1.10).toFixed(2)}
                         </p>
@@ -1802,7 +1803,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                       </div>
 
                       <div data-field="msrp">
-                        <label className={labelClass}>Original / Retail MSRP Price (Per Unit) *</label>
+                        <label className={labelClass}>MSRP (Per Unit) *</label>
                         <input
                           type="number"
                           step="0.01"
@@ -1816,7 +1817,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                       </div>
 
                       <div data-field="liquidatingPrice">
-                        <label className={labelClass}>Liquidating / Surplus Price (Per Unit) *</label>
+                        <label className={labelClass}>Liquidation Price (Per Unit) *</label>
                         <div className="relative flex items-center">
                           <input
                             type="number"

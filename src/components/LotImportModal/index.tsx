@@ -1286,6 +1286,8 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       data.append('total_retail', String(effectiveRetail));
       data.append('msrp', String(effectiveRetail));
       data.append('ask_price_surplus_payout', String(formData.askPrice || 0));
+      data.append('liquidation_price', String(formData.askPrice || 0));
+      data.append('liquidating_price', String(formData.askPrice || 0));
       data.append('asking_price', String(formData.askPrice || 0));
       data.append('price', String(formData.askPrice || 0));
       data.append('offer', discountVal > 0 ? `${discountVal}% Off MSRP` : '');
@@ -2237,7 +2239,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Total Est. Retail Value (MSRP) <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">MSRP <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
                           {pricingAnalysis.currSymbol === 'AED' ? 'AED' : pricingAnalysis.currSymbol === 'SAR' ? 'SAR' : '$'}
@@ -2256,7 +2258,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Ask Price (Surplus Payout) <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Liquidation Price (Surplus Payout) <span className="text-red-500">*</span></label>
                       <div className="relative flex items-center">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                           {pricingAnalysis.currSymbol === 'AED' ? 'AED' : pricingAnalysis.currSymbol === 'SAR' ? 'SAR' : '$'}
@@ -2551,17 +2553,17 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                           <span className="font-bold text-gray-900">{formData.currency}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Total Est. Retail Value (MSRP):</span>
+                          <span className="text-gray-600 font-medium">MSRP:</span>
                           <span className="font-bold text-gray-900">{pricingAnalysis.currSymbol} {parseFloat(formData.msrp || '0').toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600 font-medium">Surplus Payout (Ask Price):</span>
+                          <span className="text-gray-600 font-medium">Liquidation Price:</span>
                           <span className="font-bold text-[#0a5c48] text-sm">{pricingAnalysis.currSymbol} {parseFloat(formData.askPrice || '0').toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                         {pricingAnalysis.hasAsk && (
                           <div className="flex justify-between items-center text-[11px] text-emerald-800 pt-1.5 border-t border-emerald-200/80 font-semibold">
                             <span>Liquidation Discount: {pricingAnalysis.discountPercent}% OFF MSRP</span>
-                            <span>Public List Price: {pricingAnalysis.currSymbol} {pricingAnalysis.publicPrice}</span>
+                            <span>Price: {pricingAnalysis.currSymbol} {pricingAnalysis.publicPrice}</span>
                           </div>
                         )}
                       </div>

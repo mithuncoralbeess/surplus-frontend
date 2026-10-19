@@ -8,7 +8,7 @@ import {
   ShieldCheck, Tag, CheckCircle2, 
   Truck, Send, AlertCircle, 
   Minus, Plus, ShoppingCart, Lock, ChevronRight, Check, Zap, Layers,
-  List, MapPin, FileText, Info
+  List, MapPin, Globe, FileText, Info
 } from 'lucide-react';
 import { catalogService, ProductItem } from '../../services/catalogService';
 import { inquiryService } from '../../services/inquiryService';
@@ -494,10 +494,19 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
                     </span>
                   </div>
 
-                  {Boolean(product.inventory_location || product.location) && (
+                  {Boolean(product.inventory_location || product.location || product.inventory_country || product.country) && (
                     <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-800 font-bold">
                       <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
-                      <span>{product.inventory_location || product.location}</span>
+                      <span>
+                        {(() => {
+                          const loc = product.inventory_location || product.location || '';
+                          const country = product.inventory_country || product.country || '';
+                          if (loc && country && !loc.toLowerCase().includes(country.toLowerCase())) {
+                            return `${loc}, ${country}`;
+                          }
+                          return loc || country;
+                        })()}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -506,7 +515,7 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
               {/* Dynamic Price Banner */}
               <div className="bg-[#f8faf9] p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Wholesale Liquidation Price</div>
+                  <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Price</div>
                   <div className="flex items-baseline gap-2.5 sm:gap-3 flex-wrap">
                     <span suppressHydrationWarning className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0f7a61]">
                       {formatPrice(unitPrice, currencyCode)}
@@ -526,7 +535,7 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
                   </div>
                   {product.liquidatingPrice && product.liquidatingPrice !== unitPrice && (
                     <div className="text-xs sm:text-sm font-semibold text-gray-700 mt-2 flex items-center gap-1.5 flex-wrap">
-                      <span>Liquidation Floor:</span>
+                      <span>Liquidation Price:</span>
                       <strong suppressHydrationWarning className="font-black text-gray-900">{formatPrice(product.liquidatingPrice, currencyCode)}</strong>
                     </div>
                   )}
@@ -952,6 +961,19 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6">
+                    {/* Inventory Country */}
+                    {Boolean(product.inventory_country || product.country) && (
+                      <div className="bg-white border border-gray-200/90 shadow-xs rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+                        <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+                          INVENTORY COUNTRY
+                        </span>
+                        <span className="text-xs sm:text-sm md:text-base font-extrabold text-gray-900 flex items-center gap-1.5">
+                          <Globe className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>{product.inventory_country || product.country}</span>
+                        </span>
+                      </div>
+                    )}
+
                     {/* Inventory Location */}
                     {Boolean(product.inventory_location || product.location) && (
                       <div className="bg-white border border-gray-200/90 shadow-xs rounded-2xl p-4 sm:p-5 flex flex-col justify-between">

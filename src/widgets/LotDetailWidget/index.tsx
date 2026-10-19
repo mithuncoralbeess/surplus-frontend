@@ -354,10 +354,21 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                 </h1>
                 
                 <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-600 flex-wrap">
-                  <div className="flex items-center gap-1.5 font-bold text-gray-800">
-                    <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
-                    <span>{location}</span>
-                  </div>
+                  {Boolean(lot.inventory_country || (lot as any).country) && (
+                    <div className="flex items-center gap-1.5 font-bold text-gray-800">
+                      <Globe className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{lot.inventory_country || (lot as any).country}</span>
+                    </div>
+                  )}
+                  {Boolean(lot.inventory_location || lot.location) && (
+                    <>
+                      {Boolean(lot.inventory_country || (lot as any).country) && <span>•</span>}
+                      <div className="flex items-center gap-1.5 font-bold text-gray-800">
+                        <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
+                        <span>{lot.inventory_location || lot.location}</span>
+                      </div>
+                    </>
+                  )}
                   <span>•</span>
                   <div className="flex items-center gap-1.5 font-medium">
                     <Box className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -374,7 +385,7 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
               {/* Price Box */}
               <div className="bg-[#f8faf9] p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-emerald-100 flex flex-col justify-center gap-2">
                 <div className="flex items-center justify-between">
-                  <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">Lot Liquidation Price</div>
+                  <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">Price</div>
                   {buyerSavings > 0 && (
                     <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/70 px-2.5 py-0.5 rounded-full">
                       Buyer Saves: {formatPrice(buyerSavings, currencyCode)}
@@ -387,7 +398,7 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                   </span>
                   {msrp > price && (
                     <span suppressHydrationWarning className="text-sm sm:text-base text-gray-500 line-through font-semibold">
-                      Est. MSRP {formatPrice(msrp, currencyCode)}
+                      MSRP {formatPrice(msrp, currencyCode)}
                     </span>
                   )}
                   {offer && (
@@ -397,6 +408,12 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                     </span>
                   )}
                 </div>
+                {Boolean(lot.ask_price_surplus_payout && Number(lot.ask_price_surplus_payout) > 0 && Number(lot.ask_price_surplus_payout) !== price) && (
+                  <div className="text-xs sm:text-sm font-semibold text-gray-700 mt-1 flex items-center gap-1.5 flex-wrap">
+                    <span>Liquidation Price:</span>
+                    <strong suppressHydrationWarning className="font-black text-gray-900">{formatPrice(Number(lot.ask_price_surplus_payout), currencyCode)}</strong>
+                  </div>
+                )}
                 {unitCost > 0 && (
                   <div className="text-xs text-gray-500 font-medium pt-1">
                     Effective Unit Cost: <strong className="text-gray-900 font-bold">{formatPrice(unitCost, currencyCode)}</strong> / unit ({units} total units)
@@ -588,6 +605,24 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
 
           {/* Logistics & Provenance Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 pt-2">
+            {Boolean(lot.inventory_country || (lot as any).country) && (
+              <div className="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+                <span className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Inventory Country</span>
+                <span className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1">
+                  <Globe className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>{lot.inventory_country || (lot as any).country}</span>
+                </span>
+              </div>
+            )}
+            {Boolean(lot.inventory_location || lot.location) && (
+              <div className="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+                <span className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Inventory Location</span>
+                <span className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                  <span>{lot.inventory_location || lot.location}</span>
+                </span>
+              </div>
+            )}
             <div className="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
               <span className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Source Type</span>
               <span className="text-xs sm:text-sm font-bold text-gray-900">{lot.source_type || 'Overstock'}</span>

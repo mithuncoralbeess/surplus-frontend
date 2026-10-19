@@ -11,6 +11,8 @@ export interface ProductItem {
   model?: string;
   condition?: string;
   price: number;
+  liquidating_price?: number;
+  liquidation_price?: number;
   liquidatingPrice?: number;
   currentPrice?: number;
   originalPrice?: number;
@@ -31,6 +33,9 @@ export interface ProductItem {
   sku?: string;
   location?: string;
   inventory_location?: string;
+  inventory_country?: string;
+  inventory_city?: string;
+  country?: string;
   manufacturing_country?: string;
   manufacturing_year?: string | number;
   dimensions?: string;
@@ -69,6 +74,8 @@ export interface LotItem {
   msrp: number;
   total_est_retail_value_msrp?: number;
   price: number;
+  liquidation_price?: number;
+  liquidating_price?: number;
   ask_price_surplus_payout?: number;
   offer?: string;
   location: string;
@@ -183,11 +190,11 @@ export function sanitizeImageUrl(url: any): string {
 }
 
 export function mapApiProductToProductItem(item: any, index: number): ProductItem {
-  const liquidatingPrice = Number(item.liquidating_price || item.liquidatingPrice || 0);
-  const currentPrice = Number(item.current_price || item.price || item.asking_price || item.unit_price || item.priceUsd || liquidatingPrice || 0);
-  const previousPrice = Number(item.previous_price || item.originalPrice || item.msrp || item.retail_price || 0);
-  const msrpPrice = Number(item.msrp || item.originalPrice || 0);
-  const price = currentPrice || liquidatingPrice || previousPrice || 0;
+  const liquidatingPrice = Number(item.liquidating_price || item.liquidation_price || item.liquidatingPrice || 0);
+  const msrpPrice = Number(item.msrp || item.originalPrice || item.previous_price || 0);
+  const price = Number(item.price || item.current_price || (liquidatingPrice ? Number((liquidatingPrice * 1.10).toFixed(2)) : 0));
+  const previousPrice = msrpPrice;
+  const currentPrice = price;
 
   let rawImages: string[] = [];
   if (Array.isArray(item.images) && item.images.length > 0) {
@@ -209,7 +216,17 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
   const subCategoryName = extractStringValue(item.subcategory || item.subCategory, '');
   const brandName = extractStringValue(item.brand_name || item.brand || item.manufacturer, '');
   const conditionName = extractStringValue(item.condition || item.stock_condition, 'Brand New Surplus');
-  const locationName = extractStringValue(item.inventory_location || item.location || item.country, '');
+  
+  const inventoryCountry = extractStringValue(item.inventory_country || item.country, '');
+  const inventoryCity = extractStringValue(item.inventory_city || item.city, '');
+  const rawLocation = extractStringValue(item.inventory_location || item.location, '');
+  let resolvedLocation = rawLocation;
+  if (!resolvedLocation && inventoryCity && inventoryCountry) {
+    resolvedLocation = `${inventoryCity}, ${inventoryCountry}`;
+  } else if (!resolvedLocation && (inventoryCity || inventoryCountry)) {
+    resolvedLocation = inventoryCity || inventoryCountry;
+  }
+  const locationName = resolvedLocation;
 
   const rawOffer = item.offer !== undefined && item.offer !== null && String(item.offer).trim() !== '' ? String(item.offer).trim() : undefined;
   const discountVal = previousPrice > price ? Math.round(((previousPrice - price) / previousPrice) * 100) : (msrpPrice > price ? Math.round(((msrpPrice - price) / msrpPrice) * 100) : 0);
@@ -243,8 +260,10 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
     model: item.model_no || item.model || item.part_no || '',
     condition: conditionName,
     price: price,
+    liquidating_price: liquidatingPrice || price,
+    liquidation_price: liquidatingPrice || price,
     liquidatingPrice: liquidatingPrice || price,
-    currentPrice: currentPrice || price,
+    currentPrice: price,
     originalPrice: previousPrice > price ? previousPrice : (msrpPrice > price ? msrpPrice : undefined),
     previousPrice: previousPrice > 0 ? previousPrice : (msrpPrice > 0 ? msrpPrice : undefined),
     msrp: msrpPrice > 0 ? msrpPrice : undefined,
@@ -262,7 +281,10 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
     offer: offerTag,
     location: locationName,
     inventory_location: locationName,
-    manufacturing_country: item.manufacturing_country || item.country || '',
+    inventory_country: inventoryCountry,
+    inventory_city: inventoryCity,
+    country: inventoryCountry,
+    manufacturing_country: item.manufacturing_country || '',
     manufacturing_year: item.manufacturing_year || item.mfg_year || item.year || '',
     dimensions: item.dimensions || '',
     expiry_date: item.expiry_date || item.expiry || null,
@@ -285,12 +307,11 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
 export function mapApiLotToLotItem(raw: any, index: number): LotItem {
   const item = raw?.lot || raw?.data || raw || {};
   
-  const price = Number(
-    item.price ||
-    item.asking_price ||
+  const liquidationPrice = Number(
+    item.liquidation_price ||
+    item.liquidating_price ||
     item.ask_price_surplus_payout ||
-    item.total_price ||
-    item.priceUsd ||
+    item.asking_price ||
     0
   );
   
@@ -300,6 +321,13 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     item.total_retail ||
     item.retail_price ||
     0
+  );
+  
+  const price = Number(
+    item.price ||
+    item.total_price ||
+    item.priceUsd ||
+    (liquidationPrice ? Number((liquidationPrice * 1.10).toFixed(2)) : 0)
   );
   
   let image = item.image || item.image_url || item.photo || item.thumbnail || '';
@@ -410,8 +438,10 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     number_of_distinct_skus: distinctSkus,
     msrp: msrp,
     total_est_retail_value_msrp: msrp,
-    price: price,
-    ask_price_surplus_payout: price,
+    price: price || liquidationPrice,
+    liquidation_price: liquidationPrice || price,
+    liquidating_price: liquidationPrice || price,
+    ask_price_surplus_payout: liquidationPrice || price,
     offer: lotOfferTag,
     location: locationName,
     inventory_location: locationName,
@@ -782,6 +812,8 @@ export const catalogService = {
       ...payload,
       title: payload.lot_title,
       price: askingPrice,
+      liquidation_price: askingPrice,
+      liquidating_price: askingPrice,
       asking_price: askingPrice,
       ask_price_surplus_payout: askingPrice,
       msrp: retailMsrp,
