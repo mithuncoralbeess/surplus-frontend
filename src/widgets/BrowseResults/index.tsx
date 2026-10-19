@@ -17,6 +17,7 @@ import { slugify } from '../../lib/slugs';
 import WhatsAppAlertBanner from '../../components/WhatsAppAlertBanner';
 import ProductCard from '../../components/ProductCard';
 import LotCard from '../../components/LotCard';
+import BrowseSourcingDesk from '../BrowseSourcingDesk';
 
 const BrowseResults = () => {
   const router = useRouter();
@@ -297,28 +298,12 @@ const BrowseResults = () => {
             })}
           </div>
         ) : (
-          /* EMPTY SEARCH RESULTS STATE */
-          <div className="bg-white rounded-3xl border border-gray-200/90 p-8 md:p-12 text-center shadow-xs max-w-xl mx-auto my-6">
-            <div className="w-16 h-16 bg-emerald-50 text-[#0f7a61] rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <PackageOpen className="w-8 h-8" />
-            </div>
-
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              No products or lots found for &quot;{trimmedQuery}&quot;
-            </h3>
-            <p className="text-gray-500 text-sm max-w-md mx-auto mb-6">
-              We couldn&apos;t find any verified inventory matching your search. Try using broader keywords or checking spelling.
-            </p>
-
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => router.push('/contact')}
-                className="px-5 py-2.5 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full text-xs font-bold transition-colors cursor-pointer"
-              >
-                Request Custom Sourcing
-              </button>
-            </div>
+          /* EMPTY SEARCH RESULTS STATE: B2B FAST SOURCING DESK WIDGET */
+          <div className="my-6">
+            <BrowseSourcingDesk
+              searchQuery={trimmedQuery}
+              onCategorySelect={(category) => router.push(`/browse?q=${encodeURIComponent(category)}`)}
+            />
           </div>
         )}
 

@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { Metadata } from 'next';
 import BrowseSearchBanner from '../../widgets/BrowseSearchBanner';
 import BrowseResults from '../../widgets/BrowseResults';
+import BrowseSourcingDesk from '../../widgets/BrowseSourcingDesk';
 
 export const metadata: Metadata = {
   title: "Browse Surplus Inventory & Wholesale Lots | Surplus Market",
@@ -21,3 +22,6 @@ export default function BrowsePage() {
     </div>
   );
 }
+
+export { BrowseSourcingDesk };
+
