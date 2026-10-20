@@ -46,7 +46,7 @@ export default function BuyFeaturedLots() {
     setMounted(true);
   }, []);
 
-  const [purchaseMode, setPurchaseMode] = useState<'lot' | 'product'>('lot');
+  const [purchaseMode, setPurchaseMode] = useState<'lot' | 'product'>('product');
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [debouncedSearch, setDebouncedSearch] = useState<string>('');
@@ -164,6 +164,10 @@ export default function BuyFeaturedLots() {
           search: querySearch
         });
         setProducts(data);
+        // Pre-fetch lots count for the toggle badge if empty
+        if (lots.length === 0) {
+          catalogService.getLots().then(l => setLots(Array.isArray(l) ? l : [])).catch(() => {});
+        }
       } catch (err) {
         console.warn('[BuyFeaturedLots] Error fetching dynamic products:', err);
         setProducts([]);
@@ -177,6 +181,10 @@ export default function BuyFeaturedLots() {
           search: querySearch
         });
         setLots(Array.isArray(data) ? data : []);
+        // Pre-fetch products count for the toggle badge if empty
+        if (products.length === 0) {
+          catalogService.getProducts().then(p => setProducts(Array.isArray(p) ? p : [])).catch(() => {});
+        }
       } catch (err) {
         console.warn('[BuyFeaturedLots] Error fetching dynamic lots:', err);
         setLots([]);
@@ -184,7 +192,7 @@ export default function BuyFeaturedLots() {
         setLoading(false);
       }
     }
-  }, [purchaseMode, selectedCategory, debouncedSearch]);
+  }, [purchaseMode, selectedCategory, debouncedSearch, lots.length, products.length]);
 
   useEffect(() => {
     fetchData();

@@ -2,10 +2,12 @@ import type { NextConfig } from "next";
 
 const envBackendTarget = (
   process.env.BACKEND_API_URL ||
+  process.env.BACKEND_APT_URL ||
   process.env.INTERNAL_BACKEND_URL ||
   process.env.API_BASE_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
   process.env.NEXT_PUBLIC_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
   ''
 ).replace(/\/$/, '');
 
@@ -59,6 +61,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  skipTrailingSlashRedirect: true,
   images: {
     remotePatterns: [
       {
@@ -75,14 +78,22 @@ const nextConfig: NextConfig = {
     const backendTarget = envBackendTarget;
 
     if (!backendTarget) {
-      return { fallback: [] };
+      return [];
     }
 
     return {
       fallback: [
         {
+          source: '/api/:path*/',
+          destination: `${backendTarget}/api/:path*/`,
+        },
+        {
           source: '/api/:path*',
           destination: `${backendTarget}/api/:path*`,
+        },
+        {
+          source: '/categories/:path*/',
+          destination: `${backendTarget}/categories/:path*/`,
         },
         {
           source: '/categories/:path*',
@@ -93,8 +104,16 @@ const nextConfig: NextConfig = {
           destination: `${backendTarget}/media/:path*`,
         },
         {
+          source: '/submit-product-request/:path*/',
+          destination: `${backendTarget}/submit-product-request/:path*/`,
+        },
+        {
           source: '/submit-product-request/:path*',
           destination: `${backendTarget}/submit-product-request/:path*`,
+        },
+        {
+          source: '/submit-lot-request/:path*/',
+          destination: `${backendTarget}/submit-lot-request/:path*/`,
         },
         {
           source: '/submit-lot-request/:path*',
