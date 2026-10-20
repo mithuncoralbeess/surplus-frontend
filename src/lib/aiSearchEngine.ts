@@ -579,7 +579,7 @@ export function mapBackendProductToAiItem(p: any): AiSearchResultItem {
     img = prefix + img;
   }
   if (!img) {
-    img = 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80';
+    img = '';
   }
 
   const sku = p.product_id || p.model_no || (p.id ? 'PRO-' + p.id : 'PRO-SURPLUS');
@@ -631,7 +631,7 @@ function mapBackendLotToAiItem(lot: any): AiSearchResultItem {
 
   let img = lot.image || (Array.isArray(lot.warehouse_images) && lot.warehouse_images[0]) || (Array.isArray(lot.images) && lot.images[0]) || '';
   if (!img) {
-    img = 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?auto=format&fit=crop&w=1200&q=80';
+    img = '';
   }
 
   const sku = lot.lot_number || (lot.id ? `LOT-${lot.id}` : 'LOT-SURPLUS');
@@ -918,8 +918,15 @@ export async function fetchSemanticSearchResults(
     console.warn('Unified search error, checking local fallback:', err);
   }
 
-  // Fallback to client-side search engine if backend offline
-  const fallbackRes = performAiSearch(query, options);
-  return fallbackRes;
+  return {
+    query,
+    intent: { rawQuery: query, cleanedQuery: trimmed, confidence: 1 },
+    results: [],
+    totalCount: 0,
+    executionMs: Math.round((performance.now() - startTime) * 10) / 10,
+    mode: 'ai',
+    availableCategories: [],
+    priceRange: { min: 0, max: 0 }
+  };
 }
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShieldCheck, Tag, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Tag, CheckCircle2, Package } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
 import { createProductUrl } from '../../lib/slugs';
@@ -44,6 +44,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const { formatPrice } = useCurrency();
   const { addToCart, isInCart } = useCart();
   const [isRfqAdded, setIsRfqAdded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const inCart = id ? isInCart(id) : false;
 
@@ -147,13 +148,26 @@ const ProductCard: React.FC<ProductCardProps> = ({
         href={productLink}
         className="relative aspect-[3/2] w-full bg-gray-50 overflow-hidden cursor-pointer block"
       >
-        <Image
-          src={image}
-          alt={title}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1536px) 33vw, 25vw"
-          className="object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+        {image && !imageError ? (
+          <Image
+            src={image}
+            alt={title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1536px) 33vw, 25vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-50/60 to-gray-100/80 p-4 text-center select-none group-hover:scale-105 transition-transform duration-300">
+            <div className="w-12 h-12 rounded-2xl bg-white/90 border border-emerald-100 flex items-center justify-center shadow-xs mb-2 text-[#0f7a61]">
+              <Package className="w-6 h-6" />
+            </div>
+            <span className="text-[11px] font-bold text-gray-600 line-clamp-1 max-w-[85%] uppercase tracking-wider">
+              {categoryText}
+            </span>
+            <span className="text-[10px] text-gray-400 font-medium">Surplus Certified</span>
+          </div>
+        )}
 
         {/* Certified Badge */}
         {isCertified && (

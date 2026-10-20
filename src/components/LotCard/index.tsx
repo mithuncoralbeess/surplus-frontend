@@ -58,6 +58,7 @@ const LotCard: React.FC<LotCardProps> = ({
   const { formatPrice } = useCurrency();
   const { addToCart, isInCart } = useCart();
   const [isAdded, setIsAdded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const inCart = id ? isInCart(id) : false;
 
   const handleAddLot = (e: React.MouseEvent) => {
@@ -142,15 +143,28 @@ const LotCard: React.FC<LotCardProps> = ({
   return (
     <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col group h-full">
       {/* Top Image Container */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-800">
         <Link href={lotLink} className="block w-full h-full relative cursor-pointer">
-          <Image
-            src={image || 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?auto=format&fit=crop&w=800&q=80'}
-            alt={title}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          {image && !imageError ? (
+            <Image
+              src={image}
+              alt={title}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 p-4 text-center select-none group-hover:scale-105 transition-transform duration-500">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center shadow-xs mb-2 text-emerald-400">
+                <Boxes className="w-6 h-6" />
+              </div>
+              <span className="text-[12px] font-bold text-slate-200 line-clamp-1 max-w-[85%] uppercase tracking-wider">
+                {categoryText}
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium">Wholesale Lot</span>
+            </div>
+          )}
         </Link>
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/20 pointer-events-none" />
 

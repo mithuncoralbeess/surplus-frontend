@@ -31,10 +31,12 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
     return categories.find((cat) => {
       const slug = cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       return slug === normalizedSlug || cat.name.toLowerCase() === normalizedSlug.replace(/-/g, ' ');
-    }) || categories[0];
+    }) || null;
   }, [categories, normalizedSlug]);
 
-  const categoryTitle = currentCategory ? currentCategory.name : categorySlug.replace(/-/g, ' ').toUpperCase();
+  const categoryTitle = currentCategory 
+    ? currentCategory.name 
+    : normalizedSlug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
   // Fetch products from /api/products/
   useEffect(() => {
@@ -44,7 +46,11 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
     catalogService.getProducts({ category: categoryTitle, search: searchQuery })
       .then((data) => {
         if (isMounted) {
-          const productsOnly = data.filter((item) => item.type !== 'lot');
+          const productsOnly = data.filter((item) => {
+            if (item.type === 'lot') return false;
+            if (!item.title || item.title.trim() === '') return false;
+            return true;
+          });
           setApiProducts(productsOnly);
           setLoadingProducts(false);
         }
@@ -72,8 +78,13 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
   // Filter products for this subcategory
   const filteredProducts = useMemo(() => {
     return apiProducts.filter((prod) => {
-      if (selectedSubCategory !== 'all' && prod.category?.toLowerCase() !== selectedSubCategory.toLowerCase()) {
-        return false;
+      if (selectedSubCategory !== 'all') {
+        const subCat = (prod.subCategory || '').toLowerCase();
+        const mainCat = (prod.category || '').toLowerCase();
+        const selected = selectedSubCategory.toLowerCase();
+        if (subCat !== selected && mainCat !== selected) {
+          return false;
+        }
       }
       return true;
     });

@@ -206,9 +206,9 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
     primaryImage = rawImages[0];
   }
   if (!primaryImage) {
-    primaryImage = 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=600&q=80';
+    primaryImage = '';
   }
-  if (rawImages.length === 0) {
+  if (rawImages.length === 0 && primaryImage) {
     rawImages = [primaryImage];
   }
 
@@ -345,7 +345,7 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     }
   }
   if (!image || (!image.startsWith('http://') && !image.startsWith('https://') && !image.startsWith('/'))) {
-    image = 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?auto=format&fit=crop&w=1200&q=80';
+    image = '';
   }
 
   const discount = msrp > price && msrp > 0 ? Math.round(((msrp - price) / msrp) * 100) : 0;
@@ -531,7 +531,7 @@ export const catalogService = {
 
       const response = await apiClient(endpoint, { silent: true });
       if (!response.success || !response.data) {
-        return allProductsCache || [];
+        return isDefaultQuery ? (allProductsCache || []) : [];
       }
 
       let rawList: any[] = [];
@@ -569,7 +569,7 @@ export const catalogService = {
       return mappedList;
     } catch (error) {
       console.warn('[catalogService] Error fetching /api/products/:', error);
-      return allProductsCache || [];
+      return isDefaultQuery ? (allProductsCache || []) : [];
     }
   },
 
@@ -602,7 +602,7 @@ export const catalogService = {
 
       const response = await apiClient(endpoint, { silent: true });
       if (!response.success || !response.data) {
-        return allLotsCache || [];
+        return isDefaultQuery ? (allLotsCache || []) : [];
       }
 
       let rawList: any[] = [];
@@ -633,7 +633,7 @@ export const catalogService = {
       return mappedLots;
     } catch (error) {
       console.warn('[catalogService] Error fetching /api/lots/:', error);
-      return allLotsCache || [];
+      return isDefaultQuery ? (allLotsCache || []) : [];
     }
   },
 
