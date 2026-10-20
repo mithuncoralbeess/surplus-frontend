@@ -51,6 +51,7 @@ import { useNotifications } from '../../context/NotificationContext';
 import Link from 'next/link';
 import SimpleListingModal from '../../components/SimpleListingModal';
 import LotImportModal from '../../components/LotImportModal';
+import AuthModal from '../../components/AuthModal';
 import { useAppSelector } from '../../store';
 import { scrollToTop } from '../../lib/scroll';
 import Select, { components } from 'react-select';
@@ -276,12 +277,18 @@ export default function UserProfileWidget() {
   const { formatPrice } = useCurrency();
   const { showToast } = useNotifications();
 
-  // Redirect unauthenticated users immediately to homepage
+  // Auth modal state for unauthenticated users accessing /profile
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const hasPromptedAuth = useRef(false);
+
+  // Automatically show sign-in modal when unauthenticated user accesses /profile
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.replace('/');
+    if (status === 'unauthenticated' && !hasPromptedAuth.current) {
+      hasPromptedAuth.current = true;
+      setIsAuthModalOpen(true);
     }
-  }, [status, router]);
+  }, [status]);
+
   const [activeTab, setActiveTab] = useState<'profile' | 'rfqs' | 'submissions' | 'listings' | 'saved' | 'settings'>('profile');
 
   // Submissions Type Filter State
@@ -484,12 +491,7 @@ export default function UserProfileWidget() {
       }
     } else {
       // Clear all fields if user is not logged in
-      if (typeof window !== 'undefined') {
-        const localId = localStorage.getItem('vendor_id');
-        setVendorId(localId ? String(localId) : '');
-      } else {
-        setVendorId('');
-      }
+      setVendorId('');
       setFullName('');
       setEmail('');
       setPhone('');
@@ -515,6 +517,15 @@ export default function UserProfileWidget() {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!session?.user) {
+      setIsAuthModalOpen(true);
+      showToast({
+        type: 'info',
+        title: 'Sign In Required',
+        message: 'Please sign in to save and update your business profile.'
+      });
+      return;
+    }
     setIsSaving(true);
     setSaveError('');
 
@@ -727,6 +738,11 @@ export default function UserProfileWidget() {
 
   // Fetch real RFQs from backend and local history strictly for logged-in user
   const fetchUserRfqs = async () => {
+    if (!session?.user) {
+      setRfqsList([]);
+      setIsLoadingRfqs(false);
+      return;
+    }
     setIsLoadingRfqs(true);
     try {
       let combined: UserRfqItem[] = [];
@@ -826,6 +842,11 @@ export default function UserProfileWidget() {
 
   // Fetch submitted product & wholesale lot requests (pending verification / curation)
   const fetchUserSubmissions = async () => {
+    if (!session?.user) {
+      setSubmissionsList([]);
+      setIsLoadingSubmissions(false);
+      return;
+    }
     setIsLoadingSubmissions(true);
     try {
       let combined: UserSubmissionItem[] = [];
@@ -973,6 +994,11 @@ export default function UserProfileWidget() {
 
   // Fetch real listings (single products & lots) from backend
   const fetchUserListings = async () => {
+    if (!session?.user) {
+      setListingsList([]);
+      setIsLoadingListings(false);
+      return;
+    }
     setIsLoadingListings(true);
     try {
       const vId = vendorId || (session?.user as any)?.vendor_id;
@@ -1035,6 +1061,10 @@ export default function UserProfileWidget() {
 
   // Load Saved Deals from local storage
   const loadSavedDeals = () => {
+    if (!session?.user) {
+      setSavedDeals([]);
+      return;
+    }
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem('surplus_saved_deals');
@@ -1118,6 +1148,15 @@ export default function UserProfileWidget() {
   };
 
   const handleExportData = () => {
+    if (!session?.user) {
+      setIsAuthModalOpen(true);
+      showToast({
+        type: 'info',
+        title: 'Sign In Required',
+        message: 'Please sign in to export your account data.'
+      });
+      return;
+    }
     const dataToExport = {
       user_profile: {
         vendor_id: vendorId,
@@ -1188,11 +1227,18 @@ export default function UserProfileWidget() {
 
   // Sync and fetch on mount & profile change
   useEffect(() => {
+    if (!session?.user) {
+      setRfqsList([]);
+      setSubmissionsList([]);
+      setListingsList([]);
+      setSavedDeals([]);
+      return;
+    }
     fetchUserRfqs();
     fetchUserSubmissions();
     fetchUserListings();
     loadSavedDeals();
-  }, [email, vendorId]);
+  }, [session, email, vendorId]);
 
   const filteredSubmissions = useMemo(() => {
     return submissionsList.filter(item => {
@@ -1222,11 +1268,10 @@ export default function UserProfileWidget() {
     );
   }
 
-  if (status === 'unauthenticated' || !session) {
-    return null;
-  }
-
   const getSubtitleText = () => {
+    if (!session?.user) {
+      return 'Guest Profile • Sign in to view and manage your account';
+    }
     if (userType === 'BUYER') {
       return companyName ? `${companyName} • Registered Buyer` : 'Registered Surplus Buyer';
     }
@@ -1260,19 +1305,31 @@ export default function UserProfileWidget() {
             <div className="flex items-center space-x-5">
               <div className="relative">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-[#0f7a61] to-[#1bbd98] text-white flex items-center justify-center font-extrabold text-3xl shadow-md border-4 border-white">
-                  {fullName ? fullName[0].toUpperCase() : 'U'}
+                  {fullName ? fullName[0].toUpperCase() : <User className="w-10 h-10 text-white/90" />}
                 </div>
-                <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-sm">
-                  <ShieldCheck className="w-5 h-5 text-[#0f7a61]" />
-                </div>
+                {session?.user && (
+                  <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-sm">
+                    <ShieldCheck className="w-5 h-5 text-[#0f7a61]" />
+                  </div>
+                )}
               </div>
 
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold text-gray-900">{fullName || 'User Profile'}</h1>
-                  <span className="bg-[#e6f7ef] text-[#0f7a61] text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> {userType === 'BUYER' ? 'Verified Buyer' : (accountEntityType === 'INDIVIDUAL' ? 'Verified Individual' : 'Verified Business')}
-                  </span>
+                  <h1 className="text-2xl font-bold text-gray-900">{fullName || (session?.user ? 'User Profile' : 'Guest Account')}</h1>
+                  {session?.user ? (
+                    <span className="bg-[#e6f7ef] text-[#0f7a61] text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> {userType === 'BUYER' ? 'Verified Buyer' : (accountEntityType === 'INDIVIDUAL' ? 'Verified Individual' : 'Verified Business')}
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsAuthModalOpen(true)}
+                      className="bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <span>Not Signed In</span> • <span className="text-[#0f7a61] underline">Sign In</span>
+                    </button>
+                  )}
                   {vendorId && (
                     <span className="bg-emerald-50 text-[#0f7a61] border border-emerald-200/80 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 font-mono shadow-2xs" title="Vendor ID">
                       <Hash className="w-3 h-3 text-[#0f7a61]" /> Vendor ID: {vendorId.startsWith('USR') || vendorId.startsWith('#') ? vendorId : `#${vendorId}`}
@@ -1345,6 +1402,28 @@ export default function UserProfileWidget() {
 
           </div>
         </div>
+
+        {/* Guest / Unauthenticated Notice Banner */}
+        {!session?.user && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-amber-100 rounded-xl text-amber-700 shrink-0">
+                <User className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">You are currently viewing this page as a guest</p>
+                <p className="text-xs text-amber-700 mt-0.5">Please sign in to access your business credentials, active RFQs, submissions, and inventory listings.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAuthModalOpen(true)}
+              className="bg-[#0f7a61] hover:bg-[#0c6651] text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors shrink-0 shadow-sm cursor-pointer"
+            >
+              Sign In / Register
+            </button>
+          </div>
+        )}
 
         {/* Saved Toast Notification */}
         {isSavedNotice && (
@@ -1463,6 +1542,19 @@ export default function UserProfileWidget() {
                 <span>Account & Settings</span>
               </button>
 
+              {!session?.user && (
+                <div className="pt-2 border-t border-gray-100 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAuthModalOpen(true)}
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#0f7a61] text-white hover:bg-[#0c6651] transition-all shadow-sm cursor-pointer"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    <span>Sign In to Account</span>
+                  </button>
+                </div>
+              )}
+
             </div>
           </div>
 
@@ -1488,14 +1580,16 @@ export default function UserProfileWidget() {
                       <div className="relative">
                         <input 
                           type="text" 
-                          value={vendorId ? (vendorId.startsWith('USR') || vendorId.startsWith('#') ? vendorId : `#${vendorId}`) : 'Assigned upon verification'} 
+                          value={vendorId ? (vendorId.startsWith('USR') || vendorId.startsWith('#') ? vendorId : `#${vendorId}`) : (session?.user ? 'Assigned upon verification' : 'Not Signed In')} 
                           readOnly 
                           disabled
                           className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm font-mono cursor-not-allowed select-all font-semibold" 
                         />
-                        <span className="absolute right-3 top-2.5 text-[11px] font-bold text-[#0f7a61] bg-emerald-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                          Verified ID
-                        </span>
+                        {vendorId ? (
+                          <span className="absolute right-3 top-2.5 text-[11px] font-bold text-[#0f7a61] bg-emerald-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                            Verified ID
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                     <div>
@@ -2596,13 +2690,23 @@ export default function UserProfileWidget() {
                 </div>
 
                 <div className="pt-2 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => signOut({ callbackUrl: '/' })}
-                    className="bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs px-5 py-2.5 rounded-full flex items-center gap-2 transition-colors border border-red-200"
-                  >
-                    <LogOut className="w-3.5 h-3.5" /> Sign Out
-                  </button>
+                  {session?.user ? (
+                    <button
+                      type="button"
+                      onClick={() => signOut({ callbackUrl: '/' })}
+                      className="bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs px-5 py-2.5 rounded-full flex items-center gap-2 transition-colors border border-red-200 cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5" /> Sign Out
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsAuthModalOpen(true)}
+                      className="bg-[#0f7a61] hover:bg-[#0c6651] text-white font-semibold text-xs px-5 py-2.5 rounded-full flex items-center gap-2 transition-colors shadow-sm cursor-pointer"
+                    >
+                      <User className="w-3.5 h-3.5" /> Sign In
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -2893,6 +2997,12 @@ export default function UserProfileWidget() {
           fetchUserSubmissions();
           fetchUserListings();
         }} 
+      />
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => setIsAuthModalOpen(false)}
+        initialMode="login"
       />
     </section>
   );
