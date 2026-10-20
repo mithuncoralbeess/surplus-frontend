@@ -6,10 +6,12 @@ import { Sparkles, PackageSearch, ArrowRight } from 'lucide-react';
 import { motion } from '../../lib/motion';
 import ProductCard from '../../components/ProductCard';
 import { catalogService, ProductItem } from '../../services/catalogService';
+import { useLanguage } from '../../context/LanguageContext';
 
 const TABS = ['Best Sellers', 'New Arrivals', 'Featured Deals'];
 
 const CuratedProducts = () => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('Best Sellers');
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,12 +85,12 @@ const CuratedProducts = () => {
           className="flex flex-col items-center text-center mb-12"
         >
           <div className="flex items-center text-primary-alt font-bold text-xs tracking-widest uppercase mb-4">
-            <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-            Curated Marketplace Selection
+            <Sparkles className="w-3.5 h-3.5 mr-1.5 rtl:mr-0 rtl:ml-1.5" />
+            {t('curated.badge', 'Curated Marketplace Selection')}
           </div>
 
           <h2 className="h2 text-gray-900 tracking-tight mb-8">
-            Verified Surplus Wholesale Products Ready to Quote
+            {t('curated.title', 'Verified Surplus Wholesale Products Ready to Quote')}
           </h2>
 
           {/* Tabs */}
@@ -160,8 +162,8 @@ const CuratedProducts = () => {
             href="/buy"
             className="inline-flex items-center gap-2 px-8 py-3.5 bg-primary hover:bg-primary-dark text-white rounded-full font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
           >
-            <span>View All</span>
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            <span>{t('curated.viewAll', 'View All Inventory')}</span>
+            <ArrowRight className="w-4 h-4 rtl:rotate-180 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
           </Link>
         </motion.div>
 

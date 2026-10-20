@@ -5,10 +5,11 @@ import { Package, SearchX } from 'lucide-react';
 import { motion } from '../../lib/motion';
 import LotCard from '../../components/LotCard';
 import { catalogService, LotItem } from '../../services/catalogService';
-
-const TABS = ['View All', 'Electronics', 'Apparel', 'Home Goods'];
+import { useLanguage } from '../../context/LanguageContext';
 
 const PalletDeals = () => {
+  const { t } = useLanguage();
+  const TABS = [t('common.viewAll', 'View All'), 'Electronics', 'Apparel', 'Home Goods'];
   const [activeTab, setActiveTab] = useState('View All');
   const [lots, setLots] = useState<LotItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +18,8 @@ const PalletDeals = () => {
     let isMounted = true;
     setLoading(true);
 
-    catalogService.getLots({ category: activeTab })
+    const categoryQuery = (activeTab === 'View All' || activeTab === t('common.viewAll', 'View All')) ? 'View All' : activeTab;
+    catalogService.getLots({ category: categoryQuery })
       .then((data) => {
         if (isMounted) {
           setLots(data);
@@ -35,7 +37,7 @@ const PalletDeals = () => {
     return () => {
       isMounted = false;
     };
-  }, [activeTab]);
+  }, [activeTab, t]);
 
   return (
     <section className="w-full bg-[#fdfcf9] py-20 border-b border-gray-100">
@@ -50,16 +52,16 @@ const PalletDeals = () => {
           className="flex flex-col items-center text-center mb-12"
         >
           <div className="flex items-center text-primary-alt font-bold text-xs tracking-widest uppercase mb-4">
-            <Package className="w-3.5 h-3.5 mr-1.5" />
-            Wholesale Liquidation
+            <Package className="w-3.5 h-3.5 mr-1.5 rtl:mr-0 rtl:ml-1.5" />
+            {t('palletDeals.badge', 'Wholesale Liquidation')}
           </div>
 
           <h2 className="h2 text-gray-900 tracking-tight mb-4">
-            Full Lots & Pallet Deals
+            {t('palletDeals.title', 'Full Lots & Pallet Deals')}
           </h2>
 
           <p className="text-[15px] text-gray-600 max-w-2xl mb-8 leading-relaxed">
-            Verified bulk pallet batches and container manifests at wholesale clearance pricing. All lots are pre-inspected and ready for fast freight dispatch.
+            {t('palletDeals.subtitle', 'Verified bulk pallet batches and container manifests at wholesale clearance pricing. All lots are pre-inspected and ready for fast freight dispatch.')}
           </p>
 
           {/* Tabs */}
@@ -69,7 +71,7 @@ const PalletDeals = () => {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`
-                  px-6 py-2.5 rounded-full text-sm font-medium transition-all
+                  px-6 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer
                   ${activeTab === tab
                     ? 'bg-primary text-white shadow-md'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}

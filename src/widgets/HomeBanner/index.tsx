@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { getInstantSuggestions } from '../../lib/aiSearchEngine';
 import { useVoiceSearch } from '../../hooks/useVoiceSearch';
+import { useLanguage } from '../../context/LanguageContext';
 
 // Natural language conversational search prompts
 const AI_PROMPTS = [
@@ -64,6 +65,7 @@ let hasHeroLandedInPageLoad = false;
 
 const HomeBanner = () => {
   const router = useRouter();
+  const { t, tCategory, locale } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [recentSearches, setRecentSearches] = useState(DEFAULT_RECENT);
@@ -201,28 +203,27 @@ const HomeBanner = () => {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
               </span>
               <span className="text-xs font-semibold text-gray-800 tracking-wide uppercase">
-                B2B Liquidation Marketplace
+                {t('hero.badge', 'B2B Liquidation Marketplace')}
               </span>
               <span className="hidden sm:inline-block w-px h-3.5 bg-gray-200" />
               <span className="hidden sm:inline-flex items-center gap-1 text-xs font-medium text-emerald-800">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                100% Escrow Protected
+                {t('hero.escrow', '100% Escrow Protected')}
               </span>
             </div>
 
             {/* Main Headline */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[2.9rem] xl:text-[3.4rem] font-extrabold text-gray-900 tracking-tight leading-[1.12]">
-              Buy, Liquidate &amp; Source{' '}
+              {t('hero.titlePrefix', 'Buy, Liquidate & Source')}{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0a5c48] via-[#0f7a61] to-[#14b875]">
-                Surplus Inventory
+                {t('hero.titleHighlight', 'Surplus Inventory')}
               </span>{' '}
-              At Scale.
+              {t('hero.titleSuffix', 'At Scale.')}
             </h1>
 
             {/* High-conversion Subtitle */}
             <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl font-normal">
-              Direct access to verified global overstock, factory excess, enterprise IT, and MRO equipment.
-              Unlock up to <strong className="text-gray-900 font-semibold">75% savings</strong> with certified lot inspection, guaranteed escrow settlement, and 48-hour dispatch.
+              {t('hero.subtitle', 'Direct access to verified global overstock, factory excess, enterprise IT, and MRO equipment. Unlock up to 75% savings with certified lot inspection, guaranteed escrow settlement, and 48-hour dispatch.')}
             </p>
 
             {/* ========================================================================= */}
@@ -238,7 +239,7 @@ const HomeBanner = () => {
                 } p-2 rounded-2xl sm:rounded-full flex items-center gap-2 transition-all duration-200`}
               >
                 {/* Search Icon with subtle mint background */}
-                <div className="w-9 h-9 rounded-full bg-emerald-50 text-primary flex items-center justify-center shrink-0 ml-1">
+                <div className="w-9 h-9 rounded-full bg-emerald-50 text-primary flex items-center justify-center shrink-0 ml-1 rtl:ml-0 rtl:mr-1">
                   <Search className="w-4 h-4 text-primary" />
                 </div>
 
@@ -251,7 +252,7 @@ const HomeBanner = () => {
                     setSearchQuery(e.target.value);
                     if (!isDropdownOpen) setIsDropdownOpen(true);
                   }}
-                  placeholder="Ask anything (e.g. '2U servers under $500', 'Siemens S7 PLCs', 'Cat6 cable drums')..."
+                  placeholder={t('hero.searchPlaceholder', "Ask anything (e.g. '2U servers under $500', 'Siemens S7 PLCs', 'Cat6 cable drums')...")}
                   className="flex-1 bg-transparent border-none outline-none text-gray-800 placeholder-gray-400 text-sm sm:text-base font-normal cursor-text min-w-0"
                   aria-label="Search surplus lots and excess inventory"
                 />
@@ -519,15 +520,15 @@ const HomeBanner = () => {
                 onClick={() => router.push('/browse')}
                 className="btn btn-primary"
               >
-                Browse Inventory
-                <ArrowRight className="w-4 h-4" />
+                {t('hero.ctaBuy', 'Browse Inventory')}
+                <ArrowRight className="w-4 h-4 rtl:rotate-180" />
               </button>
 
               <button
                 onClick={() => router.push('/sell')}
                 className="btn btn-secondary"
               >
-                Sell Inventory
+                {t('hero.ctaSell', 'Sell Inventory')}
               </button>
             </div>
 

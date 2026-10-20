@@ -9,7 +9,66 @@
     "profile": "Profile",
     "signOut": "Sign out",
     "browse": "Browse Lots",
-    "cart": "Cart"
+    "cart": "Cart",
+    "notifications": "Notifications",
+    "language": "Language",
+    "region": "Region",
+    "currency": "Currency"
+  },
+  "megamenu": {
+    "browseMarketplace": "Browse Marketplace",
+    "shopByCategory": "Shop by Category",
+    "allBuyLots": "All Buy Lots",
+    "allCategories": "All Categories",
+    "specialFormats": "Special Formats",
+    "latestArrivals": "Latest Arrivals",
+    "latestArrivalsDesc": "Fresh verified inventory added this week",
+    "fresh": "Fresh",
+    "verifiedDeals": "Verified Deals",
+    "verifiedDealsDesc": "Discounted liquidation inventory ready to ship",
+    "hotDeals": "Hot Deals",
+    "wholesaleLots": "Wholesale Lots & Pallets",
+    "wholesaleLotsDesc": "Full container & pallet batch manifests",
+    "itemsAvailable": "items available",
+    "subcategories": "subcategories",
+    "items": "items"
+  },
+  "categories": {
+    "Building Materials": "Building Materials",
+    "Electricals": "Electricals",
+    "Hand tools": "Hand tools",
+    "Chisels And Punches": "Chisels And Punches",
+    "PPE": "PPE & Safety",
+    "Power tools": "Power tools",
+    "Decor": "Decor & Lighting",
+    "Abrasives": "Abrasives",
+    "ICT Hardware & Servers": "ICT Hardware & Servers",
+    "Industrial Automation": "Industrial Automation",
+    "Auto Spare Parts": "Auto Spare Parts",
+    "Heavy Equipment": "Heavy Equipment"
+  },
+  "selectors": {
+    "selectLanguage": "Language",
+    "languageSubtitle": "Select interface language",
+    "selectRegion": "Select Region",
+    "regionSubtitle": "Select delivery & inventory region",
+    "selectCurrency": "Select Currency",
+    "currencySubtitle": "All prices update dynamically",
+    "liveRates": "Live Rates",
+    "changeRegion": "Change shopping region",
+    "changeCurrency": "Change currency"
+  },
+  "cartDropdown": {
+    "rfqBasket": "RFQ Basket",
+    "item": "item",
+    "items": "items",
+    "emptyTitle": "Your RFQ Basket is empty",
+    "emptySubtitle": "Add pallet lots or surplus inventory to request bulk quotes",
+    "browseLots": "Browse Lots",
+    "subtotal": "Estimated Subtotal",
+    "viewBasket": "View Basket",
+    "proceedRFQ": "Proceed to RFQ",
+    "remove": "Remove"
   },
   "common": {
     "search": "Search surplus inventory...",
@@ -25,15 +84,41 @@
     "learnMore": "Learn More",
     "contactUs": "Contact Us",
     "english": "English",
-    "arabic": "العربية"
+    "arabic": "العربية",
+    "clear": "Clear",
+    "escrow": "100% Escrow Protected",
+    "verified": "Verified"
   },
   "hero": {
-    "title": "Empowering B2B Surplus & Asset Liquidation",
-    "subtitle": "Discover, list, and trade certified excess inventory, industrial machinery, and overstock materials across global markets.",
+    "badge": "B2B Liquidation Marketplace",
+    "escrow": "100% Escrow Protected",
+    "titlePrefix": "Buy, Liquidate & Source",
+    "titleHighlight": "Surplus Inventory",
+    "titleSuffix": "At Scale.",
+    "subtitle": "Direct access to verified global overstock, factory excess, enterprise IT, and MRO equipment. Unlock up to 75% savings with certified lot inspection, guaranteed escrow settlement, and 48-hour dispatch.",
+    "searchPlaceholder": "Ask anything (e.g. '2U servers under $500', 'Siemens S7 PLCs', 'Cat6 cable drums')...",
     "ctaBuy": "Browse Lots",
-    "ctaSell": "List Surplus"
+    "ctaSell": "List Surplus",
+    "popularCategories": "Popular Categories",
+    "savingsNotice": "Save up to 75% on certified industrial lots"
+  },
+  "curated": {
+    "badge": "Verified Surplus",
+    "title": "Top Liquidated Inventory Lots",
+    "subtitle": "Pre-inspected overstock ready for immediate shipping and escrow settlement",
+    "viewAll": "View All Inventory"
+  },
+  "palletDeals": {
+    "badge": "Bulk Pallet Manifests",
+    "title": "Pallet & Container Deals",
+    "subtitle": "High-margin surplus parcels and overstock liquidation ready for dispatch",
+    "viewAll": "View All Pallets"
   },
   "footer": {
+    "newsletterTitle": "Never miss a deal! Subscribe to Surplus Newsletter.",
+    "newsletterSubtitle": "New arrivals, wholesale lots and price drops - straight to your inbox.",
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Subscribe",
     "tagline": "The premier B2B marketplace for surplus inventory and industrial asset recovery.",
     "quickLinks": "Quick Links",
     "categories": "Categories",

@@ -7,6 +7,7 @@ import {
   Hammer, Zap, Wrench, PenTool, HardHat, Drill, Lamp, Disc, Laptop, Truck, Box, Cpu, Stethoscope, Layers, Sparkles
 } from 'lucide-react';
 import { useAppSelector } from '../../store';
+import { useLanguage } from '../../context/LanguageContext';
 
 const ICON_MAP: Record<string, any> = {
   'building materials': Hammer,
@@ -45,6 +46,7 @@ const BG_COLORS = [
 ];
 
 export default function CategoryExplorer() {
+  const { t, tCategory } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedJumpCategory, setSelectedJumpCategory] = useState<string>('all');
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -104,7 +106,7 @@ export default function CategoryExplorer() {
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
           <div className="max-w-3xl">
             <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
-              Explore All Categories
+              {t('megamenu.shopByCategory', 'Explore All Categories')}
             </h1>
             <p className="text-base text-gray-600 leading-relaxed">
               Browse through our complete catalog of {totalCategories > 0 ? totalCategories : 'all'} categories, curated collections, and specialized subcategories.
@@ -113,22 +115,22 @@ export default function CategoryExplorer() {
 
           {/* Search Box */}
           <div className="relative w-full lg:w-[380px] shrink-0">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+            <div className="absolute inset-y-0 left-0 rtl:left-auto rtl:right-0 pl-3.5 rtl:pl-0 rtl:pr-3.5 flex items-center pointer-events-none text-gray-400">
               <Search className="w-4.5 h-4.5 text-[#0f7a61]" />
             </div>
             <input
               type="text"
-              placeholder="Search category or subcategory..."
+              placeholder={t('common.search', 'Search category or subcategory...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200/90 rounded-2xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0f7a61]/20 focus:border-[#0f7a61] transition-all shadow-xs"
+              className="w-full pl-10 rtl:pl-4 rtl:pr-10 pr-10 rtl:pr-4 py-3 bg-white border border-gray-200/90 rounded-2xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0f7a61]/20 focus:border-[#0f7a61] transition-all shadow-xs"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-bold text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 rtl:right-auto rtl:left-0 pr-3.5 rtl:pr-0 rtl:pl-3.5 flex items-center text-xs font-bold text-gray-400 hover:text-gray-600"
               >
-                Clear
+                {t('common.clear', 'Clear')}
               </button>
             )}
           </div>
@@ -137,7 +139,7 @@ export default function CategoryExplorer() {
         {/* Jump To Navigation Bar */}
         {categories.length > 0 && (
           <div className="flex items-center gap-2.5 overflow-x-auto pb-4 mb-10 scrollbar-none">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1 shrink-0 pr-2">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1 shrink-0 pr-2 rtl:pr-0 rtl:pl-2">
               <Filter className="w-3.5 h-3.5 text-gray-400" /> JUMP TO:
             </span>
 
@@ -148,7 +150,7 @@ export default function CategoryExplorer() {
                 : 'bg-white text-gray-700 border border-gray-200/80 hover:bg-gray-100/80'
                 }`}
             >
-              All Categories
+              {t('megamenu.allCategories', 'All Categories')}
             </button>
 
             {categories.map((cat) => {
@@ -166,7 +168,7 @@ export default function CategoryExplorer() {
                     }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
-                  {cat.name}
+                  {tCategory(cat.name)}
                 </button>
               );
             })}
@@ -218,14 +220,14 @@ export default function CategoryExplorer() {
                         <Icon className="w-6 h-6" strokeWidth={1.75} />
                       </div>
                       <span className="text-xs font-bold text-gray-500 bg-gray-100/80 px-2.5 py-1 rounded-full group-hover:bg-[#e6f7ef] group-hover:text-[#0f7a61] transition-colors">
-                        {subs.length} subcategories
+                        {subs.length} {t('megamenu.subcategories', 'subcategories')}
                       </span>
                     </Link>
 
                     {/* Category Title Link */}
                     <Link href={categoryUrl} className="block mb-3">
                       <h3 className="text-lg font-extrabold text-gray-900 group-hover:text-[#0f7a61] transition-colors truncate">
-                        {cat.name}
+                        {tCategory(cat.name)}
                       </h3>
                     </Link>
 
@@ -237,15 +239,15 @@ export default function CategoryExplorer() {
                           <Link
                             key={sub.id || sIdx}
                             href={`${categoryUrl}?sub=${subSlug}`}
-                            className="text-[13.5px] font-medium text-gray-600 hover:text-[#0f7a61] hover:translate-x-1 transition-all block truncate"
+                            className="text-[13.5px] font-medium text-gray-600 hover:text-[#0f7a61] hover:translate-x-1 rtl:hover:-translate-x-1 transition-all block truncate"
                           >
-                            {sub.name}
+                            {tCategory(sub.name)}
                           </Link>
                         );
                       })}
                       {subs.length > 7 && (
                         <Link href={categoryUrl} className="text-xs font-bold text-[#0f7a61] hover:underline block pt-1">
-                          + {subs.length - 7} more subcategories
+                          + {subs.length - 7} {t('megamenu.subcategories', 'subcategories')}
                         </Link>
                       )}
                     </div>
@@ -256,8 +258,8 @@ export default function CategoryExplorer() {
                     href={categoryUrl}
                     className="text-xs font-extrabold text-[#0f7a61] hover:text-[#0b5c49] flex items-center justify-between pt-3.5 border-t border-gray-100 group/link transition-colors"
                   >
-                    <span>Explore All ({subs.length} subcategories)</span>
-                    <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
+                    <span>{t('common.viewAll', 'Explore All')} ({subs.length})</span>
+                    <ArrowRight className="w-4 h-4 rtl:rotate-180 group-hover/link:translate-x-1 rtl:group-hover/link:-translate-x-1 transition-transform" />
                   </Link>
                 </div>
               );

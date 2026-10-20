@@ -115,7 +115,7 @@ const Header = () => {
               onClick={() => openAuth('login')} 
               className="text-gray-700 hover:text-[#0f7a61] text-xs font-bold px-2 py-1 ml-1"
             >
-              Sign In
+              {t('nav.signIn', 'Sign In')}
             </button>
           )}
         </div>

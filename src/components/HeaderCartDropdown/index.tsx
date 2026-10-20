@@ -6,11 +6,13 @@ import { ShoppingBag, X, Trash2, ArrowRight, Package } from 'lucide-react';
 import Image from 'next/image';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const HeaderCartDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { items, removeFromCart, totalPrice, totalCount, openCartDrawer } = useCart();
   const { formatPrice } = useCurrency();
+  const { t } = useLanguage();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,7 +31,7 @@ const HeaderCartDropdown: React.FC = () => {
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className="relative text-gray-600 hover:text-gray-900 transition-colors p-1.5 focus:outline-none cursor-pointer flex items-center justify-center w-8 h-8 lg:w-9 lg:h-9 rounded-full hover:bg-gray-100"
-        title="View RFQ Basket"
+        title={t('cartDropdown.rfqBasket', 'View RFQ Basket')}
         aria-label={`RFQ Basket with ${totalCount} items`}
       >
         <ShoppingBag className="w-[18px] h-[18px] lg:w-5 lg:h-5" />
@@ -49,11 +51,11 @@ const HeaderCartDropdown: React.FC = () => {
         >
           {/* Header */}
           <div className="p-4 bg-gray-50/70 border-b border-gray-100 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 rtl:space-x-reverse">
               <Package className="w-4 h-4 text-[#0f7a61]" />
-              <h3 className="font-semibold text-gray-900 text-[15px]">RFQ Basket</h3>
+              <h3 className="font-semibold text-gray-900 text-[15px]">{t('cartDropdown.rfqBasket', 'RFQ Basket')}</h3>
               <span className="bg-[#e6f7ef] text-[#0f7a61] text-xs font-bold px-2 py-0.5 rounded-full">
-                {items.length} {items.length === 1 ? 'item' : 'items'}
+                {items.length} {items.length === 1 ? t('cartDropdown.item', 'item') : t('cartDropdown.items', 'items')}
               </span>
             </div>
             <div className="flex items-center gap-1">
@@ -126,7 +128,7 @@ const HeaderCartDropdown: React.FC = () => {
               {/* Footer Summary & Actions */}
               <div className="p-4 bg-gray-50/50 border-t border-gray-100">
                 <div className="flex items-center justify-between mb-3 text-sm">
-                  <span className="text-gray-500 font-medium">Est. Total Value:</span>
+                  <span className="text-gray-500 font-medium">{t('cartDropdown.subtotal', 'Estimated Subtotal')}:</span>
                   <span className="font-extrabold text-gray-900 text-base">
                     {formatPrice(totalPrice)}
                   </span>
@@ -137,15 +139,15 @@ const HeaderCartDropdown: React.FC = () => {
                     onClick={() => setIsOpen(false)}
                     className="btn btn-secondary !py-2.5 !text-xs text-center rounded-full"
                   >
-                    View Basket
+                    {t('cartDropdown.viewBasket', 'View Basket')}
                   </Link>
                   <Link 
                     href="/cart"
                     onClick={() => setIsOpen(false)}
                     className="btn btn-primary !py-2.5 !text-xs text-center rounded-full flex items-center justify-center gap-1"
                   >
-                    <span>Submit RFQ</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <span>{t('cartDropdown.proceedRFQ', 'Proceed to RFQ')}</span>
+                    <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                   </Link>
                 </div>
               </div>
@@ -155,14 +157,14 @@ const HeaderCartDropdown: React.FC = () => {
               <div className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
                 <ShoppingBag className="w-6 h-6" />
               </div>
-              <p className="text-sm font-semibold text-gray-900 mb-1">Your RFQ basket is empty</p>
-              <p className="text-xs text-gray-500 mb-4">Explore surplus inventory and add deals to your request list.</p>
+              <p className="text-sm font-semibold text-gray-900 mb-1">{t('cartDropdown.emptyTitle', 'Your RFQ basket is empty')}</p>
+              <p className="text-xs text-gray-500 mb-4">{t('cartDropdown.emptySubtitle', 'Explore surplus inventory and add deals to your request list.')}</p>
               <Link 
                 href="/browse"
                 onClick={() => setIsOpen(false)}
                 className="btn btn-primary !py-2 !px-4 !text-xs rounded-full inline-flex items-center gap-1"
               >
-                Browse Inventory
+                {t('cartDropdown.browseLots', 'Browse Lots')}
               </Link>
             </div>
           )}

@@ -17,6 +17,7 @@ interface LanguageContextType {
   dir: Direction;
   setLocale: (locale: Locale) => void;
   t: (key: string, fallback?: string) => string;
+  tCategory: (name: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -37,6 +38,12 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (typeof document !== 'undefined') {
       document.documentElement.lang = locale;
       document.documentElement.dir = dir;
+      document.body.dir = dir;
+      if (locale === 'ar') {
+        document.documentElement.classList.add('rtl');
+      } else {
+        document.documentElement.classList.remove('rtl');
+      }
     }
   }, [locale, dir]);
 
@@ -72,8 +79,15 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return typeof current === 'string' ? current : fallback || key;
   }, [locale]);
 
+  const tCategory = useCallback((name: string): string => {
+    if (!name) return '';
+    const localized = dictionaries[locale]?.categories?.[name];
+    if (localized) return localized;
+    return name;
+  }, [locale]);
+
   return (
-    <LanguageContext.Provider value={{ locale, dir, setLocale, t }}>
+    <LanguageContext.Provider value={{ locale, dir, setLocale, t, tCategory }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -87,6 +101,7 @@ export const useLanguage = () => {
       dir: 'ltr' as Direction,
       setLocale: () => {},
       t: (key: string, fallback?: string) => fallback || key,
+      tCategory: (name: string) => name,
     };
   }
   return context;

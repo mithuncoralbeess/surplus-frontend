@@ -3,10 +3,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { useCurrency, CURRENCY_OPTIONS } from '../../context/CurrencyContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const CurrencySelector = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { currency, setCurrency, activeOption, currencyOptions, isLiveRates } = useCurrency();
+  const { t } = useLanguage();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ const CurrencySelector = () => {
       <div
         className="flex items-center gap-1.5 cursor-pointer text-gray-600 hover:text-gray-900 font-medium text-[12px] lg:text-[13.5px] bg-gray-50 hover:bg-gray-100 px-2 lg:px-2.5 py-1 lg:py-1.5 rounded-full border border-gray-200/80 transition-colors header-selector-btn"
         onClick={() => setIsOpen(!isOpen)}
-        title="Change currency"
+        title={t('selectors.changeCurrency', 'Change currency')}
       >
         <span className="font-medium text-gray-800 text-[12px] lg:text-[13.5px]">
           {activeOption.code === activeOption.symbol ? activeOption.code : `${activeOption.code} (${activeOption.symbol})`}
@@ -41,17 +43,17 @@ const CurrencySelector = () => {
       {isOpen && (
         <div
           data-lenis-prevent
-          className="absolute top-full right-0 mt-3 w-64 bg-white rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.12)] border border-gray-100 z-50 overflow-hidden"
+          className="absolute top-full right-0 rtl:right-auto rtl:left-0 mt-3 w-64 bg-white rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.12)] border border-gray-100 z-50 overflow-hidden"
           onWheel={(e) => e.stopPropagation()}
         >
           <div className="p-3 bg-gray-50/50 flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-gray-900 text-[14px]">Select Currency</h3>
-              <p className="text-gray-500 text-[11px] mt-0.5">All prices update dynamically.</p>
+              <h3 className="font-semibold text-gray-900 text-[14px]">{t('selectors.selectCurrency', 'Select Currency')}</h3>
+              <p className="text-gray-500 text-[11px] mt-0.5">{t('selectors.currencySubtitle', 'All prices update dynamically.')}</p>
             </div>
             {isLiveRates && (
               <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Live Rates
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> {t('selectors.liveRates', 'Live Rates')}
               </span>
             )}
           </div>
@@ -64,7 +66,7 @@ const CurrencySelector = () => {
               return (
                 <button
                   key={opt.code}
-                  className={`w-full text-left px-4 py-2.5 flex items-center justify-between text-[14px] transition-colors ${isSelected
+                  className={`w-full text-left rtl:text-right px-4 py-2.5 flex items-center justify-between text-[14px] transition-colors ${isSelected
                       ? 'bg-[#e6f7ef] text-[#0f7a61] font-medium'
                       : 'text-gray-700 hover:bg-[#e6f7ef] hover:text-[#0f7a61]'
                     }`}

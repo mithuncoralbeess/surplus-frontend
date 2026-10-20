@@ -76,7 +76,7 @@ const FORMATS = [
 
 const BuyMegamenu = () => {
   const pathname = usePathname();
-  const { t } = useLanguage();
+  const { t, tCategory } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const { categories, loading } = useAppSelector((state) => state.categories);
 
@@ -92,17 +92,41 @@ const BuyMegamenu = () => {
     ? categories.slice(0, 8).map((cat) => ({
         id: cat.id,
         name: cat.name,
-        count: cat.subcategories?.length ? `${cat.subcategories.length} subcategories` : 'Items available',
+        count: cat.subcategories?.length ? `${cat.subcategories.length} ${t('megamenu.subcategories', 'subcategories')}` : t('megamenu.itemsAvailable', 'Items available'),
         icon: getCategoryIcon(cat.name),
         slug: cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       }))
     : DEFAULT_CATEGORIES.map((cat) => ({
         id: cat.name,
         name: cat.name,
-        count: `${cat.count} items`,
+        count: `${cat.count} ${t('megamenu.items', 'items')}`,
         icon: cat.icon,
         slug: cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       }));
+
+  const dynamicFormats = [
+    {
+      title: t('megamenu.latestArrivals', 'Latest Arrivals'),
+      badge: t('megamenu.fresh', 'Fresh'),
+      desc: t('megamenu.latestArrivalsDesc', 'Fresh verified inventory added this week'),
+      icon: Sparkles,
+      href: '/buy',
+    },
+    {
+      title: t('megamenu.verifiedDeals', 'Verified Deals'),
+      badge: t('megamenu.hotDeals', 'Hot Deals'),
+      desc: t('megamenu.verifiedDealsDesc', 'Discounted liquidation inventory ready to ship'),
+      icon: Tag,
+      href: '/buy',
+    },
+    {
+      title: t('megamenu.wholesaleLots', 'Wholesale Lots & Pallets'),
+      badge: '> 10 SKUs',
+      desc: t('megamenu.wholesaleLotsDesc', 'Full container & pallet batch manifests'),
+      icon: Package,
+      href: '/buy',
+    },
+  ];
 
   return (
     <div 
@@ -120,31 +144,31 @@ const BuyMegamenu = () => {
             : 'text-gray-600 hover:text-gray-900'
         }`}
       >
-        {t('nav.buy', 'Buy')} <ChevronDown className={`ml-1 w-4 h-4 transition-colors ${isBuyActive || isOpen ? 'text-[#0f7a61]' : 'text-gray-400'}`} />
+        {t('nav.buy', 'Buy')} <ChevronDown className={`ml-1 rtl:ml-0 rtl:mr-1 w-4 h-4 transition-colors ${isBuyActive || isOpen ? 'text-[#0f7a61]' : 'text-gray-400'}`} />
       </Link>
 
       {/* Dropdown Container */}
       <div className={`absolute top-full left-0 w-full transition-all duration-300 ease-out z-50 ${isOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-4'}`}>
         <div className="w-full bg-white shadow-2xl border-t border-gray-100">
-          <div className="container mx-auto flex">
+          <div className="container mx-auto flex flex-col lg:flex-row">
           
           {/* Left Panel: Categories */}
-          <div className="flex-1 py-6 pr-8">
+          <div className="flex-1 py-6 pr-8 rtl:pr-0 rtl:pl-8">
             <div className="flex justify-between items-end mb-4">
               <div>
                 <p className="text-[11px] font-bold text-primary tracking-widest uppercase mb-1">
-                  Browse Marketplace
+                  {t('megamenu.browseMarketplace', 'Browse Marketplace')}
                 </p>
                 <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                  Shop by Category
+                  {t('megamenu.shopByCategory', 'Shop by Category')}
                 </h3>
               </div>
               <div className="flex items-center gap-2">
                 <Link href="/buy" className="text-xs font-bold text-white bg-[#0f7a61] hover:bg-[#0c6651] px-3.5 py-1.5 rounded-lg flex items-center transition-all shadow-xs">
-                  All Buy Lots <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                  {t('megamenu.allBuyLots', 'All Buy Lots')} <ArrowRight className="w-3.5 h-3.5 ml-1 rtl:ml-0 rtl:mr-1 rtl:rotate-180" />
                 </Link>
                 <Link href="/shop-by-category" className="text-sm font-bold text-primary hover:text-primary-dark flex items-center transition-colors pb-1">
-                  All Categories <ArrowRight className="w-4 h-4 ml-1" />
+                  {t('megamenu.allCategories', 'All Categories')} <ArrowRight className="w-4 h-4 ml-1 rtl:ml-0 rtl:mr-1 rtl:rotate-180" />
                 </Link>
               </div>
             </div>
@@ -158,7 +182,7 @@ const BuyMegamenu = () => {
                       <Icon className="w-5 h-5" strokeWidth={1.5} />
                     </div>
                     <span className="text-xs font-bold text-gray-900 text-center w-full truncate px-1">
-                      {cat.name}
+                      {tCategory(cat.name)}
                     </span>
                     <span className="text-[10px] text-gray-500 mt-1">
                       {cat.count}
@@ -170,23 +194,23 @@ const BuyMegamenu = () => {
           </div>
 
           {/* Right Panel: Special Formats */}
-          <div className="w-[440px] bg-[#f4fbf9] py-6 px-10 relative overflow-hidden flex flex-col border-l border-gray-100 megamenu-right-panel">
+          <div className="w-full lg:w-[440px] bg-[#f4fbf9] py-6 px-10 relative overflow-hidden flex flex-col border-l rtl:border-l-0 rtl:border-r border-gray-100 megamenu-right-panel">
             {/* Background Icon Decoration */}
-            <PlayCircle className="absolute -top-10 -right-10 w-48 h-48 text-white/40 pointer-events-none" strokeWidth={1} />
+            <PlayCircle className="absolute -top-10 -right-10 rtl:-right-auto rtl:-left-10 w-48 h-48 text-white/40 pointer-events-none" strokeWidth={1} />
             
             <div className="relative z-10">
               <p className="text-[11px] font-bold text-primary tracking-widest uppercase mb-1">
-                Special Formats
+                {t('megamenu.specialFormats', 'Special Formats')}
               </p>
               <h3 className="text-xl font-extrabold text-gray-900 tracking-tight mb-6">
-                How You Want to Buy
+                {t('megamenu.howYouWantToBuy', 'How You Want to Buy')}
               </h3>
 
               <div className="space-y-4">
-                {FORMATS.map((format, idx) => {
+                {dynamicFormats.map((format, idx) => {
                   const Icon = format.icon;
                   return (
-                    <Link href={format.href || "/buy"} key={idx} className="flex items-start gap-5 group/format p-3 -ml-3 rounded-2xl hover:bg-white/60 transition-colors">
+                    <Link href={format.href || "/buy"} key={idx} className="flex items-start gap-5 group/format p-3 -ml-3 rtl:-ml-0 rtl:-mr-3 rounded-2xl hover:bg-white/60 transition-colors">
                       <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-primary shadow-sm border border-gray-50 group-hover/format:scale-110 group-hover/format:shadow-md transition-all duration-300">
                         <Icon className="w-5 h-5" strokeWidth={1.5} />
                       </div>
