@@ -1,5 +1,14 @@
 import type { NextConfig } from "next";
 
+const envBackendTarget = (
+  process.env.BACKEND_API_URL ||
+  process.env.INTERNAL_BACKEND_URL ||
+  process.env.API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  ''
+).replace(/\/$/, '');
+
 const securityHeaders = [
   // 1. Prevent Clickjacking (OWASP A05)
   {
@@ -40,7 +49,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: blob: https: http:",
-      "connect-src 'self' https://dev.surplusmarket.com https://*.surplusmarket.com https://open.er-api.com https://*.r2.cloudflarestorage.com https://*.cloudflarestorage.com",
+      `connect-src 'self' ${envBackendTarget} https://*.surplusmarket.com https://open.er-api.com https://*.r2.cloudflarestorage.com https://*.cloudflarestorage.com`.trim(),
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -63,12 +72,11 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const backendTarget = (
-      process.env.BACKEND_API_URL ||
-      process.env.INTERNAL_BACKEND_URL ||
-      process.env.API_BASE_URL ||
-      'https://dev.surplusmarket.com'
-    ).replace(/\/$/, '');
+    const backendTarget = envBackendTarget;
+
+    if (!backendTarget) {
+      return { fallback: [] };
+    }
 
     return {
       fallback: [

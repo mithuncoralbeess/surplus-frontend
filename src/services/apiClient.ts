@@ -21,6 +21,8 @@ function resolveRequestUrl(endpoint: string): string {
     process.env.BACKEND_API_URL ||
     process.env.INTERNAL_BACKEND_URL ||
     process.env.API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
     ''
   ).replace(/\/$/, '');
 
