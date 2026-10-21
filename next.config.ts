@@ -82,6 +82,24 @@ const nextConfig: NextConfig = {
     }
 
     return {
+      beforeFiles: [
+        {
+          source: '/api/auth/login/:path*/',
+          destination: `${backendTarget}/api/auth/login/:path*/`,
+        },
+        {
+          source: '/api/auth/login/:path*',
+          destination: `${backendTarget}/api/auth/login/:path*`,
+        },
+        {
+          source: '/api/auth/register/:path*/',
+          destination: `${backendTarget}/api/auth/register/:path*/`,
+        },
+        {
+          source: '/api/auth/register/:path*',
+          destination: `${backendTarget}/api/auth/register/:path*`,
+        },
+      ],
       fallback: [
         {
           source: '/api/:path*/',

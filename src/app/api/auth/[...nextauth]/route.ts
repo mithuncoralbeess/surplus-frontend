@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { authService } from "../../../../services/authService";
+import { NextRequest, NextResponse } from "next/server";
 
 const handler = NextAuth({
   providers: [
@@ -200,4 +201,82 @@ const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET || "dummy-secret-for-development-12345",
 });
 
-export { handler as GET, handler as POST };
+const NEXTAUTH_ACTIONS = new Set([
+  'signin',
+  'signout',
+  'session',
+  'csrf',
+  'providers',
+  'callback',
+  '_log',
+]);
+
+async function proxyAuthToBackend(req: NextRequest, pathSegments: string[]) {
+  const backendTarget = (
+    process.env.BACKEND_API_URL ||
+    process.env.BACKEND_APT_URL ||
+    process.env.INTERNAL_BACKEND_URL ||
+    process.env.API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    'https://dev.surplusmarket.com'
+  ).replace(/\/$/, '');
+
+  const path = pathSegments.join('/');
+  const search = req.nextUrl.search || '';
+  const targetUrl = `${backendTarget}/api/auth/${path}${path.endsWith('/') ? '' : '/'}${search}`;
+
+  const headers = new Headers(req.headers);
+  headers.delete('host');
+
+  const body = req.method !== 'GET' && req.method !== 'HEAD' ? await req.arrayBuffer() : undefined;
+
+  try {
+    const res = await fetch(targetUrl, {
+      method: req.method,
+      headers: headers,
+      body: body,
+      redirect: 'manual',
+    });
+
+    const resHeaders = new Headers(res.headers);
+    resHeaders.delete('content-encoding');
+
+    return new NextResponse(res.body, {
+      status: res.status,
+      statusText: res.statusText,
+      headers: resHeaders,
+    });
+  } catch (err: any) {
+    console.error(`[NextAuth Route Proxy] Error proxying /api/auth/${path} to backend:`, err);
+    return NextResponse.json(
+      { success: false, message: 'Authentication server connection error' },
+      { status: 502 }
+    );
+  }
+}
+
+export async function GET(req: NextRequest, context: any) {
+  const resolvedParams = await Promise.resolve(context?.params || {});
+  const nextauth: string[] = resolvedParams?.nextauth || [];
+  const action = nextauth[0];
+
+  if (action && !NEXTAUTH_ACTIONS.has(action)) {
+    return proxyAuthToBackend(req, nextauth);
+  }
+
+  return (handler as any)(req, context);
+}
+
+export async function POST(req: NextRequest, context: any) {
+  const resolvedParams = await Promise.resolve(context?.params || {});
+  const nextauth: string[] = resolvedParams?.nextauth || [];
+  const action = nextauth[0];
+
+  if (action && !NEXTAUTH_ACTIONS.has(action)) {
+    return proxyAuthToBackend(req, nextauth);
+  }
+
+  return (handler as any)(req, context);
+}

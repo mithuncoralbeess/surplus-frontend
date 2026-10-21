@@ -226,7 +226,7 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
               onClick={() => router.push('/buy')}
               className="px-6 py-3 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer"
             >
-              Browse All Inventory
+              Back to Buy
             </button>
           </div>
         </div>
@@ -253,11 +253,16 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
           <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
             <Link href="/" className="hover:text-gray-900 transition-colors shrink-0">Home</Link>
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
-            <Link href="/buy" className="hover:text-gray-900 transition-colors shrink-0">Wholesale Lots</Link>
+            <Link href="/buy" className="hover:text-gray-900 transition-colors shrink-0">Buy</Link>
             {category && (
               <>
                 <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
-                <span className="font-medium shrink-0 text-gray-700">{category}</span>
+                <Link 
+                  href={`/buy?category=${encodeURIComponent(category)}`}
+                  className="hover:text-[#0f7a61] transition-colors shrink-0 font-medium"
+                >
+                  {category}
+                </Link>
               </>
             )}
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
