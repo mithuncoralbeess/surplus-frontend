@@ -123,7 +123,7 @@ const LotCard: React.FC<LotCardProps> = ({
     : String(category || 'Surplus Lot');
 
   const lotIdText = String(id || 'LOT');
-  const lotLink = createLotUrl(title || lotIdText);
+  const lotLink = createLotUrl(title || lotIdText, lotIdText);
 
   const formatOfferBadge = (raw?: string) => {
     if (!raw) return null;

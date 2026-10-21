@@ -8,18 +8,31 @@ export function slugify(text: string | number | undefined | null): string {
   return str
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, '') // Remove non-alphanumeric chars except space & dash
+    .replace(/[^\p{L}\p{N}\s-]/gu, '') // Keep letters and numbers in any language, removing symbols
     .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with a single hyphen
     .replace(/^-+|-+$/g, ''); // Remove leading and trailing hyphens
 }
 
-export function createProductUrl(category: string | undefined | null, titleOrSku: string | number | undefined | null): string {
+export function createProductUrl(
+  category: string | undefined | null,
+  titleOrSku: string | number | undefined | null,
+  fallbackId?: string | number | undefined | null
+): string {
   const catSlug = slugify(category) || 'general';
-  const prodSlug = slugify(titleOrSku) || 'item';
-  return `/buy/${catSlug}/${prodSlug}`;
+  let prodSlug = slugify(titleOrSku);
+  if (!prodSlug && fallbackId) {
+    prodSlug = slugify(fallbackId);
+  }
+  return `/buy/${catSlug}/${prodSlug || 'item'}`;
 }
 
-export function createLotUrl(titleOrId: string | number | undefined | null): string {
-  const lotSlug = slugify(titleOrId) || 'lot';
-  return `/buy/lot/${lotSlug}`;
+export function createLotUrl(
+  titleOrId: string | number | undefined | null,
+  fallbackId?: string | number | undefined | null
+): string {
+  let lotSlug = slugify(titleOrId);
+  if (!lotSlug && fallbackId) {
+    lotSlug = slugify(fallbackId);
+  }
+  return `/buy/lot/${lotSlug || 'lot'}`;
 }

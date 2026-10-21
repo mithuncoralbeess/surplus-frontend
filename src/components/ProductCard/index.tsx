@@ -138,7 +138,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
     ? (category as any).name || (category as any).title || (category as any).slug || 'General'
     : String(category || 'General');
 
-  const productLink = createProductUrl(categoryText, title || sku || id);
+  const productLink = createProductUrl(categoryText, title || sku || id, sku || id);
 
   return (
     <div className="group relative flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full">

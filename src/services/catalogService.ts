@@ -502,9 +502,10 @@ export const catalogService = {
   /**
    * Connect to GET /api/products/ to fetch single product items (NOT lots).
    * Uses in-memory cache to prevent redundant backend roundtrips.
+   * Default limit is set to 1000 so the entire catalog is available without 20-item pagination cut-off.
    */
-  async getProducts(params?: { category?: string; search?: string; vendor_id?: string; collection?: string }): Promise<ProductItem[]> {
-    const isDefaultQuery = (!params?.category || params.category === 'All') && !params?.search && !params?.vendor_id && !params?.collection;
+  async getProducts(params?: { category?: string; search?: string; vendor_id?: string; collection?: string; limit?: number; page?: number }): Promise<ProductItem[]> {
+    const isDefaultQuery = (!params?.category || params.category === 'All' || params.category === 'all') && !params?.search && !params?.vendor_id && !params?.collection && !params?.limit && !params?.page;
     
     if (isDefaultQuery && allProductsCache && (Date.now() - lastProductsFetchTime < CACHE_TTL_MS)) {
       return allProductsCache;
@@ -513,7 +514,7 @@ export const catalogService = {
     try {
       let endpoint = '/api/products/';
       const queryParts: string[] = [];
-      if (params?.category && params.category !== 'All') {
+      if (params?.category && params.category !== 'All' && params.category !== 'all') {
         queryParts.push(`category=${encodeURIComponent(params.category)}`);
       }
       if (params?.search) {
@@ -525,6 +526,14 @@ export const catalogService = {
       if (params?.collection) {
         queryParts.push(`collection=${encodeURIComponent(params.collection)}`);
       }
+      if (params?.page) {
+        queryParts.push(`page=${encodeURIComponent(params.page)}`);
+      }
+      // CRITICAL: The backend defaults to page_size=20 unless limit is specified.
+      // Default to 1000 so the full catalog is loaded and available for product detail routes.
+      const limit = params?.limit ?? 1000;
+      queryParts.push(`limit=${encodeURIComponent(limit)}`);
+
       if (queryParts.length > 0) {
         endpoint += `?${queryParts.join('&')}`;
       }
@@ -556,14 +565,36 @@ export const catalogService = {
 
       const mappedList = productsOnly.map(mapApiProductToProductItem);
 
+      // Index every product into productCache for instant lookup
+      mappedList.forEach((p) => {
+        productCache.set(String(p.id), p);
+        if (p.sku) {
+          productCache.set(String(p.sku), p);
+          productCache.set(String(p.sku).toLowerCase(), p);
+          const slugSku = slugify(p.sku);
+          if (slugSku) productCache.set(slugSku, p);
+        }
+        if (p.product_id) {
+          productCache.set(String(p.product_id), p);
+          productCache.set(String(p.product_id).toLowerCase(), p);
+          const slugProdId = slugify(p.product_id);
+          if (slugProdId) productCache.set(slugProdId, p);
+        }
+        if (p.model) {
+          productCache.set(String(p.model).toLowerCase(), p);
+          const slugModel = slugify(p.model);
+          if (slugModel) productCache.set(slugModel, p);
+        }
+        const s = slugify(p.title);
+        if (s) {
+          productCache.set(s, p);
+        }
+        productCache.set(p.title.toLowerCase().trim(), p);
+      });
+
       if (isDefaultQuery) {
         allProductsCache = mappedList;
         lastProductsFetchTime = Date.now();
-        mappedList.forEach((p) => {
-          productCache.set(String(p.id), p);
-          if (p.sku) productCache.set(String(p.sku), p);
-          if (p.product_id) productCache.set(String(p.product_id), p);
-        });
       }
 
       return mappedList;
@@ -577,8 +608,8 @@ export const catalogService = {
    * Connect to GET /api/lots/ to fetch wholesale lot batch items.
    * If no lot data is returned from the API, returns an empty array.
    */
-  async getLots(params?: { category?: string; search?: string; vendor_id?: string }): Promise<LotItem[]> {
-    const isDefaultQuery = (!params?.category || params.category === 'All' || params.category === 'View All') && !params?.search && !params?.vendor_id;
+  async getLots(params?: { category?: string; search?: string; vendor_id?: string; limit?: number; page?: number }): Promise<LotItem[]> {
+    const isDefaultQuery = (!params?.category || params.category === 'All' || params.category === 'View All') && !params?.search && !params?.vendor_id && !params?.limit && !params?.page;
 
     if (isDefaultQuery && allLotsCache && (Date.now() - lastLotsFetchTime < CACHE_TTL_MS)) {
       return allLotsCache;
@@ -596,6 +627,12 @@ export const catalogService = {
       if (params?.vendor_id) {
         queryParts.push(`vendor_id=${encodeURIComponent(params.vendor_id)}`);
       }
+      if (params?.page) {
+        queryParts.push(`page=${encodeURIComponent(params.page)}`);
+      }
+      const limit = params?.limit ?? 1000;
+      queryParts.push(`limit=${encodeURIComponent(limit)}`);
+
       if (queryParts.length > 0) {
         endpoint += `?${queryParts.join('&')}`;
       }
@@ -619,15 +656,22 @@ export const catalogService = {
 
       const mappedLots = rawList.map(mapApiLotToLotItem);
 
+      mappedLots.forEach((l) => {
+        lotCache.set(String(l.id), l);
+        if (l.lot_number) {
+          lotCache.set(String(l.lot_number), l);
+          lotCache.set(String(l.lot_number).toLowerCase(), l);
+          const slugLot = slugify(l.lot_number);
+          if (slugLot) lotCache.set(slugLot, l);
+        }
+        const slug = slugify(l.title);
+        if (slug) lotCache.set(slug, l);
+        lotCache.set(l.title.toLowerCase().trim(), l);
+      });
+
       if (isDefaultQuery) {
         allLotsCache = mappedLots;
         lastLotsFetchTime = Date.now();
-        mappedLots.forEach((l) => {
-          lotCache.set(String(l.id), l);
-          if (l.lot_number) lotCache.set(String(l.lot_number), l);
-          const slug = slugify(l.title);
-          if (slug) lotCache.set(slug, l);
-        });
       }
 
       return mappedLots;
@@ -649,94 +693,146 @@ export const catalogService = {
   },
 
   /**
-   * Fetch single product by ID, SKU, or slugified title from /api/products/:id/
-   * Optimized with instant in-memory cache and parallel execution.
+   * Fetch single product by ID, SKU, model number, or slugified title.
+   * Multi-strategy parallel resolution with instant cache lookup.
    */
-  async getProductById(id: string | number): Promise<ProductItem | null> {
+  async getProductById(id: string | number, categoryHint?: string): Promise<ProductItem | null> {
     if (!id) return null;
-    const key = String(id);
-    const keyLower = key.toLowerCase().trim();
+    const key = String(id).trim();
+    if (!key) return null;
+    const keyLower = key.toLowerCase();
     const targetSlug = slugify(key);
 
+    const matchesProduct = (p: ProductItem): boolean => {
+      if (!p) return false;
+      // 1. Direct ID match
+      if (String(p.id) === key) return true;
+      // 2. SKU / Product ID match
+      const pSku = String(p.sku || '').toLowerCase().trim();
+      const pProdId = String(p.product_id || '').toLowerCase().trim();
+      if (pSku && (pSku === keyLower || (targetSlug && slugify(pSku) === targetSlug))) return true;
+      if (pProdId && (pProdId === keyLower || (targetSlug && slugify(pProdId) === targetSlug))) return true;
+      // 3. Model number match
+      const pModel = String(p.model || '').toLowerCase().trim();
+      if (pModel && (pModel === keyLower || (targetSlug && slugify(pModel) === targetSlug))) return true;
+      // 4. Title slug match
+      const pSlug = slugify(p.title);
+      if (targetSlug && pSlug && pSlug === targetSlug) return true;
+      // 5. Title lowercase match
+      if (p.title.toLowerCase().trim() === keyLower) return true;
+      // 6. Model number suffix in slug (e.g. key ends with model number)
+      if (pModel && pModel.length >= 4 && (keyLower.endsWith(pModel) || (targetSlug && targetSlug.endsWith(slugify(pModel))))) return true;
+      return false;
+    };
+
+    const cacheProduct = (p: ProductItem) => {
+      productCache.set(key, p);
+      productCache.set(keyLower, p);
+      if (targetSlug) productCache.set(targetSlug, p);
+      productCache.set(String(p.id), p);
+      if (p.sku) {
+        productCache.set(String(p.sku), p);
+        productCache.set(String(p.sku).toLowerCase(), p);
+      }
+      if (p.product_id) {
+        productCache.set(String(p.product_id), p);
+        productCache.set(String(p.product_id).toLowerCase(), p);
+      }
+      if (p.model) {
+        productCache.set(String(p.model).toLowerCase(), p);
+      }
+      const s = slugify(p.title);
+      if (s) productCache.set(s, p);
+    };
+
     // 1. Instant Cache Lookup (0ms latency if already loaded)
-    if (productCache.has(key)) {
-      return productCache.get(key)!;
-    }
-    if (targetSlug && productCache.has(targetSlug)) {
-      return productCache.get(targetSlug)!;
-    }
-    if (allProductsCache) {
-      const match = allProductsCache.find(
-        (p) =>
-          String(p.id) === key ||
-          String(p.sku || '').toLowerCase() === keyLower ||
-          String(p.product_id || '').toLowerCase() === keyLower ||
-          (targetSlug && slugify(p.title) === targetSlug) ||
-          p.title.toLowerCase().trim() === keyLower
-      );
+    if (productCache.has(key)) return productCache.get(key)!;
+    if (productCache.has(keyLower)) return productCache.get(keyLower)!;
+    if (targetSlug && productCache.has(targetSlug)) return productCache.get(targetSlug)!;
+
+    if (allProductsCache && allProductsCache.length > 0) {
+      const match = allProductsCache.find(matchesProduct);
       if (match) {
-        productCache.set(key, match);
-        if (targetSlug) productCache.set(targetSlug, match);
+        cacheProduct(match);
         return match;
       }
     }
 
-    // 2. Parallel API Execution (prevents sequential fallback delay)
+    // 2. Multi-tier parallel API execution
     try {
-      const isNumericId = /^\d+$/.test(key);
-      const searchTerms = key.includes('-') ? key.replace(/-/g, ' ').trim() : key.trim();
-      const [singleRes, searchRes, listRes] = await Promise.allSettled([
-        isNumericId ? apiClient(`/api/products/${id}/`, { silent: true }) : Promise.resolve(null),
-        searchTerms ? apiClient(`/api/products/?search=${encodeURIComponent(searchTerms)}`, { silent: true }) : Promise.resolve(null),
-        allProductsCache ? Promise.resolve(null) : this.getProducts()
-      ]);
+      const searchPromises: Promise<ProductItem | null>[] = [];
 
-      if (singleRes.status === 'fulfilled' && singleRes.value && singleRes.value.success && singleRes.value.data) {
-        const mapped = mapApiProductToProductItem(singleRes.value.data, 0);
-        productCache.set(key, mapped);
-        if (mapped.sku) productCache.set(String(mapped.sku), mapped);
-        if (mapped.product_id) productCache.set(String(mapped.product_id), mapped);
-        if (targetSlug) productCache.set(targetSlug, mapped);
-        return mapped;
+      // A) Category-scoped fetch if categoryHint is present
+      const cleanCat = categoryHint && categoryHint !== 'All' && categoryHint !== 'all' && categoryHint !== 'general' && categoryHint !== 'item'
+        ? categoryHint.trim()
+        : '';
+      if (cleanCat) {
+        searchPromises.push(
+          this.getProducts({ category: cleanCat, limit: 1000 })
+            .then(catList => catList.find(matchesProduct) || null)
+            .catch(() => null)
+        );
       }
 
-      // Check search results (enables finding products across paginated pages)
-      if (searchRes.status === 'fulfilled' && searchRes.value && searchRes.value.success) {
-        const rawSearch = searchRes.value.data;
-        const searchList: any[] = Array.isArray(rawSearch)
-          ? rawSearch
-          : (Array.isArray(rawSearch?.products) ? rawSearch.products : (Array.isArray(rawSearch?.data) ? rawSearch.data : []));
-
-        const mappedSearch = searchList.map(mapApiProductToProductItem);
-        const searchMatch = mappedSearch.find(
-          (p) =>
-            String(p.id) === key ||
-            String(p.sku || '').toLowerCase() === keyLower ||
-            String(p.product_id || '').toLowerCase() === keyLower ||
-            (targetSlug && slugify(p.title) === targetSlug) ||
-            p.title.toLowerCase().trim() === keyLower
+      // B) Full catalog fetch (loads and caches all products with limit=1000)
+      if (!allProductsCache || allProductsCache.length === 0) {
+        searchPromises.push(
+          this.getProducts({ limit: 1000 })
+            .then(fullList => fullList.find(matchesProduct) || null)
+            .catch(() => null)
         );
-        if (searchMatch) {
-          productCache.set(key, searchMatch);
-          if (targetSlug) productCache.set(targetSlug, searchMatch);
-          return searchMatch;
+      }
+
+      // C) Targeted keyword searches if key contains tokens or hyphens
+      const tokens = key.split(/[-_\s]+/).filter(Boolean);
+      // If slug has model/part number at the end (e.g. '40206-01gx3')
+      if (tokens.length >= 2) {
+        const lastPart = tokens.slice(-2).join('-');
+        searchPartsLoop:
+        searchPromises.push(
+          apiClient(`/api/products/?search=${encodeURIComponent(lastPart)}`, { silent: true })
+            .then(res => {
+              if (res.success && res.data) {
+                const raw = Array.isArray(res.data) ? res.data : (res.data.products || res.data.results || []);
+                const mapped = raw.map(mapApiProductToProductItem);
+                return mapped.find(matchesProduct) || null;
+              }
+              return null;
+            })
+            .catch(() => null)
+        );
+      }
+      // Also try brand / first token
+      if (tokens.length >= 1 && tokens[0].length >= 3) {
+        searchPromises.push(
+          apiClient(`/api/products/?search=${encodeURIComponent(tokens[0])}`, { silent: true })
+            .then(res => {
+              if (res.success && res.data) {
+                const raw = Array.isArray(res.data) ? res.data : (res.data.products || res.data.results || []);
+                const mapped = raw.map(mapApiProductToProductItem);
+                return mapped.find(matchesProduct) || null;
+              }
+              return null;
+            })
+            .catch(() => null)
+        );
+      }
+
+      const settled = await Promise.allSettled(searchPromises);
+      for (const r of settled) {
+        if (r.status === 'fulfilled' && r.value) {
+          cacheProduct(r.value);
+          return r.value;
         }
       }
 
-      // Fallback matching from parallel list result
-      const list = listRes.status === 'fulfilled' && Array.isArray(listRes.value) ? listRes.value : (allProductsCache || []);
-      const match = list.find(
-        (p) =>
-          String(p.id) === key ||
-          String(p.sku || '').toLowerCase() === keyLower ||
-          String(p.product_id || '').toLowerCase() === keyLower ||
-          (targetSlug && slugify(p.title) === targetSlug) ||
-          p.title.toLowerCase().trim() === keyLower
-      );
-      if (match) {
-        productCache.set(key, match);
-        if (targetSlug) productCache.set(targetSlug, match);
-        return match;
+      // Final check in allProductsCache (in case another parallel query finished)
+      if (allProductsCache && allProductsCache.length > 0) {
+        const fallbackMatch = allProductsCache.find(matchesProduct);
+        if (fallbackMatch) {
+          cacheProduct(fallbackMatch);
+          return fallbackMatch;
+        }
       }
     } catch (err) {
       console.warn(`[catalogService] Error fetching product ${id}:`, err);

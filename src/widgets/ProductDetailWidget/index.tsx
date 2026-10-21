@@ -17,12 +17,14 @@ import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard';
 import VirtualWarehouseExplorer from '../../components/VirtualWarehouseExplorer';
 import { scrollToTop } from '../../lib/scroll';
+import { slugify } from '../../lib/slugs';
 
 interface ProductDetailWidgetProps {
   productId: string;
+  category?: string;
 }
 
-export default function ProductDetailWidget({ productId }: ProductDetailWidgetProps) {
+export default function ProductDetailWidget({ productId, category }: ProductDetailWidgetProps) {
   const router = useRouter();
   const { formatPrice } = useCurrency();
   const { addToCart, openCartDrawer } = useCart();
@@ -48,7 +50,7 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
     let isMounted = true;
     setLoading(true);
 
-    catalogService.getProductById(productId)
+    catalogService.getProductById(productId, category)
       .then((data) => {
         if (isMounted) {
           setProduct(data);
@@ -69,11 +71,18 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
         }
       });
 
-    // Fetch related products
-    catalogService.getProducts()
+    // Fetch related products (prefer same category if available)
+    const relCat = category || '';
+    catalogService.getProducts(relCat ? { category: relCat, limit: 12 } : { limit: 12 })
       .then((list) => {
         if (isMounted) {
-          setRelatedProducts(list.filter(p => String(p.id) !== productId).slice(0, 4));
+          const currentSlug = slugify(productId);
+          const filtered = list.filter(p => 
+            String(p.id) !== productId &&
+            slugify(p.title) !== currentSlug &&
+            String(p.product_id || '').toLowerCase() !== productId.toLowerCase()
+          );
+          setRelatedProducts(filtered.slice(0, 4));
         }
       })
       .catch(() => {});
@@ -81,7 +90,7 @@ export default function ProductDetailWidget({ productId }: ProductDetailWidgetPr
     return () => {
       isMounted = false;
     };
-  }, [productId]);
+  }, [productId, category]);
 
   const handleDecreaseQty = () => {
     const moq = product?.moq || 1;
