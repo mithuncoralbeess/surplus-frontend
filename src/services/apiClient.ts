@@ -83,7 +83,30 @@ const inFlightRequests = new Map<string, Promise<ApiResponse<any>>>();
 const DEFAULT_CACHE_TTL_MS = 3 * 60 * 1000;
 
 // LocalStorage Persistent Cache Key Prefix
-const STORAGE_PREFIX = 'surplus_api_cache_v2:';
+const STORAGE_PREFIX = 'surplus_api_cache_v3:';
+const LEGACY_STORAGE_PREFIXES = ['surplus_api_cache_v1:', 'surplus_api_cache_v2:'];
+
+function purgeLegacyStorageCaches(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const toRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && LEGACY_STORAGE_PREFIXES.some(prefix => key.startsWith(prefix))) {
+        toRemove.push(key);
+      }
+    }
+    toRemove.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+if (typeof window !== 'undefined') {
+  try {
+    purgeLegacyStorageCaches();
+  } catch {}
+}
 
 // Endpoints that qualify for client-side localStorage persistence
 const PERSISTENT_ENDPOINTS = [

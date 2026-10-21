@@ -684,8 +684,10 @@ export const catalogService = {
     // 2. Parallel API Execution (prevents sequential fallback delay)
     try {
       const isNumericId = /^\d+$/.test(key);
-      const [singleRes, listRes] = await Promise.allSettled([
+      const searchTerms = key.includes('-') ? key.replace(/-/g, ' ').trim() : key.trim();
+      const [singleRes, searchRes, listRes] = await Promise.allSettled([
         isNumericId ? apiClient(`/api/products/${id}/`, { silent: true }) : Promise.resolve(null),
+        searchTerms ? apiClient(`/api/products/?search=${encodeURIComponent(searchTerms)}`, { silent: true }) : Promise.resolve(null),
         allProductsCache ? Promise.resolve(null) : this.getProducts()
       ]);
 
@@ -696,6 +698,29 @@ export const catalogService = {
         if (mapped.product_id) productCache.set(String(mapped.product_id), mapped);
         if (targetSlug) productCache.set(targetSlug, mapped);
         return mapped;
+      }
+
+      // Check search results (enables finding products across paginated pages)
+      if (searchRes.status === 'fulfilled' && searchRes.value && searchRes.value.success) {
+        const rawSearch = searchRes.value.data;
+        const searchList: any[] = Array.isArray(rawSearch)
+          ? rawSearch
+          : (Array.isArray(rawSearch?.products) ? rawSearch.products : (Array.isArray(rawSearch?.data) ? rawSearch.data : []));
+
+        const mappedSearch = searchList.map(mapApiProductToProductItem);
+        const searchMatch = mappedSearch.find(
+          (p) =>
+            String(p.id) === key ||
+            String(p.sku || '').toLowerCase() === keyLower ||
+            String(p.product_id || '').toLowerCase() === keyLower ||
+            (targetSlug && slugify(p.title) === targetSlug) ||
+            p.title.toLowerCase().trim() === keyLower
+        );
+        if (searchMatch) {
+          productCache.set(key, searchMatch);
+          if (targetSlug) productCache.set(targetSlug, searchMatch);
+          return searchMatch;
+        }
       }
 
       // Fallback matching from parallel list result
