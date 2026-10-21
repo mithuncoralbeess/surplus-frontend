@@ -530,8 +530,8 @@ export const catalogService = {
         queryParts.push(`page=${encodeURIComponent(params.page)}`);
       }
       // CRITICAL: The backend defaults to page_size=20 unless limit is specified.
-      // Default to 1000 so the full catalog is loaded and available for product detail routes.
-      const limit = params?.limit ?? 1000;
+      // Default to 5000 so the full catalog is loaded and available for product detail routes.
+      const limit = params?.limit ?? 5000;
       queryParts.push(`limit=${encodeURIComponent(limit)}`);
 
       if (queryParts.length > 0) {
@@ -630,7 +630,7 @@ export const catalogService = {
       if (params?.page) {
         queryParts.push(`page=${encodeURIComponent(params.page)}`);
       }
-      const limit = params?.limit ?? 1000;
+      const limit = params?.limit ?? 5000;
       queryParts.push(`limit=${encodeURIComponent(limit)}`);
 
       if (queryParts.length > 0) {
