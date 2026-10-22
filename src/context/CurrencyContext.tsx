@@ -42,9 +42,62 @@ export const getShortRegionName = (regionName: string): string => {
   return REGION_SHORT_MAP[regionName] || regionName;
 };
 
+interface DetectedRegionProfile {
+  region: string;
+  currency: string;
+  countryCode: string;
+}
+
+export const REGION_PROFILES: Record<string, DetectedRegionProfile> = {
+  'AE': { region: 'United Arab Emirates', currency: 'AED', countryCode: 'AE' },
+  'SA': { region: 'Saudi Arabia', currency: 'SAR', countryCode: 'SA' },
+  'QA': { region: 'Qatar', currency: 'QAR', countryCode: 'QA' },
+  'IN': { region: 'India', currency: 'INR', countryCode: 'IN' },
+  'GB': { region: 'United Kingdom', currency: 'GBP', countryCode: 'GB' },
+  'US': { region: 'United States', currency: 'USD', countryCode: 'US' },
+  'KW': { region: 'Kuwait', currency: 'USD', countryCode: 'KW' },
+  'OM': { region: 'Oman', currency: 'USD', countryCode: 'OM' },
+  'BH': { region: 'Bahrain', currency: 'USD', countryCode: 'BH' },
+  'DE': { region: 'Germany', currency: 'EUR', countryCode: 'DE' },
+  'FR': { region: 'France', currency: 'EUR', countryCode: 'FR' },
+};
+
+export function detectRegionFromBrowserTimezone(): DetectedRegionProfile {
+  if (typeof window === 'undefined') {
+    return REGION_PROFILES['AE'];
+  }
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    if (tz.includes('Dubai') || tz.includes('Muscat')) {
+      return REGION_PROFILES['AE'];
+    }
+    if (tz.includes('Riyadh')) {
+      return REGION_PROFILES['SA'];
+    }
+    if (tz.includes('Qatar')) {
+      return REGION_PROFILES['QA'];
+    }
+    if (tz.includes('Kolkata') || tz.includes('Calcutta')) {
+      return REGION_PROFILES['IN'];
+    }
+    if (tz.includes('London') || tz.includes('Belfast')) {
+      return REGION_PROFILES['GB'];
+    }
+    if (tz.startsWith('America/')) {
+      return REGION_PROFILES['US'];
+    }
+    if (tz.startsWith('Europe/')) {
+      return REGION_PROFILES['DE'];
+    }
+  } catch {}
+  return REGION_PROFILES['AE']; // Default surplus hub
+}
+
 interface CurrencyContextType {
   currency: string;
   selectedRegion: string;
+  detectedCountryCode: string;
+  isAutoDetected: boolean;
   currencyOptions: CurrencyOption[];
   isLiveRates: boolean;
   setCurrency: (code: string) => void;
@@ -58,19 +111,64 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 
 export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currency, setCurrencyState] = useState<string>('USD');
-  const [selectedRegion, setSelectedRegionState] = useState<string>('India');
+  const [selectedRegion, setSelectedRegionState] = useState<string>('United Arab Emirates');
+  const [detectedCountryCode, setDetectedCountryCode] = useState<string>('AE');
+  const [isAutoDetected, setIsAutoDetected] = useState<boolean>(true);
   const [currencyOptions, setCurrencyOptions] = useState<CurrencyOption[]>(INITIAL_CURRENCY_OPTIONS);
   const [isLiveRates, setIsLiveRates] = useState<boolean>(false);
 
-  // Restore saved choices & fetch live exchange rates on mount
+  // Restore saved choices & auto-detect region on mount
   useEffect(() => {
     const savedCurrency = localStorage.getItem('surplus_currency');
     const savedRegion = localStorage.getItem('surplus_region');
-    if (savedCurrency) {
-      setCurrencyState(savedCurrency);
-    }
+
     if (savedRegion) {
       setSelectedRegionState(savedRegion);
+      setIsAutoDetected(false);
+      if (savedCurrency) {
+        setCurrencyState(savedCurrency);
+      }
+    } else {
+      // Step 1: Immediate zero-latency timezone detection
+      const fallback = detectRegionFromBrowserTimezone();
+      setSelectedRegionState(fallback.region);
+      setCurrencyState(fallback.currency);
+      setDetectedCountryCode(fallback.countryCode);
+      setIsAutoDetected(true);
+
+      // Step 2: Query API / Edge headers or IP geolocation to refine
+      (async () => {
+        try {
+          const apiRes = await fetch('/api/location/detect');
+          if (apiRes.ok) {
+            const apiData = await apiRes.json();
+            if (apiData.countryCode && REGION_PROFILES[apiData.countryCode]) {
+              const matched = REGION_PROFILES[apiData.countryCode];
+              setSelectedRegionState(matched.region);
+              setCurrencyState(matched.currency);
+              setDetectedCountryCode(matched.countryCode);
+              return;
+            }
+          }
+
+          // Step 3: Fast open IP geo lookup fallback
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 2000);
+          const geoRes = await fetch('https://api.country.is', { signal: controller.signal });
+          clearTimeout(timer);
+          if (geoRes.ok) {
+            const geoData = await geoRes.json();
+            if (geoData?.country && REGION_PROFILES[geoData.country]) {
+              const matched = REGION_PROFILES[geoData.country];
+              setSelectedRegionState(matched.region);
+              setCurrencyState(matched.currency);
+              setDetectedCountryCode(matched.countryCode);
+            }
+          }
+        } catch {
+          // Keep the instant timezone detection result
+        }
+      })();
     }
 
     // Fetch live rates relative to USD from open forex API
@@ -106,6 +204,7 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setSelectedRegion = (region: string) => {
     setSelectedRegionState(region);
+    setIsAutoDetected(false);
     if (typeof window !== 'undefined') {
       localStorage.setItem('surplus_region', region);
     }
@@ -114,6 +213,7 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setRegionAndCurrency = (region: string, code: string) => {
     setSelectedRegionState(region);
     setCurrencyState(code);
+    setIsAutoDetected(false);
     if (typeof window !== 'undefined') {
       localStorage.setItem('surplus_region', region);
       localStorage.setItem('surplus_currency', code);
@@ -164,6 +264,8 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     <CurrencyContext.Provider value={{
       currency,
       selectedRegion,
+      detectedCountryCode,
+      isAutoDetected,
       currencyOptions,
       isLiveRates,
       setCurrency,
@@ -182,7 +284,9 @@ export const useCurrency = () => {
   if (!context) {
     return {
       currency: 'USD',
-      selectedRegion: 'India',
+      selectedRegion: 'United Arab Emirates',
+      detectedCountryCode: 'AE',
+      isAutoDetected: true,
       currencyOptions: INITIAL_CURRENCY_OPTIONS,
       isLiveRates: false,
       setCurrency: () => {},

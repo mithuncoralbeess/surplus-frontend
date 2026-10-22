@@ -6,17 +6,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { 
   ShieldCheck, Tag, CheckCircle2, 
-  Truck, Send, AlertCircle, 
-  ShoppingCart, ChevronRight, Check, Zap, Layers,
+  Truck, AlertCircle, 
+  ShoppingCart, ChevronRight, Check, Layers,
   List, MapPin, FileSpreadsheet, Download, Info, Package,
   Search, SlidersHorizontal, Building2, Calendar, Scale,
   Box, ExternalLink, Globe, Clock, X
 } from 'lucide-react';
 import { catalogService, LotItem } from '../../services/catalogService';
-import { inquiryService } from '../../services/inquiryService';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
-import { scrollToTop } from '../../lib/scroll';
 import VirtualWarehouseExplorer from '../../components/VirtualWarehouseExplorer';
 
 interface LotDetailWidgetProps {
@@ -42,13 +40,8 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
   );
 
 
-  // Quote Request State
-  const [showInlineQuoteForm, setShowInlineQuoteForm] = useState<boolean>(false);
+  // RFQ Basket Notification State
   const [isRfqSent, setIsRfqSent] = useState<boolean>(false);
-  const [userEmail, setUserEmail] = useState<string>('');
-  const [notes, setNotes] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [quoteSuccessMsg, setQuoteSuccessMsg] = useState<string>('');
 
   useEffect(() => {
     if (!lotId) return;
@@ -107,57 +100,6 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
     setTimeout(() => setIsRfqSent(false), 3500);
   };
 
-  const handleQuoteSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!lot || !userEmail) return;
-
-    setIsSubmitting(true);
-    try {
-      const lotQty = lot.units || lot.total_units_quantity || 1;
-      const lotPrice = Number(lot.price || lot.ask_price_surplus_payout || 0);
-
-      const res = await inquiryService.submitRfqEnquiry({
-        contact_person: userEmail.split('@')[0],
-        company_name: userEmail.split('@')[1]?.split('.')[0]?.toUpperCase() || 'Wholesale Buyer',
-        email: userEmail,
-        destination_port: lot.location || '',
-        additional_notes: notes || `Direct RFQ / Offer for Lot #${lot.lot_number}: ${lot.title}`,
-        currency: lot.currency || 'USD',
-        total_units: lotQty,
-        estimated_value: lotPrice,
-        items: [
-          {
-            id: `lot-${lot.id}`,
-            productId: lot.id,
-            title: lot.title || `Wholesale Lot #${lot.lot_number}`,
-            sku: lot.lot_number || `LOT-${lot.id}`,
-            category: lot.category || 'Wholesale Lot',
-            quantity: lotQty,
-            unitPrice: lotPrice,
-            notes: notes || undefined,
-          }
-        ]
-      });
-
-      if (res.success || res.status === 200 || res.status === 201) {
-        const refMsg = res.data?.reference ? ` Ref: ${res.data.reference}.` : '';
-        setQuoteSuccessMsg(`Quote enquiry submitted successfully!${refMsg} Our representative will contact ${userEmail} shortly.`);
-        setShowInlineQuoteForm(false);
-        scrollToTop({ behavior: 'smooth' });
-        setTimeout(() => setQuoteSuccessMsg(''), 7000);
-      } else {
-        setQuoteSuccessMsg(res.message || 'Failed to submit quote enquiry. Please try again.');
-        scrollToTop({ behavior: 'smooth' });
-        setTimeout(() => setQuoteSuccessMsg(''), 5000);
-      }
-    } catch (err: any) {
-      console.error('[LotDetailWidget] RFQ Submit error:', err);
-      setQuoteSuccessMsg('Error submitting enquiry. Please check your connection and try again.');
-      setTimeout(() => setQuoteSuccessMsg(''), 5000);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleWhatsAppInquiry = () => {
     if (!lot) return;
@@ -213,9 +155,9 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                     <div className="h-8 w-44 bg-gray-200 rounded-lg"></div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div className="h-14 bg-gray-200 rounded-full"></div>
-                  <div className="h-14 bg-gray-200 rounded-full"></div>
+                <div className="space-y-3 pt-2">
+                  <div className="h-12 sm:h-14 bg-gray-200 rounded-full"></div>
+                  <div className="h-10 sm:h-12 bg-gray-200 rounded-full"></div>
                 </div>
               </div>
             </div>
@@ -289,13 +231,6 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
           </div>
         </div>
 
-        {/* Quote Success Alert */}
-        {quoteSuccessMsg && (
-          <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 text-xs sm:text-sm font-extrabold flex items-center gap-3 animate-fade-in shadow-xs">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span>{quoteSuccessMsg}</span>
-          </div>
-        )}
 
         {/* Hero Section */}
         <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200/90 shadow-sm p-4 sm:p-6 lg:p-8 xl:p-10 mb-8 sm:mb-10">
@@ -463,51 +398,41 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
 
               {/* Action Buttons */}
               <div className="space-y-3 pt-1">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowInlineQuoteForm(!showInlineQuoteForm)}
-                    className="w-full py-3 px-4 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>{showInlineQuoteForm ? 'Close Enquiry Form' : 'Request Manifest / Offer'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={inCart ? openCartDrawer : handleAddToCart}
-                    className={`w-full py-3 px-4 rounded-full font-extrabold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer border ${
-                      isRfqSent
-                        ? 'bg-emerald-700 text-white border-emerald-700'
-                        : inCart
-                        ? 'bg-[#0f7a61] hover:bg-[#0c6651] text-white border-[#0f7a61] shadow-xs'
-                        : 'bg-emerald-50 hover:bg-emerald-100 text-[#0f7a61] border-emerald-200'
-                    }`}
-                    title={inCart ? 'Already added to RFQ Basket. Click to view basket.' : 'Add Lot to RFQ Basket'}
-                  >
-                    {isRfqSent ? (
-                      <>
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Added to Cart!</span>
-                      </>
-                    ) : inCart ? (
-                      <>
-                        <CheckCircle2 className="w-4 h-4 text-emerald-200" />
-                        <span>In RFQ Basket (View Basket)</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="w-4 h-4" />
-                        <span>+ Add Lot to Enquiry</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={inCart ? openCartDrawer : handleAddToCart}
+                  className={`w-full py-3 sm:py-3.5 px-6 rounded-full font-extrabold text-xs sm:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-md ${
+                    isRfqSent
+                      ? 'bg-emerald-700 text-white border border-emerald-700'
+                      : inCart
+                      ? 'bg-[#0f7a61] hover:bg-[#0c6651] text-white border border-[#0f7a61]'
+                      : 'bg-[#0f7a61] hover:bg-[#0c6651] text-white border border-[#0f7a61]'
+                  }`}
+                  title={inCart ? 'Already added to RFQ Basket. Click to view basket.' : 'Add Lot to RFQ Basket'}
+                >
+                  {isRfqSent ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-200" />
+                      <span>Added wholesale lot to RFQ Basket!</span>
+                    </>
+                  ) : inCart ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-200" />
+                      <span>In RFQ Basket (View Basket)</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span>+ Add Lot to RFQ List</span>
+                    </>
+                  )}
+                </button>
 
                 {/* Direct WhatsApp Instant Deal Button */}
                 <button
                   type="button"
                   onClick={handleWhatsAppInquiry}
-                  className="w-full py-3 px-4 bg-[#0a5c48] hover:bg-[#084838] text-white rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-2.5 sm:py-3 px-4 bg-[#0a5c48] hover:bg-[#084838] text-white rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <svg viewBox="0 0 32 32" className="w-4 h-4 fill-current shrink-0">
                     <path d="M16 2C8.28 2 2 8.28 2 16c0 2.62.72 5.08 1.98 7.18L2 30l7.04-1.93A13.91 13.91 0 0016 30c7.72 0 14-6.28 14-14S23.72 2 16 2zm8.17 19.86c-.34.97-1.7 1.8-2.38 1.88-.63.07-1.42.1-4.07-.98-3.39-1.39-5.59-4.83-5.76-5.06-.17-.23-1.38-1.84-1.38-3.51 0-1.67.87-2.49 1.18-2.83.31-.34.68-.43.91-.43.23 0 .45.01.65.02.21.01.49-.08.77.59.29.68.98 2.39 1.07 2.56.09.17.15.37.03.6-.12.23-.18.37-.36.58-.18.21-.38.47-.54.63-.18.18-.37.38-.16.74.21.36.93 1.54 2 2.49 1.38 1.23 2.54 1.61 2.9 1.79.36.18.57.15.78-.09.21-.24.9-1.05 1.14-1.41.24-.36.48-.3.8-.18.33.12 2.07.98 2.42 1.15.36.18.6.27.69.42.09.15.09.89-.25 1.86z" />
@@ -545,46 +470,6 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                   </a>
                 )}
               </div>
-
-              {/* Integrated Form */}
-              {showInlineQuoteForm && (
-                <div className="p-5 sm:p-6 bg-gray-50 border border-emerald-200 rounded-2xl animate-fade-in space-y-4 mt-4">
-                  <div className="flex items-center gap-2 font-extrabold text-[#0f7a61] text-xs sm:text-sm uppercase tracking-wider">
-                    <Zap className="w-4 h-4" />
-                    <span>Enquire or Submit Offer For This Lot</span>
-                  </div>
-                  <form onSubmit={handleQuoteSubmit} className="space-y-3.5">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Business Email Address</label>
-                      <input
-                        type="email"
-                        placeholder="buyer@company.com"
-                        value={userEmail}
-                        onChange={(e) => setUserEmail(e.target.value)}
-                        required
-                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0f7a61]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">Target Offer or Questions</label>
-                      <textarea
-                        rows={3}
-                        placeholder="Specify target offer or request manifest details..."
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0f7a61]"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full py-3 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full font-extrabold text-xs sm:text-sm uppercase tracking-wider transition-colors shadow-sm flex items-center justify-center cursor-pointer"
-                    >
-                      {isSubmitting ? 'Sending Request...' : 'Submit Enquiry'}
-                    </button>
-                  </form>
-                </div>
-              )}
 
             </div>
           </div>

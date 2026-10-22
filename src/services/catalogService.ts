@@ -114,6 +114,91 @@ export interface LotItem {
   type?: 'lot';
 }
 
+/**
+ * Checks if a ProductItem or LotItem matches a given region or country name.
+ * Handles regional synonyms, GCC hubs, state/city names, and excludes restricted export destinations.
+ */
+export function isItemInRegion(item: ProductItem | LotItem, targetRegion: string): boolean {
+  if (!targetRegion || targetRegion === 'all' || targetRegion.toLowerCase() === 'global') return true;
+
+  const cleanTarget = targetRegion.trim().toLowerCase();
+
+  // Excluded countries check
+  const excluded = ('excluded_countries' in item && Array.isArray(item.excluded_countries)
+    ? item.excluded_countries
+    : ('excluded_export_countries' in item && Array.isArray(item.excluded_export_countries)
+      ? item.excluded_export_countries
+      : [])) as string[];
+
+  if (excluded.some(ex => typeof ex === 'string' && (ex.toLowerCase().includes(cleanTarget) || cleanTarget.includes(ex.toLowerCase())))) {
+    return false;
+  }
+
+  // Extract all location-relevant strings from the item
+  const locationStrings: string[] = [];
+  if ('inventory_country' in item && item.inventory_country) locationStrings.push(String(item.inventory_country));
+  if ('inventory_city' in item && item.inventory_city) locationStrings.push(String(item.inventory_city));
+  if ('inventory_location' in item && item.inventory_location) locationStrings.push(String(item.inventory_location));
+  if (item.location) locationStrings.push(String(item.location));
+  if ('country' in item && item.country) locationStrings.push(String(item.country));
+  if ('city' in item && item.city) locationStrings.push(String(item.city));
+  if ('manufacturing_country' in item && item.manufacturing_country) locationStrings.push(String(item.manufacturing_country));
+
+  const combined = locationStrings.join(' ').toLowerCase();
+  if (!combined) return false;
+
+  // Direct match
+  if (combined.includes(cleanTarget)) return true;
+
+  // Regional aliases and major hub cities
+  const REGION_KEYWORDS: Record<string, string[]> = {
+    'united arab emirates': ['uae', 'united arab emirates', 'dubai', 'abu dhabi', 'sharjah', 'ajman', 'al ain', 'ras al khaimah', 'fujairah', 'jebel ali', 'dhaid', 'emirates'],
+    'uae': ['uae', 'united arab emirates', 'dubai', 'abu dhabi', 'sharjah', 'ajman', 'al ain', 'jebel ali'],
+    'saudi arabia': ['saudi arabia', 'saudi', 'ksa', 'riyadh', 'jeddah', 'dammam', 'khobar', 'mecca', 'medina', 'jubail', 'yanbu'],
+    'qatar': ['qatar', 'doha', 'al wakrah', 'al rayyan', 'lusail', 'mesaieed', 'ras laffan'],
+    'india': ['india', 'mumbai', 'delhi', 'bangalore', 'bengaluru', 'chennai', 'hyderabad', 'kolkata', 'pune', 'ahmedabad', 'kerala', 'kozhikode', 'kochi', 'cochin', 'calicut', 'kakkodi', 'gujarat', 'noida', 'gurugram'],
+    'united kingdom': ['united kingdom', 'uk', 'great britain', 'england', 'scotland', 'wales', 'london', 'manchester', 'birmingham', 'leeds', 'glasgow', 'bristol'],
+    'united states': ['united states', 'usa', 'u.s.', 'texas', 'california', 'new york', 'florida', 'illinois', 'chicago', 'austin', 'houston', 'dallas', 'san jose', 'los angeles', 'seattle', 'atlanta'],
+    'kuwait': ['kuwait', 'kuwait city', 'al ahmadi', 'hawalli', 'salmiya'],
+    'oman': ['oman', 'muscat', 'salalah', 'sohar', 'nizwa'],
+    'bahrain': ['bahrain', 'manama', 'riffa', 'muharraq'],
+    'germany': ['germany', 'deutschland', 'munich', 'stuttgart', 'berlin', 'frankfurt', 'hamburg', 'cologne'],
+  };
+
+  for (const [key, aliases] of Object.entries(REGION_KEYWORDS)) {
+    if (cleanTarget.includes(key) || key.includes(cleanTarget)) {
+      if (aliases.some(alias => combined.includes(alias))) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Prioritizes items from the user's detected region so they appear at the top,
+ * followed by other global inventory.
+ */
+export function prioritizeItemsByRegion<T extends ProductItem | LotItem>(items: T[], region: string): T[] {
+  if (!region || region === 'all' || region.toLowerCase() === 'global' || !Array.isArray(items) || items.length === 0) {
+    return items;
+  }
+
+  const inRegion: T[] = [];
+  const otherRegion: T[] = [];
+
+  for (const item of items) {
+    if (isItemInRegion(item, region)) {
+      inRegion.push(item);
+    } else {
+      otherRegion.push(item);
+    }
+  }
+
+  return [...inRegion, ...otherRegion];
+}
+
 export interface ProductRequestPayload {
   category: string;
   title: string;

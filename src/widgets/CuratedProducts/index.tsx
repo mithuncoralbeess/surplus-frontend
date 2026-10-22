@@ -5,13 +5,15 @@ import Link from 'next/link';
 import { Sparkles, PackageSearch, ArrowRight } from 'lucide-react';
 import { motion } from '../../lib/motion';
 import ProductCard from '../../components/ProductCard';
-import { catalogService, ProductItem } from '../../services/catalogService';
+import { catalogService, ProductItem, prioritizeItemsByRegion } from '../../services/catalogService';
 import { useLanguage } from '../../context/LanguageContext';
+import { useCurrency } from '../../context/CurrencyContext';
 
 const TABS = ['Best Sellers', 'New Arrivals', 'Featured Deals'];
 
 const CuratedProducts = () => {
   const { t } = useLanguage();
+  const { selectedRegion } = useCurrency();
   const [activeTab, setActiveTab] = useState('Best Sellers');
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,10 +21,11 @@ const CuratedProducts = () => {
 
   useEffect(() => {
     let isMounted = true;
+    const cacheKey = `${activeTab}_${selectedRegion}`;
 
     // Check in-memory cache first for instant tab switching
-    if (cacheRef.current[activeTab]) {
-      setProducts(cacheRef.current[activeTab]);
+    if (cacheRef.current[cacheKey]) {
+      setProducts(cacheRef.current[cacheKey]);
       setLoading(false);
       return;
     }
@@ -52,9 +55,12 @@ const CuratedProducts = () => {
             if (feat.length > 0) singleProducts = feat;
           }
 
+          // Prioritize inventory based on auto-detected region
+          const regionalPrioritized = prioritizeItemsByRegion(singleProducts, selectedRegion);
+
           // Limit to maximum 8 items per tab
-          const curatedList = singleProducts.slice(0, 8);
-          cacheRef.current[activeTab] = curatedList;
+          const curatedList = regionalPrioritized.slice(0, 8);
+          cacheRef.current[cacheKey] = curatedList;
           setProducts(curatedList);
           setLoading(false);
         }

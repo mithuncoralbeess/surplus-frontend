@@ -5,8 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { User, LogOut } from 'lucide-react';
 import { motion } from '../../lib/motion';
-import RegionSelector from '../../components/RegionSelector';
-import CurrencySelector from '../../components/CurrencySelector';
 import HeaderCartDropdown from '../../components/HeaderCartDropdown';
 import HeaderNotificationsDropdown from '../../components/HeaderNotificationsDropdown';
 import BuyMegamenu from './BuyMegamenu';
@@ -120,10 +118,6 @@ const Header = () => {
 
         {/* Right Actions */}
         <div className="hidden lg:flex items-center header-right-actions">
-          {/* Language selector hidden per user requirement */}
-          <RegionSelector />
-          <CurrencySelector />
-
           <HeaderCartDropdown />
           {session ? <HeaderNotificationsDropdown /> : null}
 
