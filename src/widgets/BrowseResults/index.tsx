@@ -12,8 +12,6 @@ import {
   AiSearchResultItem, 
   AiSearchResponse 
 } from '../../lib/aiSearchEngine';
-import { useCurrency } from '../../context/CurrencyContext';
-import { isItemInRegion } from '../../services/catalogService';
 import { slugify } from '../../lib/slugs';
 import WhatsAppAlertBanner from '../../components/WhatsAppAlertBanner';
 import ProductCard from '../../components/ProductCard';
@@ -23,7 +21,6 @@ import BrowseSourcingDesk from '../BrowseSourcingDesk';
 const BrowseResults = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { formatPrice, selectedRegion } = useCurrency();
 
   const query = searchParams.get('q') || '';
   const mode = (searchParams.get('mode') as 'ai' | 'sku') || 'ai';
@@ -101,18 +98,6 @@ const BrowseResults = () => {
 
   const trimmedQuery = query.trim();
   const isSearching = isLoading || (Boolean(trimmedQuery) && searchResult.query !== trimmedQuery);
-
-  // Region-based prioritization for search results
-  const displayResults = React.useMemo(() => {
-    if (!searchResult.results.length || !selectedRegion) return searchResult.results;
-    return [...searchResult.results].sort((a, b) => {
-      const matchA = isItemInRegion(a as any, selectedRegion);
-      const matchB = isItemInRegion(b as any, selectedRegion);
-      if (matchA && !matchB) return -1;
-      if (!matchA && matchB) return 1;
-      return 0;
-    });
-  }, [searchResult.results, selectedRegion]);
 
   // IF NO SEARCH QUERY: DO NOT SHOW PRODUCTS OR LOTS
   if (!trimmedQuery) {
@@ -193,7 +178,7 @@ const BrowseResults = () => {
                 </span>
               ) : (
                 <>
-                  Found <strong className="text-gray-900 font-semibold">{searchResult.totalCount}</strong> matching items across verified industrial catalogs and wholesale lots{selectedRegion ? <> • Prioritizing stock near <span className="font-semibold text-[#0a5c48]">{selectedRegion}</span></> : null}.
+                  Found <strong className="text-gray-900 font-semibold">{searchResult.totalCount}</strong> matching items across verified industrial catalogs and wholesale lots.
                 </>
               )}
             </p>
@@ -261,9 +246,9 @@ const BrowseResults = () => {
               />
             ))}
           </div>
-        ) : displayResults.length > 0 ? (
+        ) : searchResult.results.length > 0 ? (
           <div className={viewMode === 'list' ? "grid grid-cols-1 md:grid-cols-2 gap-6" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"}>
-            {displayResults.map((item) => {
+            {searchResult.results.map((item) => {
               const isLot = Boolean(item.isLot || item.condition === 'Liquidation Lot' || item.subCategory === 'Wholesale Lots');
 
               if (isLot) {

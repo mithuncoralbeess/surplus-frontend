@@ -128,8 +128,8 @@ export function buildClientWarehouseExplorer(
 
   const totalSkus = items.length;
   const totalUnits = items.reduce((sum, item) => sum + item.available_quantity, 0);
-  const totalMsrp = items.reduce((sum, item) => sum + (item.line_msrp || 0), 0) || (lotMeta?.msrp || 0);
-  const totalAsk = items.reduce((sum, item) => sum + (item.line_ask || 0), 0) || (lotMeta?.price || 0);
+  const totalMsrp = Number(lotMeta?.msrp || 0);
+  const totalAsk = Number(lotMeta?.price || 0);
   const blendedDiscount = totalMsrp > 0 && totalMsrp > totalAsk 
     ? Math.round(((totalMsrp - totalAsk) / totalMsrp) * 100) 
     : 0;

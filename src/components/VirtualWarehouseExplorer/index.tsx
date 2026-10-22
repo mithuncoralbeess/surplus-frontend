@@ -317,8 +317,8 @@ export default function VirtualWarehouseExplorer({
         </div>
       </div>
 
-      {/* 2. Executive Valuation KPI Bar (5 Metric Cards) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      {/* 2. Executive Valuation KPI Bar (Inventory Metric Cards) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Distinct SKUs */}
         <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100/90 flex flex-col justify-between">
           <div className="flex items-center justify-between text-gray-400 mb-1">
@@ -329,7 +329,7 @@ export default function VirtualWarehouseExplorer({
             {summary.total_skus.toLocaleString()}
           </div>
           <div className="text-[10px] text-gray-500 font-medium mt-1">
-            Across {summary.total_categories} categories
+            Across {summary.total_categories} {summary.total_categories === 1 ? 'category' : 'categories'}
           </div>
         </div>
 
@@ -347,45 +347,31 @@ export default function VirtualWarehouseExplorer({
           </div>
         </div>
 
-        {/* Card 3: Retail MSRP */}
+        {/* Card 3: Total Brands */}
         <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100/90 flex flex-col justify-between">
           <div className="flex items-center justify-between text-gray-400 mb-1">
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">Retail MSRP</span>
-            <DollarSign className="w-4 h-4 text-blue-600" />
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">Total Brands</span>
+            <Tag className="w-4 h-4 text-blue-600" />
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-gray-900 truncate">
-            {formatPrice(summary.total_msrp, currencyCode)}
+          <div className="text-2xl sm:text-3xl font-black text-gray-900">
+            {summary.total_brands || brandBreakdown.length || 1}
           </div>
           <div className="text-[10px] text-gray-500 font-medium mt-1">
-            Original benchmark value
+            Verified manufacturers
           </div>
         </div>
 
-        {/* Card 4: Lot Asking Price */}
-        <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-200/60 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-[#0a5c48] mb-1">
-            <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider">Lot Asking Price</span>
-            <Tag className="w-4 h-4 text-[#0a5c48]" />
+        {/* Card 4: Categories */}
+        <div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100/90 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-gray-400 mb-1">
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">Categories</span>
+            <ListFilter className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-[#0a5c48] truncate">
-            {formatPrice(summary.total_ask, currencyCode)}
+          <div className="text-2xl sm:text-3xl font-black text-gray-900">
+            {summary.total_categories || categoriesList.length || 1}
           </div>
-          <div className="text-[10px] text-emerald-700 font-bold mt-1">
-            Effective wholesale buyout
-          </div>
-        </div>
-
-        {/* Card 5: Blended Liquidation Discount */}
-        <div className="bg-gradient-to-br from-[#0a5c48] to-[#074737] p-4 rounded-2xl text-white shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
-          <div className="flex items-center justify-between text-emerald-200 mb-1">
-            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">Blended Discount</span>
-            <TrendingDown className="w-4 h-4 text-emerald-300" />
-          </div>
-          <div className="text-2xl sm:text-3xl font-black text-white">
-            {summary.blended_discount_pct}% OFF
-          </div>
-          <div className="text-[10px] text-emerald-200 font-medium mt-1">
-            Buyer savings: {formatPrice(Math.max(0, summary.total_msrp - summary.total_ask), currencyCode)}
+          <div className="text-[10px] text-gray-500 font-medium mt-1">
+            Product classifications
           </div>
         </div>
       </div>

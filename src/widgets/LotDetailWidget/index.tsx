@@ -100,18 +100,6 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
     setTimeout(() => setIsRfqSent(false), 3500);
   };
 
-
-  const handleWhatsAppInquiry = () => {
-    if (!lot) return;
-    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-    const cleanNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '+974 3026 9988').replace(/[^0-9]/g, '');
-    const lotPrice = Number(lot.price || lot.ask_price_surplus_payout || 0);
-    const lotUnits = lot.units || lot.total_units_quantity || 0;
-    const cur = lot.currency || 'USD';
-    const message = `Hello Surplus Market Deals Desk,\n\nI want to make an inquiry / offer on this wholesale surplus lot:\n• Lot: ${lot.title || lot.listing_title || 'Wholesale Lot'}\n• Lot No: ${lot.lot_number || `LOT-${lot.id}`}\n• Lot Price: ${formatPrice(lotPrice, cur)}\n• Units: ${lotUnits.toLocaleString()} units (${lot.pallets || 1} pallet(s))\n• Location: ${lot.location || 'GCC'}\n• Link: ${currentUrl}\n\nPlease share manifest details and discuss offer terms.`;
-    window.open(`https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`, '_blank');
-  };
-
   // Products array extraction
   const productsList: any[] = useMemo(() => {
     if (!lot) return [];
@@ -190,9 +178,25 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
   }
 
   const { title, image, price, msrp, units, pallets, condition, category, offer } = lot;
-  const location = (lot.inventory_city && lot.inventory_country)
-    ? `${lot.inventory_city}, ${lot.inventory_country}`
-    : (lot.inventory_country || lot.inventory_city || lot.location || lot.inventory_location || 'Warehouse');
+
+  const loc = (lot.inventory_location || lot.location || '').trim();
+  const country = (lot.inventory_country || (lot as any).country || '').trim();
+  const city = (lot.inventory_city || (lot as any).city || '').trim();
+
+  let displayLocation = '';
+  if (city && country) {
+    if (city.toLowerCase() === country.toLowerCase()) displayLocation = country;
+    else if (city.toLowerCase().includes(country.toLowerCase())) displayLocation = city;
+    else displayLocation = `${city}, ${country}`;
+  } else if (loc && country) {
+    if (loc.toLowerCase() === country.toLowerCase()) displayLocation = loc;
+    else if (loc.toLowerCase().includes(country.toLowerCase())) displayLocation = loc;
+    else displayLocation = `${loc}, ${country}`;
+  } else {
+    displayLocation = loc || country || city || '';
+  }
+
+  const location = displayLocation || 'Warehouse';
   const buyerSavings = msrp > price ? msrp - price : 0;
   const unitCost = units > 0 ? price / units : 0;
   const brandsList = lot.key_brands_included 
@@ -307,22 +311,15 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                 </h1>
                 
                 <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-600 flex-wrap">
-                  {Boolean(lot.inventory_country || (lot as any).country) && (
-                    <div className="flex items-center gap-1.5 font-bold text-gray-800">
-                      <Globe className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{lot.inventory_country || (lot as any).country}</span>
-                    </div>
-                  )}
-                  {Boolean(lot.inventory_location || lot.location) && (
+                  {displayLocation && (
                     <>
-                      {Boolean(lot.inventory_country || (lot as any).country) && <span>•</span>}
                       <div className="flex items-center gap-1.5 font-bold text-gray-800">
                         <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
-                        <span>{lot.inventory_location || lot.location}</span>
+                        <span>{displayLocation}</span>
                       </div>
+                      <span>•</span>
                     </>
                   )}
-                  <span>•</span>
                   <div className="flex items-center gap-1.5 font-medium">
                     <Box className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>{pallets} {pallets === 1 ? 'Pallet' : 'Pallets'}</span>
@@ -428,18 +425,6 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                   )}
                 </button>
 
-                {/* Direct WhatsApp Instant Deal Button */}
-                <button
-                  type="button"
-                  onClick={handleWhatsAppInquiry}
-                  className="w-full py-2.5 sm:py-3 px-4 bg-[#0a5c48] hover:bg-[#084838] text-white rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <svg viewBox="0 0 32 32" className="w-4 h-4 fill-current shrink-0">
-                    <path d="M16 2C8.28 2 2 8.28 2 16c0 2.62.72 5.08 1.98 7.18L2 30l7.04-1.93A13.91 13.91 0 0016 30c7.72 0 14-6.28 14-14S23.72 2 16 2zm8.17 19.86c-.34.97-1.7 1.8-2.38 1.88-.63.07-1.42.1-4.07-.98-3.39-1.39-5.59-4.83-5.76-5.06-.17-.23-1.38-1.84-1.38-3.51 0-1.67.87-2.49 1.18-2.83.31-.34.68-.43.91-.43.23 0 .45.01.65.02.21.01.49-.08.77.59.29.68.98 2.39 1.07 2.56.09.17.15.37.03.6-.12.23-.18.37-.36.58-.18.21-.38.47-.54.63-.18.18-.37.38-.16.74.21.36.93 1.54 2 2.49 1.38 1.23 2.54 1.61 2.9 1.79.36.18.57.15.78-.09.21-.24.9-1.05 1.14-1.41.24-.36.48-.3.8-.18.33.12 2.07.98 2.42 1.15.36.18.6.27.69.42.09.15.09.89-.25 1.86z" />
-                  </svg>
-                  <span>Inquire / Offer on WhatsApp</span>
-                </button>
-
                 {(isRfqSent || inCart) && (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold text-[#0a5c48] text-center animate-fade-in flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -462,11 +447,11 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                     href={lot.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full py-2.5 px-4 bg-slate-900 hover:bg-black text-white rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                    className="w-full py-2 px-3 bg-slate-900 hover:bg-black text-white rounded-lg font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                    <span>Download Official Verified Manifest (.XLSX)</span>
-                    <Download className="w-3.5 h-3.5 text-gray-400" />
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Download Manifest (.XLSX)</span>
+                    <Download className="w-3 h-3 text-gray-400" />
                   </a>
                 )}
               </div>
@@ -516,7 +501,9 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
 
           {/* Logistics & Provenance Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 pt-2">
-            {Boolean(lot.inventory_country || (lot as any).country) && (
+            {Boolean(lot.inventory_country || (lot as any).country) && 
+             (!Boolean(lot.inventory_location || lot.location) || 
+              (lot.inventory_country || (lot as any).country)?.trim().toLowerCase() !== (lot.inventory_location || lot.location)?.trim().toLowerCase()) && (
               <div className="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
                 <span className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Inventory Country</span>
                 <span className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1">

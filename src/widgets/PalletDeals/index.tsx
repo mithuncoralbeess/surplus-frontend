@@ -4,13 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { Package, SearchX } from 'lucide-react';
 import { motion } from '../../lib/motion';
 import LotCard from '../../components/LotCard';
-import { catalogService, LotItem, prioritizeItemsByRegion } from '../../services/catalogService';
+import { catalogService, LotItem } from '../../services/catalogService';
 import { useLanguage } from '../../context/LanguageContext';
-import { useCurrency } from '../../context/CurrencyContext';
 
 const PalletDeals = () => {
   const { t } = useLanguage();
-  const { selectedRegion } = useCurrency();
   const TABS = [t('common.viewAll', 'View All'), 'Electronics', 'Apparel', 'Home Goods'];
   const [activeTab, setActiveTab] = useState('View All');
   const [lots, setLots] = useState<LotItem[]>([]);
@@ -24,9 +22,7 @@ const PalletDeals = () => {
     catalogService.getLots({ category: categoryQuery })
       .then((data) => {
         if (isMounted) {
-          // Prioritize lots based on auto-detected region
-          const regionalPrioritized = prioritizeItemsByRegion(data, selectedRegion);
-          setLots(regionalPrioritized);
+          setLots(data);
           setLoading(false);
         }
       })

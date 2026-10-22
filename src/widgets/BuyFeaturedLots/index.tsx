@@ -29,8 +29,8 @@ import {
   Flame,
   Star
 } from 'lucide-react';
-import { catalogService, LotItem, ProductItem, isItemInRegion } from '../../services/catalogService';
-import { useCurrency, getShortRegionName } from '../../context/CurrencyContext';
+import { catalogService, LotItem, ProductItem } from '../../services/catalogService';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useAppSelector } from '../../store';
 import ProductCard from '../../components/ProductCard';
 import LotCard from '../../components/LotCard';
@@ -38,7 +38,7 @@ import { createLotUrl } from '../../lib/slugs';
 
 export default function BuyFeaturedLots() {
   const searchParams = useSearchParams();
-  const { formatPrice, selectedRegion } = useCurrency();
+  const { formatPrice } = useCurrency();
   const { categories: reduxCategories } = useAppSelector((state) => state.categories);
 
   const [mounted, setMounted] = useState<boolean>(false);
@@ -67,7 +67,7 @@ export default function BuyFeaturedLots() {
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [selectedCondition, setSelectedCondition] = useState<string>('all');
-  const [selectedCountry, setSelectedCountry] = useState<string>('auto');
+  const [selectedCountry, setSelectedCountry] = useState<string>('all');
   const [minDiscount, setMinDiscount] = useState<number>(0);
   const [shippingSizeFilter, setShippingSizeFilter] = useState<string>('all');
   const [moqFilter, setMoqFilter] = useState<string>('all');
@@ -78,7 +78,7 @@ export default function BuyFeaturedLots() {
     if (minPrice.trim() !== '') count++;
     if (maxPrice.trim() !== '') count++;
     if (selectedCondition !== 'all') count++;
-    if (selectedCountry !== 'all' && selectedCountry !== 'auto') count++;
+    if (selectedCountry !== 'all') count++;
     if (minDiscount > 0) count++;
     if (shippingSizeFilter !== 'all') count++;
     if (moqFilter !== 'all') count++;
@@ -216,7 +216,7 @@ export default function BuyFeaturedLots() {
       }
 
       // Country / Location Filter
-      if (selectedCountry !== 'all' && selectedCountry !== 'auto') {
+      if (selectedCountry !== 'all') {
         const pCountry = (product.inventory_country || product.inventory_location || product.location || product.country || product.manufacturing_country || '').toLowerCase();
         if (!pCountry.includes(selectedCountry.toLowerCase())) return false;
       }
@@ -254,14 +254,6 @@ export default function BuyFeaturedLots() {
     });
 
     return filtered.sort((a, b) => {
-      // Prioritize items in user's auto-detected region
-      if (selectedCountry === 'auto' && selectedRegion) {
-        const matchA = isItemInRegion(a, selectedRegion);
-        const matchB = isItemInRegion(b, selectedRegion);
-        if (matchA && !matchB) return -1;
-        if (!matchA && matchB) return 1;
-      }
-
       const origA = Number(a.originalPrice || a.previousPrice || a.msrp || a.price);
       const origB = Number(b.originalPrice || b.previousPrice || b.msrp || b.price);
       if (sortBy === 'discount') {
@@ -274,7 +266,7 @@ export default function BuyFeaturedLots() {
       if (sortBy === 'units') return (b.estQty || 0) - (a.estQty || 0);
       return 0;
     });
-  }, [products, sortBy, minPrice, maxPrice, selectedCondition, selectedCountry, minDiscount, moqFilter, selectedCuration, selectedRegion]);
+  }, [products, sortBy, minPrice, maxPrice, selectedCondition, selectedCountry, minDiscount, moqFilter, selectedCuration]);
 
   // Filter & Sort Dynamic Lots
   const sortedLots = useMemo(() => {
@@ -294,7 +286,7 @@ export default function BuyFeaturedLots() {
       }
 
       // Country / Location Filter
-      if (selectedCountry !== 'all' && selectedCountry !== 'auto') {
+      if (selectedCountry !== 'all') {
         const lCountry = (lot.inventory_country || lot.country || lot.inventory_location || lot.location || '').toLowerCase();
         if (!lCountry.includes(selectedCountry.toLowerCase())) return false;
       }
@@ -335,14 +327,6 @@ export default function BuyFeaturedLots() {
     });
 
     return filtered.sort((a, b) => {
-      // Prioritize lots in user's auto-detected region
-      if (selectedCountry === 'auto' && selectedRegion) {
-        const matchA = isItemInRegion(a, selectedRegion);
-        const matchB = isItemInRegion(b, selectedRegion);
-        if (matchA && !matchB) return -1;
-        if (!matchA && matchB) return 1;
-      }
-
       if (sortBy === 'discount') {
         const discA = a.msrp > a.price ? (a.msrp - a.price) / a.msrp : 0;
         const discB = b.msrp > b.price ? (b.msrp - b.price) / b.msrp : 0;
@@ -353,7 +337,7 @@ export default function BuyFeaturedLots() {
       if (sortBy === 'units') return (b.units || 0) - (a.units || 0);
       return 0;
     });
-  }, [lots, sortBy, minPrice, maxPrice, selectedCondition, selectedCountry, minDiscount, shippingSizeFilter, selectedCuration, selectedRegion]);
+  }, [lots, sortBy, minPrice, maxPrice, selectedCondition, selectedCountry, minDiscount, shippingSizeFilter, selectedCuration]);
 
   const handleDownloadManifest = (lotTitle: string) => {
     setDownloadSuccess(true);
@@ -369,7 +353,7 @@ export default function BuyFeaturedLots() {
     setMinPrice("");
     setMaxPrice("");
     setSelectedCondition("all");
-    setSelectedCountry("auto");
+    setSelectedCountry("all");
     setMinDiscount(0);
     setShippingSizeFilter("all");
     setMoqFilter("all");
@@ -693,7 +677,6 @@ export default function BuyFeaturedLots() {
                     onChange={(e) => setSelectedCountry(e.target.value)}
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-[#0a5c48] cursor-pointer"
                   >
-                    <option value="auto">📍 Auto-detected ({getShortRegionName(selectedRegion)})</option>
                     <option value="all">All Locations / Global</option>
                     {availableCountries.map((country) => (
                       <option key={country} value={country}>
