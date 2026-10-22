@@ -542,12 +542,6 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
                       </span>
                     )}
                   </div>
-                  {product.liquidatingPrice && product.liquidatingPrice !== unitPrice && (
-                    <div className="text-xs sm:text-sm font-semibold text-gray-700 mt-2 flex items-center gap-1.5 flex-wrap">
-                      <span>Liquidation Price:</span>
-                      <strong suppressHydrationWarning className="font-black text-gray-900">{formatPrice(product.liquidatingPrice, currencyCode)}</strong>
-                    </div>
-                  )}
                 </div>
               </div>
 
