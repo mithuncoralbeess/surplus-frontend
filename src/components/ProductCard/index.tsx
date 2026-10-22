@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShieldCheck, Tag, CheckCircle2, Package } from 'lucide-react';
+import { ShieldCheck, Tag, CheckCircle2, Package, MapPin } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
 import { createProductUrl } from '../../lib/slugs';
@@ -22,6 +22,13 @@ export interface ProductCardProps {
   isNew?: boolean;
   isLoading?: boolean;
   onAddRfq?: () => void;
+  location?: string;
+  inventory_location?: string;
+  inventoryLocation?: string;
+  inventory_city?: string;
+  inventory_country?: string;
+  city?: string;
+  country?: string;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -40,6 +47,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
   isNew = false,
   isLoading = false,
   onAddRfq,
+  location,
+  inventory_location,
+  inventoryLocation,
+  inventory_city,
+  inventory_country,
+  city,
+  country,
 }) => {
   const { formatPrice } = useCurrency();
   const { addToCart, isInCart } = useCart();
@@ -98,7 +112,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
   if (isLoading) {
     return (
       <div className="flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm h-full">
-        <div className="relative aspect-[3/2] w-full bg-gray-200 animate-pulse" />
+        <div className="relative aspect-[3/2] w-full bg-gray-200 animate-pulse">
+          <div className="absolute bottom-3 left-3 h-5 w-24 bg-gray-300/80 rounded-lg animate-pulse" />
+        </div>
         <div className="p-5 flex flex-col flex-1">
           <div className="flex items-center justify-between mb-3">
             <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
@@ -133,6 +149,27 @@ const ProductCard: React.FC<ProductCardProps> = ({
       </div>
     );
   }
+
+  const rawLocation = (
+    location ||
+    inventory_location ||
+    inventoryLocation ||
+    ''
+  ).trim();
+
+  const cityStr = (inventory_city || city || '').trim();
+  const countryStr = (inventory_country || country || '').trim();
+
+  let resolvedLocation = rawLocation;
+  if (!resolvedLocation) {
+    if (cityStr && countryStr) {
+      resolvedLocation = `${cityStr}, ${countryStr}`;
+    } else if (cityStr || countryStr) {
+      resolvedLocation = cityStr || countryStr;
+    }
+  }
+
+  const displayLocation = resolvedLocation || 'Dubai, UAE';
 
   const categoryText = typeof category === 'object' && category !== null
     ? (category as any).name || (category as any).title || (category as any).slug || 'General'
@@ -182,6 +219,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <div className="absolute top-3 right-3 bg-rose-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1 z-10">
             <Tag className="w-3 h-3" />
             <span>{displayOffer}</span>
+          </div>
+        )}
+
+        {/* Inventory Location Overlay */}
+        {displayLocation && (
+          <div className="absolute bottom-3 left-3 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-[11px] text-white z-10 pointer-events-none shadow-xs">
+            <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="truncate max-w-[150px] font-medium">{displayLocation}</span>
           </div>
         )}
       </Link>

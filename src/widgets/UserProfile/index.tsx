@@ -55,6 +55,7 @@ import AuthModal from '../../components/AuthModal';
 import { useAppSelector } from '../../store';
 import { scrollToTop } from '../../lib/scroll';
 import Select, { components } from 'react-select';
+import { searchRealLocation, RealLocationSuggestion } from '../../services/locationService';
 
 const COUNTRY_LIST = [
   // Primary GCC & Regional Hubs
@@ -354,6 +355,66 @@ export default function UserProfileWidget() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Real location search autocomplete states for Business Location
+  const [locationSuggestions, setLocationSuggestions] = useState<RealLocationSuggestion[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const locationSearchRef = useRef<HTMLDivElement>(null);
+  const locationDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Close location suggestions on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (locationSearchRef.current && !locationSearchRef.current.contains(e.target as Node)) {
+        setShowLocationSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (locationDebounceTimer.current) clearTimeout(locationDebounceTimer.current);
+    };
+  }, []);
+
+  const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setBusinessLocation(val);
+
+    if (locationDebounceTimer.current) {
+      clearTimeout(locationDebounceTimer.current);
+    }
+
+    if (!val || val.trim().length < 2) {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+      setIsSearchingLocation(false);
+      return;
+    }
+
+    setIsSearchingLocation(true);
+    setShowLocationSuggestions(true);
+    locationDebounceTimer.current = setTimeout(async () => {
+      try {
+        const countryFilter = country && country !== '-- Select Country --' ? country : undefined;
+        const results = await searchRealLocation(val, countryFilter);
+        setLocationSuggestions(results);
+        setShowLocationSuggestions(true);
+      } catch (err) {
+        console.warn('Real location search error:', err);
+      } finally {
+        setIsSearchingLocation(false);
+      }
+    }, 250);
+  };
+
+  const handleSelectLocationSuggestion = (item: RealLocationSuggestion) => {
+    setBusinessLocation(item.displayName);
+    if ((!country || country === '-- Select Country --') && item.country) {
+      setCountry(item.country);
+    }
+    setShowLocationSuggestions(false);
+  };
 
   // Parse comma-separated categories into array
   const selectedCategories: string[] = useMemo(() => {
@@ -1647,18 +1708,93 @@ export default function UserProfileWidget() {
                       />
                     </div>
 
-                    <div>
+                    <div className={`relative ${showLocationSuggestions ? 'z-30' : ''}`} ref={locationSearchRef}>
                       <label className="block text-xs font-semibold text-gray-700 mb-1">
                         Business Location *
                       </label>
-                      <input 
-                        type="text" 
-                        required
-                        value={businessLocation} 
-                        onChange={(e) => setBusinessLocation(e.target.value)}
-                        placeholder="e.g. Dubai, Jebel Ali Free Zone, Riyadh, Mumbai"
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61]" 
-                      />
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          required
+                          value={businessLocation} 
+                          onChange={handleLocationInputChange}
+                          onFocus={() => {
+                            if (locationSuggestions.length > 0 || isSearchingLocation) setShowLocationSuggestions(true);
+                          }}
+                          placeholder={country ? `Search area, town, or city in ${country}...` : "e.g. Dubai, Jebel Ali Free Zone, Riyadh, Mumbai"}
+                          className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61]" 
+                        />
+                        <MapPin className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+                        {isSearchingLocation ? (
+                          <div className="w-4 h-4 border-2 border-[#0a5c48] border-t-transparent rounded-full animate-spin absolute right-3 top-3"></div>
+                        ) : businessLocation ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setBusinessLocation('');
+                              setLocationSuggestions([]);
+                              setShowLocationSuggestions(false);
+                            }}
+                            className="text-gray-400 hover:text-gray-600 absolute right-3 top-2.5 p-0.5"
+                            title="Clear location"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        ) : null}
+                      </div>
+
+                      {/* Real Location Autocomplete Floating Dropdown */}
+                      {showLocationSuggestions && (
+                        <div className="absolute z-50 left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
+                          <div className="p-2.5 bg-gray-50 border-b border-gray-100 text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-[#0a5c48]" />
+                              Location Suggestions
+                            </span>
+                            {country && (
+                              <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[10px]">
+                                {country}
+                              </span>
+                            )}
+                          </div>
+
+                          {isSearchingLocation && locationSuggestions.length === 0 ? (
+                            <div className="p-4 text-center text-sm text-gray-500 flex items-center justify-center gap-2">
+                              <div className="w-4 h-4 border-2 border-[#0a5c48] border-t-transparent rounded-full animate-spin"></div>
+                              <span>Searching locations for &quot;{businessLocation}&quot;...</span>
+                            </div>
+                          ) : locationSuggestions.length > 0 ? (
+                            locationSuggestions.map((item, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50/70 border-b border-gray-100 last:border-b-0 flex items-start gap-2.5 transition-colors group cursor-pointer"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  handleSelectLocationSuggestion(item);
+                                }}
+                                onClick={() => handleSelectLocationSuggestion(item)}
+                              >
+                                <div className="w-6 h-6 rounded-full bg-emerald-100/60 group-hover:bg-[#0a5c48] flex items-center justify-center shrink-0 mt-0.5 transition-colors">
+                                  <MapPin className="w-3.5 h-3.5 text-[#0a5c48] group-hover:text-white transition-colors" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-semibold text-gray-900 group-hover:text-[#0a5c48] truncate">
+                                    {item.shortName}
+                                  </p>
+                                  <p className="text-xs text-gray-500 truncate mt-0.5">
+                                    {item.displayName}
+                                  </p>
+                                </div>
+                              </button>
+                            ))
+                          ) : !isSearchingLocation && businessLocation.trim().length >= 2 ? (
+                            <div className="p-3.5 text-center text-xs text-gray-500">
+                              No specific place found. You can keep &quot;{businessLocation}&quot; as custom location.
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                     {userType !== 'BUYER' && (
                       <div>

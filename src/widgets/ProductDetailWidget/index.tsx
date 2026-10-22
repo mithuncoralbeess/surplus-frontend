@@ -1105,6 +1105,7 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
                   originalPrice={relProduct.originalPrice || relProduct.previousPrice}
                   offer={relProduct.offer}
                   currency={relProduct.currency}
+                  location={relProduct.inventory_location || relProduct.location}
                   isCertified={relProduct.isCertified}
                   isNew={relProduct.isNew}
                 />

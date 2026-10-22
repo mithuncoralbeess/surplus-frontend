@@ -226,7 +226,7 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
   } else if (!resolvedLocation && (inventoryCity || inventoryCountry)) {
     resolvedLocation = inventoryCity || inventoryCountry;
   }
-  const locationName = resolvedLocation;
+  const locationName = resolvedLocation || 'Dubai, UAE';
 
   const rawOffer = item.offer !== undefined && item.offer !== null && String(item.offer).trim() !== '' ? String(item.offer).trim() : undefined;
   const discountVal = previousPrice > price ? Math.round(((previousPrice - price) / previousPrice) * 100) : (msrpPrice > price ? Math.round(((msrpPrice - price) / msrpPrice) * 100) : 0);

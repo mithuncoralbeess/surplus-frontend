@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { inquiryService } from '../../services/inquiryService';
+import { searchRealLocation, RealLocationSuggestion } from '../../services/locationService';
 import { motion } from '../../lib/motion';
 import { z } from 'zod';
 import { 
@@ -81,6 +82,65 @@ const PartnershipForm = () => {
       return () => clearTimeout(timer);
     }
   }, [isSuccess]);
+
+  // Real location search autocomplete states
+  const [locationSuggestions, setLocationSuggestions] = useState<RealLocationSuggestion[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const locationSearchRef = useRef<HTMLDivElement>(null);
+  const locationDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Close location suggestions on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (locationSearchRef.current && !locationSearchRef.current.contains(e.target as Node)) {
+        setShowLocationSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (locationDebounceTimer.current) clearTimeout(locationDebounceTimer.current);
+    };
+  }, []);
+
+  const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleChange(e);
+    const val = e.target.value;
+
+    if (locationDebounceTimer.current) {
+      clearTimeout(locationDebounceTimer.current);
+    }
+
+    if (!val || val.trim().length < 2) {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+      setIsSearchingLocation(false);
+      return;
+    }
+
+    setIsSearchingLocation(true);
+    setShowLocationSuggestions(true);
+    locationDebounceTimer.current = setTimeout(async () => {
+      try {
+        const results = await searchRealLocation(val);
+        setLocationSuggestions(results);
+        setShowLocationSuggestions(true);
+      } catch (err) {
+        console.warn('Real location search error:', err);
+      } finally {
+        setIsSearchingLocation(false);
+      }
+    }, 250);
+  };
+
+  const handleSelectLocationSuggestion = (item: RealLocationSuggestion) => {
+    setFormData(prev => ({ ...prev, location: item.displayName }));
+    if (errors.location) {
+      setErrors(prev => ({ ...prev, location: undefined }));
+    }
+    setShowLocationSuggestions(false);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (isSuccess) setIsSuccess(false);
@@ -281,7 +341,7 @@ const PartnershipForm = () => {
                 </div>
 
                 {/* Business Location */}
-                <div>
+                <div className={`relative ${showLocationSuggestions ? 'z-30' : ''}`} ref={locationSearchRef}>
                   <label htmlFor="location" className="block text-sm font-bold text-gray-900 mb-2">
                     Business Location <span className="text-red-500">*</span>
                   </label>
@@ -294,11 +354,79 @@ const PartnershipForm = () => {
                       id="location"
                       name="location"
                       value={formData.location}
-                      onChange={handleChange}
-                      placeholder="Country / City"
-                      className={getInputClass('location')}
+                      onChange={handleLocationInputChange}
+                      onFocus={() => {
+                        if (locationSuggestions.length > 0 || isSearchingLocation) setShowLocationSuggestions(true);
+                      }}
+                      placeholder="e.g. Dubai, Jebel Ali, Riyadh, Mumbai"
+                      className={`${getInputClass('location')} pl-10 pr-10`}
                     />
+                    {isSearchingLocation ? (
+                      <div className="w-4 h-4 border-2 border-[#0f7a61] border-t-transparent rounded-full animate-spin absolute right-3 top-3.5"></div>
+                    ) : formData.location ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, location: '' }));
+                          setLocationSuggestions([]);
+                          setShowLocationSuggestions(false);
+                        }}
+                        className="text-gray-400 hover:text-gray-600 absolute right-3 top-3 p-0.5"
+                        title="Clear location"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    ) : null}
                   </div>
+
+                  {/* Real Location Autocomplete Floating Dropdown */}
+                  {showLocationSuggestions && (
+                    <div className="absolute z-50 left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
+                      <div className="p-2.5 bg-gray-50 border-b border-gray-100 text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-[#0f7a61]" />
+                          Location Suggestions
+                        </span>
+                      </div>
+
+                      {isSearchingLocation && locationSuggestions.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-gray-500 flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-[#0f7a61] border-t-transparent rounded-full animate-spin"></div>
+                          <span>Searching locations for &quot;{formData.location}&quot;...</span>
+                        </div>
+                      ) : locationSuggestions.length > 0 ? (
+                        locationSuggestions.map((item, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50/70 border-b border-gray-100 last:border-b-0 flex items-start gap-2.5 transition-colors group cursor-pointer"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleSelectLocationSuggestion(item);
+                            }}
+                            onClick={() => handleSelectLocationSuggestion(item)}
+                          >
+                            <div className="w-6 h-6 rounded-full bg-emerald-100/60 group-hover:bg-[#0f7a61] flex items-center justify-center shrink-0 mt-0.5 transition-colors">
+                              <MapPin className="w-3.5 h-3.5 text-[#0f7a61] group-hover:text-white transition-colors" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-gray-900 group-hover:text-[#0f7a61] truncate">
+                                {item.shortName}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate mt-0.5">
+                                {item.displayName}
+                              </p>
+                            </div>
+                          </button>
+                        ))
+                      ) : !isSearchingLocation && formData.location?.trim().length >= 2 ? (
+                        <div className="p-3.5 text-center text-xs text-gray-500">
+                          No specific place found. You can keep &quot;{formData.location}&quot; as custom location.
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+
                   {errors.location && <p className="text-red-500 text-xs mt-1.5">{errors.location}</p>}
                 </div>
 

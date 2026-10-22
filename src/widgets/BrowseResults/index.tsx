@@ -288,6 +288,7 @@ const BrowseResults = () => {
                     price={item.price}
                     originalPrice={item.retailPrice}
                     offer={item.discountPercent >= 10 ? `${item.discountPercent}% OFF` : undefined}
+                    location={item.location}
                     isCertified={item.isCertified}
                     isNew={Boolean(item.condition?.toLowerCase().includes('new'))}
                     isLoading={false}
