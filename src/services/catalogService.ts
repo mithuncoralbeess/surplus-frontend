@@ -314,7 +314,8 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
   const locationName = resolvedLocation || 'Dubai, UAE';
 
   const rawOffer = item.offer !== undefined && item.offer !== null && String(item.offer).trim() !== '' ? String(item.offer).trim() : undefined;
-  const discountVal = previousPrice > price ? Math.round(((previousPrice - price) / previousPrice) * 100) : (msrpPrice > price ? Math.round(((msrpPrice - price) / msrpPrice) * 100) : 0);
+  const discountTarget = liquidatingPrice > 0 ? liquidatingPrice : price;
+  const discountVal = previousPrice > discountTarget ? Math.round(((previousPrice - discountTarget) / previousPrice) * 100) : (msrpPrice > discountTarget ? Math.round(((msrpPrice - discountTarget) / msrpPrice) * 100) : 0);
   
   let offerTag: string | undefined = undefined;
   if (rawOffer) {
@@ -433,7 +434,8 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     image = '';
   }
 
-  const discount = msrp > price && msrp > 0 ? Math.round(((msrp - price) / msrp) * 100) : 0;
+  const discountTarget = liquidationPrice > 0 ? liquidationPrice : price;
+  const discount = msrp > discountTarget && msrp > 0 ? Math.round(((msrp - discountTarget) / msrp) * 100) : 0;
   
   let categoryName = 'General Inventory';
   if (Array.isArray(item.category_allocations) && item.category_allocations.length > 0) {
