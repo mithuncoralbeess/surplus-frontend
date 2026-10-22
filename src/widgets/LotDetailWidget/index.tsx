@@ -26,11 +26,20 @@ interface LotDetailWidgetProps {
 export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
   const router = useRouter();
   const { formatPrice } = useCurrency();
-  const { addToCart, openCartDrawer } = useCart();
+  const { addToCart, openCartDrawer, isInCart } = useCart();
 
   const [lot, setLot] = useState<LotItem | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const inCart = Boolean(
+    (lot && (
+      isInCart(lot.id) ||
+      (lot.lot_number && isInCart(lot.lot_number)) ||
+      isInCart(String(lot.id || lot.lot_number))
+    )) ||
+    (lotId && isInCart(lotId))
+  );
 
 
   // Quote Request State
@@ -68,6 +77,10 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
 
   const handleAddToCart = () => {
     if (!lot) return;
+    if (inCart) {
+      openCartDrawer();
+      return;
+    }
     const lotPrice = Number(lot.price) || 0;
     const lotUnits = Number(lot.units) || 1;
     const lotLocation = (lot.inventory_city && lot.inventory_country)
@@ -461,17 +474,25 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                   </button>
                   <button
                     type="button"
-                    onClick={handleAddToCart}
+                    onClick={inCart ? openCartDrawer : handleAddToCart}
                     className={`w-full py-3 px-4 rounded-full font-extrabold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer border ${
                       isRfqSent
                         ? 'bg-emerald-700 text-white border-emerald-700'
+                        : inCart
+                        ? 'bg-[#0f7a61] hover:bg-[#0c6651] text-white border-[#0f7a61] shadow-xs'
                         : 'bg-emerald-50 hover:bg-emerald-100 text-[#0f7a61] border-emerald-200'
                     }`}
+                    title={inCart ? 'Already added to RFQ Basket. Click to view basket.' : 'Add Lot to RFQ Basket'}
                   >
                     {isRfqSent ? (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
                         <span>Added to Cart!</span>
+                      </>
+                    ) : inCart ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                        <span>In RFQ Basket (View Basket)</span>
                       </>
                     ) : (
                       <>
@@ -494,11 +515,11 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                   <span>Inquire / Offer on WhatsApp</span>
                 </button>
 
-                {isRfqSent && (
+                {(isRfqSent || inCart) && (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold text-[#0a5c48] text-center animate-fade-in flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Added wholesale lot to RFQ Basket!</span>
+                      <span>{isRfqSent ? 'Added wholesale lot to RFQ Basket!' : 'Wholesale lot is already in your RFQ Basket!'}</span>
                     </div>
                     <button
                       type="button"

@@ -6,12 +6,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { 
   ShieldCheck, Tag, CheckCircle2, 
-  Truck, Send, AlertCircle, 
-  Minus, Plus, ShoppingCart, Lock, ChevronRight, Check, Zap, Layers,
+  Truck, AlertCircle, 
+  Minus, Plus, ShoppingCart, Lock, ChevronRight, Check, Layers,
   List, MapPin, Globe, FileText, Info
 } from 'lucide-react';
 import { catalogService, ProductItem } from '../../services/catalogService';
-import { inquiryService } from '../../services/inquiryService';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard';
@@ -27,7 +26,7 @@ interface ProductDetailWidgetProps {
 export default function ProductDetailWidget({ productId, category }: ProductDetailWidgetProps) {
   const router = useRouter();
   const { formatPrice } = useCurrency();
-  const { addToCart, openCartDrawer } = useCart();
+  const { addToCart, openCartDrawer, isInCart } = useCart();
 
   const [product, setProduct] = useState<ProductItem | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<ProductItem[]>([]);
@@ -35,15 +34,19 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
   const [activeImage, setActiveImage] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'shipping'>('overview');
 
-  // Quantity & Quote Request State
+  const inCart = Boolean(
+    (product && (
+      isInCart(product.id) ||
+      (product.product_id && isInCart(product.product_id)) ||
+      (product.sku && isInCart(product.sku)) ||
+      isInCart(String(product.id || product.product_id || product.sku))
+    )) ||
+    (productId && isInCart(productId))
+  );
+
+  // Quantity State
   const [quantity, setQuantity] = useState<number>(1);
-  const [showInlineQuoteForm, setShowInlineQuoteForm] = useState<boolean>(false);
   const [isRfqSent, setIsRfqSent] = useState<boolean>(false);
-  const [userEmail, setUserEmail] = useState<string>('');
-  const [targetPrice, setTargetPrice] = useState<string>('');
-  const [notes, setNotes] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [quoteSuccessMsg, setQuoteSuccessMsg] = useState<string>('');
 
   useEffect(() => {
     if (!productId) return;
@@ -135,6 +138,10 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
 
   const handleAddToCart = () => {
     if (!product) return;
+    if (inCart) {
+      openCartDrawer();
+      return;
+    }
     const catName = typeof product.category === 'object' && product.category !== null
       ? (product.category as any)?.name || (product.category as any)?.title || 'Surplus Inventory'
       : String(product.category || 'Surplus Inventory');
@@ -160,60 +167,6 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
 
     setIsRfqSent(true);
     setTimeout(() => setIsRfqSent(false), 3500);
-  };
-
-  const handleQuoteSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!product || !userEmail) return;
-
-    setIsSubmitting(true);
-    try {
-      const parsedTarget = targetPrice ? parseFloat(targetPrice.replace(/[^0-9.]/g, '')) : undefined;
-      const effectiveUnitPrice = product.currentPrice || product.price || 0;
-      const estValue = (parsedTarget || effectiveUnitPrice) * quantity;
-
-      const res = await inquiryService.submitRfqEnquiry({
-        contact_person: userEmail.split('@')[0],
-        company_name: userEmail.split('@')[1]?.split('.')[0]?.toUpperCase() || 'Corporate Buyer',
-        email: userEmail,
-        destination_port: notes || '',
-        additional_notes: notes || `Direct RFQ for ${product.title} (SKU: ${product.product_id || product.sku || 'N/A'})`,
-        currency: product.currency || 'USD',
-        total_units: quantity,
-        estimated_value: estValue,
-        items: [
-          {
-            id: String(product.id),
-            productId: product.id,
-            title: product.title,
-            sku: product.product_id || product.sku || '',
-            category: product.category || 'General Surplus',
-            quantity: quantity,
-            unitPrice: effectiveUnitPrice,
-            targetPrice: parsedTarget,
-            notes: notes || undefined,
-          }
-        ]
-      });
-
-      if (res.success || res.status === 200 || res.status === 201) {
-        const refMsg = res.data?.reference ? ` Ref: ${res.data.reference}.` : '';
-        setQuoteSuccessMsg(`Quote request for ${quantity} unit(s) submitted successfully!${refMsg} Our representative will contact ${userEmail} shortly.`);
-        setShowInlineQuoteForm(false);
-        scrollToTop({ behavior: 'smooth' });
-        setTimeout(() => setQuoteSuccessMsg(''), 7000);
-      } else {
-        setQuoteSuccessMsg(res.message || 'Failed to submit quote request. Please try again.');
-        scrollToTop({ behavior: 'smooth' });
-        setTimeout(() => setQuoteSuccessMsg(''), 5000);
-      }
-    } catch (err: any) {
-      console.error('[ProductDetailWidget] RFQ Submit error:', err);
-      setQuoteSuccessMsg('Error submitting quote. Please check your connection and try again.');
-      setTimeout(() => setQuoteSuccessMsg(''), 5000);
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const handleWhatsAppInquiry = () => {
@@ -282,9 +235,9 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
                 </div>
 
                 {/* Action Buttons Skeleton */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div className="h-14 bg-gray-200 rounded-full"></div>
-                  <div className="h-14 bg-gray-200 rounded-full"></div>
+                <div className="space-y-3 pt-2">
+                  <div className="h-12 sm:h-14 bg-gray-200 rounded-full"></div>
+                  <div className="h-10 sm:h-12 bg-gray-200 rounded-full"></div>
                 </div>
 
                 {/* Specs List Skeleton */}
@@ -380,14 +333,6 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
             <span className="text-gray-900 font-bold truncate max-w-[180px] sm:max-w-[240px] md:max-w-xs lg:max-w-md">{product.title}</span>
           </div>
         </div>
-
-        {/* Global Quote Notification Toast */}
-        {quoteSuccessMsg && (
-          <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 text-xs sm:text-sm font-extrabold flex items-center gap-3 animate-fade-in shadow-xs">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span>{quoteSuccessMsg}</span>
-          </div>
-        )}
 
         {/* Main Product Hero Layout (E-Commerce Integrated PDP) */}
         <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200/90 shadow-sm p-4 sm:p-6 lg:p-8 mb-8 sm:mb-10">
@@ -598,38 +543,35 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
 
               {/* Action Buttons Row */}
               <div className="space-y-3 pt-1">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowInlineQuoteForm(!showInlineQuoteForm)}
-                    className="w-full py-2.5 sm:py-3 px-4 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full font-extrabold text-xs sm:text-sm transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>{showInlineQuoteForm ? 'Close Quote Form' : 'Request Official Quote'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleAddToCart}
-                    className={`w-full py-2.5 sm:py-3 px-4 rounded-full font-extrabold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer border ${
-                      isRfqSent
-                        ? 'bg-emerald-700 text-white border-emerald-700'
-                        : 'bg-emerald-50 hover:bg-emerald-100 text-[#0f7a61] border-emerald-200'
-                    }`}
-                  >
-                    {isRfqSent ? (
-                      <>
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Added to Cart!</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="w-4 h-4" />
-                        <span>+ Add to RFQ List</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={inCart ? openCartDrawer : handleAddToCart}
+                  className={`w-full py-3 sm:py-3.5 px-6 rounded-full font-extrabold text-xs sm:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-md ${
+                    isRfqSent
+                      ? 'bg-emerald-700 text-white border border-emerald-700'
+                      : inCart
+                      ? 'bg-[#0f7a61] hover:bg-[#0c6651] text-white border border-[#0f7a61]'
+                      : 'bg-[#0f7a61] hover:bg-[#0c6651] text-white border border-[#0f7a61]'
+                  }`}
+                  title={inCart ? 'Already added to RFQ Basket. Click to view basket.' : 'Add to RFQ Basket'}
+                >
+                  {isRfqSent ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-200" />
+                      <span>Added to RFQ Basket!</span>
+                    </>
+                  ) : inCart ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-200" />
+                      <span>In RFQ Basket (View Basket)</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span>+ Add to RFQ List</span>
+                    </>
+                  )}
+                </button>
 
                 {/* Direct WhatsApp Instant Deal Button */}
                 <button
@@ -643,11 +585,11 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
                   <span>Quick Inquire / Bulk Deal on WhatsApp</span>
                 </button>
 
-                {isRfqSent && (
+                {(isRfqSent || inCart) && (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs sm:text-sm font-bold text-[#0a5c48] text-center animate-fade-in flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Added {quantity} unit(s) to RFQ Basket!</span>
+                      <span>{isRfqSent ? `Added ${quantity} unit(s) to RFQ Basket!` : 'Item is already in your RFQ Basket!'}</span>
                     </div>
                     <button
                       type="button"
@@ -659,77 +601,6 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
                   </div>
                 )}
               </div>
-
-              {/* Integrated Inline RFQ Form */}
-              {showInlineQuoteForm && (
-                <div className="p-5 sm:p-6 bg-gray-50 border border-emerald-200 rounded-2xl sm:rounded-3xl animate-fade-in space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-extrabold text-[#0f7a61] text-xs sm:text-sm md:text-base uppercase tracking-wider">
-                      <Zap className="w-4 h-4" />
-                      <span>Submit Instant RFQ Enquiry</span>
-                    </div>
-                    <span className="text-[10px] sm:text-xs font-mono text-gray-500">SKU: {product.product_id || product.sku}</span>
-                  </div>
-
-                  <form onSubmit={handleQuoteSubmit} className="space-y-3.5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1">Requested Quantity</label>
-                        <input
-                          type="number"
-                          min={product.moq}
-                          max={product.quantity || product.estQty}
-                          value={quantity}
-                          onChange={(e) => setQuantity(Number(e.target.value))}
-                          required
-                          className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-bold text-gray-900"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1">Target Price / Unit ({currencyCode})</label>
-                        <input
-                          type="text"
-                          placeholder={`Current: ${formatPrice(unitPrice, currencyCode)}`}
-                          value={targetPrice}
-                          onChange={(e) => setTargetPrice(e.target.value)}
-                          className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-900"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1">Business Email Address</label>
-                      <input
-                        type="email"
-                        placeholder="buyer@company.com"
-                        value={userEmail}
-                        onChange={(e) => setUserEmail(e.target.value)}
-                        required
-                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-900"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1">Destination Port / Delivery Notes</label>
-                      <textarea
-                        rows={2}
-                        placeholder="Specify shipping destination or escrow conditions..."
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-900"
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full py-3 sm:py-3.5 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full font-extrabold text-xs sm:text-sm uppercase tracking-wider transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      {isSubmitting ? 'Sending Request...' : 'Submit Quote Request'}
-                    </button>
-                  </form>
-                </div>
-              )}
 
               {/* Highlights */}
               <div className="pt-2 grid grid-cols-2 gap-2.5 text-xs sm:text-sm border-t border-gray-100">

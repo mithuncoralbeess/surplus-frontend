@@ -13,8 +13,6 @@ import BuyMegamenu from './BuyMegamenu';
 import AuthModal from '../../components/AuthModal';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
-
-import LanguageSelector from '../../components/LanguageSelector';
 import { useLanguage } from '../../context/LanguageContext';
 
 // Track if header landing animation has played in this browser JS context
@@ -122,7 +120,7 @@ const Header = () => {
 
         {/* Right Actions */}
         <div className="hidden lg:flex items-center header-right-actions">
-          <LanguageSelector />
+          {/* Language selector hidden per user requirement */}
           <RegionSelector />
           <CurrencySelector />
 
