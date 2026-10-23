@@ -31,7 +31,7 @@ const SellCTA = () => {
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
               <Link
-                href="/register"
+                href="/sell"
                 className="w-full sm:w-auto bg-white text-[#0a1e17] hover:bg-gray-50 px-8 py-4 rounded-full font-bold text-[15px] transition-all flex items-center justify-center group"
               >
                 Become a Seller

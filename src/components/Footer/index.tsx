@@ -1,10 +1,10 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
@@ -28,6 +28,18 @@ const FooterLink = ({ href, children }: { href: string; children: React.ReactNod
 
 const Footer = () => {
   const { t } = useLanguage();
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes('@')) return;
+    setSubscribed(true);
+    setTimeout(() => {
+      setEmail('');
+      setSubscribed(false);
+    }, 4000);
+  };
 
   return (
     <footer className="w-full bg-[#071710] text-gray-300">
@@ -44,16 +56,31 @@ const Footer = () => {
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
             <input 
               type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder={t('footer.emailPlaceholder', 'Enter your email')} 
+              required
               className="w-full sm:w-[300px] bg-white/5 border border-white/10 rounded-full px-6 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#185545] transition-colors"
             />
-            <button className="w-full sm:w-auto bg-[#185545] hover:bg-[#124235] text-white px-8 py-3.5 rounded-full font-bold text-[15px] transition-colors flex items-center justify-center gap-2 whitespace-nowrap">
-              {t('footer.subscribe', 'Subscribe')} <ArrowRight className="w-4.5 h-4.5 rtl:rotate-180" />
+            <button 
+              type="submit"
+              className="w-full sm:w-auto bg-[#185545] hover:bg-[#124235] text-white px-8 py-3.5 rounded-full font-bold text-[15px] transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer shadow-md"
+            >
+              {subscribed ? (
+                <>
+                  <CheckCircle2 className="w-4.5 h-4.5 text-emerald-400" />
+                  <span>Subscribed!</span>
+                </>
+              ) : (
+                <>
+                  {t('footer.subscribe', 'Subscribe')} <ArrowRight className="w-4.5 h-4.5 rtl:rotate-180" />
+                </>
+              )}
             </button>
-          </div>
+          </form>
         </div>
 
         {/* Links Section */}
@@ -85,7 +112,7 @@ const Footer = () => {
               </h4>
               <ul className="flex flex-col gap-4 text-[14px]">
                 <li><FooterLink href="/browse">{t('nav.browse', 'Browse Inventory')}</FooterLink></li>
-                <li><FooterLink href="/lots">{t('megamenu.wholesaleLots', 'Wholesale Lots')}</FooterLink></li>
+                <li><FooterLink href="/browse">{t('megamenu.wholesaleLots', 'Wholesale Lots')}</FooterLink></li>
                 <li><FooterLink href="/sell">{t('nav.sell', 'Sell Inventory')}</FooterLink></li>
               </ul>
             </div>
@@ -98,8 +125,8 @@ const Footer = () => {
               <ul className="flex flex-col gap-4 text-[14px]">
                 <li><FooterLink href="/about-us">About</FooterLink></li>
                 <li><FooterLink href="/partnership">{t('nav.partner', 'Partner with us')}</FooterLink></li>
-                <li><FooterLink href="/assistance">Assistance</FooterLink></li>
-                <li><FooterLink href="/video">Corporate video</FooterLink></li>
+                <li><FooterLink href="/contact">Assistance</FooterLink></li>
+                <li><FooterLink href="/about-us">Corporate video</FooterLink></li>
                 <li><FooterLink href="/contact">{t('common.contactUs', 'Contact')}</FooterLink></li>
               </ul>
             </div>
@@ -111,7 +138,7 @@ const Footer = () => {
               </h4>
               <ul className="flex flex-col gap-4 text-[14px]">
                 <li><FooterLink href="/blog">Blogs</FooterLink></li>
-                <li><FooterLink href="/webinars">Webinars</FooterLink></li>
+                <li><FooterLink href="/blog">Webinars</FooterLink></li>
                 <li><FooterLink href="/inventory-calculator">Inventory Aging Calculator</FooterLink></li>
                 <li><FooterLink href="/checklist-comparison">Checklist Comparison</FooterLink></li>
                 <li><FooterLink href="/sustainability">{t('nav.sustainability', 'Sustainability')}</FooterLink></li>

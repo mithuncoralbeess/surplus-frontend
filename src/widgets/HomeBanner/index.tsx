@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
@@ -11,54 +11,14 @@ import {
   BarChart2,
   Sparkles,
   Zap,
-  Clock,
   TrendingUp,
   Mic,
   MicOff,
   X,
-  Boxes,
-  Layers,
   Award
 } from 'lucide-react';
-import { getInstantSuggestions } from '../../lib/aiSearchEngine';
 import { useVoiceSearch } from '../../hooks/useVoiceSearch';
 import { useLanguage } from '../../context/LanguageContext';
-
-// Natural language conversational search prompts
-const AI_PROMPTS = [
-  { text: "Show me 2U rackmount servers under $500 available in Maharashtra", tag: "ICT & Servers" },
-  { text: "Industrial pumps with warranty under $1000", tag: "Heavy Equipment" },
-  { text: "Refurbished Dell PowerEdge servers with warranty", tag: "Enterprise IT" },
-  { text: "Overstock Power Tools & Industrial Machinery lots", tag: "Power Tools" },
-  { text: "Wholesale Consumer Electronics & TWS Earbuds liquidation", tag: "Electronics" },
-  { text: "Siemens S7-1200 PLC automation bundles factory sealed", tag: "Industrial Automation" }
-];
-
-const DEFAULT_RECENT = [
-  "Dell PowerEdge R740",
-  "Siemens S7-1200",
-  "Neox PVC Electrical Tape",
-  "Bulk Cat6 Copper Cable"
-];
-
-const TRENDING_SURPLUS = [
-  "Dell Rack Servers",
-  "Cat6 Drums",
-  "Siemens S7 PLCs",
-  "Electrical Surplus",
-  "MRO Liquidation Lots",
-  "PPE Bulk Pallets",
-  "Industrial Pumps"
-];
-
-const POPULAR_CATEGORIES = [
-  { name: "ICT Hardware & Servers", count: "1,240+ lots", path: "/browse?category=ICT" },
-  { name: "Electricals & Cabling", count: "860+ lots", path: "/browse?category=Electricals" },
-  { name: "Industrial Automation", count: "420+ lots", path: "/browse?category=Electricals" },
-  { name: "Power Tools & Machinery", count: "510+ lots", path: "/browse?category=Power%20tools" },
-  { name: "Auto Spare Parts", count: "3,180+ lots", path: "/browse?category=Auto%20Spare%20Parts%20%26%20Accessories" },
-  { name: "Safety & PPE Pallets", count: "290+ lots", path: "/browse?category=PPE" }
-];
 
 // Track if hero banner landing animation has played in this browser JS context
 let hasHeroLandedInPageLoad = false;
@@ -67,19 +27,8 @@ const HomeBanner = () => {
   const router = useRouter();
   const { t, tCategory, locale } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [recentSearches, setRecentSearches] = useState(DEFAULT_RECENT);
   const [isHeroLanding] = useState(() => !hasHeroLandedInPageLoad);
   const [isTourModalOpen, setIsTourModalOpen] = useState(false);
-
-  // Autosuggest matches based on typing
-  const [instantMatches, setInstantMatches] = useState<{
-    products: any[];
-    categories: string[];
-    suggestions: string[];
-  }>({ products: [], categories: [], suggestions: [] });
-
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Voice Search Hook
   const { isListening, isSupported, toggleListening } = useVoiceSearch({
@@ -91,27 +40,6 @@ const HomeBanner = () => {
 
   useEffect(() => {
     hasHeroLandedInPageLoad = true;
-  }, []);
-
-  // Update instant search suggestions as query changes
-  useEffect(() => {
-    if (searchQuery.trim().length > 1) {
-      const results = getInstantSuggestions(searchQuery.trim(), 4);
-      setInstantMatches(results);
-    } else {
-      setInstantMatches({ products: [], categories: [], suggestions: [] });
-    }
-  }, [searchQuery]);
-
-  // Click outside to close search dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Handle ESC key to close modal
@@ -129,10 +57,6 @@ const HomeBanner = () => {
     if (e) e.preventDefault();
     const query = searchQuery.trim();
     if (query) {
-      if (!recentSearches.includes(query)) {
-        setRecentSearches((prev) => [query, ...prev.slice(0, 5)]);
-      }
-      setIsDropdownOpen(false);
       router.push(`/browse?q=${encodeURIComponent(query)}`);
     } else {
       router.push('/browse');
@@ -143,24 +67,10 @@ const HomeBanner = () => {
     e.preventDefault();
     const query = searchQuery.trim();
     if (query) {
-      router.push(`/browse?q=${encodeURIComponent(query)}&openDropdown=true`);
+      router.push(`/browse?q=${encodeURIComponent(query)}`);
     } else {
-      router.push('/browse?openDropdown=true');
+      router.push('/browse');
     }
-  };
-
-  const handleSelectPrompt = (promptText: string) => {
-    setSearchQuery(promptText);
-    if (!recentSearches.includes(promptText)) {
-      setRecentSearches((prev) => [promptText, ...prev.slice(0, 5)]);
-    }
-    setIsDropdownOpen(false);
-    router.push(`/browse?q=${encodeURIComponent(promptText.trim())}`);
-  };
-
-  const clearRecentSearches = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setRecentSearches([]);
   };
 
   return (
@@ -229,14 +139,13 @@ const HomeBanner = () => {
             {/* ========================================================================= */}
             {/* Interactive Search Bar & Attached Intelligent Search Dropdown             */}
             {/* ========================================================================= */}
-            <div className="relative w-full max-w-2xl pt-2" ref={dropdownRef}>
+            {/* ========================================================================= */}
+            {/* Search Bar                                                               */}
+            {/* ========================================================================= */}
+            <div className="relative w-full max-w-2xl pt-2">
               <form
                 onSubmit={handleSearchSubmit}
-                className={`w-full bg-white border ${
-                  isDropdownOpen
-                    ? 'border-primary shadow-xl ring-4 ring-primary/10'
-                    : 'border-gray-200 shadow-md shadow-gray-200/50 hover:border-gray-300'
-                } p-2 rounded-2xl sm:rounded-full flex items-center gap-2 transition-all duration-200`}
+                className="w-full bg-white border border-gray-200 shadow-md shadow-gray-200/50 hover:border-gray-300 p-2 rounded-2xl sm:rounded-full flex items-center gap-2 transition-all duration-200"
               >
                 {/* Search Icon with subtle mint background */}
                 <div className="w-9 h-9 rounded-full bg-emerald-50 text-primary flex items-center justify-center shrink-0 ml-1 rtl:ml-0 rtl:mr-1">
@@ -247,11 +156,7 @@ const HomeBanner = () => {
                 <input
                   type="text"
                   value={searchQuery}
-                  onFocus={() => setIsDropdownOpen(true)}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    if (!isDropdownOpen) setIsDropdownOpen(true);
-                  }}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('hero.searchPlaceholder', "Ask anything (e.g. '2U servers under $500', 'Siemens S7 PLCs', 'Cat6 cable drums')...")}
                   className="flex-1 bg-transparent border-none outline-none text-gray-800 placeholder-gray-400 text-sm sm:text-base font-normal cursor-text min-w-0"
                   aria-label="Search surplus lots and excess inventory"
@@ -261,10 +166,7 @@ const HomeBanner = () => {
                 {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setInstantMatches({ products: [], categories: [], suggestions: [] });
-                    }}
+                    onClick={() => setSearchQuery('')}
                     className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                     title="Clear search text"
                   >
@@ -309,209 +211,6 @@ const HomeBanner = () => {
                   <ArrowRight className="w-3.5 h-3.5 hidden sm:inline-block" />
                 </button>
               </form>
-
-              {/* ----------------------------------------------------------------------- */}
-              {/* Intelligent Search Dropdown Layer                                       */}
-              {/* ----------------------------------------------------------------------- */}
-              {isDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[460px] overflow-y-auto">
-                  
-                  {/* Case 1: User is actively typing and matches exist */}
-                  {searchQuery.trim().length > 1 ? (
-                    <div className="p-4 space-y-4">
-                      {/* Products preview */}
-                      {instantMatches.products.length > 0 && (
-                        <div>
-                          <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-100">
-                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                              <Boxes className="w-3.5 h-3.5 text-primary" />
-                              Matching Inventory Lots ({instantMatches.products.length})
-                            </span>
-                            <span className="text-[11px] text-gray-400">Instant SKU &amp; Title Match</span>
-                          </div>
-                          <div className="space-y-1.5">
-                            {instantMatches.products.map((item) => (
-                              <button
-                                key={item.id}
-                                type="button"
-                                onClick={() => handleSelectPrompt(item.title)}
-                                className="w-full text-left p-2.5 hover:bg-emerald-50/70 rounded-xl flex items-center justify-between transition-colors group cursor-pointer"
-                              >
-                                <div className="flex items-center gap-3 min-w-0">
-                                  <div className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 text-gray-500 group-hover:bg-white group-hover:text-primary transition-colors">
-                                    <Boxes className="w-4 h-4" />
-                                  </div>
-                                  <div className="truncate">
-                                    <p className="text-sm font-medium text-gray-900 group-hover:text-primary truncate">
-                                      {item.title}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                      SKU: <span className="font-mono text-gray-700">{item.sku}</span> • {item.category}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="text-right shrink-0 pl-3">
-                                  <span className="text-xs font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-full">
-                                    ${item.price.toLocaleString()}
-                                  </span>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Matching Categories */}
-                      {instantMatches.categories.length > 0 && (
-                        <div>
-                          <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                            <Layers className="w-3.5 h-3.5 text-primary" />
-                            Related Verticals
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {instantMatches.categories.map((cat, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => {
-                                  setIsDropdownOpen(false);
-                                  router.push(`/browse?category=${encodeURIComponent(cat)}`);
-                                }}
-                                className="text-xs font-medium text-gray-700 bg-gray-100 hover:bg-emerald-100 hover:text-primary px-3 py-1.5 rounded-full transition-colors cursor-pointer"
-                              >
-                                {cat}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Search trigger footer */}
-                      <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
-                        <button
-                          type="button"
-                          onClick={() => handleSearchSubmit()}
-                          className="w-full text-center py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary-dark transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          <Search className="w-3.5 h-3.5" />
-                          <span>View all results for &quot;{searchQuery}&quot;</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    /* Case 2: Dropdown is opened with empty search query (Prompts, Trending & Recents) */
-                    <div className="p-4 sm:p-5 space-y-5">
-                      {/* AI Natural Language Prompts Section */}
-                      <div>
-                        <div className="flex items-center justify-between mb-2.5">
-                          <span className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-primary" />
-                            AI Natural Language Queries
-                          </span>
-                          <span className="text-[11px] text-gray-600">Click to instant-run</span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {AI_PROMPTS.map((prompt, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              onClick={() => handleSelectPrompt(prompt.text)}
-                              className="text-left p-2.5 bg-gray-50/80 hover:bg-emerald-50/80 border border-gray-100 hover:border-emerald-200/80 rounded-xl transition-all group flex flex-col justify-between cursor-pointer"
-                            >
-                              <span className="text-xs font-medium text-gray-800 group-hover:text-primary leading-snug">
-                                &quot;{prompt.text}&quot;
-                              </span>
-                              <span className="inline-block mt-1.5 text-[10px] font-semibold text-emerald-800 uppercase tracking-wider">
-                                {prompt.tag}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Trending Surplus Searches */}
-                      <div>
-                        <div className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                          <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-                          Trending Searches This Week
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {TRENDING_SURPLUS.map((term, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              onClick={() => handleSelectPrompt(term)}
-                              className="text-xs font-medium text-gray-700 hover:text-primary bg-gray-100 hover:bg-emerald-50 px-3 py-1.5 rounded-full border border-transparent hover:border-emerald-200 transition-colors flex items-center gap-1 cursor-pointer"
-                            >
-                              <span>{term}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Recent Searches */}
-                      {recentSearches.length > 0 && (
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
-                              <Clock className="w-3.5 h-3.5 text-gray-400" />
-                              Recent Inquiries
-                            </span>
-                            <button
-                              type="button"
-                              onClick={clearRecentSearches}
-                              className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                            >
-                              Clear
-                            </button>
-                          </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {recentSearches.map((term, index) => (
-                              <button
-                                key={index}
-                                type="button"
-                                onClick={() => handleSelectPrompt(term)}
-                                className="text-xs font-medium text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1 rounded-full border border-gray-200/70 transition-colors cursor-pointer flex items-center gap-1"
-                              >
-                                <span>{term}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Popular Liquidation Categories */}
-                      <div className="pt-2 border-t border-gray-100">
-                        <div className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                          <Layers className="w-3.5 h-3.5 text-primary" />
-                          High-Volume Verticals
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {POPULAR_CATEGORIES.map((cat, idx) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => {
-                                setIsDropdownOpen(false);
-                                router.push(cat.path);
-                              }}
-                              className="text-left p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer flex flex-col"
-                            >
-                              <span className="text-xs font-semibold text-gray-800 truncate hover:text-primary">
-                                {cat.name}
-                              </span>
-                              <span className="text-[10px] text-gray-600">{cat.count}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                    </div>
-                  )}
-
-                </div>
-              )}
             </div>
 
             {/* Action Buttons Row */}

@@ -4,15 +4,9 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  Package,
   MapPin,
   Tag,
-  FileSpreadsheet,
-  TrendingUp,
   Boxes,
-  Eye,
-  ArrowRight,
-  ShoppingCart,
   CheckCircle2,
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -55,7 +49,7 @@ const LotCard: React.FC<LotCardProps> = ({
   isLoading = false,
   onViewManifest,
 }) => {
-  const { formatPrice } = useCurrency();
+  const { formatPrice, convertToUsd } = useCurrency();
   const { addToCart, isInCart } = useCart();
   const [isAdded, setIsAdded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -71,7 +65,7 @@ const LotCard: React.FC<LotCardProps> = ({
       title,
       category: category || 'Surplus Lot',
       quantity: 1,
-      unitPrice: price || 0,
+      unitPrice: convertToUsd(price, currency),
       image,
       moq: 1,
       estQty: units || 1,
@@ -83,18 +77,34 @@ const LotCard: React.FC<LotCardProps> = ({
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs animate-pulse h-full flex flex-col">
-        <div className="aspect-[16/10] bg-slate-200 w-full" />
-        <div className="p-5 sm:p-6 space-y-3 flex flex-col flex-1">
-          <div className="flex justify-between">
-            <div className="h-4 bg-slate-200 rounded w-1/4" />
-            <div className="h-4 bg-slate-200 rounded w-1/4" />
+      <div className="flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm h-full">
+        <div className="relative aspect-[3/2] w-full bg-gray-200 animate-pulse" />
+        <div className="p-4 flex flex-col flex-1">
+          <div className="flex items-center justify-between mb-3">
+            <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded-full w-10 animate-pulse"></div>
           </div>
-          <div className="h-5 bg-slate-200 rounded w-3/4" />
-          <div className="h-28 bg-slate-100 rounded-2xl" />
-          <div className="mt-auto pt-3 flex justify-between items-center">
-            <div className="h-8 bg-slate-200 rounded w-1/3" />
-            <div className="h-10 bg-slate-200 rounded-xl w-1/3" />
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2 animate-pulse"></div>
+          <div className="h-3 bg-gray-200 rounded w-28 mb-4 animate-pulse"></div>
+
+          <div className="mt-auto space-y-2 mb-4">
+            <div className="flex justify-between items-center">
+              <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 rounded w-10 animate-pulse"></div>
+            </div>
+            <div className="h-px w-full bg-gray-100"></div>
+            <div className="flex justify-between items-center">
+              <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+              <div className="h-3 bg-gray-200 rounded w-10 animate-pulse"></div>
+            </div>
+            <div className="h-px w-full bg-gray-100"></div>
+          </div>
+
+          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4 animate-pulse"></div>
+          <div className="grid grid-cols-2 gap-2 mt-auto">
+            <div className="h-9 bg-gray-200 rounded-full animate-pulse"></div>
+            <div className="h-9 bg-gray-200 rounded-full animate-pulse"></div>
           </div>
         </div>
       </div>
@@ -107,12 +117,13 @@ const LotCard: React.FC<LotCardProps> = ({
     ? Math.round(((effectiveMsrp - effectivePrice) / effectiveMsrp) * 100)
     : 0;
 
-  const grossMarginPotential = Math.max(0, effectiveMsrp - effectivePrice);
   const unitCost = units > 0 ? (effectivePrice / units).toFixed(2) : "0.00";
 
   const conditionText = typeof condition === 'object' && condition !== null
-    ? (condition as any).name || (condition as any).title || 'Surplus Inventory'
-    : String(condition || 'Surplus Inventory');
+    ? (condition as any).name || (condition as any).title || ''
+    : String(condition || '');
+
+  const isDefaultCondition = !conditionText || conditionText === 'Surplus Inventory (Unexpired)' || conditionText === 'Surplus Inventory';
 
   const locationText = typeof location === 'object' && location !== null
     ? (location as any).name || (location as any).country || 'Warehouse'
@@ -138,195 +149,157 @@ const LotCard: React.FC<LotCardProps> = ({
     return trimmed;
   };
 
-  const displayOffer = formatOfferBadge(offer) || (discountPercent > 0 ? `-${discountPercent}% MSRP` : null);
+  const displayOffer = formatOfferBadge(offer) || (discountPercent > 0 ? `-${discountPercent}%` : null);
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col group h-full">
+    <div className="group relative flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full">
       {/* Top Image Container */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-800">
-        <Link href={lotLink} className="block w-full h-full relative cursor-pointer">
-          {image && !imageError ? (
-            <Image
-              src={image}
-              alt={title}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 p-4 text-center select-none group-hover:scale-105 transition-transform duration-500">
-              <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center shadow-xs mb-2 text-emerald-400">
-                <Boxes className="w-6 h-6" />
-              </div>
-              <span className="text-[12px] font-bold text-slate-200 line-clamp-1 max-w-[85%] uppercase tracking-wider">
-                {categoryText}
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium">Wholesale Lot</span>
+      <Link
+        href={lotLink}
+        className="relative aspect-[3/2] w-full bg-gray-50 overflow-hidden cursor-pointer block"
+      >
+        {image && !imageError ? (
+          <Image
+            src={image}
+            alt={title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1536px) 33vw, 25vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-emerald-50/60 to-gray-100/80 p-4 text-center select-none group-hover:scale-105 transition-transform duration-300">
+            <div className="w-12 h-12 rounded-2xl bg-white/90 border border-emerald-100 flex items-center justify-center shadow-xs mb-2 text-[#0f7a61]">
+              <Boxes className="w-6 h-6" />
             </div>
-          )}
-        </Link>
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/20 pointer-events-none" />
-
-        {/* Top Badges */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-10 pointer-events-none">
-          {/* Top-Left: Condition Pill */}
-          <div className="inline-flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-bold text-slate-900 border border-white/60 shadow-xs pointer-events-auto">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-            <span className="truncate max-w-[170px]">{conditionText}</span>
+            <span className="text-[11px] font-bold text-gray-600 line-clamp-1 max-w-[85%] uppercase tracking-wider">
+              {categoryText}
+            </span>
+            <span className="text-[10px] text-gray-400 font-medium">Wholesale Lot</span>
           </div>
+        )}
 
-          {/* Top-Right: Discount Pill */}
-          {displayOffer && (
-            <div className="inline-flex items-center gap-1 bg-rose-600 text-white px-2.5 py-1 rounded-full text-xs font-extrabold shadow-sm pointer-events-auto">
-              <Tag className="w-3 h-3" />
-              <span>{displayOffer}</span>
-            </div>
-          )}
+        {/* Wholesale Lot Badge */}
+        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full border border-gray-100 flex items-center gap-1 shadow-sm z-10">
+          <Boxes className="w-3.5 h-3.5 text-[#0f7a61]" />
+          <span className="text-[10px] font-bold text-[#0f7a61] tracking-wide uppercase">Wholesale Lot</span>
         </div>
 
-        {/* Bottom Image Overlay: Location & Manifest Button */}
-        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white z-10">
-          <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-[11px]">
-            <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="truncate max-w-[140px] font-medium">{locationText}</span>
+        {/* Offer Badge */}
+        {displayOffer && (
+          <div className="absolute top-3 right-3 bg-rose-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1 z-10">
+            <Tag className="w-3 h-3" />
+            <span>{displayOffer}</span>
           </div>
-
-          {onViewManifest ? (
-            <button
-              type="button"
-              onClick={onViewManifest}
-              className="flex items-center gap-1.5 bg-[#0a5c48] hover:bg-[#074737] text-white px-3 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer shadow-xs"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Manifest View</span>
-            </button>
-          ) : (
-            <Link
-              href={lotLink}
-              className="flex items-center gap-1.5 bg-[#0a5c48] hover:bg-[#074737] text-white px-3 py-1 rounded-lg text-[11px] font-bold transition-colors cursor-pointer shadow-xs"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Manifest View</span>
-            </Link>
-          )}
-        </div>
-      </div>
+        )}
+      </Link>
 
       {/* Lot Content Body */}
-      <div className="p-5 sm:p-6 flex flex-col flex-1">
-        {/* Category & ID Row */}
-        <div className="flex items-center justify-between text-[11px] font-bold tracking-wider uppercase mb-2.5">
-          <span className="bg-emerald-50 text-[#0a5c48] px-2.5 py-0.5 rounded-md border border-emerald-200/60 font-extrabold">
+      <div className="py-3 px-4 flex flex-col flex-1">
+        {/* Category & Condition Row */}
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] xl:text-[12px] font-semibold text-[#0f7a61] tracking-widest uppercase truncate pr-2">
             {categoryText}
           </span>
-          <span className="text-slate-400 font-mono font-semibold text-xs">
-            ID: {lotIdText}
-          </span>
+          {!isDefaultCondition && (
+            <span className="bg-[#e7f5f1] text-[#0f7a61] px-2 py-0.5 rounded-full text-[10px] font-bold truncate max-w-[120px]">
+              {conditionText}
+            </span>
+          )}
         </div>
 
         {/* Title */}
         <Link href={lotLink}>
-          <h3 className="text-base sm:text-[17px] font-bold text-slate-900 leading-snug mb-4 line-clamp-2 group-hover:text-[#0a5c48] transition-colors cursor-pointer">
+          <h3 className="font-bold text-gray-900 text-[15px] leading-tight mb-2 line-clamp-2 cursor-pointer hover:text-[#0f7a61] transition-colors">
             {title}
           </h3>
         </Link>
 
-        {/* Liquidation Specs Breakdown */}
-        <div className="bg-slate-50/80 rounded-2xl border border-slate-100 mb-5 space-y-2 mt-auto">
-          {/* Volume & Units */}
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-500 flex items-center gap-1.5 font-medium">
-              <Package className="w-3.5 h-3.5 text-slate-400" />
-              Volume & Units
-            </span>
-            <span suppressHydrationWarning className="font-extrabold text-slate-900">
-              {units.toLocaleString()} Units • {pallets} {pallets === 1 ? 'Pallet' : 'Pallets'}
+        {/* Inventory Location - Available in (Below Title) */}
+        {locationText && (
+          <div className="flex items-center gap-1.5 text-[11px] xl:text-[12px] text-gray-500 mb-3 font-medium">
+            <MapPin className="w-3.5 h-3.5 text-[#0f7a61] shrink-0" />
+            <span className="text-gray-500">Available in</span>
+            <span className="font-bold text-gray-800 truncate" title={locationText}>
+              {locationText}
             </span>
           </div>
+        )}
 
-          {/* Average Unit Cost */}
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-500 flex items-center gap-1.5 font-medium">
-              <Boxes className="w-3.5 h-3.5 text-slate-400" />
-              Average Unit Cost
-            </span>
-            <span suppressHydrationWarning className="font-bold text-slate-800 font-mono">
-              ${unitCost} / unit
-            </span>
-          </div>
-
-          <div className="h-px bg-slate-200/80 my-1" />
-
-          {/* MSRP */}
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">MSRP</span>
-            <span suppressHydrationWarning className="font-semibold text-slate-500 line-through">
-              {formatPrice(effectiveMsrp, currency)}
+        {/* Specs Grid */}
+        <div className="mt-auto space-y-2 mb-4">
+          <div className="flex items-center justify-between text-[11px] xl:text-[13px]">
+            <span className="text-gray-900">Total Units</span>
+            <span suppressHydrationWarning className="font-bold text-black">
+              {units > 0 ? units.toLocaleString('en-US') : 'Bulk Batch'}
             </span>
           </div>
-
-          {/* Estimated Resale Profit */}
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-emerald-700 font-bold flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-              Estimated Resale Profit
+          <div className="h-px w-full bg-gray-100"></div>
+          <div className="flex items-center justify-between text-[11px] xl:text-[13px]">
+            <span className="text-gray-900">Pallets</span>
+            <span suppressHydrationWarning className="font-bold text-black">
+              {pallets || 1} {pallets === 1 ? 'Pallet' : 'Pallets'}
             </span>
-            <span suppressHydrationWarning className="font-extrabold text-emerald-700">
-              +{formatPrice(grossMarginPotential, currency)}
+          </div>
+          <div className="h-px w-full bg-gray-100"></div>
+        </div>
+
+        {/* Price Row */}
+        <div className="mb-4">
+          <div className="flex items-baseline gap-2 flex-wrap mb-1">
+            <span suppressHydrationWarning className="text-[18px] xl:text-[22px] font-extrabold text-[#0f7a61] leading-none">
+              {formatPrice(effectivePrice, currency)}
+            </span>
+            {effectiveMsrp > effectivePrice && (
+              <span suppressHydrationWarning className="text-md text-gray-700 line-through font-medium">
+                {formatPrice(effectiveMsrp, currency)}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-gray-500">
+              {units > 0 ? `~$${unitCost} / unit • Wholesale Lot` : 'Wholesale Lot'}
             </span>
           </div>
         </div>
 
-        {/* Price and CTA Row */}
-        <div className="pt-3 border-t border-slate-100 flex items-end justify-between gap-3">
-          <div>
-            <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Price
-            </div>
-            <div suppressHydrationWarning className="text-2xl sm:text-[26px] font-black text-[#0a5c48] tracking-tight leading-none mt-0.5">
-              {formatPrice(effectivePrice, currency)}
-            </div>
-          </div>
+        {/* Actions Row */}
+        <div className="grid grid-cols-2 gap-2 mt-auto">
+          <Link
+            href={lotLink}
+            className="border border-gray-200 text-gray-700 font-bold py-2.5 px-0 text-xs w-full rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
+          >
+            View Lot
+          </Link>
 
-          <div className="flex items-center gap-2">
-            {onViewManifest && (
-              <button
-                type="button"
-                onClick={onViewManifest}
-                className="p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs"
-                title="Preview Manifest Breakdown"
-              >
-                <Eye className="w-4 h-4" />
-              </button>
+          <button
+            type="button"
+            onClick={handleAddLot}
+            className={`font-bold py-2.5 px-0 text-xs w-full rounded-full flex items-center justify-center gap-1 cursor-pointer transition-all ${
+              isAdded
+                ? '!bg-emerald-700 text-white'
+                : inCart
+                ? 'bg-[#0f7a61]/90 hover:bg-[#0c6651] text-white'
+                : 'bg-[#0f7a61] hover:bg-[#0c6651] text-white'
+            }`}
+            title={inCart ? 'In Basket (click to add again)' : 'Add Lot to RFQ Basket'}
+          >
+            {isAdded ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Added!</span>
+              </>
+            ) : inCart ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
+                <span>In Basket</span>
+              </>
+            ) : (
+              <>
+                <span>+</span> Add to RFQ
+              </>
             )}
-
-            <button
-              type="button"
-              onClick={handleAddLot}
-              className={`p-2.5 rounded-xl border transition-all cursor-pointer shadow-2xs ${
-                isAdded || inCart
-                  ? 'border-emerald-600 bg-emerald-50 text-[#0a5c48]'
-                  : 'border-slate-200 hover:border-[#0a5c48] text-slate-700 hover:text-[#0a5c48] hover:bg-emerald-50/50'
-              }`}
-              title={inCart ? "In RFQ Basket" : "Add Lot to RFQ Basket"}
-              aria-label="Add lot to RFQ basket"
-            >
-              {isAdded ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <ShoppingCart className="w-4 h-4" />
-              )}
-            </button>
-
-            <Link
-              href={lotLink}
-              className="bg-[#0a5c48] hover:bg-[#074737] text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-xs hover:shadow-md flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-[0.98]"
-            >
-              <span>Buy Lot</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+          </button>
         </div>
 
       </div>

@@ -21,7 +21,7 @@ export default function AboutCTA() {
 
           <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0 w-full md:w-auto">
             <Link 
-              href="/partner" 
+              href="/partnership" 
               className="w-full sm:w-auto text-center bg-white text-gray-900 hover:bg-gray-100 px-8 py-4 rounded-full text-sm font-bold transition-all shadow-lg flex items-center justify-center gap-2"
             >
               Partner with us <ArrowRight className="w-4 h-4" />

@@ -92,6 +92,9 @@ const handler = NextAuth({
             const categoryInterested = data.category_interested || data.categoryInterested || data.categories_interested || data.categories || '';
             const businessType = data.business_type || data.businessType || '';
 
+            const isReg = credentials.isRegister === 'true';
+            const userCountry = isReg ? '' : (data.country || data.region || '');
+
             return {
               id: resolvedVendorId ? String(resolvedVendorId) : credentials.email,
               email: data.email || rawData.email || credentials.email,
@@ -103,7 +106,7 @@ const handler = NextAuth({
               user_type: rawUserType || 'BUYER',
               mobile: mobileNum,
               phone: mobileNum,
-              country: data.country || data.region || '',
+              country: userCountry,
               location: loc,
               business_location: loc,
               company_name: comp,
@@ -170,6 +173,28 @@ const handler = NextAuth({
         token.category_interested = u.category_interested;
         if (u.name) token.name = u.name;
       }
+
+      // Self-healing check: Always ensure token has up-to-date vendor_id matching DB
+      if (token.email) {
+        const now = Date.now();
+        const lastCheck = (token._last_vendor_check as number) || 0;
+        if (!token._last_vendor_check || now - lastCheck > 15000 || trigger === "update") {
+          token._last_vendor_check = now;
+          try {
+            const profileRes = await authService.getProfile(token.email as string);
+            if (profileRes?.success && profileRes.data) {
+              const freshVid = profileRes.data.vendor_id || profileRes.data.raw_vendor_id || profileRes.data.id;
+              if (freshVid) {
+                token.vendor_id = String(freshVid);
+                token.id = String(freshVid);
+              }
+            }
+          } catch {
+            // non-blocking fallback
+          }
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

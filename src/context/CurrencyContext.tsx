@@ -49,22 +49,22 @@ interface DetectedRegionProfile {
 }
 
 export const REGION_PROFILES: Record<string, DetectedRegionProfile> = {
-  'AE': { region: 'United Arab Emirates', currency: 'AED', countryCode: 'AE' },
-  'SA': { region: 'Saudi Arabia', currency: 'SAR', countryCode: 'SA' },
-  'QA': { region: 'Qatar', currency: 'QAR', countryCode: 'QA' },
-  'IN': { region: 'India', currency: 'INR', countryCode: 'IN' },
-  'GB': { region: 'United Kingdom', currency: 'GBP', countryCode: 'GB' },
+  'AE': { region: 'United Arab Emirates', currency: 'USD', countryCode: 'AE' },
+  'SA': { region: 'Saudi Arabia', currency: 'USD', countryCode: 'SA' },
+  'QA': { region: 'Qatar', currency: 'USD', countryCode: 'QA' },
+  'IN': { region: 'India', currency: 'USD', countryCode: 'IN' },
+  'GB': { region: 'United Kingdom', currency: 'USD', countryCode: 'GB' },
   'US': { region: 'United States', currency: 'USD', countryCode: 'US' },
   'KW': { region: 'Kuwait', currency: 'USD', countryCode: 'KW' },
   'OM': { region: 'Oman', currency: 'USD', countryCode: 'OM' },
   'BH': { region: 'Bahrain', currency: 'USD', countryCode: 'BH' },
-  'DE': { region: 'Germany', currency: 'EUR', countryCode: 'DE' },
-  'FR': { region: 'France', currency: 'EUR', countryCode: 'FR' },
+  'DE': { region: 'Germany', currency: 'USD', countryCode: 'DE' },
+  'FR': { region: 'France', currency: 'USD', countryCode: 'FR' },
 };
 
 export function detectRegionFromBrowserTimezone(): DetectedRegionProfile {
   if (typeof window === 'undefined') {
-    return REGION_PROFILES['AE'];
+    return REGION_PROFILES['US'];
   }
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
@@ -90,7 +90,72 @@ export function detectRegionFromBrowserTimezone(): DetectedRegionProfile {
       return REGION_PROFILES['DE'];
     }
   } catch {}
-  return REGION_PROFILES['AE']; // Default surplus hub
+  return REGION_PROFILES['US'];
+}
+
+export const DEFAULT_EXCHANGE_RATES: Record<string, number> = {
+  USD: 1.0,
+  AED: 3.6725,
+  SAR: 3.75,
+  QAR: 3.64,
+  INR: 83.5,
+  EUR: 0.92,
+  GBP: 0.79,
+  KWD: 0.307,
+  OMR: 0.385,
+  BHD: 0.376,
+};
+
+let globalExchangeRates: Record<string, number> = { ...DEFAULT_EXCHANGE_RATES };
+
+// Initialize cached rates from localStorage in browser
+if (typeof window !== 'undefined') {
+  try {
+    const saved = localStorage.getItem('surplus_live_exchange_rates');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') {
+        globalExchangeRates = { ...globalExchangeRates, ...parsed };
+      }
+    }
+  } catch {}
+}
+
+export function updateGlobalExchangeRates(rates: Record<string, number>) {
+  globalExchangeRates = { ...globalExchangeRates, ...rates };
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('surplus_live_exchange_rates', JSON.stringify(globalExchangeRates));
+    } catch {}
+  }
+}
+
+export function getGlobalExchangeRates(): Record<string, number> {
+  return globalExchangeRates;
+}
+
+/**
+ * Accurately converts any currency amount to USD based on exchange rate.
+ * Example: 92.40 QAR / 3.64 = $25.38 USD
+ */
+export function convertToUsd(
+  amount: number | string | undefined | null,
+  fromCurrency?: string,
+  customRates?: Record<string, number>
+): number {
+  const num = typeof amount === 'number' ? amount : parseFloat(String(amount || 0));
+  if (isNaN(num) || !isFinite(num) || num <= 0) return 0;
+
+  const rawCode = String(fromCurrency || 'USD').toUpperCase().trim();
+  if (rawCode === 'USD' || rawCode === '$' || rawCode === 'US DOLLAR' || rawCode === 'USD$') {
+    return Number(num.toFixed(2));
+  }
+
+  const rates = customRates || globalExchangeRates;
+  const rate = rates[rawCode] || DEFAULT_EXCHANGE_RATES[rawCode] || 1.0;
+
+  // 1 USD = rate in source currency. Therefore, amount / rate = USD amount
+  return Number((num / rate).toFixed(2));
 }
 
 interface CurrencyContextType {
@@ -103,72 +168,37 @@ interface CurrencyContextType {
   setCurrency: (code: string) => void;
   setSelectedRegion: (region: string) => void;
   setRegionAndCurrency: (region: string, code: string) => void;
-  formatPrice: (amountInUsd: number, overrideCurrency?: string) => string;
+  convertToUsd: (amount: number | string | undefined | null, fromCurrency?: string) => number;
+  formatPrice: (amount: number | string | undefined | null, fromCurrency?: string) => string;
   activeOption: CurrencyOption;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currency, setCurrencyState] = useState<string>('USD');
-  const [selectedRegion, setSelectedRegionState] = useState<string>('United Arab Emirates');
-  const [detectedCountryCode, setDetectedCountryCode] = useState<string>('AE');
+  const [currency] = useState<string>('USD');
+  const [selectedRegion, setSelectedRegionState] = useState<string>('United States');
+  const [detectedCountryCode, setDetectedCountryCode] = useState<string>('US');
   const [isAutoDetected, setIsAutoDetected] = useState<boolean>(true);
-  const [currencyOptions, setCurrencyOptions] = useState<CurrencyOption[]>(INITIAL_CURRENCY_OPTIONS);
+  const [currencyOptions] = useState<CurrencyOption[]>([INITIAL_CURRENCY_OPTIONS[0]]);
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_EXCHANGE_RATES);
   const [isLiveRates, setIsLiveRates] = useState<boolean>(false);
 
-  // Restore saved choices & auto-detect region on mount
+  // Enforce USD globally on mount & fetch live forex rates
   useEffect(() => {
-    const savedCurrency = localStorage.getItem('surplus_currency');
-    const savedRegion = localStorage.getItem('surplus_region');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('surplus_currency', 'USD');
+    }
 
+    const savedRegion = typeof window !== 'undefined' ? localStorage.getItem('surplus_region') : null;
     if (savedRegion) {
       setSelectedRegionState(savedRegion);
       setIsAutoDetected(false);
-      if (savedCurrency) {
-        setCurrencyState(savedCurrency);
-      }
     } else {
-      // Step 1: Immediate zero-latency timezone detection
       const fallback = detectRegionFromBrowserTimezone();
       setSelectedRegionState(fallback.region);
-      setCurrencyState(fallback.currency);
       setDetectedCountryCode(fallback.countryCode);
       setIsAutoDetected(true);
-
-      // Step 2: Query API / Edge headers or IP geolocation to refine
-      (async () => {
-        try {
-          const apiRes = await fetch('/api/location/detect');
-          if (apiRes.ok) {
-            const apiData = await apiRes.json();
-            if (apiData.countryCode && REGION_PROFILES[apiData.countryCode]) {
-              const matched = REGION_PROFILES[apiData.countryCode];
-              setSelectedRegionState(matched.region);
-              setCurrencyState(matched.currency);
-              setDetectedCountryCode(matched.countryCode);
-              return;
-            }
-          }
-
-          // Step 3: Fast open IP geo lookup fallback
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 2000);
-          const geoRes = await fetch('https://api.country.is', { signal: controller.signal });
-          clearTimeout(timer);
-          if (geoRes.ok) {
-            const geoData = await geoRes.json();
-            if (geoData?.country && REGION_PROFILES[geoData.country]) {
-              const matched = REGION_PROFILES[geoData.country];
-              setSelectedRegionState(matched.region);
-              setCurrencyState(matched.currency);
-              setDetectedCountryCode(matched.countryCode);
-            }
-          }
-        } catch {
-          // Keep the instant timezone detection result
-        }
-      })();
     }
 
     // Fetch live rates relative to USD from open forex API
@@ -178,12 +208,11 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (response.ok) {
           const data = await response.json();
           if (data && data.rates) {
-            setCurrencyOptions(prev => 
-              prev.map(opt => ({
-                ...opt,
-                rate: data.rates[opt.code] ? data.rates[opt.code] : opt.rate
-              }))
-            );
+            updateGlobalExchangeRates(data.rates);
+            setExchangeRates(prev => ({
+              ...prev,
+              ...data.rates
+            }));
             setIsLiveRates(true);
           }
         }
@@ -195,10 +224,10 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     fetchLiveExchangeRates();
   }, []);
 
-  const setCurrency = (code: string) => {
-    setCurrencyState(code);
+  const setCurrency = (_code: string) => {
+    // Platform displays in USD only
     if (typeof window !== 'undefined') {
-      localStorage.setItem('surplus_currency', code);
+      localStorage.setItem('surplus_currency', 'USD');
     }
   };
 
@@ -207,62 +236,38 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsAutoDetected(false);
     if (typeof window !== 'undefined') {
       localStorage.setItem('surplus_region', region);
+      localStorage.setItem('surplus_currency', 'USD');
     }
   };
 
-  const setRegionAndCurrency = (region: string, code: string) => {
+  const setRegionAndCurrency = (region: string, _code: string) => {
     setSelectedRegionState(region);
-    setCurrencyState(code);
     setIsAutoDetected(false);
     if (typeof window !== 'undefined') {
       localStorage.setItem('surplus_region', region);
-      localStorage.setItem('surplus_currency', code);
+      localStorage.setItem('surplus_currency', 'USD');
     }
   };
 
-  const activeOption = currencyOptions.find(c => c.code === currency) || currencyOptions[0];
+  const activeOption = INITIAL_CURRENCY_OPTIONS[0]; // Always USD ($)
 
-  const formatPrice = (amountInUsd: number, overrideCurrency?: string): string => {
-    const targetCode = overrideCurrency || currency;
-    const option = currencyOptions.find(c => c.code === targetCode) || activeOption;
-    const converted = amountInUsd * option.rate;
+  const convertPriceToUsd = (amount: number | string | undefined | null, fromCurrency?: string): number => {
+    return convertToUsd(amount, fromCurrency, exchangeRates);
+  };
 
-    if (option.code === 'USD') {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: amountInUsd >= 1000 ? 0 : 2
-      }).format(converted);
-    } else if (option.code === 'INR') {
-      return new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        maximumFractionDigits: converted >= 1000 ? 0 : 2
-      }).format(converted);
-    } else if (option.code === 'EUR') {
-      return new Intl.NumberFormat('de-DE', {
-        style: 'currency',
-        currency: 'EUR',
-        maximumFractionDigits: converted >= 1000 ? 0 : 2
-      }).format(converted);
-    } else if (option.code === 'GBP') {
-      return new Intl.NumberFormat('en-GB', {
-        style: 'currency',
-        currency: 'GBP',
-        maximumFractionDigits: converted >= 1000 ? 0 : 2
-      }).format(converted);
-    } else {
-      // For AED, SAR, QAR
-      const formattedNum = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: converted >= 1000 ? 0 : 2
-      }).format(converted);
-      return `${option.symbol} ${formattedNum}`;
-    }
+  const formatPrice = (amount: number | string | undefined | null, fromCurrency?: string): string => {
+    const usdAmount = convertToUsd(amount, fromCurrency, exchangeRates);
+    
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: usdAmount >= 1000 ? 0 : 2
+    }).format(usdAmount);
   };
 
   return (
     <CurrencyContext.Provider value={{
-      currency,
+      currency: 'USD',
       selectedRegion,
       detectedCountryCode,
       isAutoDetected,
@@ -271,6 +276,7 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCurrency,
       setSelectedRegion,
       setRegionAndCurrency,
+      convertToUsd: convertPriceToUsd,
       formatPrice,
       activeOption
     }}>
@@ -284,15 +290,23 @@ export const useCurrency = () => {
   if (!context) {
     return {
       currency: 'USD',
-      selectedRegion: 'United Arab Emirates',
-      detectedCountryCode: 'AE',
+      selectedRegion: 'United States',
+      detectedCountryCode: 'US',
       isAutoDetected: true,
-      currencyOptions: INITIAL_CURRENCY_OPTIONS,
+      currencyOptions: [INITIAL_CURRENCY_OPTIONS[0]],
       isLiveRates: false,
       setCurrency: () => {},
       setSelectedRegion: () => {},
       setRegionAndCurrency: () => {},
-      formatPrice: (amountInUsd: number) => `$${amountInUsd}`,
+      convertToUsd: (amount: number | string | undefined | null, fromCurrency?: string) => convertToUsd(amount, fromCurrency),
+      formatPrice: (amount: number | string | undefined | null, fromCurrency?: string) => {
+        const usdAmount = convertToUsd(amount, fromCurrency);
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          maximumFractionDigits: usdAmount >= 1000 ? 0 : 2
+        }).format(usdAmount);
+      },
       activeOption: INITIAL_CURRENCY_OPTIONS[0]
     };
   }
@@ -300,4 +314,4 @@ export const useCurrency = () => {
 };
 
 // Backwards compatibility export
-export const CURRENCY_OPTIONS = INITIAL_CURRENCY_OPTIONS;
+export const CURRENCY_OPTIONS = [INITIAL_CURRENCY_OPTIONS[0]];

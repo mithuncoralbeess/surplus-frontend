@@ -1,4 +1,5 @@
 import { SURPLUS_INVENTORY, SurplusItem } from '../data/surplusInventory';
+import { convertToUsd } from '../context/CurrencyContext';
 
 export interface ParsedAiIntent {
   rawQuery: string;
@@ -569,9 +570,12 @@ export async function fetchInstantSuggestions(query: string, limit = 5): Promise
  * Maps raw backend Neon DB product results into frontend AiSearchResultItem format
  */
 export function mapBackendProductToAiItem(p: any): AiSearchResultItem {
-  const price = Number(p.liquidating_price || p.current_price || 0);
-  const retailPrice = Number(p.current_price) || (price > 0 ? Math.round(price * 1.25) : 0);
-  const discountPercent = retailPrice > price ? Math.round(((retailPrice - price) / retailPrice) * 100) : 15;
+  const rawCurrency = p.currency || 'USD';
+  const rawPrice = Number(p.price || p.liquidation_price || p.liquidating_price || p.current_price || 0);
+  const rawMsrp = Number(p.msrp || p.original_price || p.previous_price || p.current_price) || (rawPrice > 0 ? Math.round(rawPrice * 1.25) : 0);
+  const price = convertToUsd(rawPrice, rawCurrency);
+  const retailPrice = convertToUsd(rawMsrp, rawCurrency);
+  const discountPercent = Number(p.offer) || (retailPrice > price && retailPrice > 0 ? Math.round(((retailPrice - price) / retailPrice) * 100) : 0);
 
   let img = p.image || '';
   if (img && !img.startsWith('http')) {
@@ -586,47 +590,51 @@ export function mapBackendProductToAiItem(p: any): AiSearchResultItem {
   const catName = typeof p.category === 'object' && p.category ? (p.category.name || p.category.title || p.category.slug || 'Surplus Inventory') : String(p.category || 'Surplus Inventory');
   const brandName = typeof p.brand === 'object' && p.brand ? (p.brand.name || p.brand.title || 'Enterprise') : String(p.brand || 'Enterprise');
   const subCatName = typeof p.subcategory === 'object' && p.subcategory ? (p.subcategory.name || p.subcategory.title || '') : String(p.subcategory || '');
+  const resolvedLoc = typeof p.inventory_location === 'object' ? (p.inventory_location.name || p.inventory_location.city || 'Warehouse') : String(p.inventory_location || p.location || p.inventory_country || 'Warehouse');
+  const resolvedCountry = typeof p.inventory_country === 'object' ? (p.inventory_country.name || 'UAE') : String(p.inventory_country || p.country || 'UAE');
 
   return {
     id: String(p.id || p.product_id || sku),
     sku: sku,
-    title: p.product_name || 'Surplus Inventory Lot',
+    title: p.product_name || p.title || 'Surplus Inventory Lot',
     brand: brandName,
     category: catName,
     subCategory: subCatName,
-    condition: 'Brand New Surplus',
+    condition: p.condition || 'Brand New Surplus',
     price: price,
     retailPrice: retailPrice,
     discountPercent: discountPercent,
-    moq: 1,
-    estQty: p.quantity || 1,
-    location: typeof p.inventory_location === 'object' ? (p.inventory_location.name || 'Warehouse Location') : String(p.inventory_location || 'Warehouse Location'),
-    country: 'India',
-    isCertified: true,
+    moq: Number(p.moq || p.minimum_order_quantity || 1),
+    estQty: Number(p.quantity || p.estQty || p.available_qty || 1),
+    location: resolvedLoc,
+    country: resolvedCountry,
+    isCertified: Boolean(p.third_party_certificate ?? p.isCertified ?? true),
     isVerifiedSeller: true,
     sellerRating: 4.9,
     image: img,
-    description: p.product_name,
+    description: p.product_name || p.description || '',
     specs: {
       'Brand': brandName || 'N/A',
-      'Model': p.model_no || 'N/A',
-      'Location': typeof p.inventory_location === 'object' ? (p.inventory_location.name || 'N/A') : String(p.inventory_location || 'N/A'),
-      'Available Qty': String(p.quantity || 1),
-      'Currency': p.currency || 'USD'
+      'Model': p.model_no || p.model || 'N/A',
+      'Location': resolvedLoc,
+      'Available Qty': String(p.quantity || p.estQty || 1),
+      'Currency': 'USD'
     },
     tags: [brandName, catName, subCatName, 'Verified Surplus'].filter(Boolean),
-    warranty: p.has_warranty ? 'Verified Warranty Included' : 'Surplus Terms',
+    warranty: p.warranty || (p.has_warranty ? 'Verified Warranty Included' : 'Surplus Terms'),
     aiMatchScore: Math.round(p.similarity_score || 85),
     matchReasons: (Array.isArray(p.match_reasons) && p.match_reasons.length > 0)
-
       ? p.match_reasons
       : ['Neon DB pgvector semantic similarity match']
   };
 }
 
 function mapBackendLotToAiItem(lot: any): AiSearchResultItem {
-  const price = parseFloat(lot.price || lot.ask_price_surplus_payout || lot.asking_price || lot.liquidating_price || 0) || 0;
-  const retailPrice = parseFloat(lot.msrp || lot.total_est_retail_value_msrp || lot.retail_price || 0) || Math.round(price * 1.5);
+  const rawLotCurrency = lot.currency || 'USD';
+  const rawLotPrice = parseFloat(lot.price || lot.ask_price_surplus_payout || lot.asking_price || lot.liquidating_price || 0) || 0;
+  const rawLotMsrp = parseFloat(lot.msrp || lot.total_est_retail_value_msrp || lot.retail_price || 0) || Math.round(rawLotPrice * 1.5);
+  const price = convertToUsd(rawLotPrice, rawLotCurrency);
+  const retailPrice = convertToUsd(rawLotMsrp, rawLotCurrency);
   const discountPercent = retailPrice > price && retailPrice > 0 ? Math.round(((retailPrice - price) / retailPrice) * 100) : 0;
 
   let img = lot.image || (Array.isArray(lot.warehouse_images) && lot.warehouse_images[0]) || (Array.isArray(lot.images) && lot.images[0]) || '';

@@ -18,6 +18,7 @@ import { authService } from '../../services/authService';
 import { useNotifications } from '../../context/NotificationContext';
 import { getGlobalCountries, searchRealLocation, RealLocationSuggestion, LocationOption } from '../../services/locationService';
 import AuthModal from '../AuthModal';
+import { isProfileComplete } from '../../lib/profileUtils';
 
 // Security regex patterns for threat detection (XSS, SQLi, CRLF, Path Traversal, Command Injection)
 const XSS_PAYLOAD_REGEX = /<[^>]*>|javascript\s*:|data\s*:\s*text\/html|vbscript\s*:|\bon\w+\s*=/i;
@@ -322,17 +323,19 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
   const [isSuccess, setIsSuccess] = useState(false);
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalStep, setAuthModalStep] = useState(1);
+  const [isAuthMandatory, setIsAuthMandatory] = useState(false);
   const modalScrollRef = useRef<HTMLDivElement>(null);
   const { showToast, addNotification } = useNotifications();
 
   // Extract logged-in vendor ID from session
   const userObj = (session?.user || {}) as any;
   const [activeVendorId, setActiveVendorId] = useState<string>(() => {
-    return userObj.vendor_id || userObj.id || (typeof window !== 'undefined' ? (localStorage.getItem('vendor_id') || '') : '');
+    return (typeof window !== 'undefined' ? (localStorage.getItem('vendor_id') || '') : '') || userObj.vendor_id || userObj.id || '';
   });
 
   const isAuthenticated = Boolean(session?.user);
-  const vendorId = userObj.vendor_id || userObj.id || activeVendorId || (typeof window !== 'undefined' ? (localStorage.getItem('vendor_id') || '') : '');
+  const vendorId = activeVendorId || (typeof window !== 'undefined' ? (localStorage.getItem('vendor_id') || '') : '') || userObj.vendor_id || userObj.id || '';
 
   // Keep activeVendorId synchronized with the current session and fetch exact vendor_id from DB
   useEffect(() => {
@@ -854,6 +857,15 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
     if (e) e.preventDefault();
     if (!isAuthenticated) {
       setSubmitError('You must be signed in as a registered vendor to submit a listing. Please sign in to continue.');
+      setAuthModalStep(1);
+      setIsAuthMandatory(false);
+      setShowAuthModal(true);
+      return;
+    }
+    if (!isProfileComplete(session?.user)) {
+      setSubmitError('Profile completion is mandatory before submitting a simple inventory listing. Please complete your profile to continue.');
+      setAuthModalStep(3);
+      setIsAuthMandatory(true);
       setShowAuthModal(true);
       return;
     }
@@ -872,6 +884,16 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
     if (!isAuthenticated) {
       setSubmitError('You must be signed in as a registered vendor to submit a listing. Please sign in to continue.');
       setIsReviewMode(false);
+      setAuthModalStep(1);
+      setIsAuthMandatory(false);
+      setShowAuthModal(true);
+      return;
+    }
+    if (!isProfileComplete(session?.user)) {
+      setSubmitError('Profile completion is mandatory before submitting a simple inventory listing. Please complete your profile to continue.');
+      setIsReviewMode(false);
+      setAuthModalStep(3);
+      setIsAuthMandatory(true);
       setShowAuthModal(true);
       return;
     }
@@ -1140,6 +1162,29 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                   {submitError && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm font-medium">
                       {submitError}
+                    </div>
+                  )}
+
+                  {!isProfileComplete(session?.user) && (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 text-xs sm:text-sm shadow-xs">
+                      <div className="flex items-center gap-2.5">
+                        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+                        <div>
+                          <span className="font-bold block text-gray-900">Profile Completion Required</span>
+                          <span className="text-amber-700 text-xs">You must complete your business profile before submitting inventory listings.</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthModalStep(3);
+                          setIsAuthMandatory(true);
+                          setShowAuthModal(true);
+                        }}
+                        className="px-4 py-2 bg-[#0a5c48] hover:bg-[#084838] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
+                      >
+                        Complete Profile
+                      </button>
                     </div>
                   )}
 
@@ -1447,8 +1492,9 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                     <button
                       type="button"
                       onClick={() => handleSubmit()}
-                      disabled={isSubmitting}
-                      className="px-8 py-2.5 bg-[#0a5c48] hover:bg-[#084939] text-white font-bold text-sm rounded-full transition-all shadow-md hover:shadow-lg flex items-center gap-2 disabled:opacity-70 cursor-pointer"
+                      disabled={isSubmitting || !isProfileComplete(session?.user)}
+                      className="px-8 py-2.5 bg-[#0a5c48] hover:bg-[#084939] text-white font-bold text-sm rounded-full transition-all shadow-md hover:shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      title={!isProfileComplete(session?.user) ? 'Please complete your profile before submitting' : undefined}
                     >
                       <CheckCircle2 className="w-4 h-4" />
                       <span>{isSubmitting ? 'Submitting Listing...' : 'Confirm & Submit Listing'}</span>
@@ -1497,7 +1543,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                   className="p-6 md:p-8 overflow-y-auto flex-1 min-h-0 bg-[#fafbfa] space-y-6 overscroll-contain"
                   style={{ WebkitOverflowScrolling: 'touch' }}
                 >
-                  {/* Vendor Authentication Guard Status Banner */}
+                  {/* Vendor Authentication & Profile Completion Guard Status Banner */}
                   {!isAuthenticated ? (
                     <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 text-xs sm:text-sm shadow-xs">
                       <div className="flex items-center gap-2.5">
@@ -1509,10 +1555,35 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                       </div>
                       <button
                         type="button"
-                        onClick={() => setShowAuthModal(true)}
+                        onClick={() => {
+                          setAuthModalStep(1);
+                          setIsAuthMandatory(false);
+                          setShowAuthModal(true);
+                        }}
                         className="px-4 py-2 bg-[#0a5c48] hover:bg-[#084838] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
                       >
                         <LogIn className="w-3.5 h-3.5" /> Sign In as Vendor
+                      </button>
+                    </div>
+                  ) : !isProfileComplete(session?.user) ? (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 text-xs sm:text-sm shadow-xs">
+                      <div className="flex items-center gap-2.5">
+                        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+                        <div>
+                          <span className="font-bold block text-gray-900">Profile Completion Required</span>
+                          <span className="text-amber-700 text-xs">You must complete your profile (country, business location, category) before submitting simple inventory listings.</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthModalStep(3);
+                          setIsAuthMandatory(true);
+                          setShowAuthModal(true);
+                        }}
+                        className="px-4 py-2 bg-[#0a5c48] hover:bg-[#084838] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
+                      >
+                        Complete Profile
                       </button>
                     </div>
                   ) : (
@@ -2285,11 +2356,18 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       )}
       <AuthModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={() => {
+          if (!isAuthMandatory) {
+            setShowAuthModal(false);
+          }
+        }}
         onSuccess={() => {
           setShowAuthModal(false);
+          setIsAuthMandatory(false);
           setSubmitError('');
         }}
+        initialStep={authModalStep}
+        isMandatory={isAuthMandatory}
       />
     </AnimatePresence>,
     document.body

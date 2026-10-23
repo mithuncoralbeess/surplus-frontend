@@ -267,6 +267,7 @@ const BrowseResults = () => {
                       offer={item.discountPercent >= 10 ? `${item.discountPercent}% OFF` : undefined}
                       location={item.location}
                       category={item.category}
+                      currency="USD"
                       isLoading={false}
                     />
                   </div>
@@ -287,6 +288,7 @@ const BrowseResults = () => {
                     originalPrice={item.retailPrice}
                     offer={item.discountPercent >= 10 ? `${item.discountPercent}% OFF` : undefined}
                     location={item.location}
+                    currency="USD"
                     isCertified={item.isCertified}
                     isNew={Boolean(item.condition?.toLowerCase().includes('new'))}
                     isLoading={false}

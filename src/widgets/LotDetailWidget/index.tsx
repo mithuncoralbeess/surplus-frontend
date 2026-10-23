@@ -358,12 +358,6 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                     </span>
                   )}
                 </div>
-                {Boolean(lot.ask_price_surplus_payout && Number(lot.ask_price_surplus_payout) > 0 && Number(lot.ask_price_surplus_payout) !== price) && (
-                  <div className="text-xs sm:text-sm font-semibold text-gray-700 mt-1 flex items-center gap-1.5 flex-wrap">
-                    <span>Liquidation Price:</span>
-                    <strong suppressHydrationWarning className="font-black text-gray-900">{formatPrice(Number(lot.ask_price_surplus_payout), currencyCode)}</strong>
-                  </div>
-                )}
                 {unitCost > 0 && (
                   <div className="text-xs text-gray-500 font-medium pt-1">
                     Effective Unit Cost: <strong className="text-gray-900 font-bold">{formatPrice(unitCost, currencyCode)}</strong> / unit ({units} total units)

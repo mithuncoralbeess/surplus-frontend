@@ -17,11 +17,7 @@ import {
 import { motion } from '../../lib/motion';
 
 const CURRENCIES = [
-  { code: "USD", symbol: "$" },
-  { code: "AED", symbol: "AED" },
-  { code: "SAR", symbol: "SAR" },
-  { code: "QAR", symbol: "QAR" },
-  { code: "INR", symbol: "₹" }
+  { code: "USD", symbol: "$" }
 ];
 
 export default function InventoryCalculatorWidget() {

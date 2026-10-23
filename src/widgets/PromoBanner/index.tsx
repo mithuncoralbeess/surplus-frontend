@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import { Flame, ArrowRight } from 'lucide-react';
 import { motion } from '../../lib/motion';
 
@@ -49,10 +50,13 @@ const PromoBanner = () => {
 
           {/* Right Side Button */}
           <div className="flex-shrink-0">
-            <button className="bg-[#051d14] hover:bg-[#082e20] text-white px-6 py-3.5 rounded-full font-medium text-[15px] transition-colors flex items-center gap-2 shadow-lg shadow-black/10">
+            <Link 
+              href="/browse"
+              className="bg-[#051d14] hover:bg-[#082e20] text-white px-6 py-3.5 rounded-full font-medium text-[15px] transition-colors flex items-center gap-2 shadow-lg shadow-black/10 cursor-pointer"
+            >
               Shop the sale
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </Link>
           </div>
 
         </motion.div>

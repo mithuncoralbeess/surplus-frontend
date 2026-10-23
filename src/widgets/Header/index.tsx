@@ -9,7 +9,8 @@ import HeaderCartDropdown from '../../components/HeaderCartDropdown';
 import HeaderNotificationsDropdown from '../../components/HeaderNotificationsDropdown';
 import BuyMegamenu from './BuyMegamenu';
 import AuthModal from '../../components/AuthModal';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { performLogout } from '../../lib/authCleanup';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -125,12 +126,13 @@ const Header = () => {
             <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
           ) : session ? (
             <div className="relative group">
-              <button 
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-[#0f7a61] text-white font-bold text-xs hover:opacity-90 transition-opacity focus:outline-none shadow-sm"
+              <Link 
+                href="/profile"
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-[#0f7a61] text-white font-bold text-xs hover:opacity-90 transition-opacity focus:outline-none shadow-sm cursor-pointer"
                 title={session.user?.name || session.user?.email || 'User Profile'}
               >
                 {session.user?.name?.[0]?.toUpperCase() || session.user?.email?.[0]?.toUpperCase() || 'U'}
-              </button>
+              </Link>
 
               <div className="absolute right-0 rtl:right-auto rtl:left-0 mt-2 w-56 bg-white border border-gray-100 rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.12)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2 z-50 overflow-hidden">
                 {/* User Info Header */}
@@ -160,8 +162,8 @@ const Header = () => {
 
                 {/* Sign Out Button */}
                 <button 
-                  onClick={() => signOut()}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left rtl:text-right"
+                  onClick={() => performLogout({ redirect: true, callbackUrl: '/' })}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left rtl:text-right cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 text-red-500" />
                   <span>{t('nav.signOut', 'Sign out')}</span>

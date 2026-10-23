@@ -87,6 +87,13 @@ const categorySlice = createSlice({
         state.loading = false;
         state.categories = action.payload;
         state.fetched = true;
+        if (typeof window !== 'undefined' && Array.isArray(action.payload) && action.payload.length > 0) {
+          try {
+            localStorage.setItem('surplus_categories_cache', JSON.stringify(action.payload));
+          } catch {
+            // Ignore quota errors
+          }
+        }
       })
       .addCase(fetchCategories.rejected, (state, action) => {
         state.loading = false;

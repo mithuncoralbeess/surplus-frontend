@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
+import { performLogout } from '../../lib/authCleanup';
 import { useRouter } from 'next/navigation';
 import { authService } from '../../services/authService';
 import { inquiryService } from '../../services/inquiryService';
@@ -52,10 +53,13 @@ import Link from 'next/link';
 import SimpleListingModal from '../../components/SimpleListingModal';
 import LotImportModal from '../../components/LotImportModal';
 import AuthModal from '../../components/AuthModal';
-import { useAppSelector } from '../../store';
+import { isProfileComplete } from '../../lib/profileUtils';
+import { useAppSelector, useAppDispatch } from '../../store';
+import { fetchCategories } from '../../store/slices/categorySlice';
 import { scrollToTop } from '../../lib/scroll';
 import Select, { components } from 'react-select';
 import { searchRealLocation, RealLocationSuggestion } from '../../services/locationService';
+import { createProductUrl, createLotUrl } from '../../lib/slugs';
 
 const COUNTRY_LIST = [
   // Primary GCC & Regional Hubs
@@ -249,43 +253,26 @@ const CountryMenuList = (props: any) => {
   );
 };
 
-const DEFAULT_CATEGORIES = [
-  'Electronics',
-  'Industrial Machinery & Pumps',
-  'Automation & Controls',
-  'Electrical Parts & Equipment',
-  'Mechanical Parts',
-  'Power Tools & Equipment',
-  'Hand Tools & Hardware',
-  'PPE & Safety Gear',
-  'Building Materials & Construction',
-  'Vehicles & Automotive Parts',
-  'Logistics & Material Handling',
-  'Raw Materials & Metals',
-  'Medical & Laboratory Equipment',
-  'Computers & IT Equipment',
-  'Furniture & Office Interiors',
-  'Textiles & Apparel',
-  'Agricultural Equipment',
-  'Plastics & Polymers',
-  'Consumer Goods & General Surplus',
-  'Other'
-];
 
 export default function UserProfileWidget() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const { data: session, status, update } = useSession();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, convertToUsd } = useCurrency();
   const { showToast } = useNotifications();
 
   // Auth modal state for unauthenticated users accessing /profile
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalStep, setAuthModalStep] = useState(1);
+  const [isAuthMandatory, setIsAuthMandatory] = useState(false);
   const hasPromptedAuth = useRef(false);
 
   // Automatically show sign-in modal when unauthenticated user accesses /profile
   useEffect(() => {
     if (status === 'unauthenticated' && !hasPromptedAuth.current) {
       hasPromptedAuth.current = true;
+      setAuthModalStep(1);
+      setIsAuthMandatory(false);
       setIsAuthModalOpen(true);
     }
   }, [status]);
@@ -302,6 +289,48 @@ export default function UserProfileWidget() {
   const [isSimpleModalOpen, setIsSimpleModalOpen] = useState(false);
   const [isLotModalOpen, setIsLotModalOpen] = useState(false);
 
+  const handleOpenSimpleModal = () => {
+    if (!session?.user) {
+      setAuthModalStep(1);
+      setIsAuthMandatory(false);
+      setIsAuthModalOpen(true);
+      return;
+    }
+    if (!isProfileComplete(session.user)) {
+      showToast({
+        type: 'warning',
+        title: 'Profile Incomplete',
+        message: 'You must complete your profile before adding product listings.',
+      });
+      setAuthModalStep(3);
+      setIsAuthMandatory(true);
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsSimpleModalOpen(true);
+  };
+
+  const handleOpenLotModal = () => {
+    if (!session?.user) {
+      setAuthModalStep(1);
+      setIsAuthMandatory(false);
+      setIsAuthModalOpen(true);
+      return;
+    }
+    if (!isProfileComplete(session.user)) {
+      showToast({
+        type: 'warning',
+        title: 'Profile Incomplete',
+        message: 'You must complete your profile before importing wholesale lot batches.',
+      });
+      setAuthModalStep(3);
+      setIsAuthMandatory(true);
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsLotModalOpen(true);
+  };
+
   // Form State - Empty if not logged in, populated dynamically from session user
   const u = (session?.user || {}) as any;
   const rawInitialEntity = (u.account_entity_type || u.accountEntityType || u.account_type || u.entity_type || '').toString().toUpperCase();
@@ -314,7 +343,7 @@ export default function UserProfileWidget() {
   const [email, setEmail] = useState(u.email || '');
   const [phone, setPhone] = useState(u.phone || u.mobile || u.mobile_number || u.phone_number || '');
   const [country, setCountry] = useState<string>(
-    u.country || (COUNTRY_LIST.includes(u.business_location) ? u.business_location : 'United Arab Emirates')
+    u.country || ''
   );
   const [businessLocation, setBusinessLocation] = useState(
     u.business_location && !COUNTRY_LIST.includes(u.business_location) ? u.business_location : (u.business_location || '')
@@ -341,6 +370,13 @@ export default function UserProfileWidget() {
 
   // Redux Categories & Dropdown State
   const { categories: reduxCategories } = useAppSelector((state) => state.categories);
+
+  useEffect(() => {
+    if (!reduxCategories || reduxCategories.length === 0) {
+      dispatch(fetchCategories());
+    }
+  }, [dispatch, reduxCategories]);
+
   const [isCatDropdownOpen, setIsCatDropdownOpen] = useState(false);
   const [catSearch, setCatSearch] = useState('');
   const catDropdownRef = useRef<HTMLDivElement>(null);
@@ -425,7 +461,7 @@ export default function UserProfileWidget() {
       .filter(Boolean);
   }, [categoriesInterested]);
 
-  // Aggregate categories from Redux, defaults, and existing user selections
+  // Only use categories coming from API and handled in Redux state
   const categoryOptions = useMemo(() => {
     const list: string[] = [];
     if (reduxCategories && reduxCategories.length > 0) {
@@ -434,9 +470,6 @@ export default function UserProfileWidget() {
         if (name && !list.includes(name)) list.push(name);
       });
     }
-    DEFAULT_CATEGORIES.forEach((c: string) => {
-      if (!list.includes(c)) list.push(c);
-    });
     selectedCategories.forEach((c: string) => {
       if (c && !list.includes(c)) list.push(c);
     });
@@ -485,11 +518,7 @@ export default function UserProfileWidget() {
       setFullName(userObj.full_name || userObj.name || userObj.first_name || (userObj.first_name && userObj.last_name ? `${userObj.first_name} ${userObj.last_name}` : ''));
       setEmail(userObj.email || '');
       setPhone(userObj.phone || userObj.mobile || userObj.mobile_number || userObj.phone_number || '');
-      if (userObj.country) {
-        setCountry(userObj.country);
-      } else if (userObj.business_location && COUNTRY_LIST.includes(userObj.business_location)) {
-        setCountry(userObj.business_location);
-      }
+      setCountry(userObj.country || '');
       if (userObj.business_location) {
         setBusinessLocation(userObj.business_location);
       }
@@ -529,8 +558,6 @@ export default function UserProfileWidget() {
             if (vData.company_name) setCompanyName(vData.company_name);
             if (vData.country) {
               setCountry(vData.country);
-            } else if (vData.business_location && COUNTRY_LIST.includes(vData.business_location)) {
-              setCountry(vData.business_location);
             }
             if (vData.business_location) setBusinessLocation(vData.business_location);
             if (vData.business_address) setAddress(vData.business_address);
@@ -545,9 +572,25 @@ export default function UserProfileWidget() {
               const catVal = Array.isArray(vData.category_interested) ? vData.category_interested.join(', ') : String(vData.category_interested);
               setCategoriesInterested(catVal);
             }
+          } else if (
+            res?.status === 404 ||
+            res?.status === 401 ||
+            res?.status === 403 ||
+            (res && !res.success && (
+              res.message?.toLowerCase().includes('not found') ||
+              res.message?.toLowerCase().includes('deleted') ||
+              res.message?.toLowerCase().includes('does not exist') ||
+              res.message?.toLowerCase().includes('inactive')
+            ))
+          ) {
+            console.warn('[UserProfile] User account was deleted or not found on backend. Logging out immediately...');
+            performLogout({ redirect: true, callbackUrl: '/?account_deleted=true', reason: 'account_deleted' });
           }
         }).catch((err) => {
           console.error("Failed to auto-fetch vendor profile:", err);
+          if (err?.status === 404 || err?.status === 401 || err?.status === 403) {
+            performLogout({ redirect: true, callbackUrl: '/?account_deleted=true', reason: 'account_deleted' });
+          }
         });
       }
     } else {
@@ -556,7 +599,7 @@ export default function UserProfileWidget() {
       setFullName('');
       setEmail('');
       setPhone('');
-      setCountry('United Arab Emirates');
+      setCountry('');
       setBusinessLocation('');
       setCompanyName('');
       setTaxId('');
@@ -1073,6 +1116,9 @@ export default function UserProfileWidget() {
       if (productsRes.status === 'fulfilled' && Array.isArray(productsRes.value)) {
         productsRes.value.forEach((p: any) => {
           if (vId && p.vendor_id && String(p.vendor_id) !== String(vId)) return;
+          // Filter only available / active listings, not removed or inactive items
+          const isAvailable = p.is_active !== false && String(p.enquiry_status || 'approved').toUpperCase() === 'APPROVED';
+          if (!isAvailable) return;
           items.push({
             id: p.id,
             displayId: p.product_id || p.sku || `PRD-${p.id}`,
@@ -1080,12 +1126,12 @@ export default function UserProfileWidget() {
             type: 'single',
             condition: p.condition || 'Brand New Surplus',
             units: p.quantity || p.estQty || p.moq || 1,
-            priceUsd: p.price || p.liquidatingPrice || 0,
+            priceUsd: convertToUsd(p.price || p.liquidatingPrice || 0, p.currency),
             status: p.isCertified ? 'Verified Active' : 'Active',
             image: p.image || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80',
             category: p.category,
             location: p.location || p.inventory_location || 'UAE Warehouse',
-            currency: p.currency || 'USD',
+            currency: 'USD',
             rawItem: p
           });
         });
@@ -1094,6 +1140,11 @@ export default function UserProfileWidget() {
       if (lotsRes.status === 'fulfilled' && Array.isArray(lotsRes.value)) {
         lotsRes.value.forEach((l: any) => {
           if (vId && l.vendor_id && String(l.vendor_id) !== String(vId)) return;
+          // Filter only available / active listings, not removed or inactive items
+          const isAvailable = l.is_active !== false && 
+                              String(l.active_status || '').toLowerCase() !== 'inactive' && 
+                              String(l.enquiry_status || 'approved').toLowerCase() === 'approved';
+          if (!isAvailable) return;
           items.push({
             id: l.id,
             displayId: l.lot_number || `LOT-${l.id}`,
@@ -1101,12 +1152,12 @@ export default function UserProfileWidget() {
             type: 'lot',
             condition: l.condition || 'Factory Sealed Wholesale',
             units: l.total_units_quantity || l.units || 1,
-            priceUsd: l.ask_price_surplus_payout || l.price || l.msrp || 0,
+            priceUsd: convertToUsd(l.ask_price_surplus_payout || l.price || l.msrp || 0, l.currency),
             status: l.active_status || (l.is_active !== false ? 'Active Lot' : 'Under Review'),
             image: l.image || 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=300&q=80',
             category: l.category,
             location: l.location || l.inventory_location || 'Regional Liquidation Center',
-            currency: l.currency || 'USD',
+            currency: 'USD',
             rawItem: l
           });
         });
@@ -1942,7 +1993,7 @@ export default function UserProfileWidget() {
                             })}
                             {filteredCategoryOptions.length === 0 && (
                               <div className="py-6 text-center text-xs text-gray-400">
-                                No matching categories found
+                                {reduxCategories && reduxCategories.length === 0 ? 'Loading categories...' : 'No matching categories found'}
                               </div>
                             )}
                           </div>
@@ -2281,14 +2332,14 @@ export default function UserProfileWidget() {
                     </p>
                     <div className="flex flex-wrap items-center justify-center gap-3">
                       <button 
-                        onClick={() => setIsLotModalOpen(true)}
-                        className="bg-[#0f7a61] hover:bg-[#0c6651] text-white text-xs font-semibold px-4 py-2.5 rounded-full flex items-center gap-1.5 transition-colors shadow-sm"
+                        onClick={handleOpenLotModal}
+                        className="bg-[#0f7a61] hover:bg-[#0c6651] text-white text-xs font-semibold px-4 py-2.5 rounded-full flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
                       >
                         <Boxes className="w-3.5 h-3.5" /> + Import Wholesale Lot Batch
                       </button>
                       <button 
-                        onClick={() => setIsSimpleModalOpen(true)}
-                        className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 text-xs font-semibold px-4 py-2.5 rounded-full flex items-center gap-1.5 transition-colors shadow-2xs"
+                        onClick={handleOpenSimpleModal}
+                        className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 text-xs font-semibold px-4 py-2.5 rounded-full flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
                       >
                         <Box className="w-3.5 h-3.5 text-purple-600" /> + Add Single Product
                       </button>
@@ -2481,15 +2532,15 @@ export default function UserProfileWidget() {
                       <RefreshCw className={`w-3.5 h-3.5 ${isLoadingListings ? 'animate-spin' : ''}`} />
                     </button>
                     <button 
-                      onClick={() => setIsSimpleModalOpen(true)} 
-                      className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 font-semibold text-xs px-3.5 py-2 rounded-full flex items-center gap-1.5 transition-colors shadow-2xs"
+                      onClick={handleOpenSimpleModal} 
+                      className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 font-semibold text-xs px-3.5 py-2 rounded-full flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
                     >
                       <Box className="w-3.5 h-3.5 text-purple-600" />
                       <span>+ Add Product</span>
                     </button>
                     <button 
-                      onClick={() => setIsLotModalOpen(true)} 
-                      className="bg-[#0f7a61] hover:bg-[#0c6651] text-white font-semibold text-xs px-4 py-2 rounded-full flex items-center gap-1.5 transition-colors shadow-sm"
+                      onClick={handleOpenLotModal} 
+                      className="bg-[#0f7a61] hover:bg-[#0c6651] text-white font-semibold text-xs px-4 py-2 rounded-full flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
                     >
                       <Boxes className="w-3.5 h-3.5" />
                       <span>+ Import Lot Batch</span>
@@ -2632,7 +2683,11 @@ export default function UserProfileWidget() {
                                 </span>
                               )}
 
-                              <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                String(item.status).toLowerCase().includes('inactive')
+                                  ? 'bg-gray-200 text-gray-700'
+                                  : 'bg-green-100 text-green-700'
+                              }`}>
                                 {item.status}
                               </span>
                             </div>
@@ -2653,7 +2708,7 @@ export default function UserProfileWidget() {
                             </div>
                           </div>
                           <Link
-                            href={item.type === 'lot' ? `/lot/${item.id}` : `/product/${item.id}`}
+                            href={item.type === 'lot' ? createLotUrl(item.title || item.id, item.id) : createProductUrl(item.category, item.title || item.id, item.id)}
                             className="btn btn-secondary !py-2 !px-3 !text-xs rounded-full flex items-center gap-1"
                           >
                             View Item <ExternalLink className="w-3 h-3" />
@@ -2715,7 +2770,7 @@ export default function UserProfileWidget() {
                             <span className="font-extrabold text-sm text-[#0f7a61]">{formatPrice(item.priceUsd)}</span>
                             <div className="flex items-center gap-2">
                               <Link 
-                                href={item.type === 'lot' ? `/lot/${item.id}` : `/product/${item.id}`} 
+                                href={item.type === 'lot' ? createLotUrl(item.title || item.id, item.id) : createProductUrl(item.category, item.title || item.id, item.id)} 
                                 className="text-xs font-semibold text-[#0f7a61] hover:underline"
                               >
                                 View Deal
@@ -2829,7 +2884,7 @@ export default function UserProfileWidget() {
                   {session?.user ? (
                     <button
                       type="button"
-                      onClick={() => signOut({ callbackUrl: '/' })}
+                      onClick={() => performLogout({ redirect: true, callbackUrl: '/' })}
                       className="bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs px-5 py-2.5 rounded-full flex items-center gap-2 transition-colors border border-red-200 cursor-pointer"
                     >
                       <LogOut className="w-3.5 h-3.5" /> Sign Out
@@ -3136,9 +3191,18 @@ export default function UserProfileWidget() {
       />
       <AuthModal
         isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={() => setIsAuthModalOpen(false)}
+        onClose={() => {
+          if (!isAuthMandatory) {
+            setIsAuthModalOpen(false);
+          }
+        }}
+        onSuccess={() => {
+          setIsAuthModalOpen(false);
+          setIsAuthMandatory(false);
+        }}
         initialMode="login"
+        initialStep={authModalStep}
+        isMandatory={isAuthMandatory}
       />
     </section>
   );

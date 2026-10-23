@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import SimpleListingModal from '../../components/SimpleListingModal';
 import AuthModal from '../../components/AuthModal';
 import LotImportModal from '../../components/LotImportModal';
+import { isProfileComplete } from '../../lib/profileUtils';
 
 const cardVariants: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -21,10 +22,21 @@ export default function InventoryListingOptions() {
   const [isSimpleModalOpen, setIsSimpleModalOpen] = useState(false);
   const [isLotModalOpen, setIsLotModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalStep, setAuthModalStep] = useState(1);
+  const [isAuthMandatory, setIsAuthMandatory] = useState(false);
+  const [pendingListingType, setPendingListingType] = useState<'simple' | 'lot' | null>(null);
   const { data: session } = useSession();
 
   const handleSimpleListingClick = () => {
     if (!session) {
+      setPendingListingType('simple');
+      setAuthModalStep(1);
+      setIsAuthMandatory(false);
+      setIsAuthModalOpen(true);
+    } else if (!isProfileComplete(session.user)) {
+      setPendingListingType('simple');
+      setAuthModalStep(3);
+      setIsAuthMandatory(true);
       setIsAuthModalOpen(true);
     } else {
       setIsSimpleModalOpen(true);
@@ -33,6 +45,14 @@ export default function InventoryListingOptions() {
 
   const handleLotListingClick = () => {
     if (!session) {
+      setPendingListingType('lot');
+      setAuthModalStep(1);
+      setIsAuthMandatory(false);
+      setIsAuthModalOpen(true);
+    } else if (!isProfileComplete(session.user)) {
+      setPendingListingType('lot');
+      setAuthModalStep(3);
+      setIsAuthMandatory(true);
       setIsAuthModalOpen(true);
     } else {
       setIsLotModalOpen(true);
@@ -149,11 +169,24 @@ export default function InventoryListingOptions() {
       />
       <AuthModal
         isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        onClose={() => {
+          if (!isAuthMandatory) {
+            setIsAuthModalOpen(false);
+            setPendingListingType(null);
+          }
+        }}
         onSuccess={() => {
           setIsAuthModalOpen(false);
-          setIsSimpleModalOpen(true);
+          setIsAuthMandatory(false);
+          if (pendingListingType === 'simple') {
+            setIsSimpleModalOpen(true);
+          } else if (pendingListingType === 'lot') {
+            setIsLotModalOpen(true);
+          }
+          setPendingListingType(null);
         }}
+        initialStep={authModalStep}
+        isMandatory={isAuthMandatory}
       />
     </section>
   );

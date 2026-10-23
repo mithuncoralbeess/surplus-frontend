@@ -55,7 +55,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   city,
   country,
 }) => {
-  const { formatPrice } = useCurrency();
+  const { formatPrice, convertToUsd } = useCurrency();
   const { addToCart, isInCart } = useCart();
   const [isRfqAdded, setIsRfqAdded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -97,7 +97,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         title: title || 'Wholesale Surplus Lot',
         category: resolvedCategory,
         quantity: moq > 0 ? moq : 1,
-        unitPrice: price || 0,
+        unitPrice: convertToUsd(price, currency),
         image: image || 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&auto=format&fit=crop&q=80',
         moq: moq || 1,
         estQty: estQty,
@@ -112,16 +112,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
   if (isLoading) {
     return (
       <div className="flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm h-full">
-        <div className="relative aspect-[3/2] w-full bg-gray-200 animate-pulse">
-          <div className="absolute bottom-3 left-3 h-5 w-24 bg-gray-300/80 rounded-lg animate-pulse" />
-        </div>
+        <div className="relative aspect-[3/2] w-full bg-gray-200 animate-pulse" />
         <div className="p-5 flex flex-col flex-1">
           <div className="flex items-center justify-between mb-3">
             <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
             <div className="h-4 bg-gray-200 rounded-full w-10 animate-pulse"></div>
           </div>
           <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-4 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2 animate-pulse"></div>
+          <div className="h-3 bg-gray-200 rounded w-28 mb-4 animate-pulse"></div>
 
           <div className="mt-auto space-y-2 mb-4">
             <div className="flex justify-between items-center">
@@ -163,7 +162,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
   let resolvedLocation = rawLocation;
   if (!resolvedLocation) {
     if (cityStr && countryStr) {
-      resolvedLocation = `${cityStr}, ${countryStr}`;
+      if (cityStr.toLowerCase() === countryStr.toLowerCase()) {
+        resolvedLocation = countryStr;
+      } else if (cityStr.toLowerCase().includes(countryStr.toLowerCase())) {
+        resolvedLocation = cityStr;
+      } else {
+        resolvedLocation = `${cityStr}, ${countryStr}`;
+      }
     } else if (cityStr || countryStr) {
       resolvedLocation = cityStr || countryStr;
     }
@@ -221,14 +226,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <span>{displayOffer}</span>
           </div>
         )}
-
-        {/* Inventory Location Overlay */}
-        {displayLocation && (
-          <div className="absolute bottom-3 left-3 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-[11px] text-white z-10 pointer-events-none shadow-xs">
-            <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="truncate max-w-[150px] font-medium">{displayLocation}</span>
-          </div>
-        )}
       </Link>
 
       {/* Content Container */}
@@ -248,10 +245,21 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Title */}
         <Link href={productLink}>
-          <h3 className="font-bold text-gray-900 text-[15px] leading-tight mb-3 line-clamp-2 cursor-pointer hover:text-[#0f7a61] transition-colors">
+          <h3 className="font-bold text-gray-900 text-[15px] leading-tight mb-2 line-clamp-2 cursor-pointer hover:text-[#0f7a61] transition-colors">
             {title}
           </h3>
         </Link>
+
+        {/* Inventory Location - Available in (Below Title) */}
+        {displayLocation && (
+          <div className="flex items-center gap-1.5 text-[11px] xl:text-[12px] text-gray-500 mb-3 font-medium">
+            <MapPin className="w-3.5 h-3.5 text-[#0f7a61] shrink-0" />
+            <span className="text-gray-500">Available in</span>
+            <span className="font-bold text-gray-800 truncate" title={displayLocation}>
+              {displayLocation}
+            </span>
+          </div>
+        )}
 
         {/* Specs Grid */}
         <div className="mt-auto space-y-2 mb-4">

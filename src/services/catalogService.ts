@@ -1,5 +1,6 @@
 import { apiClient, ApiResponse } from './apiClient';
 import { slugify } from '../lib/slugs';
+import { convertToUsd } from '../context/CurrencyContext';
 
 export interface ProductItem {
   id: string | number;
@@ -190,9 +191,15 @@ export function sanitizeImageUrl(url: any): string {
 }
 
 export function mapApiProductToProductItem(item: any, index: number): ProductItem {
-  const liquidatingPrice = Number(item.liquidating_price || item.liquidation_price || item.liquidatingPrice || 0);
-  const msrpPrice = Number(item.msrp || item.originalPrice || item.previous_price || 0);
-  const price = Number(item.price || item.current_price || (liquidatingPrice ? Number((liquidatingPrice * 1.10).toFixed(2)) : 0));
+  const rawCurrency = (item.currency || 'USD').toUpperCase().trim();
+  const rawLiquidatingPrice = Number(item.liquidating_price || item.liquidation_price || item.liquidatingPrice || 0);
+  const rawMsrpPrice = Number(item.msrp || item.originalPrice || item.previous_price || 0);
+  const rawPrice = Number(item.price || item.current_price || (rawLiquidatingPrice ? Number((rawLiquidatingPrice * 1.10).toFixed(2)) : 0));
+  
+  // Convert from backend country currency (QAR, AED, SAR, etc.) to USD
+  const price = convertToUsd(rawPrice, rawCurrency);
+  const liquidatingPrice = rawLiquidatingPrice > 0 ? convertToUsd(rawLiquidatingPrice, rawCurrency) : price;
+  const msrpPrice = rawMsrpPrice > 0 ? convertToUsd(rawMsrpPrice, rawCurrency) : 0;
   const previousPrice = msrpPrice;
   const currentPrice = price;
 
@@ -240,7 +247,7 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
       const numOffer = parseFloat(rawOffer);
       if (!isNaN(numOffer)) {
         if (numOffer > 0) {
-          offerTag = `${Math.round(numOffer)}% OFF`;
+          offerTag = numOffer % 1 === 0 ? `${Math.round(numOffer)}% OFF` : `${numOffer}% OFF`;
         }
       } else {
         offerTag = `${rawOffer}% OFF`;
@@ -268,7 +275,7 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
     originalPrice: previousPrice > price ? previousPrice : (msrpPrice > price ? msrpPrice : undefined),
     previousPrice: previousPrice > 0 ? previousPrice : (msrpPrice > 0 ? msrpPrice : undefined),
     msrp: msrpPrice > 0 ? msrpPrice : undefined,
-    currency: item.currency || 'USD',
+    currency: 'USD',
     moq: Number(item.moq || item.minimum_order_quantity || item.min_qty || 1),
     estQty: Number(item.quantity || item.estQty || item.available_qty || item.stock || 100),
     quantity: Number(item.quantity || item.estQty || item.available_qty || item.stock || 100),
@@ -307,8 +314,9 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
 
 export function mapApiLotToLotItem(raw: any, index: number): LotItem {
   const item = raw?.lot || raw?.data || raw || {};
+  const rawCurrency = (item.currency || 'USD').toUpperCase().trim();
   
-  const liquidationPrice = Number(
+  const rawLiquidationPrice = Number(
     item.liquidation_price ||
     item.liquidating_price ||
     item.ask_price_surplus_payout ||
@@ -316,7 +324,7 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     0
   );
   
-  const msrp = Number(
+  const rawMsrp = Number(
     item.msrp ||
     item.total_est_retail_value_msrp ||
     item.total_retail ||
@@ -324,12 +332,17 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     0
   );
   
-  const price = Number(
+  const rawPrice = Number(
     item.price ||
     item.total_price ||
     item.priceUsd ||
-    (liquidationPrice ? Number((liquidationPrice * 1.10).toFixed(2)) : 0)
+    (rawLiquidationPrice ? Number((rawLiquidationPrice * 1.10).toFixed(2)) : 0)
   );
+
+  // Convert raw lot prices to USD
+  const price = convertToUsd(rawPrice, rawCurrency);
+  const liquidationPrice = rawLiquidationPrice > 0 ? convertToUsd(rawLiquidationPrice, rawCurrency) : price;
+  const msrp = rawMsrp > 0 ? convertToUsd(rawMsrp, rawCurrency) : 0;
   
   let image = item.image || item.image_url || item.photo || item.thumbnail || '';
   if (Array.isArray(item.images) && item.images.length > 0) {
@@ -382,7 +395,7 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
       const numLotOffer = parseFloat(rawLotOffer);
       if (!isNaN(numLotOffer)) {
         if (numLotOffer > 0) {
-          lotOfferTag = `${Math.round(numLotOffer)}% OFF`;
+          lotOfferTag = numLotOffer % 1 === 0 ? `${Math.round(numLotOffer)}% OFF` : `${numLotOffer}% OFF`;
         }
       } else {
         lotOfferTag = `${rawLotOffer}% OFF`;
@@ -414,11 +427,6 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
   let manifestUrl = item.file_url || item.file || '';
   if (typeof manifestUrl === 'string') {
     manifestUrl = sanitizeImageUrl(manifestUrl);
-  }
-
-  let curr = item.currency || 'USD';
-  if (typeof curr === 'string' && curr.includes(' ')) {
-    curr = curr.split(' ')[0];
   }
 
   return {
@@ -468,7 +476,7 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     shipping_size: item.shipping_size || 'Multi-Pallet / LTL',
     lot_size: item.lot_size || `${palletsCount} Pallets`,
     shipping_terms: item.shipping_terms || 'Buyer Arranges Freight',
-    currency: curr,
+    currency: 'USD',
     excluded_export_countries: Array.isArray(item.excluded_export_countries) ? item.excluded_export_countries : [],
     sale_method: item.sale_method || 'offer',
     file: manifestUrl,

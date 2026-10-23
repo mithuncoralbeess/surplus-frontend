@@ -80,6 +80,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const userObj = (session?.user || {}) as any;
   const vendorId = useMemo(() => {
     if (!session) return '';
+    const storedVid = typeof window !== 'undefined' ? localStorage.getItem('vendor_id') : '';
+    if (storedVid && (storedVid.toUpperCase().startsWith('USR-') || !isNaN(Number(storedVid)))) {
+      return storedVid;
+    }
     const rawVid = userObj.vendor_id;
     if (rawVid && (String(rawVid).toUpperCase().startsWith('USR-') || !isNaN(Number(rawVid)))) {
       return String(rawVid);

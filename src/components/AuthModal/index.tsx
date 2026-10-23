@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { authService } from '../../services/authService';
 import { motion, AnimatePresence } from '../../lib/motion';
@@ -10,18 +10,38 @@ import PhoneInput from 'react-phone-number-input';
 import flags from 'react-phone-number-input/flags';
 import 'react-phone-number-input/style.css';
 import { searchRealLocation, RealLocationSuggestion } from '../../services/locationService';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { fetchCategories } from '../../store/slices/categorySlice';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   initialMode?: 'login' | 'register';
+  initialStep?: number;
+  isMandatory?: boolean;
 }
 
-export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'login' }: AuthModalProps) {
-  const { update } = useSession();
+export default function AuthModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  initialMode = 'login',
+  initialStep = 1,
+  isMandatory = false,
+}: AuthModalProps) {
+  const { data: session, update } = useSession();
+  const dispatch = useAppDispatch();
+  const { categories: reduxCategories } = useAppSelector((state) => state.categories);
+
+  useEffect(() => {
+    if (!reduxCategories || reduxCategories.length === 0) {
+      dispatch(fetchCategories());
+    }
+  }, [dispatch, reduxCategories]);
+
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(initialStep);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,7 +52,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
   const [otp, setOtp] = useState('');
   
   // Onboarding State
-  const [country, setCountry] = useState('United Arab Emirates');
+  const [country, setCountry] = useState('');
   const [businessLocation, setBusinessLocation] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [entityType, setEntityType] = useState('Individual');
@@ -101,16 +121,37 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     setShowLocationSuggestions(false);
   };
 
-  const AVAILABLE_CATEGORIES = ['Electronics', 'Machinery', 'Vehicles', 'Raw Materials', 'Textiles', 'Other', 'Agricultural', 'Medical Equipment', 'Industrial Tools', 'Computers', 'Furniture', 'Plastics', 'Metals'];
-  const filteredCategories = AVAILABLE_CATEGORIES.filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase()));
+  const availableCategories = useMemo(() => {
+    const list: string[] = [];
+    if (reduxCategories && reduxCategories.length > 0) {
+      reduxCategories.forEach((c: any) => {
+        const name = typeof c === 'string' ? c : (c.name || c.title);
+        if (name && !list.includes(name)) list.push(name);
+      });
+    }
+    // Also include any user-selected categories already present on their profile
+    categories.forEach((cat) => {
+      if (cat && !list.includes(cat)) list.push(cat);
+    });
+    return list;
+  }, [reduxCategories, categories]);
+
+  const filteredCategories = useMemo(() => {
+    if (!categorySearch.trim()) return availableCategories;
+    return availableCategories.filter(cat => 
+      cat.toLowerCase().includes(categorySearch.toLowerCase().trim())
+    );
+  }, [availableCategories, categorySearch]);
 
   const COUNTRY_LIST = [
+    // Primary GCC & Regional Hubs
     'United Arab Emirates',
     'Saudi Arabia',
     'Qatar',
     'Kuwait',
     'Oman',
     'Bahrain',
+    // Key Global Trade Partners
     'India',
     'United Kingdom',
     'United States',
@@ -135,6 +176,36 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     'Mexico',
     'Malaysia',
     'Indonesia',
+    'Algeria',
+    'Argentina',
+    'Austria',
+    'Belgium',
+    'Chile',
+    'Colombia',
+    'Cyprus',
+    'Czech Republic',
+    'Denmark',
+    'Finland',
+    'Greece',
+    'Hong Kong',
+    'Hungary',
+    'Iraq',
+    'Ireland',
+    'Jordan',
+    'Kenya',
+    'Lebanon',
+    'Morocco',
+    'New Zealand',
+    'Nigeria',
+    'Norway',
+    'Philippines',
+    'Poland',
+    'Portugal',
+    'Romania',
+    'Sweden',
+    'Taiwan',
+    'Thailand',
+    'Vietnam',
     'Other / Worldwide',
   ];
 
@@ -153,8 +224,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
-      setStep(1);
+      setStep(initialStep || 1);
       document.body.style.overflow = 'hidden';
+      if (initialMode === 'register' || initialStep === 1) {
+        setCountry('');
+      }
     } else {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
@@ -164,13 +238,46 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
         setMode(initialMode);
         setError('');
         setOtp('');
+        setCountry('');
+        setBusinessLocation('');
+        setCompanyName('');
+        setCategories([]);
       }, 300);
     }
     return () => {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };
-  }, [isOpen, initialMode]);
+  }, [isOpen, initialMode, initialStep]);
+
+  // Pre-fill profile state from session if available (only when NOT in register mode)
+  useEffect(() => {
+    if (session?.user && isOpen && mode !== 'register') {
+      const u = session.user as any;
+      if (u.email && !emailOrPhone) setEmailOrPhone(u.email);
+      if (u.full_name && !fullName) setFullName(u.full_name);
+      if (u.mobile && !mobileNumber) setMobileNumber(u.mobile);
+      if (u.country && u.country !== '-- Select Country --' && !country) {
+        setCountry(u.country);
+      }
+      if (u.business_location && !businessLocation) setBusinessLocation(u.business_location);
+      if (u.company_name && !companyName) setCompanyName(u.company_name);
+      if (u.account_entity_type) {
+        setEntityType(String(u.account_entity_type).toUpperCase().includes('COMPANY') ? 'Company/Business' : 'Individual');
+      }
+      if (u.user_type) {
+        const ut = String(u.user_type).toUpperCase();
+        setRole(ut === 'SELLER' ? 'Seller' : ut === 'BOTH' ? 'Both' : 'Buyer');
+      }
+      if (u.category_interested && categories.length === 0) {
+        const catArray = String(u.category_interested)
+          .split(',')
+          .map((c: string) => c.trim())
+          .filter(Boolean);
+        if (catArray.length > 0) setCategories(catArray);
+      }
+    }
+  }, [session, isOpen, mode]);
 
   const toggleCategory = (cat: string) => {
     setCategories(prev => {
@@ -280,6 +387,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
         setLoading(false);
       } else {
         setLoading(false);
+        setCountry(''); // Ensure country is blank so user must actively select it
         setStep(3); // Go to onboarding
       }
     } else {
@@ -308,7 +416,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       setError('Company Name is required for seller accounts.');
       return;
     }
-    if (!country || !country.trim()) {
+    if (!country || !country.trim() || country === '-- Select Country --') {
       setError('Please select your Country.');
       return;
     }
@@ -325,10 +433,16 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
       return;
     }
     
+    const targetEmail = (emailOrPhone || (session?.user as any)?.email || '').trim();
+    if (!targetEmail) {
+      setError('Email address is missing. Please sign in again.');
+      return;
+    }
+
     setLoading(true);
 
     const res = await authService.completeProfile({
-      email: emailOrPhone,
+      email: targetEmail.toLowerCase(),
       account_entity_type: entityType === 'Company/Business' ? 'COMPANY' : 'INDIVIDUAL',
       company_name: entityType === 'Company/Business' ? (companyName || undefined) : undefined,
       country: country.trim(),
@@ -366,7 +480,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     setStep(1);
     setError('');
     setOtp('');
+    setCountry('');
+    setBusinessLocation('');
+    setCompanyName('');
+    setCategories([]);
   };
+
+  const isLocked = step === 3 || isMandatory;
 
   if (!mounted || !isOpen) return null;
 
@@ -374,8 +494,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     <div data-lenis-prevent className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
-        onClick={onClose}
-        className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+        onClick={isLocked ? undefined : onClose}
+        className={`fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity ${isLocked ? 'cursor-not-allowed' : ''}`}
       />
 
       {/* Modal Container */}
@@ -386,12 +506,19 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white sticky top-0 z-20 rounded-t-3xl">
               <div>
                 <h3 className="text-xl font-bold text-gray-900">
-                  {mode === 'login' ? 'Sign In' : (step === 3 ? 'Complete Profile' : 'Create Account')}
+                  {step === 3 ? 'Complete Profile (Mandatory)' : (mode === 'login' ? 'Sign In' : 'Create Account')}
                 </h3>
+                {step === 3 && (
+                  <p className="text-xs text-emerald-700 font-medium mt-0.5">
+                    Profile completion is mandatory to activate your account and start listing.
+                  </p>
+                )}
               </div>
-              <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+              {!isLocked && (
+                <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
+                  <X className="w-5 h-5" />
+                </button>
+              )}
             </div>
 
             {/* Content */}
@@ -503,9 +630,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                   </form>
                 )}
 
-                {/* ONBOARDING STEP 3 (Register only) */}
-                {step === 3 && mode === 'register' && (
+                {/* ONBOARDING STEP 3 */}
+                {step === 3 && (
                   <form onSubmit={handleCompleteOnboarding} className="space-y-5">
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs px-3.5 py-2.5 rounded-xl mb-3 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[#0a5c48] shrink-0" />
+                      <span><strong>Profile Completion Mandatory:</strong> Please fill in all required details marked with * to complete registration and enable inventory listings.</span>
+                    </div>
                     
                     <div>
                       <label className={labelClass}>Account Role *</label>
@@ -572,15 +703,18 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                         <select 
                           required
                           value={country} 
-                          onChange={e => setCountry(e.target.value)} 
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-all outline-none text-gray-900 appearance-none pr-10 cursor-pointer text-sm font-medium" 
+                          onChange={e => {
+                            setCountry(e.target.value);
+                            if (error) setError('');
+                          }} 
+                          className={`w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-all outline-none ${!country ? 'text-gray-400 font-normal' : 'text-gray-900 font-medium'} appearance-none pr-10 cursor-pointer text-sm`} 
                         >
-                          <option value="">-- Select Country --</option>
-                          {country && !COUNTRY_LIST.includes(country) && (
-                            <option value={country}>{country}</option>
+                          <option value="" className="text-gray-400 font-normal">-- Select Country --</option>
+                          {country && country !== '-- Select Country --' && !COUNTRY_LIST.includes(country) && (
+                            <option value={country} className="text-gray-900 font-medium">{country}</option>
                           )}
                           {COUNTRY_LIST.map(c => (
-                            <option key={c} value={c}>{c}</option>
+                            <option key={c} value={c} className="text-gray-900 font-medium">{c}</option>
                           ))}
                         </select>
                         <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -735,7 +869,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
                                 </button>
                               );
                             }) : (
-                              <p className="text-center text-sm text-gray-500 py-6">No categories found</p>
+                              <p className="text-center text-sm text-gray-500 py-6">
+                                {reduxCategories && reduxCategories.length === 0 ? 'Loading categories...' : 'No categories found'}
+                              </p>
                             )}
                           </div>
                         </div>

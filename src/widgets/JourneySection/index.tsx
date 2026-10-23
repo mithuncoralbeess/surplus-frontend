@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import {
   Search, ShieldCheck, ClipboardList, BarChart2, Users, Leaf,
   Plus, Camera, Sparkles, Shield, Globe, DollarSign,
@@ -151,9 +152,12 @@ const JourneySection = () => {
                 <div className="text-3xl font-extrabold text-gray-900 leading-none mb-1">82 markets</div>
                 <div className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">AI-Ranked Verified Inventory</div>
               </div>
-              <button className="bg-[#185545] hover:bg-[#0f3b2f] text-white px-7 py-3 rounded-full font-bold text-[15px] transition-colors flex items-center gap-2 shadow-md">
+              <Link 
+                href="/buy"
+                className="bg-[#185545] hover:bg-[#0f3b2f] text-white px-7 py-3 rounded-full font-bold text-[15px] transition-colors flex items-center gap-2 shadow-md cursor-pointer"
+              >
                 Start Buying <ArrowRight className="w-4.5 h-4.5" />
-              </button>
+              </Link>
             </div>
           </motion.div>
 
@@ -203,9 +207,12 @@ const JourneySection = () => {
                 <div className="text-3xl font-extrabold text-gray-900 leading-none mb-1">$412M</div>
                 <div className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">Value Recovered For Sellers</div>
               </div>
-              <button className="bg-[#185545] hover:bg-[#0f3b2f] text-white px-7 py-3 rounded-full font-bold text-[15px] transition-colors flex items-center gap-2 shadow-md">
+              <Link 
+                href="/sell"
+                className="bg-[#185545] hover:bg-[#0f3b2f] text-white px-7 py-3 rounded-full font-bold text-[15px] transition-colors flex items-center gap-2 shadow-md cursor-pointer"
+              >
                 Start Selling <ArrowRight className="w-4.5 h-4.5" />
-              </button>
+              </Link>
             </div>
           </motion.div>
 

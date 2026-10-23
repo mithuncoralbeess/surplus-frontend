@@ -25,7 +25,7 @@ interface ProductDetailWidgetProps {
 
 export default function ProductDetailWidget({ productId, category }: ProductDetailWidgetProps) {
   const router = useRouter();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, convertToUsd } = useCurrency();
   const { addToCart, openCartDrawer, isInCart } = useCart();
 
   const [product, setProduct] = useState<ProductItem | null>(null);
@@ -157,7 +157,7 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
       title: product.title,
       category: catName,
       quantity: quantity,
-      unitPrice: unitPrice,
+      unitPrice: convertToUsd(unitPrice, currencyCode),
       image: prodImage,
       moq: minQty,
       estQty: maxQty,

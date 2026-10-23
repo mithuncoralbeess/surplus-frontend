@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { motion } from '../../lib/motion';
 
@@ -49,10 +50,13 @@ const SellerPromoBanner = () => {
 
           {/* Right Side Button */}
           <div className="flex-shrink-0 w-full md:w-auto">
-            <button className="w-full md:w-auto bg-[#ff9933] hover:bg-[#e68a2e] text-[#051d14] px-7 py-3.5 rounded-full font-bold text-[15px] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-black/10">
+            <Link 
+              href="/sell"
+              className="w-full md:w-auto bg-[#ff9933] hover:bg-[#e68a2e] text-[#051d14] px-7 py-3.5 rounded-full font-bold text-[15px] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-black/10 cursor-pointer"
+            >
               Sell excess stock
               <ArrowRight className="w-4.5 h-4.5" />
-            </button>
+            </Link>
           </div>
 
         </motion.div>

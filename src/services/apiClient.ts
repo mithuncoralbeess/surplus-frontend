@@ -83,8 +83,8 @@ const inFlightRequests = new Map<string, Promise<ApiResponse<any>>>();
 const DEFAULT_CACHE_TTL_MS = 3 * 60 * 1000;
 
 // LocalStorage Persistent Cache Key Prefix
-const STORAGE_PREFIX = 'surplus_api_cache_v3:';
-const LEGACY_STORAGE_PREFIXES = ['surplus_api_cache_v1:', 'surplus_api_cache_v2:'];
+const STORAGE_PREFIX = 'surplus_api_cache_v4:';
+const LEGACY_STORAGE_PREFIXES = ['surplus_api_cache_v1:', 'surplus_api_cache_v2:', 'surplus_api_cache_v3:'];
 
 function purgeLegacyStorageCaches(): void {
   if (typeof window === 'undefined') return;
@@ -277,6 +277,26 @@ async function executeNetworkFetch<T = any>(
         (typeof json === 'object' && Object.keys(json).length > 0
           ? JSON.stringify(json)
           : `Request failed with status ${response.status}`);
+
+      // Auto-logout when user account is deleted, unauthorized, or deactivated on the backend
+      if (
+        response.status === 401 ||
+        (response.status === 404 && endpoint.includes('/complete-profile/')) ||
+        (typeof errorMsg === 'string' &&
+          /user not found|account deleted|does not exist|invalid user|user is inactive/i.test(errorMsg))
+      ) {
+        if (typeof window !== 'undefined') {
+          import('../lib/authCleanup')
+            .then(({ performLogout }) => {
+              performLogout({
+                redirect: true,
+                callbackUrl: '/?account_deleted=true',
+                reason: 'account_deleted',
+              });
+            })
+            .catch(() => {});
+        }
+      }
 
       return {
         success: false,

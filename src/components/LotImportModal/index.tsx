@@ -8,6 +8,9 @@ import { z } from 'zod';
 import { validateManifestUpload } from '../../lib/security/fileUploadValidator';
 import { sanitizeInput } from '../../lib/security/sanitizer';
 import * as XLSX from 'xlsx';
+import { authService } from '../../services/authService';
+import AuthModal from '../AuthModal';
+import { isProfileComplete } from '../../lib/profileUtils';
 
 /**
  * Comprehensive Cyber Attack Protection Filter for Zod Schemas
@@ -485,10 +488,16 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
   }, []);
 
   const { data: session } = useSession();
+  const [activeVendorId, setActiveVendorId] = useState<string>(() => {
+    return (typeof window !== 'undefined' ? localStorage.getItem('vendor_id') : '') || '';
+  });
   const [manifestFile, setManifestFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalStep, setAuthModalStep] = useState(1);
+  const [isAuthMandatory, setIsAuthMandatory] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '', 
     email: '', 
@@ -683,6 +692,11 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (session?.user) {
+      const u = session.user as any;
+      const initialId = u.vendor_id || u.id;
+      if (initialId) {
+        setActiveVendorId(String(initialId));
+      }
       setFormData(prev => ({
         ...prev,
         fullName: prev.fullName || session.user?.name || '', 
@@ -692,8 +706,26 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
         inventoryCity: prev.inventoryCity || (session.user as any)?.city || '',
         location: prev.location || (session.user as any)?.location || ''
       }));
+
+      // Proactively fetch latest profile & auto-assigned vendor_id from backend
+      const email = session.user?.email;
+      if (email) {
+        authService.getProfile(email).then((res: any) => {
+          if (res?.success && res.data) {
+            const vData = res.data;
+            const fetchedVendorId = vData.vendor_id || vData.raw_vendor_id || vData.id;
+            if (fetchedVendorId) {
+              const strId = String(fetchedVendorId);
+              setActiveVendorId(strId);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('vendor_id', strId);
+              }
+            }
+          }
+        }).catch(() => {});
+      }
     }
-  }, [session]);
+  }, [session, isOpen]);
 
   const mediaPreviews = useMemo(() => {
     return mediaFiles.map((file) => ({
@@ -1202,6 +1234,22 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
   };
 
   const nextStep = () => {
+    if (currentStep === 2) {
+      if (!session?.user) {
+        setSubmitError('You must be signed in as a registered vendor to submit a lot listing. Please sign in to continue.');
+        setAuthModalStep(1);
+        setIsAuthMandatory(false);
+        setShowAuthModal(true);
+        return;
+      }
+      if (!isProfileComplete(session.user)) {
+        setSubmitError('Profile completion is mandatory before submitting a lot inventory listing. Please complete your profile to continue.');
+        setAuthModalStep(3);
+        setIsAuthMandatory(true);
+        setShowAuthModal(true);
+        return;
+      }
+    }
     if (validateStep(currentStep)) {
       setCurrentStep(prev => Math.min(prev + 1, 3));
     }
@@ -1212,13 +1260,45 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
     if (!validateStep(1)) { setCurrentStep(1); return; }
     if (!validateStep(2)) { setCurrentStep(2); return; }
 
+    if (!session?.user) {
+      setSubmitError('You must be signed in as a registered vendor to submit a lot listing. Please sign in to continue.');
+      setAuthModalStep(1);
+      setIsAuthMandatory(false);
+      setShowAuthModal(true);
+      return;
+    }
+
+    if (!isProfileComplete(session.user)) {
+      setSubmitError('Profile completion is mandatory before submitting a lot inventory listing. Please complete your profile to continue.');
+      setAuthModalStep(3);
+      setIsAuthMandatory(true);
+      setShowAuthModal(true);
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError('');
     try {
       const data = new FormData();
       
-      if (session?.user && (session.user as any).vendor_id) {
-        data.append('vendor_id', String((session.user as any).vendor_id));
+      const currentVendorId = activeVendorId || (typeof window !== 'undefined' ? localStorage.getItem('vendor_id') : '') || (session?.user as any)?.vendor_id;
+      if (currentVendorId) {
+        data.append('vendor_id', String(currentVendorId));
+      }
+      const userEmail = session?.user?.email || formData.email;
+      if (userEmail) {
+        data.append('email', String(userEmail));
+        data.append('user_email', String(userEmail));
+      }
+      const userName = session?.user?.name || formData.fullName;
+      if (userName) {
+        data.append('name', String(userName));
+        data.append('seller_name', String(userName));
+      }
+      const userPhone = (session?.user as any)?.mobile || (session?.user as any)?.phone || formData.mobile;
+      if (userPhone) {
+        data.append('mobile', String(userPhone));
+        data.append('seller_phone', String(userPhone));
       }
       
       // --- 1-3. Basic Info ---
@@ -2367,6 +2447,40 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
+              {(!session?.user || !isProfileComplete(session?.user)) && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 text-sm shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <Info className="w-5 h-5 text-amber-600 shrink-0" />
+                    <div>
+                      <span className="font-bold block text-gray-900">
+                        {!session?.user ? 'Sign In Required' : 'Profile Completion Required'}
+                      </span>
+                      <span className="text-amber-700 text-xs">
+                        {!session?.user
+                          ? 'You must be signed in to submit a lot inventory listing.'
+                          : 'You must complete your profile (country, business location, category) before submitting a lot inventory listing.'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!session?.user) {
+                        setAuthModalStep(1);
+                        setIsAuthMandatory(false);
+                      } else {
+                        setAuthModalStep(3);
+                        setIsAuthMandatory(true);
+                      }
+                      setShowAuthModal(true);
+                    }}
+                    className="px-4 py-2 bg-[#0a5c48] hover:bg-[#084838] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
+                  >
+                    {!session?.user ? 'Sign In' : 'Complete Profile'}
+                  </button>
+                </div>
+              )}
+
               {/* Section 1: Manifest File Overview */}
               <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-4">
@@ -2595,7 +2709,11 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
           <button
             type="button"
             onClick={currentStep === 3 ? submitListing : nextStep}
-            disabled={isSubmitting || (currentStep === 1 && (!manifestFile || manifestData.length === 0 || !!formErrors.manifestFile))}
+            disabled={
+              isSubmitting ||
+              (currentStep === 1 && (!manifestFile || manifestData.length === 0 || !!formErrors.manifestFile)) ||
+              (currentStep === 3 && (!session?.user || !isProfileComplete(session?.user)))
+            }
             className="flex items-center px-8 py-2.5 bg-[#0a5c48] text-white rounded-full font-semibold hover:bg-[#084838] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {currentStep === 3 ? (
@@ -2785,6 +2903,22 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
       )}
+      {/* Auth & Mandatory Profile Completion Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => {
+          if (!isAuthMandatory) {
+            setShowAuthModal(false);
+          }
+        }}
+        onSuccess={() => {
+          setShowAuthModal(false);
+          setIsAuthMandatory(false);
+          setSubmitError('');
+        }}
+        initialStep={authModalStep}
+        isMandatory={isAuthMandatory}
+      />
     </div>,
     document.body
   );
