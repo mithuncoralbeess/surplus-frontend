@@ -92,7 +92,7 @@ const BuyMegamenu = () => {
     ? categories.slice(0, 8).map((cat) => ({
         id: cat.id,
         name: cat.name,
-        count: cat.subcategories?.length ? `${cat.subcategories.length} ${t('megamenu.subcategories', 'subcategories')}` : t('megamenu.itemsAvailable', 'Items available'),
+        count: (cat.subcategories?.length || cat.sub_categories?.length) ? `${cat.subcategories?.length || cat.sub_categories?.length} ${t('megamenu.subcategories', 'subcategories')}` : t('megamenu.itemsAvailable', 'Items available'),
         icon: getCategoryIcon(cat.name),
         slug: cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       }))

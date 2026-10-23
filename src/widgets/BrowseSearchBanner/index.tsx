@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useTransition } from 'react';
+import React, { useState, useEffect, useRef, useTransition, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import {
   Sparkles, Search, Zap, Clock, TrendingUp, Mic, MicOff,
   X, Check, ChevronRight, Cpu, Wrench, ShieldCheck, Tag, ArrowRight,
-  Loader2, Package
+  Loader2, Package, Truck, PenTool, Hammer, Laptop, HardHat, Drill, Lamp, Box, Layers
 } from 'lucide-react';
 import {
   parseNaturalLanguageQuery,
@@ -16,84 +16,52 @@ import {
 } from '../../lib/aiSearchEngine';
 import { useVoiceSearch } from '../../hooks/useVoiceSearch';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { fetchCategories, Category, SubCategory } from '../../store/slices/categorySlice';
 
-interface AiPromptCategory {
-  category: string;
-  icon: any;
-  prompts: { text: string; tag: string }[];
-}
+const ICON_MAP: Record<string, any> = {
+  'apparel': Tag,
+  'clothing': Tag,
+  'automotive': Truck,
+  'books': PenTool,
+  'stationery': PenTool,
+  'construction': Hammer,
+  'building': Hammer,
+  'consumer electronics': Laptop,
+  'electronics': Cpu,
+  'ict': Cpu,
+  'electrical': Zap,
+  'lighting': Lamp,
+  'hardware': Wrench,
+  'tools': Drill,
+  'safety': HardHat,
+  'ppe': HardHat,
+  'industrial': Box,
+};
 
-const AI_CATEGORIZED_PROMPTS: AiPromptCategory[] = [
-  {
-    category: "ICT & Data Center",
-    icon: Cpu,
-    prompts: [
-      { text: "Show me 2U rackmount servers under $500 available in Maharashtra", tag: "Conversational Search" },
-      { text: "Dell PowerEdge R740 rack server refurbished with warranty", tag: "Enterprise Servers" },
-      { text: "Cisco Catalyst 9300 48-port PoE+ network switch surplus", tag: "Networking" },
-      { text: "HPE ProLiant DL380 Gen10 servers under $1500", tag: "ICT Hardware" }
-    ]
-  },
-  {
-    category: "Power Tools & Machinery",
-    icon: Wrench,
-    prompts: [
-      { text: "Bosch Professional 18V brushless cordless combo kit", tag: "Cordless Tools" },
-      { text: "DeWalt 20V MAX hammer drill liquidation lot wholesale", tag: "Wholesale Lots" },
-      { text: "Caterpillar excavator hydraulic main pump unused", tag: "Heavy Equipment" }
-    ]
-  },
-  {
-    category: "Electricals & Industrial",
-    icon: Zap,
-    prompts: [
-      { text: "Bulk Cat6 solid copper 23AWG network cable 500m drums", tag: "Cabling & Wire" },
-      { text: "Siemens S7-1200 PLC automation bundle factory sealed", tag: "Automation" },
-      { text: "Fluke 87V industrial true-RMS digital multimeter pack", tag: "Test & Measure" }
-    ]
-  },
-  {
-    category: "Liquidation Lots & PPE",
-    icon: Tag,
-    prompts: [
-      { text: "Wholesale TWS wireless earbuds consumer electronics liquidation", tag: "Electronics Lot" },
-      { text: "Full pallet 3M Aura N95 particulate respirators", tag: "Safety / PPE" },
-      { text: "Neox 12W LED round recessed slim panels bulk pallet", tag: "Commercial Lighting" }
-    ]
+const getCategoryIcon = (name: string) => {
+  const normalized = (name || '').toLowerCase().trim();
+  for (const [key, icon] of Object.entries(ICON_MAP)) {
+    if (normalized.includes(key)) return icon;
   }
-];
-
-const DEFAULT_RECENT = [
-  "Dell PowerEdge R740",
-  "Bulk Cat6 Cable",
-  "Bosch 18V Brushless Combo",
-  "Siemens S7-1200"
-];
-
-const TRENDING_SURPLUS = [
-  "Dell Rack Servers",
-  "Cat6 Drums",
-  "Cisco 9300",
-  "Fluke 87V",
-  "3M N95 Pallets",
-  "Bosch 18V",
-  "Hydraulic Pumps"
-];
-
-const POPULAR_CATEGORIES = [
-  { name: "ICT & Servers", count: 86 },
-  { name: "Power tools", count: 142 },
-  { name: "Electricals", count: 362 },
-  { name: "Building Materials", count: 610 },
-  { name: "PPE & Safety", count: 94 },
-  { name: "Lifting accessories", count: 45 }
-];
+  return Package;
+};
 
 const BrowseSearchBanner = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const dispatch = useAppDispatch();
   const { formatPrice } = useCurrency();
   const initialQuery = searchParams.get('q') || '';
+
+  // Get categories strictly from Redux store (hydrated from API & cached in localStorage)
+  const { categories: reduxCategories, loading: categoriesLoading } = useAppSelector((state) => state.categories);
+
+  useEffect(() => {
+    if (!reduxCategories || reduxCategories.length === 0) {
+      dispatch(fetchCategories());
+    }
+  }, [dispatch, reduxCategories]);
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [searchMode, setSearchMode] = useState<'ai' | 'sku'>('ai');
@@ -101,7 +69,7 @@ const BrowseSearchBanner = () => {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [activePromptCategory, setActivePromptCategory] = useState(0);
-  const [recentSearches, setRecentSearches] = useState<string[]>(DEFAULT_RECENT);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [parsedIntent, setParsedIntent] = useState<ParsedAiIntent | null>(null);
   const [instantMatches, setInstantMatches] = useState<{ products: any[]; categories: string[]; suggestions: string[] }>({
     products: [],
@@ -112,6 +80,85 @@ const BrowseSearchBanner = () => {
   const [, startTransition] = useTransition();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Dynamically derive AI search prompts strictly from Redux API categories & subcategories
+  const promptCategories = useMemo(() => {
+    if (!reduxCategories || reduxCategories.length === 0) return [];
+    return reduxCategories.map((cat) => {
+      const subs = (cat.subcategories || cat.sub_categories || []).filter((s: SubCategory) => Boolean(s?.name));
+      let prompts: { text: string; tag: string }[] = [];
+
+      if (subs.length >= 3) {
+        prompts = [
+          { text: `Wholesale ${subs[0].name} surplus lots`, tag: subs[0].name.slice(0, 16) },
+          { text: `Bulk pallets of ${subs[1].name} liquidation inventory`, tag: 'Wholesale Lot' },
+          { text: `Verified ${subs[2].name} overstock deals`, tag: 'Overstock' },
+          ...(subs[3] ? [{ text: `Brand new surplus ${subs[3].name} manifests`, tag: 'Verified Deal' }] : [])
+        ];
+      } else if (subs.length > 0) {
+        prompts = [
+          { text: `Wholesale ${subs[0].name} surplus lots`, tag: subs[0].name.slice(0, 16) },
+          { text: `Surplus ${cat.name} liquidation inventory`, tag: 'Liquidation' },
+          { text: `Bulk pallets of ${cat.name} ready to ship`, tag: 'Bulk Lot' }
+        ];
+      } else {
+        prompts = [
+          { text: `Wholesale ${cat.name} surplus lots`, tag: 'Wholesale' },
+          { text: `Bulk ${cat.name} liquidation pallets`, tag: 'Liquidation' },
+          { text: `Verified ${cat.name} overstock inventory`, tag: 'Overstock' }
+        ];
+      }
+
+      return {
+        category: cat.name,
+        id: cat.id,
+        icon: getCategoryIcon(cat.name),
+        prompts,
+        subCount: subs.length
+      };
+    });
+  }, [reduxCategories]);
+
+  const safeActiveIndex = promptCategories.length > 0
+    ? Math.min(activePromptCategory, promptCategories.length - 1)
+    : 0;
+  const currentPromptCategory = promptCategories[safeActiveIndex];
+
+  // Dynamically generate trending tags from Redux categories & subcategories
+  const trendingTags = useMemo(() => {
+    if (!reduxCategories || reduxCategories.length === 0) return [];
+    const tags: string[] = [];
+    for (const cat of reduxCategories) {
+      const subs = cat.subcategories || cat.sub_categories || [];
+      for (const sub of subs) {
+        if (sub?.name && !tags.includes(sub.name)) {
+          tags.push(sub.name);
+          if (tags.length >= 8) break;
+        }
+      }
+      if (tags.length >= 8) break;
+    }
+    if (tags.length < 5) {
+      for (const cat of reduxCategories) {
+        if (cat?.name && !tags.includes(cat.name)) {
+          tags.push(cat.name);
+          if (tags.length >= 8) break;
+        }
+      }
+    }
+    return tags;
+  }, [reduxCategories]);
+
+  // Real-time matched categories from Redux store when user is typing
+  const matchedReduxCategories = useMemo(() => {
+    const trimmed = searchQuery.trim().toLowerCase();
+    if (trimmed.length < 2 || !reduxCategories) return [];
+    return reduxCategories.filter(cat => {
+      if (cat.name.toLowerCase().includes(trimmed)) return true;
+      const subs = cat.subcategories || cat.sub_categories || [];
+      return subs.some((s: SubCategory) => s?.name?.toLowerCase().includes(trimmed));
+    }).slice(0, 4);
+  }, [reduxCategories, searchQuery]);
 
   // Load recent searches from localStorage if available
   useEffect(() => {
@@ -650,19 +697,46 @@ const BrowseSearchBanner = () => {
                   )}
 
                   {/* Matched Categories & Suggestions */}
-                  {instantMatches.suggestions.length > 0 && (
-                    <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center gap-2">
-                      <span className="text-xs text-gray-500 font-medium">Try searching:</span>
-                      {instantMatches.suggestions.map((sug, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => handleSelectPrompt(sug)}
-                          className="text-xs bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-[#0f7a61] px-2.5 py-1 rounded-full transition-colors cursor-pointer"
-                        >
-                          {sug}
-                        </button>
-                      ))}
+                  {(matchedReduxCategories.length > 0 || instantMatches.suggestions.length > 0) && (
+                    <div className="pt-3 border-t border-gray-100 space-y-2">
+                      {matchedReduxCategories.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs text-gray-500 font-medium">Matching categories:</span>
+                          {matchedReduxCategories.map((cat) => {
+                            const subCount = cat.subcategories?.length || cat.sub_categories?.length || 0;
+                            return (
+                              <button
+                                key={cat.id || cat.name}
+                                type="button"
+                                onClick={() => handleSelectPrompt(cat.name)}
+                                className="inline-flex items-center gap-1.5 text-xs bg-emerald-50 hover:bg-emerald-100 text-[#0f7a61] border border-emerald-200/80 px-2.5 py-1 rounded-full font-semibold transition-colors cursor-pointer"
+                              >
+                                <Package className="w-3.5 h-3.5 text-[#0f7a61]" />
+                                <span>{cat.name}</span>
+                                <span className="text-[10px] text-emerald-700/70 font-normal">
+                                  ({subCount} {subCount === 1 ? 'subcategory' : 'subcategories'})
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {instantMatches.suggestions.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs text-gray-500 font-medium">Try searching:</span>
+                          {instantMatches.suggestions.map((sug, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => handleSelectPrompt(sug)}
+                              className="text-xs bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-[#0f7a61] px-2.5 py-1 rounded-full transition-colors cursor-pointer"
+                            >
+                              {sug}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -679,49 +753,67 @@ const BrowseSearchBanner = () => {
                       <span className="text-[11px] text-gray-400 font-medium hidden sm:inline">Click any query to run instant AI search</span>
                     </div>
 
-                    {/* Category Selector Tabs */}
-                    <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
-                      {AI_CATEGORIZED_PROMPTS.map((cat, idx) => {
-                        const Icon = cat.icon;
-                        const isActive = activePromptCategory === idx;
-                        return (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => setActivePromptCategory(idx)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${isActive
-                                ? 'bg-[#0f7a61] text-white shadow-xs'
-                                : 'bg-gray-100 hover:bg-gray-200/80 text-gray-600'
-                              }`}
-                          >
-                            <Icon className="w-3 h-3" />
-                            <span>{cat.category}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {/* Category Selector Tabs from Redux */}
+                    {promptCategories.length > 0 ? (
+                      <>
+                        <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
+                          {promptCategories.map((cat, idx) => {
+                            const Icon = cat.icon;
+                            const isActive = safeActiveIndex === idx;
+                            return (
+                              <button
+                                key={cat.id || idx}
+                                type="button"
+                                onClick={() => setActivePromptCategory(idx)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                                  isActive
+                                    ? 'bg-[#0f7a61] text-white shadow-xs'
+                                    : 'bg-gray-100 hover:bg-gray-200/80 text-gray-600'
+                                }`}
+                              >
+                                <Icon className="w-3 h-3" />
+                                <span>{cat.category}</span>
+                                {cat.subCount > 0 && (
+                                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
+                                    isActive ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-500'
+                                  }`}>
+                                    {cat.subCount}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
 
-                    {/* Prompts list for selected category */}
-                    <div className="space-y-1.5 mt-2.5">
-                      {AI_CATEGORIZED_PROMPTS[activePromptCategory].prompts.map((item, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => handleSelectPrompt(item.text)}
-                          className="w-full text-left p-2.5 rounded-2xl hover:bg-emerald-50/80 transition-colors flex items-center justify-between group border border-transparent hover:border-emerald-200/60 cursor-pointer"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                            <Zap className="w-4 h-4 text-[#0f7a61] shrink-0 opacity-70 group-hover:opacity-100" />
-                            <span className="text-xs sm:text-sm text-gray-800 font-medium group-hover:text-[#0f7a61] transition-colors truncate">
-                              {item.text}
-                            </span>
+                        {/* Prompts list for selected category */}
+                        {currentPromptCategory && currentPromptCategory.prompts.length > 0 && (
+                          <div className="space-y-1.5 mt-2.5">
+                            {currentPromptCategory.prompts.map((item, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => handleSelectPrompt(item.text)}
+                                className="w-full text-left p-2.5 rounded-2xl hover:bg-emerald-50/80 transition-colors flex items-center justify-between group border border-transparent hover:border-emerald-200/60 cursor-pointer"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                                  <Zap className="w-4 h-4 text-[#0f7a61] shrink-0 opacity-70 group-hover:opacity-100" />
+                                  <span className="text-xs sm:text-sm text-gray-800 font-medium group-hover:text-[#0f7a61] transition-colors truncate">
+                                    {item.text}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] font-bold bg-emerald-100/70 text-[#0f7a61] px-2.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                                  {item.tag}
+                                </span>
+                              </button>
+                            ))}
                           </div>
-                          <span className="text-[10px] font-bold bg-emerald-100/70 text-[#0f7a61] px-2.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                            {item.tag}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="py-4 text-center text-xs text-gray-400">
+                        {categoriesLoading ? 'Loading verified categories from catalog...' : 'Categories available soon'}
+                      </div>
+                    )}
                   </div>
 
                   {/* Section 2: Recent & Trending */}
@@ -743,37 +835,41 @@ const BrowseSearchBanner = () => {
                           </button>
                         )}
                       </div>
-                      <div className="space-y-1">
-                        {recentSearches.slice(0, 4).map((term, idx) => (
-                          <div
-                            key={idx}
-                            onClick={() => handleSelectPrompt(term)}
-                            className="w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-50 flex items-center justify-between text-xs text-gray-700 hover:text-[#0f7a61] transition-colors cursor-pointer group"
-                          >
-                            <div className="flex items-center gap-2 truncate">
-                              <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                              <span className="truncate font-medium">{term}</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={(e) => removeRecentSearch(term, e)}
-                              className="text-gray-300 hover:text-gray-600 opacity-0 group-hover:opacity-100 p-0.5 rounded"
+                      {recentSearches.length > 0 ? (
+                        <div className="space-y-1">
+                          {recentSearches.slice(0, 4).map((term, idx) => (
+                            <div
+                              key={idx}
+                              onClick={() => handleSelectPrompt(term)}
+                              className="w-full px-2.5 py-1.5 rounded-lg hover:bg-gray-50 flex items-center justify-between text-xs text-gray-700 hover:text-[#0f7a61] transition-colors cursor-pointer group"
                             >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+                              <div className="flex items-center gap-2 truncate">
+                                <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                <span className="truncate font-medium">{term}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => removeRecentSearch(term, e)}
+                                className="text-gray-300 hover:text-gray-600 opacity-0 group-hover:opacity-100 p-0.5 rounded"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400 italic py-1">Your recent searches will appear here</p>
+                      )}
                     </div>
 
-                    {/* Trending Surplus */}
+                    {/* Trending Surplus Categories */}
                     <div>
                       <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                         <TrendingUp className="w-3.5 h-3.5 text-gray-400" />
-                        <span>Trending Surplus Lots</span>
+                        <span>Trending Surplus Categories</span>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {TRENDING_SURPLUS.map((tag, idx) => (
+                        {trendingTags.map((tag, idx) => (
                           <button
                             key={idx}
                             type="button"
@@ -787,23 +883,37 @@ const BrowseSearchBanner = () => {
                     </div>
                   </div>
 
-                  {/* Section 3: Popular Categories */}
+                  {/* Section 3: Popular Categories (Strictly from Redux Store) */}
                   <div className="pt-3">
-                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                      Browse by Verified Category
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <Package className="w-3.5 h-3.5 text-[#0f7a61]" />
+                        <span>Browse by Verified Category</span>
+                      </div>
+                      {reduxCategories.length > 0 && (
+                        <span className="text-[11px] text-gray-400 font-medium hidden sm:inline">
+                          {reduxCategories.length} categories from catalog
+                        </span>
+                      )}
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {POPULAR_CATEGORIES.map((cat, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => handleSelectPrompt(cat.name)}
-                          className="flex items-center gap-1.5 bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-[#0f7a61] border border-gray-200/70 px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer"
-                        >
-                          <span>{cat.name}</span>
-                          <span className="text-gray-400 text-[10px]">({cat.count})</span>
-                        </button>
-                      ))}
+                    <div className="flex flex-wrap gap-2">
+                      {reduxCategories.map((cat) => {
+                        const subCount = cat.subcategories?.length || cat.sub_categories?.length || 0;
+                        return (
+                          <button
+                            key={cat.id || cat.name}
+                            type="button"
+                            onClick={() => handleSelectPrompt(cat.name)}
+                            className="flex items-center gap-2 bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-[#0f7a61] border border-gray-200/70 hover:border-emerald-300 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer group shadow-2xs"
+                          >
+                            <Package className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#0f7a61] transition-colors" />
+                            <span className="font-semibold">{cat.name}</span>
+                            <span className="text-gray-400 text-[10px] group-hover:text-[#0f7a61]/70">
+                              ({subCount} {subCount === 1 ? 'subcategory' : 'subcategories'})
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

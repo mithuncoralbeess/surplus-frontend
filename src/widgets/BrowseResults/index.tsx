@@ -17,10 +17,12 @@ import WhatsAppAlertBanner from '../../components/WhatsAppAlertBanner';
 import ProductCard from '../../components/ProductCard';
 import LotCard from '../../components/LotCard';
 import BrowseSourcingDesk from '../BrowseSourcingDesk';
+import { useAppSelector } from '../../store';
 
 const BrowseResults = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { categories: reduxCategories } = useAppSelector((state) => state.categories);
 
   const query = searchParams.get('q') || '';
   const mode = (searchParams.get('mode') as 'ai' | 'sku') || 'ai';
@@ -114,8 +116,8 @@ const BrowseResults = () => {
             Enter a keyword, product name, brand, SKU, or wholesale lot description in the search bar above to view matching inventory.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 max-w-xl mx-auto">
-            <span className="text-xs font-semibold text-gray-400 mr-1">Popular searches:</span>
-            {['Cisco Switches', 'Dell Servers', 'Compressor', 'Electronics Wholesale Lot', 'Power Tools', 'Cat6 Cable'].map((tag) => (
+            <span className="text-xs font-semibold text-gray-400 mr-1">Popular categories:</span>
+            {(reduxCategories && reduxCategories.length > 0 ? reduxCategories.slice(0, 8).map(c => c.name) : []).map((tag) => (
               <button
                 key={tag}
                 type="button"
