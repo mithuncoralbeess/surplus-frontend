@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import {
   Sparkles, Search, Zap, Clock, TrendingUp, Mic, MicOff,
-  X, Check, ChevronRight, Cpu, Wrench, ShieldCheck, Tag, ArrowRight
+  X, Check, ChevronRight, Cpu, Wrench, ShieldCheck, Tag, ArrowRight,
+  Loader2, Package
 } from 'lucide-react';
 import {
   parseNaturalLanguageQuery,
@@ -14,6 +15,7 @@ import {
   ParsedAiIntent
 } from '../../lib/aiSearchEngine';
 import { useVoiceSearch } from '../../hooks/useVoiceSearch';
+import { useCurrency } from '../../context/CurrencyContext';
 
 interface AiPromptCategory {
   category: string;
@@ -90,11 +92,14 @@ const POPULAR_CATEGORIES = [
 const BrowseSearchBanner = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { formatPrice } = useCurrency();
   const initialQuery = searchParams.get('q') || '';
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [searchMode, setSearchMode] = useState<'ai' | 'sku'>('ai');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const [activePromptCategory, setActivePromptCategory] = useState(0);
   const [recentSearches, setRecentSearches] = useState<string[]>(DEFAULT_RECENT);
   const [parsedIntent, setParsedIntent] = useState<ParsedAiIntent | null>(null);
@@ -176,29 +181,34 @@ const BrowseSearchBanner = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+        setSelectedIndex(-1);
       }
     };
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsDropdownOpen(false);
+        setSelectedIndex(-1);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleGlobalKeyDown);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', handleGlobalKeyDown);
     };
   }, []);
 
-  // Auto-close dropdown when user scrolls the page so it never gets stuck over content
+  // Auto-close dropdown only when user scrolls far away, ignoring scrolls inside the dropdown
   useEffect(() => {
     if (!isDropdownOpen) return;
     const initialY = typeof window !== 'undefined' ? window.scrollY : 0;
-    const handlePageScroll = () => {
-      if (Math.abs(window.scrollY - initialY) > 25) {
+    const handlePageScroll = (e: Event) => {
+      if (dropdownRef.current && dropdownRef.current.contains(e.target as Node)) {
+        return;
+      }
+      if (Math.abs(window.scrollY - initialY) > 160) {
         setIsDropdownOpen(false);
       }
     };
@@ -212,29 +222,36 @@ const BrowseSearchBanner = () => {
   // Real-time AI Intent Parsing & Instant Typeahead suggestions with debouncing
   useEffect(() => {
     let isCancelled = false;
-    const timer = setTimeout(() => {
-      if (searchQuery.trim()) {
-        const intent = parseNaturalLanguageQuery(searchQuery);
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      setIsLoadingSuggestions(true);
+      const timer = setTimeout(() => {
+        const intent = parseNaturalLanguageQuery(trimmed);
         setParsedIntent(intent);
-        fetchInstantSuggestions(searchQuery, 4).then(instant => {
-          if (!isCancelled) {
-            setInstantMatches(instant);
-          }
-        }).catch(() => {
-          if (!isCancelled) {
-            setInstantMatches(getInstantSuggestions(searchQuery, 4));
-          }
-        });
-      } else {
-        setParsedIntent(null);
-        setInstantMatches({ products: [], categories: [], suggestions: [] });
-      }
-    }, 140);
+        fetchInstantSuggestions(trimmed, 5)
+          .then(instant => {
+            if (!isCancelled) {
+              setInstantMatches(instant);
+              setIsLoadingSuggestions(false);
+            }
+          })
+          .catch(() => {
+            if (!isCancelled) {
+              setInstantMatches(getInstantSuggestions(trimmed, 5));
+              setIsLoadingSuggestions(false);
+            }
+          });
+      }, 120);
 
-    return () => {
-      isCancelled = true;
-      clearTimeout(timer);
-    };
+      return () => {
+        isCancelled = true;
+        clearTimeout(timer);
+      };
+    } else {
+      setParsedIntent(null);
+      setInstantMatches({ products: [], categories: [], suggestions: [] });
+      setIsLoadingSuggestions(false);
+    }
   }, [searchQuery]);
 
   // Voice Search Handler
@@ -242,6 +259,7 @@ const BrowseSearchBanner = () => {
     onTranscript: (transcript) => {
       setSearchQuery(transcript);
       setIsDropdownOpen(true);
+      inputRef.current?.focus();
     },
     onError: (err) => {
       console.warn('Voice search note:', err);
@@ -254,6 +272,7 @@ const BrowseSearchBanner = () => {
     if (query) {
       saveRecentSearch(query);
       setIsDropdownOpen(false);
+      setSelectedIndex(-1);
       startTransition(() => {
         router.push(`/browse?q=${encodeURIComponent(query)}`);
       });
@@ -266,6 +285,7 @@ const BrowseSearchBanner = () => {
     setSearchQuery(promptText);
     saveRecentSearch(promptText);
     setIsDropdownOpen(false);
+    setSelectedIndex(-1);
     startTransition(() => {
       router.push(`/browse?q=${encodeURIComponent(promptText.trim())}`);
     });
@@ -273,10 +293,42 @@ const BrowseSearchBanner = () => {
 
   const handleProductQuickSelect = (productId: string, productTitle: string) => {
     saveRecentSearch(productTitle);
+    setSearchQuery(productTitle);
     setIsDropdownOpen(false);
+    setSelectedIndex(-1);
     startTransition(() => {
       router.push(`/browse?q=${encodeURIComponent(productTitle)}&highlight=${productId}`);
     });
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      setIsDropdownOpen(false);
+      setSelectedIndex(-1);
+      return;
+    }
+    if (!isDropdownOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        setIsDropdownOpen(true);
+        return;
+      }
+    }
+    const items = instantMatches.products;
+    if (items.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev < items.length - 1 ? prev + 1 : 0));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : items.length - 1));
+      } else if (e.key === 'Enter') {
+        if (selectedIndex >= 0 && selectedIndex < items.length) {
+          e.preventDefault();
+          const sel = items[selectedIndex];
+          handleProductQuickSelect(sel.id, sel.title);
+        }
+      }
+    }
   };
 
   const handleRemoveIntentTag = (tagType: keyof ParsedAiIntent) => {
@@ -335,7 +387,11 @@ const BrowseSearchBanner = () => {
         <div className="relative w-full" ref={dropdownRef}>
           <form
             onSubmit={handleSearchSubmit}
-            className={`relative flex items-center w-full bg-white border ${isDropdownOpen
+            onClick={() => {
+              setIsDropdownOpen(true);
+              inputRef.current?.focus();
+            }}
+            className={`relative flex items-center w-full bg-white border cursor-text ${isDropdownOpen
                 ? 'border-[#0f7a61] ring-3 ring-[#0f7a61]/15 shadow-2xl'
                 : 'border-gray-300/80 shadow-[0_4px_25px_rgba(0,0,0,0.06)] hover:border-gray-400'
               } rounded-full transition-all p-1.5 sm:p-2 bg-white`}
@@ -349,7 +405,16 @@ const BrowseSearchBanner = () => {
               type="text"
               value={searchQuery}
               onFocus={() => setIsDropdownOpen(true)}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDropdownOpen(true);
+              }}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsDropdownOpen(true);
+                setSelectedIndex(-1);
+              }}
+              onKeyDown={handleInputKeyDown}
               placeholder={
                 searchMode === 'ai'
                   ? "Ask conversationally (e.g. 'Show me 2U rackmount servers under $500 in Maharashtra')..."
@@ -358,13 +423,20 @@ const BrowseSearchBanner = () => {
               className="w-full pl-3 pr-2 py-3 bg-transparent text-gray-900 placeholder-gray-400 focus:outline-none text-[15px] sm:text-[16px] font-medium"
             />
 
+            {/* Live Search Loading Indicator */}
+            {isLoadingSuggestions && (
+              <Loader2 className="w-4 h-4 text-[#0f7a61] animate-spin shrink-0 mr-1.5" />
+            )}
+
             {/* Clear Query Button */}
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setSearchQuery('');
                   setParsedIntent(null);
+                  setSelectedIndex(-1);
                   inputRef.current?.focus();
                 }}
                 className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer mr-1"
@@ -378,7 +450,10 @@ const BrowseSearchBanner = () => {
             {isSupported && (
               <button
                 type="button"
-                onClick={toggleListening}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleListening();
+                }}
                 className={`relative p-2 rounded-full transition-all cursor-pointer mr-1 ${isListening
                     ? 'bg-rose-500 text-white animate-pulse ring-4 ring-rose-200'
                     : 'text-gray-500 hover:text-[#0f7a61] hover:bg-emerald-50'
@@ -399,7 +474,13 @@ const BrowseSearchBanner = () => {
             <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0 pr-1">
               <button
                 type="button"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDropdownOpen(!isDropdownOpen);
+                  if (!isDropdownOpen) {
+                    inputRef.current?.focus();
+                  }
+                }}
                 className="hidden md:flex items-center gap-1.5 bg-emerald-50 text-[#0f7a61] hover:bg-emerald-100 px-3.5 py-2.5 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer border border-emerald-200/50"
               >
                 <Sparkles className="w-3.5 h-3.5 text-[#14b875]" />
@@ -408,6 +489,7 @@ const BrowseSearchBanner = () => {
 
               <button
                 type="submit"
+                onClick={(e) => e.stopPropagation()}
                 className="bg-[#0f7a61] hover:bg-[#0c6651] active:scale-[0.98] text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-semibold text-[14px] sm:text-[15px] transition-all whitespace-nowrap cursor-pointer shadow-md hover:shadow-lg flex items-center gap-1.5"
               >
                 <span>Search</span>
@@ -475,7 +557,11 @@ const BrowseSearchBanner = () => {
                 <div>
                   <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
                     <div className="flex items-center gap-2 text-[#0f7a61] font-bold text-xs tracking-wider uppercase">
-                      <Sparkles className="w-4 h-4 text-[#14b875]" />
+                      {isLoadingSuggestions ? (
+                        <Loader2 className="w-4 h-4 text-[#14b875] animate-spin" />
+                      ) : (
+                        <Sparkles className="w-4 h-4 text-[#14b875]" />
+                      )}
                       <span>Instant AI Matches ({instantMatches.products.length} found)</span>
                     </div>
                     <span className="text-[11px] text-gray-400 font-medium">
@@ -483,48 +569,78 @@ const BrowseSearchBanner = () => {
                     </span>
                   </div>
 
-                  {instantMatches.products.length > 0 ? (
-                    <div className="space-y-2 mb-4">
-                      {instantMatches.products.map((item) => (
-                        <div
-                          key={item.id}
-                          onClick={() => handleProductQuickSelect(item.id, item.title)}
-                          className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-emerald-50/70 border border-transparent hover:border-emerald-200/60 transition-all cursor-pointer group"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200/70">
-                              <Image
-                                src={item.image}
-                                alt={item.title}
-                                fill
-                                className="object-cover group-hover:scale-105 transition-transform"
-                              />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-emerald-50 px-2 py-0.2 rounded">
-                                  {item.category}
-                                </span>
-                                <span className="text-[11px] text-gray-500 font-mono">
-                                  SKU: {item.sku}
-                                </span>
+                  {isLoadingSuggestions && instantMatches.products.length === 0 ? (
+                    <div className="py-8 text-center text-gray-500 flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="w-6 h-6 text-[#0f7a61] animate-spin" />
+                      <span className="text-xs font-semibold text-gray-600">Searching inventory & catalog...</span>
+                    </div>
+                  ) : instantMatches.products.length > 0 ? (
+                    <div className="space-y-1.5 mb-4">
+                      {instantMatches.products.map((item, idx) => {
+                        const isSelected = selectedIndex === idx;
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => handleProductQuickSelect(item.id, item.title)}
+                            onMouseEnter={() => setSelectedIndex(idx)}
+                            className={`flex items-center justify-between p-2.5 rounded-2xl transition-all cursor-pointer group border ${
+                              isSelected
+                                ? 'bg-emerald-50/90 border-emerald-300 shadow-xs'
+                                : 'hover:bg-emerald-50/70 border-transparent hover:border-emerald-200/60'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200/70 flex items-center justify-center">
+                                {item.image ? (
+                                  <Image
+                                    src={item.image}
+                                    alt={item.title}
+                                    fill
+                                    sizes="48px"
+                                    className="object-cover group-hover:scale-105 transition-transform"
+                                  />
+                                ) : (
+                                  <Package className="w-5 h-5 text-gray-400" />
+                                )}
                               </div>
-                              <h4 className="text-sm font-semibold text-gray-900 group-hover:text-[#0f7a61] truncate">
-                                {item.title}
-                              </h4>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#0a5c48] bg-emerald-100/70 px-2 py-0.5 rounded">
+                                    {item.category || 'Surplus'}
+                                  </span>
+                                  {item.isLot && (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
+                                      Wholesale Lot
+                                    </span>
+                                  )}
+                                  <span className="text-[11px] text-gray-500 font-mono truncate max-w-[150px]">
+                                    SKU: {item.sku}
+                                  </span>
+                                </div>
+                                <h4 className="text-sm font-semibold text-gray-900 group-hover:text-[#0f7a61] truncate">
+                                  {item.title}
+                                </h4>
+                              </div>
                             </div>
-                          </div>
 
-                          <div className="text-right shrink-0 pl-3">
-                            <div className="text-sm font-extrabold text-emerald-800">
-                              ${item.price.toLocaleString()}
-                            </div>
-                            <div className="text-[11px] text-gray-400 line-through">
-                              ${item.retailPrice.toLocaleString()} (-{item.discountPercent}%)
+                            <div className="text-right shrink-0 pl-3">
+                              <div className="text-sm font-extrabold text-[#0a5c48]">
+                                {formatPrice(item.price)}
+                              </div>
+                              {item.retailPrice > item.price && (
+                                <div className="text-[11px] text-gray-400 line-through">
+                                  MSRP {formatPrice(item.retailPrice)}
+                                </div>
+                              )}
+                              {item.discountPercent > 0 && (
+                                <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded inline-block mt-0.5">
+                                  -{item.discountPercent}% OFF
+                                </span>
+                              )}
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="py-6 text-center text-gray-500">

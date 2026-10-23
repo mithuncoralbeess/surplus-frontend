@@ -514,6 +514,7 @@ export async function fetchInstantSuggestions(query: string, limit = 5): Promise
     return cached.data;
   }
 
+  // 1. Try Typesense suggestions endpoint
   try {
     const res = await fetch(`/api/search/suggestions/?q=${encodeURIComponent(trimmed)}&limit=${limit}`, {
       headers: { 'Accept': 'application/json' },
@@ -521,17 +522,27 @@ export async function fetchInstantSuggestions(query: string, limit = 5): Promise
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data.suggestions) && data.suggestions.length > 0) {
-        const matchedProducts = data.suggestions.map((s: any) => ({
-          id: String(s.id),
-          title: s.title,
-          category: s.category || 'Surplus',
-          brand: s.brand || '',
-          price: s.price,
-          currency: s.currency,
-          image: s.image,
-          url: s.url,
-          sku: s.title
-        }));
+        const matchedProducts = data.suggestions.map((s: any) => {
+          const rawPrice = Number(s.price || s.liquidation_price || s.liquidating_price || 0);
+          const rawMsrp = Number(s.msrp || s.original_price || s.retail_price) || (rawPrice > 0 ? Math.round(rawPrice * 1.3) : 0);
+          const pUsd = convertToUsd(rawPrice, s.currency || 'USD');
+          const msrpUsd = convertToUsd(rawMsrp, s.currency || 'USD');
+          const discount = msrpUsd > pUsd && msrpUsd > 0 ? Math.round(((msrpUsd - pUsd) / msrpUsd) * 100) : 0;
+          return {
+            id: String(s.id),
+            title: s.title || s.product_name,
+            category: typeof s.category === 'object' ? (s.category?.name || 'Surplus') : (s.category || 'Surplus'),
+            brand: typeof s.brand === 'object' ? (s.brand?.name || '') : (s.brand || ''),
+            price: pUsd,
+            retailPrice: msrpUsd,
+            discountPercent: discount,
+            currency: s.currency || 'USD',
+            image: s.image || '',
+            url: s.url || '',
+            sku: s.sku || s.model_no || s.title,
+            isLot: Boolean(s.is_lot || s.isLot)
+          };
+        });
 
         const matchedCategories = Array.from(
           new Set(matchedProducts.map((p: any) => p.category).filter(Boolean))
@@ -549,7 +560,135 @@ export async function fetchInstantSuggestions(query: string, limit = 5): Promise
       }
     }
   } catch (err) {
-    console.debug('Live suggestions fetch note:', err);
+    console.debug('Typesense suggestions note:', err);
+  }
+
+  // 2. Query live database products & lots in parallel
+  try {
+    const [prodRes, lotRes] = await Promise.allSettled([
+      fetch(`/api/products/?search=${encodeURIComponent(trimmed)}&page_size=${limit}`, {
+        headers: { 'Accept': 'application/json' },
+      }),
+      fetch(`/api/lots/?search=${encodeURIComponent(trimmed)}&page_size=${limit}`, {
+        headers: { 'Accept': 'application/json' },
+      })
+    ]);
+
+    const liveItems: any[] = [];
+
+    if (prodRes.status === 'fulfilled' && prodRes.value.ok) {
+      try {
+        const prodData = await prodRes.value.json();
+        const prods = Array.isArray(prodData.products) ? prodData.products : (Array.isArray(prodData.results) ? prodData.results : []);
+        prods.forEach((p: any) => {
+          const rawPrice = Number(p.price || p.liquidation_price || p.liquidating_price || p.current_price || 0);
+          const rawMsrp = Number(p.msrp || p.original_price || p.previous_price) || (rawPrice > 0 ? Math.round(rawPrice * 1.3) : 0);
+          const pUsd = convertToUsd(rawPrice, p.currency || 'USD');
+          const msrpUsd = convertToUsd(rawMsrp, p.currency || 'USD');
+          const discount = Number(p.offer) || (msrpUsd > pUsd && msrpUsd > 0 ? Math.round(((msrpUsd - pUsd) / msrpUsd) * 100) : 0);
+
+          let catName = 'Surplus Inventory';
+          if (typeof p.category === 'object' && p.category) catName = p.category.name || p.category.title || 'Surplus';
+          else if (p.category) catName = String(p.category);
+
+          let brandName = '';
+          if (typeof p.brand === 'object' && p.brand) brandName = p.brand.name || '';
+          else if (p.brand) brandName = String(p.brand);
+
+          let img = p.image || (Array.isArray(p.images) && p.images[0]) || '';
+          if (typeof img === 'object' && img?.url) img = img.url;
+
+          liveItems.push({
+            id: String(p.id || p.product_id),
+            title: p.product_name || p.title || 'Surplus Item',
+            category: catName,
+            brand: brandName,
+            price: pUsd,
+            retailPrice: msrpUsd,
+            discountPercent: discount,
+            currency: p.currency || 'USD',
+            image: img,
+            sku: p.sku || p.model_no || `PRO-${p.id}`,
+            isLot: false
+          });
+        });
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    if (lotRes.status === 'fulfilled' && lotRes.value.ok) {
+      try {
+        const lotData = await lotRes.value.json();
+        const lots = Array.isArray(lotData.lots) ? lotData.lots : (Array.isArray(lotData.results) ? lotData.results : []);
+        lots.forEach((l: any) => {
+          const rawPrice = Number(l.price || l.asking_price || l.ask_price_surplus_payout || l.liquidating_price || 0);
+          const rawMsrp = Number(l.msrp || l.total_est_retail_value_msrp || l.retail_price) || Math.round(rawPrice * 1.5);
+          const pUsd = convertToUsd(rawPrice, l.currency || 'USD');
+          const msrpUsd = convertToUsd(rawMsrp, l.currency || 'USD');
+          const discount = msrpUsd > pUsd && msrpUsd > 0 ? Math.round(((msrpUsd - pUsd) / msrpUsd) * 100) : 0;
+
+          let catName = 'Wholesale Lot';
+          if (typeof l.category === 'object' && l.category) catName = l.category.name || l.category.title || 'Wholesale Lot';
+          else if (l.category) catName = String(l.category);
+
+          let brandName = l.key_brands_included || '';
+          if (typeof l.brand === 'object' && l.brand) brandName = l.brand.name || brandName;
+
+          let img = l.image || (Array.isArray(l.warehouse_images) && l.warehouse_images[0]) || (Array.isArray(l.images) && l.images[0]) || '';
+          if (typeof img === 'object' && img?.url) img = img.url;
+
+          liveItems.push({
+            id: String(l.id),
+            title: l.listing_title || l.title || `Wholesale Lot (${l.total_units_quantity || 1} Units)`,
+            category: catName,
+            brand: brandName,
+            price: pUsd,
+            retailPrice: msrpUsd,
+            discountPercent: discount,
+            currency: l.currency || 'USD',
+            image: img,
+            sku: l.lot_number || l.sku || `LOT-${l.id}`,
+            isLot: true,
+            totalUnits: Number(l.total_units_quantity || l.quantity || 1)
+          });
+        });
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    // Merge with local static catalogue matches
+    const localMatches = getInstantSuggestions(query, limit);
+    const existingIds = new Set(liveItems.map(i => String(i.id).toLowerCase()));
+    localMatches.products.forEach(p => {
+      if (!existingIds.has(String(p.id).toLowerCase())) {
+        liveItems.push(p);
+      }
+    });
+
+    if (liveItems.length > 0) {
+      const topProducts = liveItems.slice(0, limit);
+      const matchedCategories = Array.from(
+        new Set(topProducts.map(p => p.category).filter(Boolean))
+      ) as string[];
+      const suggestions = Array.from(
+        new Set([
+          ...topProducts.map(p => p.title),
+          ...localMatches.suggestions
+        ])
+      ).slice(0, 4);
+
+      const result = {
+        products: topProducts,
+        categories: matchedCategories,
+        suggestions
+      };
+      suggestionsCache.set(cacheKey, { data: result, expiresAt: Date.now() + 60000 });
+      return result;
+    }
+  } catch (err) {
+    console.debug('Live database suggestions note:', err);
   }
 
   // Fallback to local synchronous match
