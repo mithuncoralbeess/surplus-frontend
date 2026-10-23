@@ -458,13 +458,13 @@ export default function VirtualWarehouseExplorer({
         </div>
       )}
 
-      {/* 4. Top Profit Drivers Spotlight */}
+      {/* 4. Manifest Overview */}
       {profitDrivers.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-gray-900">
-              Top Profit Drivers Spotlight (High-Value Anchor SKUs)
+              Manifest Overview
             </h3>
           </div>
 
@@ -476,10 +476,18 @@ export default function VirtualWarehouseExplorer({
               >
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#0a5c48] bg-emerald-50 px-2 py-0.5 rounded">
-                      {item.brand || 'Anchor'}
-                    </span>
-                    <span className="font-mono text-[10px] text-gray-500 font-bold">
+                    {item.brand && item.brand !== '-' && item.brand.trim() !== '' ? (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#0a5c48] bg-emerald-50 px-2 py-0.5 rounded">
+                        {item.brand}
+                      </span>
+                    ) : item.product_category && item.product_category !== '-' && item.product_category.trim() !== '' ? (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#0a5c48] bg-emerald-50 px-2 py-0.5 rounded">
+                        {item.product_category}
+                      </span>
+                    ) : (
+                      <div />
+                    )}
+                    <span className="font-mono text-[10px] text-gray-500 font-bold ml-auto">
                       {item.available_quantity} units
                     </span>
                   </div>
@@ -493,21 +501,6 @@ export default function VirtualWarehouseExplorer({
                       P/N: <span className="text-gray-700 font-semibold">{item.model_part_number}</span>
                     </div>
                   )}
-                </div>
-
-                <div className="pt-3 mt-3 border-t border-gray-100 flex items-baseline justify-between">
-                  <div>
-                    <span className="text-[9px] text-gray-400 block font-bold uppercase">Unit MSRP</span>
-                    <span className="text-xs font-semibold text-gray-600">
-                      {formatPrice(item.original_price || item.asking_price || 0, currencyCode)}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[9px] text-emerald-700 block font-bold uppercase">Line Value</span>
-                    <span className="text-sm font-black text-gray-900">
-                      {formatPrice(item.line_msrp || 0, currencyCode)}
-                    </span>
-                  </div>
                 </div>
               </div>
             ))}
