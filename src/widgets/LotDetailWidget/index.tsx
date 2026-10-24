@@ -204,44 +204,46 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
     ? lot.key_brands_included.split(',').map(b => b.trim()).filter(Boolean)
     : [];
 
-  const unitTypeLabel = useMemo(() => {
-    const raw = lot.primary_unit_type?.trim();
-    if (!raw || raw.toLowerCase() === 'pieces / units' || raw.toLowerCase() === 'units' || raw.toLowerCase() === 'unit') {
-      return 'Units';
-    }
-    return raw;
-  }, [lot.primary_unit_type]);
+  const rawUnitType = lot.primary_unit_type?.trim();
+  const unitTypeLabel = (!rawUnitType || rawUnitType.toLowerCase() === 'pieces / units' || rawUnitType.toLowerCase() === 'units' || rawUnitType.toLowerCase() === 'unit')
+    ? 'Units'
+    : rawUnitType;
 
-  const unitTypeSingular = useMemo(() => {
-    const lower = unitTypeLabel.toLowerCase();
-    if (lower.endsWith('pieces')) return 'piece';
-    if (lower.endsWith('boxes')) return 'box';
-    if (lower.endsWith('cartons')) return 'carton';
-    if (lower.endsWith('sets')) return 'set';
-    if (lower.endsWith('pairs')) return 'pair';
-    if (lower.endsWith('packs')) return 'pack';
-    if (lower.endsWith('bottles')) return 'bottle';
-    if (lower.endsWith('pallets')) return 'pallet';
-    if (lower.endsWith('units')) return 'unit';
-    if (lower.endsWith('s') && lower.length > 3) return lower.slice(0, -1);
-    return lower;
-  }, [unitTypeLabel]);
+  const unitTypeLower = unitTypeLabel.toLowerCase();
+  const unitTypeSingular = unitTypeLower.endsWith('pieces')
+    ? 'piece'
+    : unitTypeLower.endsWith('boxes')
+    ? 'box'
+    : unitTypeLower.endsWith('cartons')
+    ? 'carton'
+    : unitTypeLower.endsWith('sets')
+    ? 'set'
+    : unitTypeLower.endsWith('pairs')
+    ? 'pair'
+    : unitTypeLower.endsWith('packs')
+    ? 'pack'
+    : unitTypeLower.endsWith('bottles')
+    ? 'bottle'
+    : unitTypeLower.endsWith('pallets')
+    ? 'pallet'
+    : unitTypeLower.endsWith('units')
+    ? 'unit'
+    : (unitTypeLower.endsWith('s') && unitTypeLower.length > 3)
+    ? unitTypeLower.slice(0, -1)
+    : unitTypeLower;
 
-  const formattedListedDate = useMemo(() => {
-    if (lot.created_at_formatted) return lot.created_at_formatted;
-    if (lot.created_at) {
-      try {
-        return new Date(lot.created_at).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric'
-        });
-      } catch {
-        return lot.created_at;
-      }
+  let formattedListedDate = lot.created_at_formatted || '';
+  if (!formattedListedDate && lot.created_at) {
+    try {
+      formattedListedDate = new Date(lot.created_at).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch {
+      formattedListedDate = lot.created_at;
     }
-    return '';
-  }, [lot.created_at_formatted, lot.created_at]);
+  }
 
   return (
     <main className="w-full min-h-screen bg-[#fcfbf7] pb-16 sm:pb-24 pt-4 sm:pt-6">
