@@ -136,20 +136,28 @@ const LotCard: React.FC<LotCardProps> = ({
   const lotIdText = String(id || 'LOT');
   const lotLink = createLotUrl(title || lotIdText, lotIdText);
 
-  const formatOfferBadge = (raw?: string) => {
+  const formatDropBadge = (raw?: string) => {
     if (!raw) return null;
-    const trimmed = raw.trim();
-    if (trimmed.endsWith('%') || trimmed.toLowerCase().includes('off') || trimmed.toLowerCase().includes('msrp')) {
-      return trimmed;
+    let str = raw.trim();
+    if (/special\s*offer/i.test(str)) {
+      str = str.replace(/special\s*offer/gi, 'Price Drop');
+    } else if (/offer/i.test(str)) {
+      str = str.replace(/offer/gi, 'Drop');
     }
-    const num = parseFloat(trimmed);
-    if (!isNaN(num)) {
-      return num > 0 ? `${Math.round(num)}% OFF` : null;
+    if (/off\b/i.test(str)) {
+      str = str.replace(/off\b/gi, 'DROP');
     }
-    return trimmed;
+    if (/^\d+%\s*$/.test(str)) {
+      return `${str.trim()} DROP`;
+    }
+    const num = parseFloat(str);
+    if (!isNaN(num) && num > 0 && !str.includes(' ')) {
+      return `${Math.round(num)}% DROP`;
+    }
+    return str;
   };
 
-  const displayOffer = formatOfferBadge(offer) || (discountPercent > 0 ? `-${discountPercent}%` : null);
+  const displayDrop = formatDropBadge(offer) || (discountPercent > 0 ? `${discountPercent}% DROP` : null);
 
   return (
     <div className="group relative flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full">
@@ -185,11 +193,11 @@ const LotCard: React.FC<LotCardProps> = ({
           <span className="text-[10px] font-bold text-[#0f7a61] tracking-wide uppercase">Wholesale Lot</span>
         </div>
 
-        {/* Offer Badge */}
-        {displayOffer && (
+        {/* Drop Badge */}
+        {displayDrop && (
           <div className="absolute top-3 right-3 bg-rose-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1 z-10">
             <Tag className="w-3 h-3" />
-            <span>{displayOffer}</span>
+            <span>{displayDrop}</span>
           </div>
         )}
       </Link>

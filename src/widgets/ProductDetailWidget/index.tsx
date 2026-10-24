@@ -292,11 +292,32 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
   const currencyCode = product.currency || 'USD';
   const unitPrice = product.currentPrice || product.price;
   const totalPrice = unitPrice * quantity;
+  const formatDropString = (raw?: string) => {
+    if (!raw) return null;
+    let str = raw.trim();
+    if (/special\s*offer/i.test(str)) {
+      str = str.replace(/special\s*offer/gi, 'Price Drop');
+    } else if (/offer/i.test(str)) {
+      str = str.replace(/offer/gi, 'Drop');
+    }
+    if (/off\b/i.test(str)) {
+      str = str.replace(/off\b/gi, 'DROP');
+    }
+    if (/^\d+%\s*$/.test(str)) {
+      return `${str.trim()} DROP`;
+    }
+    const num = parseFloat(str);
+    if (!isNaN(num) && num > 0 && !str.includes(' ')) {
+      return `${Math.round(num)}% DROP`;
+    }
+    return str;
+  };
+
   const msrpPrice = product.originalPrice;
   const discountPercent = msrpPrice && msrpPrice > unitPrice
     ? Math.round(((msrpPrice - unitPrice) / msrpPrice) * 100)
     : 0;
-  const displayOffer = product.offer || (discountPercent > 0 ? `${discountPercent}% OFF` : null);
+  const displayDrop = formatDropString(product.offer) || (discountPercent > 0 ? `${discountPercent}% DROP` : null);
 
   return (
     <main className="w-full min-h-screen bg-[#fcfbf7] pb-16 sm:pb-24 pt-4 sm:pt-6">
@@ -350,10 +371,10 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
                       New Arrival
                     </span>
                   )}
-                  {displayOffer && (
+                  {displayDrop && (
                     <span className="bg-rose-500 text-white px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-extrabold uppercase shadow-xs flex items-center gap-1">
                       <Tag className="w-3 h-3" />
-                      <span>{displayOffer}</span>
+                      <span>{displayDrop}</span>
                     </span>
                   )}
                 </div>
@@ -470,10 +491,10 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
                         MSRP {formatPrice(msrpPrice, currencyCode)}
                       </span>
                     )}
-                    {displayOffer && (
+                    {displayDrop && (
                       <span className="bg-rose-50 border border-rose-200 text-rose-700 px-2.5 py-0.5 rounded-full text-xs font-extrabold flex items-center gap-1 shadow-xs">
                         <Tag className="w-3 h-3 text-rose-600" />
-                        <span>{displayOffer}</span>
+                        <span>{displayDrop}</span>
                       </span>
                     )}
                   </div>

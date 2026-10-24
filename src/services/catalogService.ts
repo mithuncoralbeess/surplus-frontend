@@ -245,20 +245,22 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
   
   let offerTag: string | undefined = undefined;
   if (rawOffer) {
-    if (rawOffer.endsWith('%') || rawOffer.toLowerCase().includes('off') || rawOffer.toLowerCase().includes('msrp')) {
+    if (rawOffer.toLowerCase().includes('drop')) {
       offerTag = rawOffer;
+    } else if (rawOffer.endsWith('%') || rawOffer.toLowerCase().includes('off') || rawOffer.toLowerCase().includes('msrp')) {
+      offerTag = rawOffer.replace(/off/gi, 'DROP');
     } else {
       const numOffer = parseFloat(rawOffer);
       if (!isNaN(numOffer)) {
         if (numOffer > 0) {
-          offerTag = numOffer % 1 === 0 ? `${Math.round(numOffer)}% OFF` : `${numOffer}% OFF`;
+          offerTag = numOffer % 1 === 0 ? `${Math.round(numOffer)}% DROP` : `${numOffer}% DROP`;
         }
       } else {
-        offerTag = `${rawOffer}% OFF`;
+        offerTag = `${rawOffer}% DROP`;
       }
     }
   } else if (discountVal > 0) {
-    offerTag = `${discountVal}% OFF`;
+    offerTag = `${discountVal}% DROP`;
   }
 
   return {
@@ -393,20 +395,22 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
   const rawLotOffer = item.offer !== undefined && item.offer !== null && String(item.offer).trim() !== '' ? String(item.offer).trim() : undefined;
   let lotOfferTag: string | undefined = undefined;
   if (rawLotOffer) {
-    if (rawLotOffer.endsWith('%') || rawLotOffer.toLowerCase().includes('off') || rawLotOffer.toLowerCase().includes('msrp')) {
+    if (rawLotOffer.toLowerCase().includes('drop')) {
       lotOfferTag = rawLotOffer;
+    } else if (rawLotOffer.endsWith('%') || rawLotOffer.toLowerCase().includes('off') || rawLotOffer.toLowerCase().includes('msrp')) {
+      lotOfferTag = rawLotOffer.replace(/off/gi, 'DROP');
     } else {
       const numLotOffer = parseFloat(rawLotOffer);
       if (!isNaN(numLotOffer)) {
         if (numLotOffer > 0) {
-          lotOfferTag = numLotOffer % 1 === 0 ? `${Math.round(numLotOffer)}% OFF` : `${numLotOffer}% OFF`;
+          lotOfferTag = numLotOffer % 1 === 0 ? `${Math.round(numLotOffer)}% DROP` : `${numLotOffer}% DROP`;
         }
       } else {
-        lotOfferTag = `${rawLotOffer}% OFF`;
+        lotOfferTag = `${rawLotOffer}% DROP`;
       }
     }
   } else if (discount > 0) {
-    lotOfferTag = `${discount}% OFF`;
+    lotOfferTag = `${discount}% DROP`;
   }
 
   const productsList = Array.isArray(item.products) && item.products.length > 0
@@ -943,7 +947,7 @@ export const catalogService = {
       : 0;
     const computedOffer = payload.offer !== undefined
       ? payload.offer
-      : (discount > 0 ? `${discount}% Off MSRP` : '');
+      : (discount > 0 ? `${discount}% DROP` : '');
 
     const resolvedLoc = payload.inventory_city && payload.inventory_country
       ? `${payload.inventory_city}, ${payload.inventory_country}`

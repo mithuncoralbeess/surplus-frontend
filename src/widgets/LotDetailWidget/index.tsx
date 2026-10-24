@@ -204,6 +204,32 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
     ? lot.key_brands_included.split(',').map(b => b.trim()).filter(Boolean)
     : [];
 
+  const formatDropString = (raw?: string) => {
+    if (!raw) return null;
+    let str = raw.trim();
+    if (/special\s*offer/i.test(str)) {
+      str = str.replace(/special\s*offer/gi, 'Price Drop');
+    } else if (/offer/i.test(str)) {
+      str = str.replace(/offer/gi, 'Drop');
+    }
+    if (/off\b/i.test(str)) {
+      str = str.replace(/off\b/gi, 'DROP');
+    }
+    if (/^\d+%\s*$/.test(str)) {
+      return `${str.trim()} DROP`;
+    }
+    const num = parseFloat(str);
+    if (!isNaN(num) && num > 0 && !str.includes(' ')) {
+      return `${Math.round(num)}% DROP`;
+    }
+    return str;
+  };
+
+  const discountPercent = msrp > price && msrp > 0
+    ? Math.round(((msrp - price) / msrp) * 100)
+    : 0;
+  const displayDrop = formatDropString(offer) || (discountPercent > 0 ? `${discountPercent}% DROP` : null);
+
   const rawUnitType = lot.primary_unit_type?.trim();
   const unitTypeLabel = (!rawUnitType || rawUnitType.toLowerCase() === 'pieces / units' || rawUnitType.toLowerCase() === 'units' || rawUnitType.toLowerCase() === 'unit')
     ? 'Units'
@@ -278,9 +304,9 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                   <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 sm:px-3 sm:py-1 rounded-full border border-emerald-200 text-[10px] sm:text-xs font-extrabold text-[#0a5c48] shadow-xs flex items-center gap-1.5 uppercase tracking-wider">
                     <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0f7a61]" /> Wholesale Lot
                   </span>
-                  {offer && (
+                  {displayDrop && (
                     <span className="bg-rose-500 text-white px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-extrabold uppercase shadow-xs flex items-center gap-1">
-                      <Tag className="w-3 h-3" /> {offer}
+                      <Tag className="w-3 h-3" /> {displayDrop}
                     </span>
                   )}
                   <span className="bg-emerald-950/80 backdrop-blur-md text-emerald-300 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold flex items-center gap-1">
@@ -379,10 +405,10 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                       MSRP {formatPrice(msrp, currencyCode)}
                     </span>
                   )}
-                  {offer && (
+                  {displayDrop && (
                     <span className="bg-rose-50 border border-rose-200 text-rose-700 px-2.5 py-0.5 rounded-full text-xs font-extrabold flex items-center gap-1 shadow-xs">
                       <Tag className="w-3 h-3 text-rose-600" />
-                      <span>{offer}</span>
+                      <span>{displayDrop}</span>
                     </span>
                   )}
                 </div>
