@@ -9,7 +9,7 @@ import {
   Truck, AlertCircle, 
   ShoppingCart, ChevronRight, Check, Layers,
   List, MapPin, Info, Package,
-  Search, SlidersHorizontal, Building2, Calendar, Scale,
+  Search, SlidersHorizontal, Building2, Scale,
   Box, ExternalLink, Globe, Clock, X,
   FileCheck, FileText, Download
 } from 'lucide-react';
@@ -232,19 +232,6 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
     ? unitTypeLower.slice(0, -1)
     : unitTypeLower;
 
-  let formattedListedDate = lot.created_at_formatted || '';
-  if (!formattedListedDate && lot.created_at) {
-    try {
-      formattedListedDate = new Date(lot.created_at).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-    } catch {
-      formattedListedDate = lot.created_at;
-    }
-  }
-
   return (
     <main className="w-full min-h-screen bg-[#fcfbf7] pb-16 sm:pb-24 pt-4 sm:pt-6">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 max-w-[1550px]">
@@ -268,12 +255,6 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
             )}
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
             <span className="text-gray-900 font-bold truncate max-w-[180px] sm:max-w-[240px] md:max-w-xs lg:max-w-md">{title}</span>
-          </div>
-          <div className="hidden md:flex items-center gap-4 text-xs sm:text-sm font-mono text-gray-500 shrink-0 ml-4">
-            <span>Lot #: <strong className="text-gray-900">{lot.lot_number || `LOT-${lot.id}`}</strong></span>
-            {lot.vendor_id && (
-              <span>Vendor: <strong className="text-gray-700">{lot.vendor_id}</strong></span>
-            )}
           </div>
         </div>
 
@@ -498,13 +479,6 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
               <SlidersHorizontal className="w-4 h-4 text-[#0f7a61]" />
               <h2 className="text-base sm:text-lg font-extrabold text-gray-900">Lot Specifications & Verification Notes</h2>
             </div>
-            <div className="flex items-center gap-3 text-xs text-gray-500 font-mono flex-wrap">
-              {formattedListedDate && (
-                <span>Listed: <strong className="text-gray-900 font-bold">{formattedListedDate}</strong></span>
-              )}
-              {formattedListedDate && <span>•</span>}
-              <span>Status: <strong className="text-emerald-700 font-bold uppercase">{lot.enquiry_status || 'Approved'}</strong></span>
-            </div>
           </div>
 
           {/* Description */}
@@ -595,15 +569,6 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                 <span className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1">
                   <Layers className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                   <span>{lot.lot_size || `${pallets} ${pallets === 1 ? 'Pallet' : 'Pallets'}`}</span>
-                </span>
-              </div>
-            )}
-            {Boolean(formattedListedDate) && (
-              <div className="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
-                <span className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Listed Date</span>
-                <span className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                  <span>{formattedListedDate}</span>
                 </span>
               </div>
             )}
