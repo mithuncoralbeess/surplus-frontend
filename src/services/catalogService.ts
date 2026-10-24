@@ -112,6 +112,10 @@ export interface LotItem {
   isFeatured?: boolean;
   isBestSelling?: boolean;
   isNewArrival?: boolean;
+  third_party_certificate_available?: boolean;
+  third_party_documents?: string[];
+  created_at?: string;
+  created_at_formatted?: string;
   type?: 'lot';
 }
 
@@ -493,6 +497,12 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     isFeatured: Boolean(item.is_featured || item.featured),
     isBestSelling: Boolean(item.is_best_selling || item.best_selling),
     isNewArrival: Boolean(item.is_new_arrival || item.new_arrival),
+    third_party_certificate_available: Boolean(item.third_party_certificate_available || item.third_party_certificate),
+    third_party_documents: Array.isArray(item.third_party_documents)
+      ? item.third_party_documents.filter(Boolean)
+      : (item.third_party_documents ? [String(item.third_party_documents)] : []),
+    created_at: item.created_at || '',
+    created_at_formatted: item.created_at_formatted || (item.created_at ? new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''),
     type: 'lot',
   };
 }
