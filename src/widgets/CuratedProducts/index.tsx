@@ -91,7 +91,7 @@ const CuratedProducts = () => {
           </div>
 
           <h2 className="h2 text-gray-900 tracking-tight mb-8">
-            {t('curated.title', 'Verified Surplus Wholesale Products Ready to Quote')}
+            {t('curated.title', 'Top Liquidated Inventory Products')}
           </h2>
 
           {/* Tabs */}
@@ -145,7 +145,7 @@ const CuratedProducts = () => {
           ) : (
             <div className="col-span-full py-24 flex flex-col items-center justify-center text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
               <PackageSearch className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No {activeTab.toLowerCase()} found</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No {activeTab.toLowerCase()} products found</h3>
               <p className="text-gray-500 text-sm max-w-sm">No products currently match this curation filter. Please check back later or explore our full marketplace catalog.</p>
             </div>
           )}
