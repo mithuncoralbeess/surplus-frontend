@@ -1,16 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import en from '../i18n/dictionaries/en.json';
-import ar from '../i18n/dictionaries/ar.json';
+import React, { createContext, useContext, useCallback } from 'react';
 
 export type Locale = 'en' | 'ar';
 export type Direction = 'ltr' | 'rtl';
-
-const dictionaries: Record<Locale, Record<string, any>> = {
-  en,
-  ar,
-};
 
 interface LanguageContextType {
   locale: Locale;
@@ -20,74 +13,21 @@ interface LanguageContextType {
   tCategory: (name: string) => string;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const LanguageContext = createContext<LanguageContextType>({
+  locale: 'en',
+  dir: 'ltr',
+  setLocale: () => {},
+  t: (key: string, fallback?: string) => fallback || key,
+  tCategory: (name: string) => name,
+});
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [locale, setLocaleState] = useState<Locale>('en');
-
-  useEffect(() => {
-    const savedLocale = localStorage.getItem('surplus_language') as Locale | null;
-    if (savedLocale && (savedLocale === 'en' || savedLocale === 'ar')) {
-      setLocaleState(savedLocale);
-    }
-  }, []);
-
-  const dir: Direction = locale === 'ar' ? 'rtl' : 'ltr';
-
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.lang = locale;
-      document.documentElement.dir = dir;
-      document.body.dir = dir;
-      if (locale === 'ar') {
-        document.documentElement.classList.add('rtl');
-      } else {
-        document.documentElement.classList.remove('rtl');
-      }
-    }
-  }, [locale, dir]);
-
-  const setLocale = useCallback((newLocale: Locale) => {
-    setLocaleState(newLocale);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('surplus_language', newLocale);
-      document.cookie = `surplus_locale=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
-    }
-  }, []);
-
-  const t = useCallback((key: string, fallback?: string): string => {
-    const keys = key.split('.');
-    let current: any = dictionaries[locale] || dictionaries.en;
-    
-    for (const k of keys) {
-      if (current && typeof current === 'object' && k in current) {
-        current = current[k];
-      } else {
-        // Fallback to English dictionary if key is missing in active locale
-        let enCurrent: any = dictionaries.en;
-        for (const enK of keys) {
-          if (enCurrent && typeof enCurrent === 'object' && enK in enCurrent) {
-            enCurrent = enCurrent[enK];
-          } else {
-            return fallback || key;
-          }
-        }
-        return typeof enCurrent === 'string' ? enCurrent : fallback || key;
-      }
-    }
-
-    return typeof current === 'string' ? current : fallback || key;
-  }, [locale]);
-
-  const tCategory = useCallback((name: string): string => {
-    if (!name) return '';
-    const localized = dictionaries[locale]?.categories?.[name];
-    if (localized) return localized;
-    return name;
-  }, [locale]);
+  const setLocale = useCallback((_newLocale: Locale) => {}, []);
+  const t = useCallback((key: string, fallback?: string): string => fallback || key, []);
+  const tCategory = useCallback((name: string): string => name || '', []);
 
   return (
-    <LanguageContext.Provider value={{ locale, dir, setLocale, t, tCategory }}>
+    <LanguageContext.Provider value={{ locale: 'en', dir: 'ltr', setLocale, t, tCategory }}>
       {children}
     </LanguageContext.Provider>
   );

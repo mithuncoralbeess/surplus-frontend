@@ -87,7 +87,7 @@ const CuratedProducts = () => {
         >
           <div className="flex items-center text-primary-alt font-bold text-xs tracking-widest uppercase mb-4">
             <Sparkles className="w-3.5 h-3.5 mr-1.5 rtl:mr-0 rtl:ml-1.5" />
-            {t('curated.badge', 'Curated Marketplace Selection')}
+            {t('curated.badge', 'Verified Surplus')}
           </div>
 
           <h2 className="h2 text-gray-900 tracking-tight mb-8">
