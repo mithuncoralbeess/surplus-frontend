@@ -8,7 +8,7 @@ import {
   ShieldCheck, Tag, CheckCircle2, 
   Truck, AlertCircle, 
   ShoppingCart, ChevronRight, Check, Layers,
-  List, MapPin, FileSpreadsheet, Download, Info, Package,
+  List, MapPin, Info, Package,
   Search, SlidersHorizontal, Building2, Calendar, Scale,
   Box, ExternalLink, Globe, Clock, X
 } from 'lucide-react';
@@ -433,20 +433,6 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                       View Basket
                     </button>
                   </div>
-                )}
-
-                {/* Direct Manifest Download Button */}
-                {lot.file_url && (
-                  <a
-                    href={lot.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-2 px-3 bg-slate-900 hover:bg-black text-white rounded-lg font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-                  >
-                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Download Manifest (.XLSX)</span>
-                    <Download className="w-3 h-3 text-gray-400" />
-                  </a>
                 )}
               </div>
 

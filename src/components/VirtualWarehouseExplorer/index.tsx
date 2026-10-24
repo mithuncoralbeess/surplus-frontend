@@ -76,6 +76,7 @@ export default function VirtualWarehouseExplorer({
       currency: propCurrency || initialLot?.currency || 'USD',
       price: Number(initialLot?.price || 0),
       msrp: Number(initialLot?.msrp || 0),
+      file_url: initialLot?.file_url || initialLot?.file || (initialLot as any)?.manifest_url || (initialLot as any)?.manifest_file,
     };
 
     getLotWarehouseExplorer(lotId, rawFallback, meta)
@@ -182,7 +183,41 @@ export default function VirtualWarehouseExplorer({
     return filteredItems.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredItems, currentPage]);
 
-  // Client-Side CSV Export
+  // Resolve uploaded manifest file URL from initialLot or data
+  const uploadedManifestUrl = useMemo(() => {
+    const raw =
+      initialLot?.file_url ||
+      initialLot?.file ||
+      (initialLot as any)?.manifest_file ||
+      (initialLot as any)?.manifest_url ||
+      data?.file_url ||
+      (data as any)?.manifest_file ||
+      (data as any)?.file;
+    if (typeof raw === 'string' && raw.trim() !== '') {
+      return raw.trim();
+    }
+    return null;
+  }, [initialLot, data]);
+
+  // Export / Download Manifest: downloads the real uploaded Excel file from DB
+  const handleExportManifest = () => {
+    if (uploadedManifestUrl) {
+      const link = document.createElement('a');
+      link.href = uploadedManifestUrl;
+      link.setAttribute('target', '_blank');
+      link.setAttribute('rel', 'noopener noreferrer');
+      link.setAttribute('download', '');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
+
+    // Fallback if raw file URL is not attached: export manifest data from DB as CSV
+    handleExportCsv();
+  };
+
+  // Client-Side CSV Export (Fallback)
   const handleExportCsv = () => {
     if (filteredItems.length === 0) return;
 
@@ -263,24 +298,24 @@ export default function VirtualWarehouseExplorer({
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-            Itemized Manifest & Valuation Intelligence
+            Itemized Manifest Overview
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 max-w-2xl leading-relaxed">
-            Full item-level ledger with unit MSRP values, brand allocations, verified quantities, serial tags, and manufacturer datasheets.
+            Full item-level ledger with verified product details, categories, subcategories, and available quantities.
           </p>
         </div>
 
-        {/* Global Action: Export Clean CSV */}
+        {/* Global Action: Export Manifest */}
         <div className="flex items-center gap-3 shrink-0">
           <button
             type="button"
-            onClick={handleExportCsv}
-            disabled={filteredItems.length === 0}
-            className="py-2.5 px-4 bg-[#0a5c48] hover:bg-[#084838] disabled:bg-gray-200 text-white rounded-full font-bold text-xs sm:text-sm transition-all shadow-sm hover:shadow-md flex items-center gap-2 cursor-pointer active:scale-95 shrink-0"
-            title="Download complete filtered inventory table to Excel / CSV"
+            onClick={handleExportManifest}
+            className="py-2.5 px-5 bg-[#0a5c48] hover:bg-[#084838] text-white rounded-full font-bold text-xs sm:text-sm transition-all shadow-sm hover:shadow-md flex items-center gap-2 cursor-pointer active:scale-95 shrink-0"
+            title="Download real manifest Excel file uploaded for this lot"
           >
-            <Download className="w-4 h-4" />
-            <span>Export Filtered CSV ({filteredItems.length})</span>
+            <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
+            <span>Export Manifest</span>
+            <Download className="w-3.5 h-3.5 text-emerald-200" />
           </button>
         </div>
       </div>

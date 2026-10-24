@@ -78,6 +78,7 @@ export interface WarehouseExplorerResponse {
   lot_title?: string;
   lot_number?: string;
   currency?: string;
+  file_url?: string;
 }
 
 /**
@@ -86,7 +87,7 @@ export interface WarehouseExplorerResponse {
  */
 export function buildClientWarehouseExplorer(
   rawItems: any[],
-  lotMeta?: { title?: string; lot_number?: string; currency?: string; price?: number; msrp?: number }
+  lotMeta?: { title?: string; lot_number?: string; currency?: string; price?: number; msrp?: number; file_url?: string }
 ): WarehouseExplorerResponse {
   const items: SKUItem[] = (rawItems || []).map((raw, idx) => {
     const qty = Number(raw.available_quantity || raw.quantity || raw.units || 1);
@@ -180,6 +181,7 @@ export function buildClientWarehouseExplorer(
     lot_title: lotMeta?.title,
     lot_number: lotMeta?.lot_number,
     currency: lotMeta?.currency || 'USD',
+    file_url: lotMeta?.file_url,
   };
 }
 
@@ -190,7 +192,7 @@ export function buildClientWarehouseExplorer(
 export async function getLotWarehouseExplorer(
   lotId: string | number,
   fallbackItems?: any[],
-  lotMeta?: { title?: string; lot_number?: string; currency?: string; price?: number; msrp?: number }
+  lotMeta?: { title?: string; lot_number?: string; currency?: string; price?: number; msrp?: number; file_url?: string }
 ): Promise<WarehouseExplorerResponse> {
   const cleanId = String(lotId).trim();
 
