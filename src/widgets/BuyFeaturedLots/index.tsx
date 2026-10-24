@@ -718,7 +718,7 @@ export default function BuyFeaturedLots() {
                     <div className="flex flex-wrap gap-1.5">
                       {[
                         { value: 'all', label: 'All MOQs' },
-                        { value: 'under_50', label: '< 50 pcs' },
+                        { value: 'under_50', label: '20 - 50 pcs' },
                         { value: '50_200', label: '50 - 200 pcs' },
                         { value: '200_plus', label: '200+ pcs' },
                       ].map((m) => (

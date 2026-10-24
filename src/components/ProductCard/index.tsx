@@ -61,6 +61,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const [imageError, setImageError] = useState(false);
 
   const inCart = id ? isInCart(id) : false;
+  const effectiveMoq = Math.max(20, Number(moq || 20));
 
   const formatOfferString = (raw?: string) => {
     if (!raw) return null;
@@ -96,10 +97,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
         type: 'product',
         title: title || 'Wholesale Surplus Lot',
         category: resolvedCategory,
-        quantity: moq > 0 ? moq : 1,
+        quantity: effectiveMoq,
         unitPrice: convertToUsd(price, currency),
         image: image || 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&auto=format&fit=crop&q=80',
-        moq: moq || 1,
+        moq: effectiveMoq,
         estQty: estQty,
         sku: sku,
       });
@@ -265,7 +266,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className="mt-auto space-y-2 mb-4">
           <div className="flex items-center justify-between text-[11px] xl:text-[13px]">
             <span className="text-gray-900">MOQ</span>
-            <span suppressHydrationWarning className="font-bold text-black">{moq.toLocaleString('en-US')}</span>
+            <span suppressHydrationWarning className="font-bold text-black">{effectiveMoq.toLocaleString('en-US')}</span>
           </div>
           <div className="h-px w-full bg-gray-100"></div>
           <div className="flex items-center justify-between text-[11px] xl:text-[13px]">
@@ -310,7 +311,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 ? 'bg-[#0f7a61]/90 hover:bg-[#0c6651] text-white'
                 : 'bg-[#0f7a61] hover:bg-[#0c6651] text-white'
             }`}
-            title={inCart ? `In Basket (click to add ${moq > 0 ? moq : 1} more)` : 'Add to RFQ Basket'}
+            title={inCart ? `In Basket (click to add ${effectiveMoq} more)` : 'Add to RFQ Basket'}
           >
             {isRfqAdded ? (
               <>

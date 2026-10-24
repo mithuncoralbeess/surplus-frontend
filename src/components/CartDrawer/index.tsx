@@ -119,7 +119,8 @@ const CartDrawer: React.FC = () => {
             >
               {items.map((item) => {
                 const itemTotal = item.unitPrice * item.quantity;
-                const isAtMoq = item.quantity <= (item.moq || 1);
+                const itemMoq = item.type === 'product' ? Math.max(20, Number(item.moq || 20)) : (item.moq || 1);
+                const isAtMoq = item.quantity <= itemMoq;
                 const isAtMax = item.estQty ? item.quantity >= item.estQty : false;
 
                 return (
@@ -180,7 +181,7 @@ const CartDrawer: React.FC = () => {
                                 ? 'text-gray-300 cursor-not-allowed bg-gray-50'
                                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 cursor-pointer'
                             }`}
-                            title={isAtMoq ? `Minimum order is ${item.moq || 1}` : 'Decrease quantity'}
+                            title={isAtMoq ? `Minimum order is ${itemMoq}` : 'Decrease quantity'}
                           >
                             <Minus className="w-3 h-3" />
                           </button>
@@ -202,9 +203,9 @@ const CartDrawer: React.FC = () => {
                           </button>
                         </div>
 
-                        {item.moq > 1 && (
+                        {itemMoq > 1 && (
                           <span className="text-[10px] text-gray-400 font-medium">
-                            MOQ: {item.moq}
+                            MOQ: {itemMoq}
                           </span>
                         )}
                       </div>

@@ -44,8 +44,8 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
     (productId && isInCart(productId))
   );
 
-  // Quantity State
-  const [quantity, setQuantity] = useState<number>(1);
+  // Quantity State (minimum MOQ 20)
+  const [quantity, setQuantity] = useState<number>(20);
   const [isRfqSent, setIsRfqSent] = useState<boolean>(false);
 
   useEffect(() => {
@@ -60,9 +60,8 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
           if (data?.image) {
             setActiveImage(data.image);
           }
-          if (data?.moq) {
-            setQuantity(data.moq);
-          }
+          const minMoq = Math.max(20, Number(data?.moq || 20));
+          setQuantity(minMoq);
           setLoading(false);
         }
       })
@@ -96,7 +95,7 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
   }, [productId, category]);
 
   const handleDecreaseQty = () => {
-    const moq = product?.moq || 1;
+    const moq = Math.max(20, Number(product?.moq || 20));
     if (quantity > moq) {
       setQuantity(prev => prev - 1);
     }
@@ -127,7 +126,7 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
   };
 
   const handleQuantityInputBlur = () => {
-    const minQty = product?.moq || 1;
+    const minQty = Math.max(20, Number(product?.moq || 20));
     const maxQty = product?.quantity || product?.estQty || 9999;
     if (quantity < minQty) {
       setQuantity(minQty);
@@ -146,9 +145,10 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
       ? (product.category as any)?.name || (product.category as any)?.title || 'Surplus Inventory'
       : String(product.category || 'Surplus Inventory');
     const unitPrice = product.currentPrice || product.liquidatingPrice || product.price || 0;
-    const minQty = product.moq || 1;
+    const minQty = Math.max(20, Number(product.moq || 20));
     const maxQty = product.quantity || product.estQty || 9999;
     const prodImage = activeImage || product.image || (product.images && product.images[0]) || '';
+    const finalQty = Math.max(minQty, quantity);
 
     addToCart({
       id: String(product.id || product.product_id || product.sku || productId),
@@ -156,14 +156,14 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
       type: 'product',
       title: product.title,
       category: catName,
-      quantity: quantity,
+      quantity: finalQty,
       unitPrice: convertToUsd(unitPrice, currencyCode),
       image: prodImage,
       moq: minQty,
       estQty: maxQty,
       sku: product.product_id || product.sku,
       location: product.inventory_location || product.location,
-    }, quantity);
+    }, finalQty);
 
     setIsRfqSent(true);
     setTimeout(() => setIsRfqSent(false), 3500);
@@ -484,7 +484,7 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
               <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200/90 p-4 sm:p-5 lg:p-6 space-y-3">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <label className="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wider">
-                    Select Quantity (MOQ: {product.moq} units)
+                    Select Quantity (MOQ: {Math.max(20, Number(product.moq || 20))} units)
                   </label>
                   <span className="text-xs sm:text-sm text-gray-500">
                     Max Available: <strong className="text-gray-900">{product.quantity || product.estQty} units</strong>
@@ -497,14 +497,14 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
                     <button
                       type="button"
                       onClick={handleDecreaseQty}
-                      disabled={quantity <= (product.moq || 1)}
+                      disabled={quantity <= Math.max(20, Number(product.moq || 20))}
                       className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-white hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-gray-800 transition-colors cursor-pointer shadow-xs"
                     >
                       <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                     <input
                       type="number"
-                      min={product.moq || 1}
+                      min={Math.max(20, Number(product.moq || 20))}
                       max={product.quantity || product.estQty || 9999}
                       value={quantity === 0 ? '' : quantity}
                       onChange={handleQuantityInputChange}

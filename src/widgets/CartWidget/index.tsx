@@ -516,7 +516,8 @@ export default function CartWidget() {
             <div className="divide-y divide-gray-100">
               {items.map((item) => {
                 const itemTotal = item.unitPrice * item.quantity;
-                const isAtMoq = item.quantity <= (item.moq || 1);
+                const itemMoq = item.type === 'product' ? Math.max(20, Number(item.moq || 20)) : (item.moq || 1);
+                const isAtMoq = item.quantity <= itemMoq;
                 const isAtMax = item.estQty ? item.quantity >= item.estQty : false;
 
                 return (
@@ -572,7 +573,7 @@ export default function CartWidget() {
                             </span>
                           )}
                           <span className="text-gray-600 font-medium">
-                            MOQ: {item.moq || 1} units
+                            MOQ: {itemMoq} units
                           </span>
                         </div>
 
@@ -591,13 +592,13 @@ export default function CartWidget() {
                                     ? 'text-gray-300 bg-gray-50 cursor-not-allowed'
                                     : 'text-gray-700 hover:bg-gray-100 cursor-pointer'
                                 }`}
-                                title={isAtMoq ? `Minimum order is ${item.moq || 1}` : 'Decrease quantity'}
+                                title={isAtMoq ? `Minimum order is ${itemMoq}` : 'Decrease quantity'}
                               >
                                 <Minus className="w-3.5 h-3.5" />
                               </button>
                               <input
                                 type="number"
-                                min={item.moq || 1}
+                                min={itemMoq}
                                 max={item.estQty || 999999}
                                 value={item.quantity}
                                 onChange={(e) => updateQuantity(item.id, Number(e.target.value))}

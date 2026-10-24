@@ -280,7 +280,7 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
     previousPrice: previousPrice > 0 ? previousPrice : (msrpPrice > 0 ? msrpPrice : undefined),
     msrp: msrpPrice > 0 ? msrpPrice : undefined,
     currency: 'USD',
-    moq: Number(item.moq || item.minimum_order_quantity || item.min_qty || 1),
+    moq: Math.max(20, Number(item.moq || item.minimum_order_quantity || item.min_qty || 20)),
     estQty: Number(item.quantity || item.estQty || item.available_qty || item.stock || 100),
     quantity: Number(item.quantity || item.estQty || item.available_qty || item.stock || 100),
     image: primaryImage,

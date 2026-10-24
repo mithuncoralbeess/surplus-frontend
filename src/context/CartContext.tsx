@@ -118,12 +118,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToCart = useCallback((input: CartItemInput, customQuantity?: number, openDrawer: boolean = false) => {
     const itemId = String(input.id || input.productId || input.sku || input.title);
-    const moq = Number(input.moq) > 0 ? Number(input.moq) : 1;
+    const itemType = input.type || 'product';
+    const rawMoq = Number(input.moq);
+    const moq = itemType === 'product'
+      ? Math.max(20, rawMoq > 0 ? rawMoq : 20)
+      : (rawMoq > 0 ? rawMoq : 1);
     const estQty = input.estQty ? Number(input.estQty) : undefined;
     const initialQty = customQuantity !== undefined 
       ? customQuantity 
       : (input.quantity !== undefined && input.quantity > 0 ? input.quantity : moq);
-    const clampedQty = Math.max(1, initialQty);
+    const clampedQty = Math.max(moq, initialQty);
 
     setItems(prev => {
       const existingIndex = prev.findIndex(item => item.id === itemId);
@@ -180,10 +184,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const itemId = String(id);
     setItems(prev => prev.map(item => {
       if (item.id === itemId) {
-        const minQty = item.moq > 0 ? item.moq : 1;
+        const defaultMin = item.type === 'product' ? 20 : 1;
+        const minQty = item.moq > 0 ? Math.max(defaultMin, item.moq) : defaultMin;
         const targetQty = Math.max(minQty, quantity);
         const finalQty = item.estQty ? Math.min(targetQty, item.estQty) : targetQty;
-        return { ...item, quantity: finalQty };
+        return { ...item, quantity: finalQty, moq: minQty };
       }
       return item;
     }));
