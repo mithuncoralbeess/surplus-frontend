@@ -10,7 +10,8 @@ import {
   ShoppingCart, ChevronRight, Check, Layers,
   List, MapPin, Info, Package,
   Search, SlidersHorizontal, Building2, Calendar, Scale,
-  Box, ExternalLink, Globe, Clock, X
+  Box, ExternalLink, Globe, Clock, X,
+  FileCheck, FileText, Download
 } from 'lucide-react';
 import { catalogService, LotItem } from '../../services/catalogService';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -203,6 +204,45 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
     ? lot.key_brands_included.split(',').map(b => b.trim()).filter(Boolean)
     : [];
 
+  const unitTypeLabel = useMemo(() => {
+    const raw = lot.primary_unit_type?.trim();
+    if (!raw || raw.toLowerCase() === 'pieces / units' || raw.toLowerCase() === 'units' || raw.toLowerCase() === 'unit') {
+      return 'Units';
+    }
+    return raw;
+  }, [lot.primary_unit_type]);
+
+  const unitTypeSingular = useMemo(() => {
+    const lower = unitTypeLabel.toLowerCase();
+    if (lower.endsWith('pieces')) return 'piece';
+    if (lower.endsWith('boxes')) return 'box';
+    if (lower.endsWith('cartons')) return 'carton';
+    if (lower.endsWith('sets')) return 'set';
+    if (lower.endsWith('pairs')) return 'pair';
+    if (lower.endsWith('packs')) return 'pack';
+    if (lower.endsWith('bottles')) return 'bottle';
+    if (lower.endsWith('pallets')) return 'pallet';
+    if (lower.endsWith('units')) return 'unit';
+    if (lower.endsWith('s') && lower.length > 3) return lower.slice(0, -1);
+    return lower;
+  }, [unitTypeLabel]);
+
+  const formattedListedDate = useMemo(() => {
+    if (lot.created_at_formatted) return lot.created_at_formatted;
+    if (lot.created_at) {
+      try {
+        return new Date(lot.created_at).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      } catch {
+        return lot.created_at;
+      }
+    }
+    return '';
+  }, [lot.created_at_formatted, lot.created_at]);
+
   return (
     <main className="w-full min-h-screen bg-[#fcfbf7] pb-16 sm:pb-24 pt-4 sm:pt-6">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 max-w-[1550px]">
@@ -263,6 +303,11 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                   <span className="bg-emerald-950/80 backdrop-blur-md text-emerald-300 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-emerald-400" /> Itemized Manifest
                   </span>
+                  {(lot.third_party_certificate_available || (Array.isArray(lot.third_party_documents) && lot.third_party_documents.length > 0)) && (
+                    <span className="bg-blue-950/85 backdrop-blur-md text-blue-200 border border-blue-400/40 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-extrabold flex items-center gap-1 shadow-xs uppercase tracking-wider">
+                      <FileCheck className="w-3 h-3 text-blue-400" /> 3rd-Party Inspected
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -360,7 +405,7 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                 </div>
                 {unitCost > 0 && (
                   <div className="text-xs text-gray-500 font-medium pt-1">
-                    Effective Unit Cost: <strong className="text-gray-900 font-bold">{formatPrice(unitCost, currencyCode)}</strong> / unit ({units} total units)
+                    Effective Unit Cost: <strong className="text-gray-900 font-bold">{formatPrice(unitCost, currencyCode)}</strong> / {unitTypeSingular} ({units.toLocaleString()} total {unitTypeLabel.toLowerCase()})
                   </div>
                 )}
               </div>
@@ -369,8 +414,12 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
               <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200/90 p-4 sm:p-5 space-y-3">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center sm:text-left">
                   <div className="p-2 sm:p-0">
-                    <span className="block text-[10px] sm:text-xs text-gray-400 font-bold uppercase mb-1">Total Units</span>
-                    <span suppressHydrationWarning className="text-base sm:text-lg font-extrabold text-gray-900">{units.toLocaleString()}</span>
+                    <span className="block text-[10px] sm:text-xs text-gray-400 font-bold uppercase mb-1">
+                      {unitTypeLabel === 'Units' ? 'Total Units' : `Total ${unitTypeLabel}`}
+                    </span>
+                    <span suppressHydrationWarning className="text-base sm:text-lg font-extrabold text-gray-900">
+                      {units.toLocaleString()} {unitTypeLabel !== 'Units' ? <span className="text-xs font-semibold text-gray-500 ml-0.5">{unitTypeLabel}</span> : null}
+                    </span>
                   </div>
                   <div className="p-2 sm:p-0">
                     <span className="block text-[10px] sm:text-xs text-gray-400 font-bold uppercase mb-1">Distinct SKUs</span>
@@ -447,7 +496,11 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
               <SlidersHorizontal className="w-4 h-4 text-[#0f7a61]" />
               <h2 className="text-base sm:text-lg font-extrabold text-gray-900">Lot Specifications & Verification Notes</h2>
             </div>
-            <div className="flex items-center gap-2 text-xs text-gray-500 font-mono">
+            <div className="flex items-center gap-3 text-xs text-gray-500 font-mono flex-wrap">
+              {formattedListedDate && (
+                <span>Listed: <strong className="text-gray-900 font-bold">{formattedListedDate}</strong></span>
+              )}
+              {formattedListedDate && <span>•</span>}
               <span>Status: <strong className="text-emerald-700 font-bold uppercase">{lot.enquiry_status || 'Approved'}</strong></span>
             </div>
           </div>
@@ -525,6 +578,33 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
               <span className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Sale Method</span>
               <span className="text-xs sm:text-sm font-bold text-gray-900 uppercase">{lot.sale_method || 'Offer'}</span>
             </div>
+            {Boolean(lot.primary_unit_type && lot.primary_unit_type.trim()) && (
+              <div className="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+                <span className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Primary Unit Type</span>
+                <span className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1">
+                  <Package className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>{lot.primary_unit_type}</span>
+                </span>
+              </div>
+            )}
+            {Boolean(lot.lot_size || pallets) && (
+              <div className="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+                <span className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Lot Size</span>
+                <span className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1">
+                  <Layers className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <span>{lot.lot_size || `${pallets} ${pallets === 1 ? 'Pallet' : 'Pallets'}`}</span>
+                </span>
+              </div>
+            )}
+            {Boolean(formattedListedDate) && (
+              <div className="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+                <span className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Listed Date</span>
+                <span className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                  <span>{formattedListedDate}</span>
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Excluded Countries & Allocations */}
@@ -544,6 +624,74 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
               )}
             </div>
           ) : null}
+
+          {/* Third-Party Inspection & Quality Documents Section */}
+          {(lot.third_party_certificate_available || (Array.isArray(lot.third_party_documents) && lot.third_party_documents.length > 0)) && (
+            <div className="bg-gradient-to-br from-emerald-50/70 via-teal-50/40 to-blue-50/50 border border-emerald-200/90 rounded-2xl p-4 sm:p-5 mt-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                <div className="flex items-start sm:items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5 sm:mt-0">
+                    <FileCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-sm sm:text-base font-extrabold text-gray-900">Third-Party Certificates & Inspection Documents</h3>
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1">
+                        <Check className="w-3 h-3 text-emerald-700" /> Verified Audit
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      This lot has been independently audited and verified for authentic quality, count conformity, and warehouse condition.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Downloadable Documents */}
+              {Array.isArray(lot.third_party_documents) && lot.third_party_documents.length > 0 ? (
+                <div className="space-y-2 mt-3 pt-3 border-t border-emerald-200/60">
+                  <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Available Certificate & Inspection Files ({lot.third_party_documents.length})
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                    {lot.third_party_documents.map((docUrl, idx) => {
+                      const rawFileName = docUrl.split('/').pop()?.split('?')[0] || `Inspection_Certificate_${idx + 1}.pdf`;
+                      const cleanFileName = decodeURIComponent(rawFileName);
+                      return (
+                        <a
+                          key={idx}
+                          href={docUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download={cleanFileName}
+                          className="flex items-center justify-between gap-2.5 p-3 bg-white hover:bg-emerald-50 rounded-xl border border-emerald-200/90 hover:border-emerald-400 text-gray-800 hover:text-emerald-950 transition-all duration-200 shadow-2xs group"
+                          title={`Download ${cleanFileName}`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-7 h-7 rounded-lg bg-emerald-100/80 group-hover:bg-emerald-200 text-emerald-700 flex items-center justify-center shrink-0 transition-colors">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                            <span className="text-xs font-bold truncate text-gray-800 group-hover:text-emerald-950">
+                              {cleanFileName}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0 text-emerald-700 bg-emerald-50 group-hover:bg-[#0f7a61] group-hover:text-white px-2.5 py-1 rounded-md text-[11px] font-extrabold border border-emerald-200 transition-colors">
+                            <Download className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Download</span>
+                          </div>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-emerald-900 bg-white/80 rounded-xl p-3 border border-emerald-200/60 mt-2 flex items-center gap-2 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>3rd-party inspection certificate is verified on file with Surplus operations and available with purchase documentation upon request.</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Virtual Warehouse Explorer (Interactive Lot SKU Grid & Valuation) */}
