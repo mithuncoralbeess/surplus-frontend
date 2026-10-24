@@ -115,11 +115,6 @@ const HomeBanner = () => {
               <span className="text-xs font-semibold text-gray-800 tracking-wide uppercase">
                 {t('hero.badge', 'B2B Liquidation Marketplace')}
               </span>
-              <span className="hidden sm:inline-block w-px h-3.5 bg-gray-200" />
-              <span className="hidden sm:inline-flex items-center gap-1 text-xs font-medium text-emerald-800">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                {t('hero.escrow', '100% Escrow Protected')}
-              </span>
             </div>
 
             {/* Main Headline */}
@@ -235,7 +230,7 @@ const HomeBanner = () => {
             <div className="pt-3 border-t border-gray-200/80 w-full grid grid-cols-2 sm:grid-cols-4 gap-3 text-gray-600 text-xs">
               <div className="flex items-center gap-1.5 font-medium">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>100% Escrow Protection</span>
+                <span>Verified Buyer Protection</span>
               </div>
               <div className="flex items-center gap-1.5 font-medium">
                 <Zap className="w-4 h-4 text-emerald-600 shrink-0" />
