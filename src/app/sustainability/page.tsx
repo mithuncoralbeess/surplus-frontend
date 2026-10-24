@@ -1,16 +1,18 @@
 import React from 'react';
-import CommonBanner from '../../widgets/CommonBanner';
-import SustainabilityMission from '../../widgets/SustainabilityMission';
-import SustainabilityImpact from '../../widgets/SustainabilityImpact';
-import SustainabilityGoals from '../../widgets/SustainabilityGoals';
-import SustainabilityModel from '../../widgets/SustainabilityModel';
-import SustainabilityCTA from '../../widgets/SustainabilityCTA';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../services/pageSeoService';
+import SustainabilityHero from '../../widgets/SustainabilityHero';
+import SustainabilityCalculator from '../../widgets/SustainabilityCalculator';
+import SustainabilityPillars from '../../widgets/SustainabilityPillars';
+import SustainabilityCycle from '../../widgets/SustainabilityCycle';
+import SustainabilitySDG from '../../widgets/SustainabilitySDG';
+import SustainabilityFAQ from '../../widgets/SustainabilityFAQ';
+import SustainabilityCTA from '../../widgets/SustainabilityCTA';
 
 const fallbackMetadata: Metadata = {
-  title: "Sustainability & Circular Economy | Surplus Market",
-  description: "Transform excess inventory into measurable carbon offsets, circular savings, and recovered capital.",
+  title: "Industrial Sustainability & Scope 3 Circular Economy | Surplus Market",
+  description: "Accelerate enterprise zero-waste goals. Liquidate or procure industrial surplus with verified Scope 3 carbon avoidance, landfill diversion metrics, and escrow protection.",
+  keywords: "Circular economy, enterprise surplus liquidation, Scope 3 carbon avoidance, industrial waste diversion, ESG compliance, GCC sustainability, surplus market",
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,34 +21,26 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function SustainabilityPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center bg-gray-50">
-      <CommonBanner 
-        title="Reducing Waste, Boosting Impact: Building a Sustainable Future Together"
-        subtitle="Transform excess inventory into measurable carbon offsets, circular savings, and recovered capital."
-        align="center"
-        image="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=2000&q=80"
-        breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Sustainability' }
-        ]}
-      >
-        <a 
-          href="/inventory-calculator" 
-          className="w-full sm:w-auto bg-[#0a5c48] hover:bg-[#084838] text-white px-8 py-4 rounded-full font-bold text-[15px] transition-all flex items-center justify-center"
-        >
-          Inventory Aging Calculator
-        </a>
-        <a 
-          href="/browse" 
-          className="w-full sm:w-auto bg-transparent border border-white/30 text-white hover:bg-white/10 px-8 py-4 rounded-full font-bold text-[15px] transition-all flex items-center justify-center"
-        >
-          Explore Surplus Deals
-        </a>
-      </CommonBanner>
-      <SustainabilityMission />
-      <SustainabilityImpact />
-      <SustainabilityGoals />
-      <SustainabilityModel />
+    <main className="w-full min-h-screen bg-white">
+      {/* 1. Executive Hero with Verified Impact Metrics Bar */}
+      <SustainabilityHero />
+
+      {/* 2. Interactive ESG Scope 3 & Landfill Avoidance Calculator */}
+      <SustainabilityCalculator />
+
+      {/* 3. Dual-Sided Circular Economics Framework (Sellers vs Buyers vs P2P Logistics) */}
+      <SustainabilityPillars />
+
+      {/* 4. The 4-Stage Closed-Loop Supply Chain Architecture */}
+      <SustainabilityCycle />
+
+      {/* 5. Global UN SDGs & GCC National Environmental Visions Alignment */}
+      <SustainabilitySDG />
+
+      {/* 6. Corporate ESG Compliance FAQ Accordion */}
+      <SustainabilityFAQ />
+
+      {/* 7. Executive Enterprise CTA Hub */}
       <SustainabilityCTA />
     </main>
   );
