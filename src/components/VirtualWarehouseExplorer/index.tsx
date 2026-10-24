@@ -5,8 +5,6 @@ import Image from 'next/image';
 import {
   Layers,
   Boxes,
-  DollarSign,
-  TrendingDown,
   Sparkles,
   Search,
   X,
@@ -14,17 +12,10 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
-  ShieldCheck,
-  Tag,
-  Check,
   AlertCircle,
-  Loader2,
-  Filter,
-  ArrowUpDown,
+  Tag,
   ListFilter
 } from 'lucide-react';
-import { useCurrency } from '../../context/CurrencyContext';
 import {
   WarehouseExplorerResponse,
   SKUItem,
@@ -59,8 +50,6 @@ export default function VirtualWarehouseExplorer({
   currency: propCurrency,
   className = '',
 }: VirtualWarehouseExplorerProps) {
-  const { formatPrice } = useCurrency();
-
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<WarehouseExplorerResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +60,7 @@ export default function VirtualWarehouseExplorer({
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState<
     'line_value_desc' | 'msrp_desc' | 'qty_desc' | 'name_asc' | 'sheet_order'
-  >('line_value_desc');
+  >('sheet_order');
   const [currentPage, setCurrentPage] = useState(1);
 
   // Load Virtual Warehouse Explorer data
@@ -113,7 +102,6 @@ export default function VirtualWarehouseExplorer({
     };
   }, [lotId, initialLot, propCurrency]);
 
-  const currencyCode = propCurrency || data?.currency || initialLot?.currency || 'USD';
   const allItems = useMemo(() => data?.items || [], [data]);
   const summary = data?.summary;
   const brandBreakdown = useMemo(() => data?.brand_breakdown || [], [data]);
@@ -199,22 +187,12 @@ export default function VirtualWarehouseExplorer({
     if (filteredItems.length === 0) return;
 
     const headers = [
-      'Line #',
-      'Product Name',
-      'Brand',
-      'Model / Part Number',
-      'Category',
-      'Subcategory',
-      'Available Qty',
-      'Unit Asking Price',
-      'Unit MSRP',
-      'Total Line MSRP',
-      'Total Line Asking',
-      'Country of Origin',
-      'Year of Manufacture',
-      'Condition / Status',
-      'Warehouse Bay / Tag',
-      'Datasheet URL'
+      'S.No*',
+      'Product Name*',
+      'Product Description*',
+      'Product Category*',
+      'Subcategory*',
+      'Available Quantity*'
     ];
 
     const escapeCsv = (val: any) => {
@@ -223,23 +201,13 @@ export default function VirtualWarehouseExplorer({
       return `"${str}"`;
     };
 
-    const rows = filteredItems.map((item) => [
-      item.s_no,
+    const rows = filteredItems.map((item, idx) => [
+      item.s_no || idx + 1,
       escapeCsv(item.product_name),
-      escapeCsv(item.brand),
-      escapeCsv(item.model_part_number),
+      escapeCsv(item.product_description || item.description || ''),
       escapeCsv(item.product_category),
       escapeCsv(item.subcategory),
-      item.available_quantity,
-      item.asking_price || 0,
-      item.original_price || 0,
-      item.line_msrp || 0,
-      item.line_ask || 0,
-      escapeCsv(item.country_of_origin),
-      escapeCsv(item.year_of_manufacture),
-      escapeCsv(item.tested_and_verified || item.functional_status || 'Visual Inspection'),
-      escapeCsv(item.seller_custom_field_1),
-      escapeCsv(item.datasheet_certificate_link)
+      item.available_quantity || 0,
     ]);
 
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
@@ -517,7 +485,7 @@ export default function VirtualWarehouseExplorer({
             <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Filter by product name, part #, brand, or category..."
+              placeholder="Filter by product name, description, category, or subcategory..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm font-medium text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f7a61]"
@@ -562,11 +530,9 @@ export default function VirtualWarehouseExplorer({
                 onChange={(e) => setSortBy(e.target.value as any)}
                 className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f7a61]"
               >
-                <option value="line_value_desc">💎 Line Value (High to Low)</option>
-                <option value="msrp_desc">💵 Unit MSRP (High to Low)</option>
-                <option value="qty_desc">📦 Quantity (High to Low)</option>
+                <option value="sheet_order">📄 Original Sheet Order (S.No*)</option>
+                <option value="qty_desc">📦 Available Quantity (High to Low)</option>
                 <option value="name_asc">🔤 Product Name (A–Z)</option>
-                <option value="sheet_order">📄 Original Sheet Order (#)</option>
               </select>
             </div>
           </div>
@@ -613,125 +579,61 @@ export default function VirtualWarehouseExplorer({
       <div className="space-y-4">
         {filteredItems.length > 0 ? (
           <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-xs">
-            <table className="w-full text-left border-collapse min-w-[1000px]">
+            <table className="w-full text-left border-collapse min-w-[900px]">
               <thead className="bg-[#f8faf9] border-b border-gray-200 text-gray-600">
                 <tr>
-                  <th className="py-3 px-3 text-xs font-bold uppercase tracking-wider text-center w-[50px]">#</th>
-                  <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider min-w-[280px]">Product Name</th>
-                  <th className="py-3 px-3 text-xs font-bold uppercase tracking-wider min-w-[120px]">Brand</th>
-                  <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider min-w-[140px]">Model / Part #</th>
-                  <th className="py-3 px-3 text-xs font-bold uppercase tracking-wider text-center min-w-[90px]">Qty</th>
-                  <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-right min-w-[120px]">Unit MSRP</th>
-                  <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-right min-w-[130px]">Line MSRP</th>
-                  <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider min-w-[140px]">Condition / Spec</th>
-                  <th className="py-3 px-3 text-xs font-bold uppercase tracking-wider text-center min-w-[80px]">Doc</th>
+                  <th className="py-3 px-3 text-xs font-bold uppercase tracking-wider text-center w-[70px]">S.No*</th>
+                  <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider min-w-[220px]">Product Name*</th>
+                  <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider min-w-[280px]">Product Description*</th>
+                  <th className="py-3 px-3 text-xs font-bold uppercase tracking-wider min-w-[160px]">Product Category*</th>
+                  <th className="py-3 px-3 text-xs font-bold uppercase tracking-wider min-w-[140px]">Subcategory*</th>
+                  <th className="py-3 px-3 text-xs font-bold uppercase tracking-wider text-center min-w-[120px]">Available Quantity*</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-800 text-xs sm:text-sm">
                 {paginatedItems.map((item, idx) => {
                   const lineIndex = (currentPage - 1) * ITEMS_PER_PAGE + idx + 1;
-                  const verified = Boolean(
-                    item.tested_and_verified === 'Yes' || 
-                    item.functional_status === 'Yes' || 
-                    item.functional_status?.toLowerCase().includes('tested')
-                  );
-                  const docLink = item.datasheet_certificate_link && 
-                    item.datasheet_certificate_link !== '-' && 
-                    !item.datasheet_certificate_link.includes('link removed') 
-                    ? item.datasheet_certificate_link 
-                    : null;
 
                   return (
                     <tr key={`${item.s_no}-${idx}`} className="hover:bg-emerald-50/30 transition-colors">
-                      {/* S.No */}
-                      <td className="py-3 px-3 text-xs font-mono text-gray-400 text-center">
+                      {/* S.No* */}
+                      <td className="py-3.5 px-3 text-xs font-mono text-gray-500 font-semibold text-center">
                         {item.s_no || lineIndex}
                       </td>
 
-                      {/* Product Name */}
-                      <td className="py-3 px-4">
+                      {/* Product Name* */}
+                      <td className="py-3.5 px-4">
                         <div className="font-bold text-gray-900 leading-snug line-clamp-2" title={item.product_name}>
                           {item.product_name}
                         </div>
-                        {item.product_category && (
-                          <div className="text-[11px] text-gray-400 mt-0.5">
-                            {item.product_category} {item.subcategory ? `• ${item.subcategory}` : ''}
-                          </div>
-                        )}
                       </td>
 
-                      {/* Brand */}
-                      <td className="py-3 px-3">
-                        <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-900">
-                          {item.brand || '—'}
-                        </span>
-                      </td>
-
-                      {/* Model / Part # */}
-                      <td className="py-3 px-4 font-mono text-xs text-gray-700">
-                        {item.model_part_number ? (
-                          <span className="font-semibold text-gray-900 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded">
-                            {item.model_part_number}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
-
-                      {/* Qty */}
-                      <td className="py-3 px-3 text-center">
-                        <span className="inline-block bg-emerald-50 border border-emerald-200 text-[#0a5c48] px-2.5 py-0.5 rounded-full text-xs font-black">
-                          {item.available_quantity.toLocaleString()}
-                        </span>
-                      </td>
-
-                      {/* Unit MSRP */}
-                      <td className="py-3 px-4 text-right font-medium text-gray-600">
-                        {formatPrice(item.original_price || item.asking_price || 0, currencyCode)}
-                      </td>
-
-                      {/* Total Line MSRP */}
-                      <td className="py-3 px-4 text-right font-black text-gray-900">
-                        {formatPrice(item.line_msrp || 0, currencyCode)}
-                      </td>
-
-                      {/* Condition / Verification */}
-                      <td className="py-3 px-4">
-                        <div className="flex flex-col gap-0.5">
-                          {verified ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
-                              <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
-                              Tested & Verified
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-gray-500 font-medium">
-                              Visual Inspection
-                            </span>
-                          )}
-                          {item.country_of_origin && (
-                            <span className="text-[10px] text-gray-400">
-                              Origin: {item.country_of_origin}
-                            </span>
-                          )}
+                      {/* Product Description* */}
+                      <td className="py-3.5 px-4 text-gray-600">
+                        <div className="line-clamp-2 text-xs leading-relaxed" title={item.product_description || item.description || ''}>
+                          {item.product_description || item.description || '—'}
                         </div>
                       </td>
 
-                      {/* Datasheet Link */}
-                      <td className="py-3 px-3 text-center">
-                        {docLink ? (
-                          <a
-                            href={docLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[#0a5c48] hover:text-[#084838] font-bold text-xs underline"
-                            title="Open manufacturer technical datasheet"
-                          >
-                            <span>Doc</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        ) : (
-                          <span className="text-gray-300">—</span>
-                        )}
+                      {/* Product Category* */}
+                      <td className="py-3.5 px-3 text-gray-700">
+                        <span className="inline-block px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                          {item.product_category || '—'}
+                        </span>
+                      </td>
+
+                      {/* Subcategory* */}
+                      <td className="py-3.5 px-3 text-gray-700">
+                        <span className="text-xs text-gray-600">
+                          {item.subcategory || '—'}
+                        </span>
+                      </td>
+
+                      {/* Available Quantity* */}
+                      <td className="py-3.5 px-3 text-center">
+                        <span className="inline-block bg-emerald-50 border border-emerald-200 text-[#0a5c48] px-3 py-1 rounded-full text-xs font-black">
+                          {item.available_quantity?.toLocaleString() ?? 0}
+                        </span>
                       </td>
                     </tr>
                   );

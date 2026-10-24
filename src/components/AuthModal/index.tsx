@@ -270,11 +270,25 @@ export default function AuthModal({
         setRole(ut === 'SELLER' ? 'Seller' : ut === 'BOTH' ? 'Both' : 'Buyer');
       }
       if (u.category_interested && categories.length === 0) {
-        const catArray = String(u.category_interested)
-          .split(',')
-          .map((c: string) => c.trim())
-          .filter(Boolean);
-        if (catArray.length > 0) setCategories(catArray);
+        if (Array.isArray(u.category_interested)) {
+          setCategories(u.category_interested);
+        } else {
+          try {
+            const parsed = JSON.parse(String(u.category_interested));
+            if (Array.isArray(parsed)) {
+              setCategories(parsed);
+              return;
+            }
+          } catch {}
+          const raw = String(u.category_interested);
+          const matched = availableCategories.filter((name: string) => raw.includes(name));
+          if (matched.length > 0) {
+            setCategories(matched);
+          } else {
+            const catArray = raw.split(',').map((c: string) => c.trim()).filter(Boolean);
+            if (catArray.length > 0) setCategories(catArray);
+          }
+        }
       }
     }
   }, [session, isOpen, mode]);
@@ -448,7 +462,7 @@ export default function AuthModal({
       country: country.trim(),
       business_location: businessLocation.trim(),
       user_type: role.toUpperCase(),
-      category_interested: categories.join(', ') || undefined,
+      category_interested: categories,
     });
 
     if (res.success) {
@@ -465,7 +479,7 @@ export default function AuthModal({
         business_location: businessLocation.trim(),
         business_type: role.toUpperCase(),
         account_entity_type: entityType === 'Company/Business' ? 'COMPANY' : 'INDIVIDUAL',
-        category_interested: categories.join(', '),
+        category_interested: categories,
       });
       setLoading(false);
       onSuccess();

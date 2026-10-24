@@ -24,7 +24,7 @@ export interface CompleteProfilePayload {
   business_location: string;
   country?: string;
   user_type: string;
-  category_interested?: string;
+  category_interested?: string | string[];
 }
 
 export const authService = {

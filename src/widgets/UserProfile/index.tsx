@@ -452,14 +452,30 @@ export default function UserProfileWidget() {
     setShowLocationSuggestions(false);
   };
 
-  // Parse comma-separated categories into array
+  // Parse categories into array safely (handling arrays, json strings, and category names with commas)
   const selectedCategories: string[] = useMemo(() => {
-    if (!categoriesInterested || typeof categoriesInterested !== 'string') return [];
-    return categoriesInterested
-      .split(',')
-      .map((s: string) => s.trim())
-      .filter(Boolean);
-  }, [categoriesInterested]);
+    if (!categoriesInterested) return [];
+    if (Array.isArray(categoriesInterested)) return categoriesInterested;
+    if (typeof categoriesInterested === 'string') {
+      try {
+        const parsed = JSON.parse(categoriesInterested);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {}
+
+      // Match against known category names from Redux to preserve names with commas
+      const allCategoryNames = (reduxCategories || [])
+        .map((c: any) => (typeof c === 'string' ? c : (c.name || c.title)))
+        .filter(Boolean);
+      const matched = allCategoryNames.filter((name: string) => categoriesInterested.includes(name));
+      if (matched.length > 0) return matched;
+
+      return categoriesInterested
+        .split(',')
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+    }
+    return [];
+  }, [categoriesInterested, reduxCategories]);
 
   // Only use categories coming from API and handled in Redux state
   const categoryOptions = useMemo(() => {
@@ -493,12 +509,12 @@ export default function UserProfileWidget() {
       }
       updated = [...selectedCategories, cat];
     }
-    setCategoriesInterested(updated.join(', '));
+    setCategoriesInterested(JSON.stringify(updated));
   };
 
   const removeCategory = (cat: string) => {
     const updated = selectedCategories.filter((c: string) => c !== cat);
-    setCategoriesInterested(updated.join(', '));
+    setCategoriesInterested(JSON.stringify(updated));
   };
 
   // Sync profile fields with logged-in session user data dynamically
@@ -534,7 +550,7 @@ export default function UserProfileWidget() {
       setUserType(rawUserRole || 'BUYER');
 
       const rawCat = userObj.category_interested || userObj.categoryInterested || userObj.categories_interested || '';
-      setCategoriesInterested(Array.isArray(rawCat) ? rawCat.join(', ') : String(rawCat));
+      setCategoriesInterested(Array.isArray(rawCat) ? JSON.stringify(rawCat) : String(rawCat));
       setAddress(userObj.address || userObj.business_address || userObj.location || '');
 
       // Proactively fetch latest profile & auto-assigned vendor_id from backend
@@ -569,7 +585,7 @@ export default function UserProfileWidget() {
             }
             if (vData.user_type) setUserType(String(vData.user_type).toUpperCase());
             if (vData.category_interested) {
-              const catVal = Array.isArray(vData.category_interested) ? vData.category_interested.join(', ') : String(vData.category_interested);
+              const catVal = Array.isArray(vData.category_interested) ? JSON.stringify(vData.category_interested) : String(vData.category_interested);
               setCategoriesInterested(catVal);
             }
           } else if (
@@ -667,7 +683,7 @@ export default function UserProfileWidget() {
         user_type: userType || 'BUYER',
         country: country.trim(),
         business_location: businessLocation.trim(),
-        category_interested: categoriesInterested,
+        category_interested: selectedCategories,
         company_name: userType !== 'BUYER' && accountEntityType === 'COMPANY' ? companyName : (companyName || ''),
         business_type: userType !== 'BUYER' && accountEntityType === 'COMPANY' ? businessType : '',
         business_address: userType !== 'BUYER' ? address : '',
@@ -702,7 +718,7 @@ export default function UserProfileWidget() {
           address: address || resData.business_address || resData.address,
           account_entity_type: accountEntityType || resData.account_entity_type,
           user_type: userType || resData.user_type,
-          category_interested: categoriesInterested || resData.category_interested
+          category_interested: selectedCategories
         });
         
         setIsSavedNotice(true);
