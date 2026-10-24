@@ -206,23 +206,22 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
 
   const formatDropString = (raw?: string) => {
     if (!raw) return null;
-    let str = raw.trim();
-    if (/special\s*offer/i.test(str)) {
-      str = str.replace(/special\s*offer/gi, 'Price Drop');
-    } else if (/offer/i.test(str)) {
-      str = str.replace(/offer/gi, 'Drop');
+    const str = raw.trim();
+    if (/open\s*to/i.test(str) || /droper/i.test(str)) {
+      return null;
     }
-    if (/off\b/i.test(str)) {
-      str = str.replace(/off\b/gi, 'DROP');
-    }
-    if (/^\d+%\s*$/.test(str)) {
-      return `${str.trim()} DROP`;
+    const matchPct = str.match(/(\d+(?:\.\d+)?)\s*%/);
+    if (matchPct) {
+      return `${Math.round(parseFloat(matchPct[1]))}% DROP`;
     }
     const num = parseFloat(str);
     if (!isNaN(num) && num > 0 && !str.includes(' ')) {
       return `${Math.round(num)}% DROP`;
     }
-    return str;
+    if (str.toLowerCase().includes('drop')) {
+      return str;
+    }
+    return null;
   };
 
   const discountPercent = msrp > price && msrp > 0

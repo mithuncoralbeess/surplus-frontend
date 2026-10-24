@@ -117,8 +117,6 @@ const LotCard: React.FC<LotCardProps> = ({
     ? Math.round(((effectiveMsrp - effectivePrice) / effectiveMsrp) * 100)
     : 0;
 
-  const unitCost = units > 0 ? (effectivePrice / units).toFixed(2) : "0.00";
-
   const conditionText = typeof condition === 'object' && condition !== null
     ? (condition as any).name || (condition as any).title || ''
     : String(condition || '');
@@ -138,23 +136,22 @@ const LotCard: React.FC<LotCardProps> = ({
 
   const formatDropBadge = (raw?: string) => {
     if (!raw) return null;
-    let str = raw.trim();
-    if (/special\s*offer/i.test(str)) {
-      str = str.replace(/special\s*offer/gi, 'Price Drop');
-    } else if (/offer/i.test(str)) {
-      str = str.replace(/offer/gi, 'Drop');
+    const str = raw.trim();
+    if (/open\s*to/i.test(str) || /droper/i.test(str)) {
+      return null;
     }
-    if (/off\b/i.test(str)) {
-      str = str.replace(/off\b/gi, 'DROP');
-    }
-    if (/^\d+%\s*$/.test(str)) {
-      return `${str.trim()} DROP`;
+    const matchPct = str.match(/(\d+(?:\.\d+)?)\s*%/);
+    if (matchPct) {
+      return `${Math.round(parseFloat(matchPct[1]))}% DROP`;
     }
     const num = parseFloat(str);
     if (!isNaN(num) && num > 0 && !str.includes(' ')) {
       return `${Math.round(num)}% DROP`;
     }
-    return str;
+    if (str.toLowerCase().includes('drop')) {
+      return str;
+    }
+    return null;
   };
 
   const displayDrop = formatDropBadge(offer) || (discountPercent > 0 ? `${discountPercent}% DROP` : null);
@@ -254,7 +251,7 @@ const LotCard: React.FC<LotCardProps> = ({
 
         {/* Price Row */}
         <div className="mb-4">
-          <div className="flex items-baseline gap-2 flex-wrap mb-1">
+          <div className="flex items-baseline gap-2 flex-wrap">
             <span suppressHydrationWarning className="text-[18px] xl:text-[22px] font-extrabold text-[#0f7a61] leading-none">
               {formatPrice(effectivePrice, currency)}
             </span>
@@ -263,11 +260,6 @@ const LotCard: React.FC<LotCardProps> = ({
                 {formatPrice(effectiveMsrp, currency)}
               </span>
             )}
-          </div>
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="text-gray-500">
-              {units > 0 ? `~$${unitCost} / unit • Wholesale Lot` : 'Wholesale Lot'}
-            </span>
           </div>
         </div>
 

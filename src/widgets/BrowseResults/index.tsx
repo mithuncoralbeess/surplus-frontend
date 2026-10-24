@@ -266,7 +266,7 @@ const BrowseResults = () => {
                       price={item.price}
                       msrp={item.retailPrice}
                       originalPrice={item.retailPrice}
-                      offer={item.discountPercent >= 10 ? `${item.discountPercent}% OFF` : undefined}
+                      offer={item.discountPercent >= 10 ? `${item.discountPercent}% DROP` : undefined}
                       location={item.location}
                       category={item.category}
                       currency="USD"
@@ -288,7 +288,7 @@ const BrowseResults = () => {
                     estQty={item.estQty || item.totalUnits || 1}
                     price={item.price}
                     originalPrice={item.retailPrice}
-                    offer={item.discountPercent >= 10 ? `${item.discountPercent}% OFF` : undefined}
+                    offer={item.discountPercent >= 10 ? `${item.discountPercent}% DROP` : undefined}
                     location={item.location}
                     currency="USD"
                     isCertified={item.isCertified}

@@ -243,23 +243,35 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
   const discountTarget = liquidatingPrice > 0 ? liquidatingPrice : price;
   const discountVal = previousPrice > discountTarget ? Math.round(((previousPrice - discountTarget) / previousPrice) * 100) : (msrpPrice > discountTarget ? Math.round(((msrpPrice - discountTarget) / msrpPrice) * 100) : 0);
   
+  const rawApiProductDiscount = Number(
+    item.discount_percent ??
+    item.discount_percentage ??
+    item.drop_percent ??
+    item.drop_percentage ??
+    item.discount ??
+    0
+  );
+
   let offerTag: string | undefined = undefined;
-  if (rawOffer) {
-    if (rawOffer.toLowerCase().includes('drop')) {
-      offerTag = rawOffer;
-    } else if (rawOffer.endsWith('%') || rawOffer.toLowerCase().includes('off') || rawOffer.toLowerCase().includes('msrp')) {
-      offerTag = rawOffer.replace(/off/gi, 'DROP');
+  if (rawOffer && !/open\s*to/i.test(rawOffer) && !/droper/i.test(rawOffer)) {
+    const matchPct = rawOffer.match(/(\d+(?:\.\d+)?)\s*%/);
+    if (matchPct) {
+      offerTag = `${Math.round(parseFloat(matchPct[1]))}% DROP`;
     } else {
       const numOffer = parseFloat(rawOffer);
-      if (!isNaN(numOffer)) {
-        if (numOffer > 0) {
-          offerTag = numOffer % 1 === 0 ? `${Math.round(numOffer)}% DROP` : `${numOffer}% DROP`;
-        }
-      } else {
-        offerTag = `${rawOffer}% DROP`;
+      if (!isNaN(numOffer) && numOffer > 0 && !rawOffer.includes(' ')) {
+        offerTag = `${Math.round(numOffer)}% DROP`;
+      } else if (rawOffer.toLowerCase().includes('drop')) {
+        offerTag = rawOffer;
       }
     }
-  } else if (discountVal > 0) {
+  }
+
+  if (!offerTag && rawApiProductDiscount > 0) {
+    offerTag = `${Math.round(rawApiProductDiscount)}% DROP`;
+  }
+
+  if (!offerTag && discountVal > 0) {
     offerTag = `${discountVal}% DROP`;
   }
 
@@ -393,23 +405,36 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
   const locationName = resolvedLocation;
 
   const rawLotOffer = item.offer !== undefined && item.offer !== null && String(item.offer).trim() !== '' ? String(item.offer).trim() : undefined;
+  const rawApiLotDiscount = Number(
+    item.discount_percent ??
+    item.discount_percentage ??
+    item.drop_percent ??
+    item.drop_percentage ??
+    item.blended_discount_pct ??
+    item.discount ??
+    0
+  );
+
   let lotOfferTag: string | undefined = undefined;
-  if (rawLotOffer) {
-    if (rawLotOffer.toLowerCase().includes('drop')) {
-      lotOfferTag = rawLotOffer;
-    } else if (rawLotOffer.endsWith('%') || rawLotOffer.toLowerCase().includes('off') || rawLotOffer.toLowerCase().includes('msrp')) {
-      lotOfferTag = rawLotOffer.replace(/off/gi, 'DROP');
+  if (rawLotOffer && !/open\s*to/i.test(rawLotOffer) && !/droper/i.test(rawLotOffer)) {
+    const matchPct = rawLotOffer.match(/(\d+(?:\.\d+)?)\s*%/);
+    if (matchPct) {
+      lotOfferTag = `${Math.round(parseFloat(matchPct[1]))}% DROP`;
     } else {
       const numLotOffer = parseFloat(rawLotOffer);
-      if (!isNaN(numLotOffer)) {
-        if (numLotOffer > 0) {
-          lotOfferTag = numLotOffer % 1 === 0 ? `${Math.round(numLotOffer)}% DROP` : `${numLotOffer}% DROP`;
-        }
-      } else {
-        lotOfferTag = `${rawLotOffer}% DROP`;
+      if (!isNaN(numLotOffer) && numLotOffer > 0 && !rawLotOffer.includes(' ')) {
+        lotOfferTag = `${Math.round(numLotOffer)}% DROP`;
+      } else if (rawLotOffer.toLowerCase().includes('drop')) {
+        lotOfferTag = rawLotOffer;
       }
     }
-  } else if (discount > 0) {
+  }
+
+  if (!lotOfferTag && rawApiLotDiscount > 0) {
+    lotOfferTag = `${Math.round(rawApiLotDiscount)}% DROP`;
+  }
+
+  if (!lotOfferTag && discount > 0) {
     lotOfferTag = `${discount}% DROP`;
   }
 
