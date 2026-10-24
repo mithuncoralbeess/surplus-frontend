@@ -25,6 +25,7 @@ const HomeBanner = () => {
   const { t, tCategory, locale } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [isTourModalOpen, setIsTourModalOpen] = useState(false);
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
 
   // Voice Search Hook
   const { isListening, isSupported, toggleListening } = useVoiceSearch({
@@ -282,14 +283,14 @@ const HomeBanner = () => {
                 {/* Tour Button */}
                 <button
                   type="button"
-                  onClick={() => setIsTourModalOpen(true)}
+                  onClick={() => setIsPlayingVideo(true)}
                   className="w-full bg-accent/10 hover:bg-accent/20 border border-accent/30 text-accent py-3 rounded-full font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Play className="w-4 h-4 fill-current" /> PLATFORM TOUR
                 </button>
 
                 {/* How it works section */}
-                <div className="flex-1 flex flex-col pt-2">
+                <div className="flex-1 flex flex-col pt-2 min-h-0">
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-[14px] xxl:text-base text-white font-medium tracking-widest uppercase">
                       How Surplus Market Works
@@ -299,33 +300,57 @@ const HomeBanner = () => {
                     </span>
                   </div>
 
-                  {/* Video Thumbnail */}
-                  <div
-                    onClick={() => setIsTourModalOpen(true)}
-                    className="flex-1 rounded-3xl overflow-hidden relative group cursor-pointer bg-gray-900 border border-dashboard-border"
-                  >
-                    <Image
-                      src="/hero-warehouse.jpg"
-                      alt="Warehouse Surplus Tour"
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 520px"
-                      className="object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-                      priority
-                    />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                  {/* Video Player or Thumbnail */}
+                  {isPlayingVideo ? (
+                    <div className="flex-1 min-h-[190px] rounded-3xl overflow-hidden relative bg-black border border-dashboard-border shadow-2xl">
+                      <iframe
+                        src="https://www.youtube-nocookie.com/embed/mRjurOdvjwg?autoplay=1&rel=0"
+                        title="Surplus Market Live Intelligence Tour"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        className="w-full h-full border-0 absolute inset-0"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsPlayingVideo(false);
+                        }}
+                        className="absolute top-3 right-3 z-20 bg-black/75 hover:bg-black text-white p-1.5 rounded-full backdrop-blur-sm transition-colors cursor-pointer shadow-lg"
+                        title="Close video"
+                        aria-label="Close video"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => setIsPlayingVideo(true)}
+                      className="flex-1 min-h-[190px] rounded-3xl overflow-hidden relative group cursor-pointer bg-gray-900 border border-dashboard-border"
+                    >
+                      <Image
+                        src="/hero-warehouse.jpg"
+                        alt="Warehouse Surplus Tour"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 520px"
+                        className="object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+                        priority
+                      />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
 
-                    {/* Play Button Center */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(20,184,117,0.3)] group-hover:scale-110 transition-transform duration-300">
-                        <Play className="w-6 h-6 text-primary ml-1 fill-current" />
+                      {/* Play Button Center */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(20,184,117,0.3)] group-hover:scale-110 transition-transform duration-300">
+                          <Play className="w-6 h-6 text-primary ml-1 fill-current" />
+                        </div>
+                      </div>
+
+                      {/* Watch label */}
+                      <div className="absolute bottom-4 left-4 bg-white px-4 py-2 rounded-full text-xs font-bold text-gray-900 shadow-lg">
+                        Watch - 2 min
                       </div>
                     </div>
-
-                    {/* Watch label */}
-                    <div className="absolute bottom-4 left-4 bg-white px-4 py-2 rounded-full text-xs font-bold text-gray-900 shadow-lg">
-                      Watch - 2 min
-                    </div>
-                  </div>
+                  )}
                 </div>
 
               </div>
@@ -371,6 +396,17 @@ const HomeBanner = () => {
                   Enterprise-grade surplus sourcing and inventory liquidation in 4 simple steps.
                 </p>
               </div>
+            </div>
+
+            {/* Embedded Video in Tour Modal */}
+            <div className="aspect-video w-full rounded-2xl overflow-hidden mb-6 bg-black border border-[#2a3f35] shadow-lg">
+              <iframe
+                src="https://www.youtube-nocookie.com/embed/mRjurOdvjwg?autoplay=1&rel=0"
+                title="Surplus Market Video Tour"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
             </div>
 
             {/* 4-Step Liquidation Workflow */}
