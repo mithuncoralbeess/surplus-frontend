@@ -35,16 +35,27 @@ const HomeBanner = () => {
     }
   });
 
-  // Handle ESC key to close modal
+  // Handle ESC key to close modals
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isTourModalOpen) {
-        setIsTourModalOpen(false);
+      if (e.key === 'Escape') {
+        if (isTourModalOpen) setIsTourModalOpen(false);
+        if (isPlayingVideo) setIsPlayingVideo(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isTourModalOpen]);
+  }, [isTourModalOpen, isPlayingVideo]);
+
+  // Lock body scroll while the video modal is open
+  useEffect(() => {
+    if (!isPlayingVideo) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isPlayingVideo]);
 
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -300,32 +311,19 @@ const HomeBanner = () => {
                     </span>
                   </div>
 
-                  {/* Video Player or Thumbnail */}
-                  {isPlayingVideo ? (
-                    <div className="flex-1 min-h-[190px] rounded-3xl overflow-hidden relative bg-black border border-dashboard-border shadow-2xl">
-                      <iframe
-                        src="https://www.youtube-nocookie.com/embed/mRjurOdvjwg?autoplay=1&rel=0"
-                        title="Surplus Market Live Intelligence Tour"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                        className="w-full h-full border-0 absolute inset-0"
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsPlayingVideo(false);
-                        }}
-                        className="absolute top-3 right-3 z-20 bg-black/75 hover:bg-black text-white p-1.5 rounded-full backdrop-blur-sm transition-colors cursor-pointer shadow-lg"
-                        title="Close video"
-                        aria-label="Close video"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
+                  {/* Video Thumbnail (opens video modal) */}
+                  {(
                     <div
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Play platform tour video"
                       onClick={() => setIsPlayingVideo(true)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setIsPlayingVideo(true);
+                        }
+                      }}
                       className="flex-1 min-h-[190px] rounded-3xl overflow-hidden relative group cursor-pointer bg-gray-900 border border-dashboard-border"
                     >
                       <Image
@@ -360,6 +358,43 @@ const HomeBanner = () => {
 
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* Video Player Modal                                                        */}
+      {/* ========================================================================= */}
+      {isPlayingVideo && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setIsPlayingVideo(false)}
+        >
+          <div
+            className="relative w-full max-w-5xl animate-in zoom-in-95 duration-200"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Surplus Market platform tour video"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setIsPlayingVideo(false)}
+              className="absolute -top-12 right-0 p-2 rounded-full text-white/80 hover:text-white bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+              title="Close video"
+              aria-label="Close video"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black border border-white/10 shadow-2xl">
+              <iframe
+                src="https://www.youtube-nocookie.com/embed/mRjurOdvjwg?autoplay=1&rel=0"
+                title="Surplus Market Platform Tour"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* Platform Tour & Liquidation Workflow Interactive Modal                     */}
