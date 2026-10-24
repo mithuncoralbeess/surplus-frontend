@@ -20,14 +20,10 @@ import {
 import { useVoiceSearch } from '../../hooks/useVoiceSearch';
 import { useLanguage } from '../../context/LanguageContext';
 
-// Track if hero banner landing animation has played in this browser JS context
-let hasHeroLandedInPageLoad = false;
-
 const HomeBanner = () => {
   const router = useRouter();
   const { t, tCategory, locale } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
-  const [isHeroLanding] = useState(() => !hasHeroLandedInPageLoad);
   const [isTourModalOpen, setIsTourModalOpen] = useState(false);
 
   // Voice Search Hook
@@ -37,10 +33,6 @@ const HomeBanner = () => {
       router.push(`/browse?q=${encodeURIComponent(transcript.trim())}`);
     }
   });
-
-  useEffect(() => {
-    hasHeroLandedInPageLoad = true;
-  }, []);
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -100,11 +92,7 @@ const HomeBanner = () => {
           {/* ========================================================================= */}
           {/* LEFT COLUMN: Hero Content & Intelligent Interactive Search                */}
           {/* ========================================================================= */}
-          <div
-            className={`w-full lg:w-[56%] flex flex-col items-start space-y-6 ${
-              isHeroLanding ? 'animate-hero-landing' : ''
-            }`}
-          >
+          <div className="w-full lg:w-[56%] flex flex-col items-start space-y-6">
 
             {/* Elevated Pill Trust Badge */}
             <div className="inline-flex items-center gap-2.5 bg-white/90 border border-emerald-600/20 shadow-xs px-3.5 py-1.5 rounded-full backdrop-blur-md transition-all hover:border-emerald-600/40 hover:shadow-sm">
@@ -251,11 +239,7 @@ const HomeBanner = () => {
           {/* ========================================================================= */}
           {/* RIGHT COLUMN: Dark Dashboard Card (Original Design Maintained)            */}
           {/* ========================================================================= */}
-          <div
-            className={`relative w-full lg:w-[41%] aspect-square max-w-[600px] min-[1350px]:max-w-[520px] min-[1600px]:max-w-[600px] mx-auto lg:ml-auto lg:mr-0 ${
-              isHeroLanding ? 'animate-hero-landing' : ''
-            }`}
-          >
+          <div className="relative w-full lg:w-[41%] aspect-square max-w-[600px] min-[1350px]:max-w-[520px] min-[1600px]:max-w-[600px] mx-auto lg:ml-auto lg:mr-0">
 
             {/* Dark Card Container */}
             <div className="absolute inset-0 bg-dashboard-bg rounded-[2rem] shadow-2xl p-6 md:p-8 min-[1350px]:p-5 min-[1600px]:p-8 flex flex-col justify-between overflow-hidden">

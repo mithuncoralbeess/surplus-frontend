@@ -6,7 +6,6 @@ import AppShell from "../components/AppShell";
 import SmoothScroll from "../components/SmoothScroll";
 import AuthProvider from "../components/AuthProvider";
 import { CurrencyProvider } from "../context/CurrencyContext";
-import AOSProvider from "../components/AosProvider";
 
 import { Suspense } from "react";
 import GoogleAnalytics from "../components/GoogleAnalytics";
@@ -51,14 +50,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <CurrencyProvider>
                 <NotificationProvider>
                   <CartProvider>
-                    <AOSProvider>
-                      <SmoothScroll>
-                        <AppShell>
-                          {children}
-                        </AppShell>
-                        <CartDrawer />
-                      </SmoothScroll>
-                    </AOSProvider>
+                    <SmoothScroll>
+                      <AppShell>
+                        {children}
+                      </AppShell>
+                      <CartDrawer />
+                    </SmoothScroll>
                   </CartProvider>
                 </NotificationProvider>
               </CurrencyProvider>

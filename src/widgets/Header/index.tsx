@@ -15,19 +15,12 @@ import { usePathname } from 'next/navigation';
 import { useLanguage } from '../../context/LanguageContext';
 
 // Track if header landing animation has played in this browser JS context
-let hasLandedInPageLoad = false;
-
 const Header = () => {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const { t } = useLanguage();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [isLanding] = useState(() => !hasLandedInPageLoad);
-
-  useEffect(() => {
-    hasLandedInPageLoad = true;
-  }, []);
 
   const openAuth = (mode: 'login' | 'register') => {
     setAuthMode(mode);
@@ -38,9 +31,7 @@ const Header = () => {
 
   return (
     <header 
-      className={`sticky top-0 w-full border-b border-gray-200/80 bg-white/95 backdrop-blur-md z-50 shadow-sm transition-all [transform:translateZ(0)] ${
-        isLanding ? 'animate-header-landing' : ''
-      }`}
+      className="sticky top-0 w-full border-b border-gray-200/80 bg-white/95 backdrop-blur-md z-50 shadow-sm transition-all [transform:translateZ(0)]"
     >
       <div className="container header-container">
         <div className="flex items-center justify-between h-20">

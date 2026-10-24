@@ -112,38 +112,11 @@ html.modal-open {
   animation: shimmer 1.5s infinite;
 }
 
-/* Header Landing Animation (Only on initial load / refresh) */
-@keyframes headerLanding {
-  0% {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.animate-header-landing {
-  animation: headerLanding 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Hero Banner Landing Animation */
-@keyframes heroLanding {
-  0% {
-    transform: translateY(28px);
-    opacity: 0;
-  }
-
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.animate-hero-landing {
-  animation: heroLanding 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* Disable AOS Animations Completely */
+[data-aos] {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
 }
 
 /* Hide scrollbar utility */

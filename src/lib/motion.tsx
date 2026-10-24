@@ -19,16 +19,9 @@ const createMotionComponent = (Tag: string) => {
     'data-aos-easing': dataAosEasing,
     ...props 
   }, ref) => {
-    // Auto-map motion scroll triggers to AOS fade-up animations if no custom data-aos is provided
-    const aosAttr = dataAos || (whileInView ? 'fade-up' : undefined);
-
     return React.createElement(Tag, { 
       ...props, 
       ref,
-      'data-aos': aosAttr,
-      'data-aos-delay': dataAosDelay,
-      'data-aos-duration': dataAosDuration,
-      'data-aos-easing': dataAosEasing,
     });
   });
   Component.displayName = `Motion(${Tag})`;
