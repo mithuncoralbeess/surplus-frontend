@@ -571,7 +571,7 @@ export default function BuyFeaturedLots() {
                 <div className="flex flex-wrap gap-2">
                   {[
                     { id: 'all', label: 'All Items', icon: Boxes },
-                    { id: 'best_sellers', label: 'Best Sellers', icon: Flame, color: 'text-amber-500' },
+                    { id: 'best_sellers', label: 'Best Selling', icon: Flame, color: 'text-amber-500' },
                     { id: 'featured', label: 'Featured Deals', icon: Star, color: 'text-emerald-600' },
                     { id: 'new_arrivals', label: 'New Arrivals', icon: Sparkles, color: 'text-blue-500' },
                   ].map((cur) => {
@@ -789,7 +789,7 @@ export default function BuyFeaturedLots() {
               
               {selectedCuration !== 'all' && (
                 <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-300/80 px-2.5 py-0.5 rounded-full text-xs font-bold">
-                  {selectedCuration === 'best_sellers' && '🔥 Best Sellers'}
+                  {selectedCuration === 'best_sellers' && '🔥 Best Selling'}
                   {selectedCuration === 'featured' && '⭐ Featured Deals'}
                   {selectedCuration === 'new_arrivals' && '✨ New Arrivals'}
                   <button onClick={() => setSelectedCuration('all')} className="hover:text-amber-950 cursor-pointer ml-0.5">

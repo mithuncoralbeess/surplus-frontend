@@ -8,11 +8,11 @@ import ProductCard from '../../components/ProductCard';
 import { catalogService, ProductItem } from '../../services/catalogService';
 import { useLanguage } from '../../context/LanguageContext';
 
-const TABS = ['Best Sellers', 'New Arrivals', 'Featured Deals'];
+const TABS = ['Best Selling', 'New Arrivals', 'Featured Deals'];
 
 const CuratedProducts = () => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState('Best Sellers');
+  const [activeTab, setActiveTab] = useState('Best Selling');
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
   const cacheRef = useRef<Record<string, ProductItem[]>>({});
@@ -31,7 +31,7 @@ const CuratedProducts = () => {
     setLoading(true);
 
     const collectionParam = 
-      activeTab === 'Best Sellers' ? 'best_selling' :
+      activeTab === 'Best Selling' ? 'best_selling' :
       activeTab === 'New Arrivals' ? 'new_arrivals' :
       'featured';
 
@@ -42,7 +42,7 @@ const CuratedProducts = () => {
           let singleProducts = data.filter((item) => item.type !== 'lot');
 
           // Strict curation filtering based on selected tab flag
-          if (activeTab === 'Best Sellers') {
+          if (activeTab === 'Best Selling') {
             const best = singleProducts.filter(item => item.isBestSelling);
             if (best.length > 0) singleProducts = best;
           } else if (activeTab === 'New Arrivals') {
