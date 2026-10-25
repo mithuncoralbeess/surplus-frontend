@@ -255,8 +255,7 @@ const shippingTermsOptions = [
 
 const saleMethodOptions = [
   { value: 'offer', label: 'Accept Offers' },
-  { value: 'fixed', label: 'Fixed Price' },
-  { value: 'auction', label: 'Auction' }
+  { value: 'fixed', label: 'Fixed Price' }
 ];
 
 const currencyOptions = [
