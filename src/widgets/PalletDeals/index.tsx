@@ -7,22 +7,54 @@ import LotCard from '../../components/LotCard';
 import { catalogService, LotItem } from '../../services/catalogService';
 import { useLanguage } from '../../context/LanguageContext';
 
-const PalletDeals = () => {
+const getCachedLots = (): LotItem[] => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = sessionStorage.getItem('surplus_pallet_deals_lots');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+  }
+  return [];
+};
+
+interface PalletDealsProps {
+  initialLots?: LotItem[];
+}
+
+const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [] }) => {
   const { t } = useLanguage();
   const TABS = [t('common.viewAll', 'View All'), 'Electronics', 'Apparel', 'Home Goods'];
   const [activeTab, setActiveTab] = useState('View All');
-  const [lots, setLots] = useState<LotItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [lots, setLots] = useState<LotItem[]>(() => {
+    if (initialLots.length > 0) return initialLots;
+    return getCachedLots();
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (initialLots.length > 0) return false;
+    return getCachedLots().length === 0;
+  });
 
   useEffect(() => {
     let isMounted = true;
+    
+    // If initialLots or cache provided and we are on initial 'View All' tab, skip redundant fetch
+    if (activeTab === 'View All' && lots.length > 0) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     const categoryQuery = (activeTab === 'View All' || activeTab === t('common.viewAll', 'View All')) ? 'View All' : activeTab;
-    catalogService.getLots({ category: categoryQuery })
+    catalogService.getLots({ category: categoryQuery, limit: 8 })
       .then((data) => {
         if (isMounted) {
           setLots(data);
+          if (typeof window !== 'undefined' && (activeTab === 'View All' || activeTab === t('common.viewAll', 'View All'))) {
+            try {
+              sessionStorage.setItem('surplus_pallet_deals_lots', JSON.stringify(data));
+            } catch {}
+          }
           setLoading(false);
         }
       })
@@ -37,7 +69,7 @@ const PalletDeals = () => {
     return () => {
       isMounted = false;
     };
-  }, [activeTab, t]);
+  }, [activeTab, t, initialLots.length]);
 
   return (
     <section className="w-full bg-[#fdfcf9] py-20 border-b border-gray-100">

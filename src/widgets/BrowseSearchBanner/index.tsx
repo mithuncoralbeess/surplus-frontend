@@ -303,6 +303,9 @@ const BrowseSearchBanner = () => {
 
   // Voice Search Handler
   const { isListening, isSupported, toggleListening } = useVoiceSearch({
+    onInterimTranscript: (transcript) => {
+      setSearchQuery(transcript);
+    },
     onTranscript: (transcript) => {
       setSearchQuery(transcript);
       setIsDropdownOpen(true);

@@ -10,20 +10,49 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const TABS = ['Best Selling', 'New Arrivals', 'Featured Deals'];
 
-const CuratedProducts = () => {
+const getCachedTabProducts = (tab: string): ProductItem[] => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = sessionStorage.getItem(`surplus_curated_${tab}`);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+  }
+  return [];
+};
+
+interface CuratedProductsProps {
+  initialProducts?: ProductItem[];
+}
+
+const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('Best Selling');
-  const [products, setProducts] = useState<ProductItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<ProductItem[]>(() => {
+    if (initialProducts.length > 0) return initialProducts;
+    return getCachedTabProducts('Best Selling');
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (initialProducts.length > 0) return false;
+    return getCachedTabProducts('Best Selling').length === 0;
+  });
   const cacheRef = useRef<Record<string, ProductItem[]>>({});
 
   useEffect(() => {
     let isMounted = true;
     const cacheKey = activeTab;
 
-    // Check in-memory cache first for instant tab switching
-    if (cacheRef.current[cacheKey]) {
+    // Check in-memory cache first for instant tab switching (0ms delay)
+    if (cacheRef.current[cacheKey] && cacheRef.current[cacheKey].length > 0) {
       setProducts(cacheRef.current[cacheKey]);
+      setLoading(false);
+      return;
+    }
+
+    // Check sessionStorage cache for 0ms cold tab switch
+    const localCached = getCachedTabProducts(activeTab);
+    if (localCached.length > 0) {
+      cacheRef.current[cacheKey] = localCached;
+      setProducts(localCached);
       setLoading(false);
       return;
     }
@@ -35,7 +64,7 @@ const CuratedProducts = () => {
       activeTab === 'New Arrivals' ? 'new_arrivals' :
       'featured';
 
-    catalogService.getProducts({ collection: collectionParam })
+    catalogService.getProducts({ collection: collectionParam, limit: 12 })
       .then((data) => {
         if (isMounted) {
           // Filter out lot items (display single products only)
@@ -56,6 +85,11 @@ const CuratedProducts = () => {
           // Limit to maximum 8 items per tab
           const curatedList = singleProducts.slice(0, 8);
           cacheRef.current[cacheKey] = curatedList;
+          if (typeof window !== 'undefined') {
+            try {
+              sessionStorage.setItem(`surplus_curated_${activeTab}`, JSON.stringify(curatedList));
+            } catch {}
+          }
           setProducts(curatedList);
           setLoading(false);
         }

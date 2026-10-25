@@ -29,9 +29,16 @@ const HomeBanner = () => {
 
   // Voice Search Hook
   const { isListening, isSupported, toggleListening } = useVoiceSearch({
+    onInterimTranscript: (transcript) => {
+      setSearchQuery(transcript);
+    },
     onTranscript: (transcript) => {
       setSearchQuery(transcript);
       router.push(`/browse?q=${encodeURIComponent(transcript.trim())}`);
+    },
+    onError: (err) => {
+      console.warn('Voice search:', err);
+      if (err.toLowerCase().includes('denied')) alert(err);
     }
   });
 

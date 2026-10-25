@@ -161,12 +161,13 @@ export default function BuyFeaturedLots() {
       try {
         const data = await catalogService.getProducts({
           category: queryCategory,
-          search: querySearch
+          search: querySearch,
+          limit: 24
         });
         setProducts(data);
         // Pre-fetch lots count for the toggle badge if empty
         if (lots.length === 0) {
-          catalogService.getLots().then(l => setLots(Array.isArray(l) ? l : [])).catch(() => {});
+          catalogService.getLots({ limit: 12 }).then(l => setLots(Array.isArray(l) ? l : [])).catch(() => {});
         }
       } catch (err) {
         console.warn('[BuyFeaturedLots] Error fetching dynamic products:', err);
@@ -178,12 +179,13 @@ export default function BuyFeaturedLots() {
       try {
         const data = await catalogService.getLots({
           category: queryCategory,
-          search: querySearch
+          search: querySearch,
+          limit: 24
         });
         setLots(Array.isArray(data) ? data : []);
         // Pre-fetch products count for the toggle badge if empty
         if (products.length === 0) {
-          catalogService.getProducts().then(p => setProducts(Array.isArray(p) ? p : [])).catch(() => {});
+          catalogService.getProducts({ limit: 12 }).then(p => setProducts(Array.isArray(p) ? p : [])).catch(() => {});
         }
       } catch (err) {
         console.warn('[BuyFeaturedLots] Error fetching dynamic lots:', err);

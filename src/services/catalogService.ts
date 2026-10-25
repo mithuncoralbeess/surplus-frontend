@@ -546,18 +546,26 @@ let allLotsCache: LotItem[] | null = null;
 let lastLotsFetchTime = 0;
 
 const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes cache TTL
+const queryProductsCache = new Map<string, { data: ProductItem[]; timestamp: number }>();
+const queryLotsCache = new Map<string, { data: LotItem[]; timestamp: number }>();
 
 export const catalogService = {
   /**
    * Connect to GET /api/products/ to fetch single product items (NOT lots).
    * Uses in-memory cache to prevent redundant backend roundtrips.
-   * Default limit is set to 1000 so the entire catalog is available without 20-item pagination cut-off.
+   * Default limit is set to 24 so catalog requests are lightweight and fast.
    */
   async getProducts(params?: { category?: string; search?: string; vendor_id?: string; collection?: string; limit?: number; page?: number }): Promise<ProductItem[]> {
     const isDefaultQuery = (!params?.category || params.category === 'All' || params.category === 'all') && !params?.search && !params?.vendor_id && !params?.collection && !params?.limit && !params?.page;
     
     if (isDefaultQuery && allProductsCache && (Date.now() - lastProductsFetchTime < CACHE_TTL_MS)) {
       return allProductsCache;
+    }
+
+    const queryKey = JSON.stringify(params || {});
+    const cachedQuery = queryProductsCache.get(queryKey);
+    if (cachedQuery && (Date.now() - cachedQuery.timestamp < CACHE_TTL_MS)) {
+      return cachedQuery.data;
     }
 
     try {
@@ -578,9 +586,8 @@ export const catalogService = {
       if (params?.page) {
         queryParts.push(`page=${encodeURIComponent(params.page)}`);
       }
-      // CRITICAL: The backend defaults to page_size=20 unless limit is specified.
-      // Default to 5000 so the full catalog is loaded and available for product detail routes.
-      const limit = params?.limit ?? 5000;
+      // Sensible default limit of 24 for catalog queries (prevents slow 5,000 item downloads)
+      const limit = params?.limit ?? 24;
       queryParts.push(`limit=${encodeURIComponent(limit)}`);
 
       if (queryParts.length > 0) {
@@ -641,6 +648,8 @@ export const catalogService = {
         productCache.set(p.title.toLowerCase().trim(), p);
       });
 
+      queryProductsCache.set(queryKey, { data: mappedList, timestamp: Date.now() });
+
       if (isDefaultQuery) {
         allProductsCache = mappedList;
         lastProductsFetchTime = Date.now();
@@ -664,6 +673,12 @@ export const catalogService = {
       return allLotsCache;
     }
 
+    const lotQueryKey = JSON.stringify(params || {});
+    const cachedLotQuery = queryLotsCache.get(lotQueryKey);
+    if (cachedLotQuery && (Date.now() - cachedLotQuery.timestamp < CACHE_TTL_MS)) {
+      return cachedLotQuery.data;
+    }
+
     try {
       let endpoint = '/api/lots/';
       const queryParts: string[] = [];
@@ -679,7 +694,7 @@ export const catalogService = {
       if (params?.page) {
         queryParts.push(`page=${encodeURIComponent(params.page)}`);
       }
-      const limit = params?.limit ?? 5000;
+      const limit = params?.limit ?? 24;
       queryParts.push(`limit=${encodeURIComponent(limit)}`);
 
       if (queryParts.length > 0) {
@@ -717,6 +732,8 @@ export const catalogService = {
         if (slug) lotCache.set(slug, l);
         lotCache.set(l.title.toLowerCase().trim(), l);
       });
+
+      queryLotsCache.set(lotQueryKey, { data: mappedLots, timestamp: Date.now() });
 
       if (isDefaultQuery) {
         allLotsCache = mappedLots;
