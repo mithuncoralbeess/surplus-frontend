@@ -30,7 +30,7 @@ const securityHeaders = [
   // 4. Permissions Policy - Disable unused dangerous hardware capabilities
   {
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(), payment=()',
+    value: 'camera=(), microphone=(self), geolocation=(), payment=()',
   },
   // 5. Strict Transport Security (HSTS)
   {
@@ -47,11 +47,11 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googletagmanager.com", // Needed for Next.js hydration & dev + Google Analytics
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Needed for Next.js hydration & dev
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: blob: https: http:",
-      `connect-src 'self' ${envBackendTarget} https://*.surplusmarket.com https://open.er-api.com https://*.r2.cloudflarestorage.com https://*.cloudflarestorage.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.g.doubleclick.net`.trim(),
+      `connect-src 'self' ${envBackendTarget} https://*.surplusmarket.com https://open.er-api.com https://*.r2.cloudflarestorage.com https://*.cloudflarestorage.com`.trim(),
       "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com",
       "object-src 'none'",
       "base-uri 'self'",

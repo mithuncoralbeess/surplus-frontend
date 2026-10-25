@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { BlogPost } from '../../data/blogData';
 import { extractFaqsFromContent, stripFaqFromContent, fixContentImageUrls } from '../../services/blogService';
-import { useTrackView } from '../../hooks/useTrackView';
 
 interface BlogDetailProps {
   post: BlogPost;
@@ -32,15 +31,6 @@ interface BlogDetailProps {
 export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps) {
   const [copied, setCopied] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-
-  // Track blog view count
-  useTrackView({
-    entity_type: 'blog',
-    entity_id: post.id,
-    entity_slug: post.slug,
-    title: post.title,
-    path: typeof window !== 'undefined' ? window.location.pathname : `/blog/${post.slug}`,
-  });
 
   const related = (relatedPosts || []).filter(p => p.id !== post.id && p.slug !== post.slug).slice(0, 3);
 

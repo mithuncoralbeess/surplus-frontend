@@ -7,9 +7,6 @@ import SmoothScroll from "../components/SmoothScroll";
 import AuthProvider from "../components/AuthProvider";
 import { CurrencyProvider } from "../context/CurrencyContext";
 
-import { Suspense } from "react";
-import GoogleAnalytics from "../components/GoogleAnalytics";
-import AnalyticsTracker from "../components/AnalyticsTracker";
 
 import { LanguageProvider } from "../context/LanguageContext";
 import { NotificationProvider } from "../context/NotificationContext";
@@ -40,10 +37,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <GoogleAnalytics />
-        <Suspense fallback={null}>
-          <AnalyticsTracker />
-        </Suspense>
         <AuthProvider>
           <ReduxProvider>
             <LanguageProvider>
