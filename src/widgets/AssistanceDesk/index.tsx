@@ -7,6 +7,7 @@ import {
   TriangleAlert, 
   Lightbulb, 
   MessageSquare, 
+  MessageCircle,
   CheckCircle2, 
   X, 
   FileText, 
@@ -63,14 +64,6 @@ export default function AssistanceDesk() {
   const [featureFiles, setFeatureFiles] = useState<FileItem[]>([]);
   const featureFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form states - Order Help
-  const [orderId, setOrderId] = useState('');
-  const [orderInquiryType, setOrderInquiryType] = useState('');
-  const [orderEmail, setOrderEmail] = useState('');
-  const [orderPhone, setOrderPhone] = useState('');
-  const [orderDetails, setOrderDetails] = useState('');
-  const [orderFiles, setOrderFiles] = useState<FileItem[]>([]);
-  const orderFileInputRef = useRef<HTMLInputElement>(null);
 
   // File size formatter
   const formatFileSize = (bytes: number) => {
@@ -133,13 +126,6 @@ export default function AssistanceDesk() {
       setFeaturePhone('');
       setFeatureDescription('');
       setFeatureFiles([]);
-    } else if (activeTab === 'order-help') {
-      setOrderId('');
-      setOrderInquiryType('');
-      setOrderEmail('');
-      setOrderPhone('');
-      setOrderDetails('');
-      setOrderFiles([]);
     }
   };
 
@@ -155,13 +141,11 @@ export default function AssistanceDesk() {
       const randomTicketNum = Math.floor(10000 + Math.random() * 90000);
       const prefix = 
         activeTab === 'request-product' ? 'PRQ' :
-        activeTab === 'report-issue' ? 'ISS' :
-        activeTab === 'suggest-feature' ? 'FTR' : 'ORD';
+        activeTab === 'report-issue' ? 'ISS' : 'FTR';
 
       const email = 
         activeTab === 'request-product' ? productEmail :
-        activeTab === 'report-issue' ? issueEmail :
-        activeTab === 'suggest-feature' ? featureEmail : orderEmail;
+        activeTab === 'report-issue' ? issueEmail : featureEmail;
 
       setSubmittedTicket({
         tab: activeTab,
@@ -777,168 +761,60 @@ export default function AssistanceDesk() {
 
               {/* TAB 4: Order Help */}
               {activeTab === 'order-help' && (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                      Order Help
+                <div className="py-12 sm:py-16 px-4 text-center max-w-lg mx-auto space-y-6 animate-in fade-in duration-300">
+                  {/* Icon Badge */}
+                  <div className="w-16 h-16 rounded-full bg-[#dcfce7] text-[#0f7a61] mx-auto flex items-center justify-center">
+                    <MessageCircle className="w-8 h-8 text-[#0f7a61]" strokeWidth={2} />
+                  </div>
+
+                  {/* Heading & Subtitle */}
+                  <div className="space-y-3">
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+                      Need Help with Your Order?
                     </h2>
-                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                      Need immediate assistance with an existing order, shipping tracking, or inspection verification?
+                    <p className="text-sm sm:text-base text-gray-600 leading-relaxed max-w-md mx-auto font-normal">
+                      Stuck with something? Tap below to chat with our support team on WhatsApp - we're here to help!
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-                    <div>
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                        Order Reference ID <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={orderId}
-                        onChange={(e) => setOrderId(e.target.value)}
-                        placeholder="e.g. SUR-2026-9481"
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                        Assistance Needed <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        required
-                        value={orderInquiryType}
-                        onChange={(e) => setOrderInquiryType(e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 bg-white focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all cursor-pointer"
+                  {/* WhatsApp Chat Button */}
+                  <div className="pt-2">
+                    <a
+                      href="https://wa.me/97430269988?text=Hello%20Surplus%20Market%20Support%2C%20I%20need%20help%20with%20my%20order."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2.5 bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold text-sm sm:text-base px-8 py-3.5 rounded-full transition-all shadow-md hover:shadow-lg cursor-pointer hover:scale-[1.02]"
+                    >
+                      <svg
+                        className="w-5 h-5 fill-current"
+                        viewBox="0 0 24 24"
                       >
-                        <option value="" disabled>Select inquiry type</option>
-                        <option value="Shipment Tracking & Status">Shipment Tracking &amp; Delivery ETA</option>
-                        <option value="Inspection Report & Quality">Inspection Report &amp; Quality Verification</option>
-                        <option value="Customs & Export Documentation">Customs &amp; Export Documentation</option>
-                        <option value="Payment Confirmation & Escrow">Payment Confirmation &amp; Escrow Release</option>
-                        <option value="Delivery Discrepancy or Damage">Delivery Discrepancy or Damage</option>
-                        <option value="Other">Other Order Inquiries</option>
-                      </select>
-                    </div>
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
+                      </svg>
+                      <span>Chat on WhatsApp</span>
+                    </a>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+                  {/* Direct Contact Links */}
+                  <div className="pt-4 space-y-1.5">
                     <div>
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                        Company Email <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={orderEmail}
-                        onChange={(e) => setOrderEmail(e.target.value)}
-                        placeholder="your.email@company.com"
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all"
-                      />
+                      <a
+                        href="tel:+97430269988"
+                        className="text-base font-bold text-gray-900 hover:text-[#0f7a61] transition-colors inline-block"
+                      >
+                        +974 3026 9988
+                      </a>
                     </div>
-
                     <div>
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                        Contact Phone Number
-                      </label>
-                      <input
-                        type="tel"
-                        value={orderPhone}
-                        onChange={(e) => setOrderPhone(e.target.value)}
-                        placeholder="+974 4400 0000"
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all"
-                      />
+                      <a
+                        href="mailto:sales@surplusmarket.com"
+                        className="text-sm text-gray-600 hover:text-[#0f7a61] transition-colors inline-block"
+                      >
+                        sales@surplusmarket.com
+                      </a>
                     </div>
                   </div>
-
-                  <div>
-                    <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                      Order Details &amp; Request <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      required
-                      rows={4}
-                      value={orderDetails}
-                      onChange={(e) => setOrderDetails(e.target.value)}
-                      placeholder="Please provide specifics regarding the shipment, inspection condition, invoice, or questions you have..."
-                      className="w-full rounded-xl border border-gray-200 p-4 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all resize-y"
-                    />
-                  </div>
-
-                  {/* Attachments */}
-                  <div>
-                    <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                      Supporting Documents (BOL, PO, Photos) (optional)
-                    </label>
-                    <input
-                      type="file"
-                      ref={orderFileInputRef}
-                      multiple
-                      onChange={(e) => handleFileUpload(e, setOrderFiles)}
-                      className="hidden"
-                      id="order-file-input"
-                    />
-                    <div className="w-full rounded-xl border border-gray-200 px-4 py-3 flex items-center justify-between bg-white">
-                      <div className="flex items-center gap-3">
-                        <label
-                          htmlFor="order-file-input"
-                          className="bg-[#e6f7ef] hover:bg-[#d5f3e4] text-[#0f7a61] text-xs font-semibold px-3.5 py-1.5 rounded-lg border border-[#0f7a61]/20 cursor-pointer transition-colors"
-                        >
-                          Choose Files
-                        </label>
-                        <span className="text-xs text-gray-500">
-                          {orderFiles.length === 0
-                            ? 'No file chosen'
-                            : `${orderFiles.length} file(s) selected`}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1.5">
-                      Up to 10 MB per file.
-                    </p>
-
-                    {orderFiles.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {orderFiles.map((f, idx) => (
-                          <div
-                            key={idx}
-                            className="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg text-xs text-gray-700"
-                          >
-                            <FileText className="w-3.5 h-3.5 text-[#0f7a61]" />
-                            <span className="max-w-[200px] truncate font-medium">{f.name}</span>
-                            <span className="text-gray-400">({f.size})</span>
-                            <button
-                              type="button"
-                              onClick={() => removeFile(idx, setOrderFiles)}
-                              className="text-gray-400 hover:text-red-500 transition-colors ml-1 cursor-pointer"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="pt-2 flex items-center gap-3">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="bg-[#0f7a61] hover:bg-[#0c6651] text-white font-bold text-xs sm:text-sm px-8 py-3 rounded-full transition-all shadow-sm cursor-pointer disabled:opacity-60 flex items-center gap-2"
-                    >
-                      {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                      <span>Request Order Support</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleClear}
-                      className="bg-white hover:bg-gray-50 text-gray-700 font-semibold text-xs sm:text-sm px-8 py-3 rounded-full border border-gray-200 transition-all cursor-pointer"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </form>
+                </div>
               )}
             </div>
           )}
