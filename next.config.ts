@@ -63,6 +63,130 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
+  async redirects() {
+    return [
+      {
+        source: '/buy/clothing',
+        destination: '/shop-by-category/apparel-footwear-accessories',
+        permanent: true,
+      },
+      {
+        source: '/buy/clothing/:path*',
+        destination: '/shop-by-category/apparel-footwear-accessories',
+        permanent: true,
+      },
+      {
+        source: '/buy/fasteners',
+        destination: '/shop-by-category/construction-hardware-mro',
+        permanent: true,
+      },
+      {
+        source: '/buy/fasteners/:path*',
+        destination: '/shop-by-category/construction-hardware-mro',
+        permanent: true,
+      },
+      {
+        source: '/buy/auto-spare-parts-accessories',
+        destination: '/shop-by-category/automotive',
+        permanent: true,
+      },
+      {
+        source: '/buy/auto-spare-parts-accessories/:path*',
+        destination: '/shop-by-category/automotive',
+        permanent: true,
+      },
+      {
+        source: '/buy/ict',
+        destination: '/shop-by-category/electronics-ict',
+        permanent: true,
+      },
+      {
+        source: '/buy/ict/:path*',
+        destination: '/shop-by-category/electronics-ict',
+        permanent: true,
+      },
+      {
+        source: '/buy/building-materials',
+        destination: '/shop-by-category/construction-hardware-mro',
+        permanent: true,
+      },
+      {
+        source: '/buy/building-materials/:path*',
+        destination: '/shop-by-category/construction-hardware-mro',
+        permanent: true,
+      },
+      {
+        source: '/buy/electricals',
+        destination: '/shop-by-category/electrical-parts',
+        permanent: true,
+      },
+      {
+        source: '/buy/electricals/:path*',
+        destination: '/shop-by-category/electrical-parts',
+        permanent: true,
+      },
+      {
+        source: '/buy/furniture',
+        destination: '/shop-by-category/books-stationery-office-supplies',
+        permanent: true,
+      },
+      {
+        source: '/buy/furniture/:path*',
+        destination: '/shop-by-category/books-stationery-office-supplies',
+        permanent: true,
+      },
+      {
+        source: '/buy/mobile-phone-and-accessories',
+        destination: '/shop-by-category/electronics-ict',
+        permanent: true,
+      },
+      {
+        source: '/buy/mobile-phone-and-accessories/:path*',
+        destination: '/shop-by-category/electronics-ict',
+        permanent: true,
+      },
+      {
+        source: '/buy/plumbing-materials',
+        destination: '/shop-by-category/construction-hardware-mro',
+        permanent: true,
+      },
+      {
+        source: '/buy/plumbing-materials/:path*',
+        destination: '/shop-by-category/construction-hardware-mro',
+        permanent: true,
+      },
+      {
+        source: '/buy/ppe',
+        destination: '/shop-by-category/oil-gas-equipment-mro',
+        permanent: true,
+      },
+      {
+        source: '/buy/ppe/:path*',
+        destination: '/shop-by-category/oil-gas-equipment-mro',
+        permanent: true,
+      },
+      {
+        source: '/gcc-business-sourcing-surplus-locally',
+        destination: '/sustainability-data/gcc-business-sourcing-surplus-locally',
+        permanent: true,
+      },
+      {
+        source: '/hidden-economy-surplus-strategic-asset',
+        destination: '/sustainability-data/hidden-economy-surplus-strategic-asset',
+        permanent: true,
+      },
+      {
+        source: '/how-surplus-market-reduces-waste-carbon-footprint',
+        destination: '/sustainability-data/how-surplus-market-reduces-waste-carbon-footprint',
+        permanent: true,
+      },
+      {
+        source: '/textile-waste-fashion-industry-92-million-tons',
+        destination: '/sustainability-data/textile-waste-fashion-industry-92-million-tons',
+        permanent: true,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
