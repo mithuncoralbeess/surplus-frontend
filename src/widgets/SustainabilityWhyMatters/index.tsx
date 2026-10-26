@@ -16,7 +16,7 @@ export default function SustainabilityWhyMatters() {
           </h2>
 
           <p className="text-base sm:text-lg text-slate-700 leading-relaxed font-normal max-w-3xl mx-auto">
-            Sustainability is core to our values because it's essential for the future of both business and the environment. The stakes are high: waste from excess inventory contributes to pollution, resource depletion, and climate change. By championing a circular economy, we aim to shift the paradigm from disposable to sustainable.
+            Sustainability is core to our values because it&apos;s essential for the future of both business and the environment. The stakes are high: waste from excess inventory contributes to pollution, resource depletion, and climate change. By championing a circular economy, we aim to shift the paradigm from disposable to sustainable.
           </p>
         </div>
       </div>

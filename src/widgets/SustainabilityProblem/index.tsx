@@ -24,7 +24,7 @@ export default function SustainabilityProblem() {
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Current Volume</span>
               <span className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs">01</span>
             </div>
-            <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight font-mono">
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight font-mono">
               2.01 Billion Metric Tons
             </div>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
@@ -37,7 +37,7 @@ export default function SustainabilityProblem() {
               <span className="text-xs font-semibold uppercase tracking-wider text-amber-600">Projected by 2050</span>
               <span className="w-8 h-8 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center text-xs">02</span>
             </div>
-            <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-amber-800 tracking-tight font-mono">
+            <div className="text-xl sm:text-2xl font-bold text-amber-800 tracking-tight font-mono">
               3.4 Billion Metric Tons
             </div>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
@@ -49,7 +49,7 @@ export default function SustainabilityProblem() {
         {/* Narrative Box with Data Source */}
         <div className="max-w-4xl mx-auto rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-2xs text-center space-y-3">
           <p className="text-base sm:text-lg text-slate-700 leading-relaxed font-normal">
-            Each year, the manufacturing and retail industries add significantly to the world's waste, with slow-moving and obsolete stock (SLOB) often ending up in landfills. Surplus Market aims to change this by connecting buyers and sellers in a system that maximizes resource use and minimizes waste, transforming surplus into opportunity.
+            Each year, the manufacturing and retail industries add significantly to the world&apos;s waste, with slow-moving and obsolete stock (SLOB) often ending up in landfills. Surplus Market aims to change this by connecting buyers and sellers in a system that maximizes resource use and minimizes waste, transforming surplus into opportunity.
           </p>
           <div className="pt-1">
             <span className="text-xs text-slate-500 font-medium">

@@ -10,13 +10,13 @@ export default function SustainabilityGoals() {
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/70 px-3.5 py-1 text-xs font-semibold text-[#0a5c48]">
             <Globe className="h-3.5 w-3.5 text-[#0a5c48]" />
-            <span>International &amp; National Goals</span>
+            <span>International & National Goals</span>
           </div>
           <h2 className="h2 text-slate-900">
             How We Align with Global and National Sustainability Goals
           </h2>
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal max-w-2xl mx-auto">
-            Supporting the UN's Sustainable Development Goals (SDGs). Surplus Market is aligned with key sustainability and climate action goals, specifically:
+            Supporting the UN&apos;s Sustainable Development Goals (SDGs). Surplus Market is aligned with key sustainability and climate action goals, specifically:
           </p>
         </div>
 
@@ -123,7 +123,7 @@ export default function SustainabilityGoals() {
               Qatar National Vision 2030
             </h3>
             <p className="text-sm sm:text-base text-slate-600 max-w-4xl leading-relaxed font-normal">
-              Qatar National Vision 2030. We proudly align with Qatar's national vision for environmental responsibility by actively supporting sustainable industry practices and encouraging the responsible use of resources.
+              Qatar National Vision 2030. We proudly align with Qatar&apos;s national vision for environmental responsibility by actively supporting sustainable industry practices and encouraging the responsible use of resources.
             </p>
           </div>
         </div>

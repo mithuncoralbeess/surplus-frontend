@@ -23,7 +23,7 @@ export default function SustainabilityMission() {
           {/* Statement */}
           <div className="max-w-3xl mx-auto">
             <p className="text-base sm:text-xl text-slate-800 leading-relaxed font-normal sm:font-medium">
-              At Surplus Market, we believe that sustainability isn't just an option - it's our responsibility. Our mission is to turn excess inventory into opportunity, creating a marketplace that values every asset and ensures nothing is wasted. We are driven to empower businesses to transform surplus into value, while actively reducing environmental impact.
+              At Surplus Market, we believe that sustainability isn&apos;t just an option - it&apos;s our responsibility. Our mission is to turn excess inventory into opportunity, creating a marketplace that values every asset and ensures nothing is wasted. We are driven to empower businesses to transform surplus into value, while actively reducing environmental impact.
             </p>
           </div>
 

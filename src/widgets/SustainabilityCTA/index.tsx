@@ -23,7 +23,7 @@ export default function SustainabilityCTA() {
             </h2>
 
             <p className="mx-auto max-w-2xl text-emerald-100/90 text-base sm:text-lg leading-relaxed font-normal">
-              Every business has the power to make a positive impact. By joining Surplus Market, you're supporting a marketplace that values sustainability, reduces waste, and offers significant savings. Let's turn surplus into success, one transaction at a time.
+              Every business has the power to make a positive impact. By joining Surplus Market, you&apos;re supporting a marketplace that values sustainability, reduces waste, and offers significant savings. Let&apos;s turn surplus into success, one transaction at a time.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center justify-center gap-4">

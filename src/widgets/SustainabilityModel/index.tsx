@@ -28,7 +28,7 @@ export default function SustainabilityModel() {
               Direct from Seller to Buyer
             </h3>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-              Our no-warehouse model ensures that every product is shipped directly from the seller's location to the buyer, reducing additional transport and storage emissions.
+              Our no-warehouse model ensures that every product is shipped directly from the seller&apos;s location to the buyer, reducing additional transport and storage emissions.
             </p>
           </div>
 
