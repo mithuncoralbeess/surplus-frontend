@@ -2,7 +2,8 @@ import React from 'react';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../services/pageSeoService';
 import SustainabilityHero from '../../widgets/SustainabilityHero';
-import SustainabilityMissionProblem from '../../widgets/SustainabilityMissionProblem';
+import SustainabilityMission from '../../widgets/SustainabilityMission';
+import SustainabilityProblem from '../../widgets/SustainabilityProblem';
 import SustainabilityImpact from '../../widgets/SustainabilityImpact';
 import SustainabilityBigNumbers from '../../widgets/SustainabilityBigNumbers';
 import SustainabilityGoals from '../../widgets/SustainabilityGoals';
@@ -32,7 +33,8 @@ export default function SustainabilityPage() {
   return (
     <main className="w-full min-h-screen bg-white">
       <SustainabilityHero />
-      <SustainabilityMissionProblem />
+      <SustainabilityMission />
+      <SustainabilityProblem />
       <SustainabilityImpact />
       <SustainabilityBigNumbers />
       <SustainabilityGoals />

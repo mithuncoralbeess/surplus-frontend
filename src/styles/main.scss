@@ -38,48 +38,48 @@ $container-max-widths: (
 }
 
 $heading-font-sizes: (
-  h1: (base: 36px,
-    sm: 40px,
-    md: 48px,
-    lg: rem(56),
-    xl: rem(45),
-    xxl: rem(50),
+  h1: (base: 34px,
+    sm: 38px,
+    md: 42px,
+    lg: rem(46),
+    xl: rem(50),
+    xxl: rem(54),
     xxxl: rem(58)),
-  h2: (base: 30px,
-    sm: 30px,
-    md: 34px,
-    lg: rem(38),
-    xl: rem(40),
-    xxl: rem(46),
+  h2: (base: 28px,
+    sm: 32px,
+    md: 36px,
+    lg: rem(40),
+    xl: rem(44),
+    xxl: rem(48),
     xxxl: rem(52)),
-  h3: (base: 26px,
+  h3: (base: 24px,
     sm: 28px,
     md: 32px,
     lg: rem(36),
     xl: rem(40),
     xxl: rem(44),
     xxxl: rem(48)),
-  h4: (base: 22px,
+  h4: (base: 20px,
     sm: 24px,
     md: 28px,
     lg: rem(32),
     xl: rem(36),
-    xxl: rem(40),
+    xxl: rem(38),
     xxxl: rem(44)),
   h5: (base: 18px,
     sm: 20px,
     md: 24px,
-    lg: rem(28),
-    xl: rem(32),
-    xxl: rem(18),
-    xxxl: rem(22)),
-  h6: (base: 16px,
-    sm: 18px,
-    md: 20px,
-    lg: rem(24),
-    xl: rem(28),
-    xxl: rem(32),
-    xxxl: rem(36))
+    lg: rem(27),
+    xl: rem(30),
+    xxl: rem(33),
+    xxxl: rem(36)),
+  h6: (base: 15px,
+    sm: 17px,
+    md: 19px,
+    lg: rem(21),
+    xl: rem(23),
+    xxl: rem(25),
+    xxxl: rem(28))
 );
 
 .ttl,
@@ -91,11 +91,13 @@ $heading-font-sizes: (
 .h6 {
   font-weight: 700;
   line-height: 1.2;
+}
+
+:where(.ttl, .h1, .h2, .h3, .h4, .h5, .h6) {
   color: #000;
 }
 
 @each $heading, $sizes in $heading-font-sizes {
-
   .#{$heading} {
     @each $bp, $size in $sizes {
       @if $bp ==base {
