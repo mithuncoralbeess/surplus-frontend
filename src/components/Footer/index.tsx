@@ -125,7 +125,7 @@ const Footer = () => {
               <ul className="flex flex-col gap-4 text-[14px]">
                 <li><FooterLink href="/about-us">About</FooterLink></li>
                 <li><FooterLink href="/partnership">{t('nav.partner', 'Partner with us')}</FooterLink></li>
-                <li><FooterLink href="/contact">Assistance</FooterLink></li>
+                <li><FooterLink href="/assistance">Assistance</FooterLink></li>
                 <li><FooterLink href="/about-us">Corporate video</FooterLink></li>
                 <li><FooterLink href="/contact">{t('common.contactUs', 'Contact')}</FooterLink></li>
               </ul>
