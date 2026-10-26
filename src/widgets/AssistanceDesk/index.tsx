@@ -48,19 +48,17 @@ export default function AssistanceDesk() {
   const productFileInputRef = useRef<HTMLInputElement>(null);
 
   // Form states - Report an Issue
-  const [issueType, setIssueType] = useState('');
-  const [issueSeverity, setIssueSeverity] = useState('Medium');
+  const [issueName, setIssueName] = useState('');
   const [issueEmail, setIssueEmail] = useState('');
-  const [issueRefUrl, setIssueRefUrl] = useState('');
+  const [issuePhone, setIssuePhone] = useState('');
   const [issueDescription, setIssueDescription] = useState('');
   const [issueFiles, setIssueFiles] = useState<FileItem[]>([]);
   const issueFileInputRef = useRef<HTMLInputElement>(null);
 
   // Form states - Suggest a Feature
-  const [featureTitle, setFeatureTitle] = useState('');
-  const [featureCategory, setFeatureCategory] = useState('');
+  const [featureName, setFeatureName] = useState('');
   const [featureEmail, setFeatureEmail] = useState('');
-  const [featureRole, setFeatureRole] = useState('');
+  const [featurePhone, setFeaturePhone] = useState('');
   const [featureDescription, setFeatureDescription] = useState('');
   const [featureFiles, setFeatureFiles] = useState<FileItem[]>([]);
   const featureFileInputRef = useRef<HTMLInputElement>(null);
@@ -124,17 +122,15 @@ export default function AssistanceDesk() {
       setProductComment('');
       setProductFiles([]);
     } else if (activeTab === 'report-issue') {
-      setIssueType('');
-      setIssueSeverity('Medium');
+      setIssueName('');
       setIssueEmail('');
-      setIssueRefUrl('');
+      setIssuePhone('');
       setIssueDescription('');
       setIssueFiles([]);
     } else if (activeTab === 'suggest-feature') {
-      setFeatureTitle('');
-      setFeatureCategory('');
+      setFeatureName('');
       setFeatureEmail('');
-      setFeatureRole('');
+      setFeaturePhone('');
       setFeatureDescription('');
       setFeatureFiles([]);
     } else if (activeTab === 'order-help') {
@@ -504,45 +500,21 @@ export default function AssistanceDesk() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                     <div>
                       <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                        Issue Category <span className="text-red-500">*</span>
+                        Full Name <span className="text-red-500">*</span>
                       </label>
-                      <select
+                      <input
+                        type="text"
                         required
-                        value={issueType}
-                        onChange={(e) => setIssueType(e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 bg-white focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all cursor-pointer"
-                      >
-                        <option value="" disabled>Select issue category</option>
-                        <option value="Website Bug / Glitch">Website Bug / Technical Glitch</option>
-                        <option value="Checkout & Payment">Checkout &amp; Payment Processing</option>
-                        <option value="Search & Filters">Search, Filter &amp; Catalog</option>
-                        <option value="Account & Login">Account, Authentication &amp; Profile</option>
-                        <option value="Seller Listing Issue">Seller Listing &amp; Upload Discrepancy</option>
-                        <option value="Other">Other</option>
-                      </select>
+                        value={issueName}
+                        onChange={(e) => setIssueName(e.target.value)}
+                        placeholder="e.g. John Doe"
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all"
+                      />
                     </div>
 
                     <div>
                       <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                        Severity Level <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={issueSeverity}
-                        onChange={(e) => setIssueSeverity(e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 bg-white focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all cursor-pointer"
-                      >
-                        <option value="Low">Low - Minor visual or cosmetic issue</option>
-                        <option value="Medium">Medium - Feature works but with difficulty</option>
-                        <option value="High">High - Blocking a core task or transaction</option>
-                        <option value="Critical">Critical - Urgent security or payment barrier</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-                    <div>
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                        Company Email <span className="text-red-500">*</span>
+                        Email <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="email"
@@ -553,31 +525,32 @@ export default function AssistanceDesk() {
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all"
                       />
                     </div>
-
-                    <div>
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                        Page URL or Reference ID (optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={issueRefUrl}
-                        onChange={(e) => setIssueRefUrl(e.target.value)}
-                        placeholder="https://surplusmarket.com/browse?lot=123"
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all"
-                      />
-                    </div>
                   </div>
 
                   <div>
                     <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                      Description of the Issue <span className="text-red-500">*</span>
+                      Phone <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={issuePhone}
+                      onChange={(e) => setIssuePhone(e.target.value)}
+                      placeholder="+974 4400 0000"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
+                      Describe Issue <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       required
                       rows={4}
                       value={issueDescription}
                       onChange={(e) => setIssueDescription(e.target.value)}
-                      placeholder="Please describe what happened, what you expected, and any steps to reproduce the issue..."
+                      placeholder="Please describe the issue or problem you encountered in detail..."
                       className="w-full rounded-xl border border-gray-200 p-4 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all resize-y"
                     />
                   </div>
@@ -672,44 +645,21 @@ export default function AssistanceDesk() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                     <div>
                       <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                        Feature Title <span className="text-red-500">*</span>
+                        Full Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         required
-                        value={featureTitle}
-                        onChange={(e) => setFeatureTitle(e.target.value)}
-                        placeholder="e.g. Automated Saved Search Alerts for Bulk Steel"
+                        value={featureName}
+                        onChange={(e) => setFeatureName(e.target.value)}
+                        placeholder="e.g. John Doe"
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all"
                       />
                     </div>
 
                     <div>
                       <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                        Platform Area <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        required
-                        value={featureCategory}
-                        onChange={(e) => setFeatureCategory(e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 bg-white focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all cursor-pointer"
-                      >
-                        <option value="" disabled>Select category</option>
-                        <option value="Sourcing Desk & RFQ">Sourcing Desk &amp; RFQ</option>
-                        <option value="Bidding & Wholesale Lots">Bidding &amp; Wholesale Lots</option>
-                        <option value="Inspection Reports">Inspection &amp; Quality Reports</option>
-                        <option value="Logistics & Freight Tracking">Logistics &amp; Freight Tracking</option>
-                        <option value="Seller Inventory Tools">Seller Inventory Tools</option>
-                        <option value="Escrow & Payments">Escrow &amp; Payments</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-                    <div>
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                        Company Email <span className="text-red-500">*</span>
+                        Email <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="email"
@@ -720,37 +670,32 @@ export default function AssistanceDesk() {
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all"
                       />
                     </div>
-
-                    <div>
-                      <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                        Your Business Role <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        required
-                        value={featureRole}
-                        onChange={(e) => setFeatureRole(e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 bg-white focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all cursor-pointer"
-                      >
-                        <option value="" disabled>Select your role</option>
-                        <option value="Enterprise Buyer / Procurement">Enterprise Buyer / Procurement</option>
-                        <option value="Surplus Seller / Liquidator">Surplus Seller / Liquidator</option>
-                        <option value="Logistics / Inspection Partner">Logistics / Inspection Partner</option>
-                        <option value="Broker / Trader">Broker / Trader</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
                   </div>
 
                   <div>
                     <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
-                      Feature Description &amp; Business Value <span className="text-red-500">*</span>
+                      Phone <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={featurePhone}
+                      onChange={(e) => setFeaturePhone(e.target.value)}
+                      placeholder="+974 4400 0000"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-2">
+                      Describe Feature <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       required
                       rows={4}
                       value={featureDescription}
                       onChange={(e) => setFeatureDescription(e.target.value)}
-                      placeholder="Describe the feature and how it would improve your buying, selling, or operational experience..."
+                      placeholder="Please describe the feature you would like to suggest and how it would improve your workflow..."
                       className="w-full rounded-xl border border-gray-200 p-4 text-sm text-gray-900 placeholder-gray-400 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] outline-none transition-all resize-y"
                     />
                   </div>
