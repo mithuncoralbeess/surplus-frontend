@@ -46,6 +46,7 @@ const Header = () => {
                   width={180} 
                   height={40} 
                   className="object-contain header-logo"
+                  style={{ width: "auto", height: "auto" }}
                   priority 
                 />
               </Link>

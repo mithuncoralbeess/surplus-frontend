@@ -55,7 +55,7 @@ const securityHeaders = [
       "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://www.googletagmanager.com https://www.facebook.com https://*.facebook.com",
       "object-src 'none'",
       "base-uri 'self'",
-      "form-action 'self'",
+      "form-action 'self' https://facebook.com https://*.facebook.com https://facebook.net https://*.facebook.net",
       "frame-ancestors 'none'",
     ].join('; '),
   },

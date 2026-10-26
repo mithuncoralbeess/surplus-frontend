@@ -66,6 +66,7 @@ export default function MaintenanceWidget() {
               width={180} 
               height={40} 
               className="object-contain brightness-0 invert"
+              style={{ width: "auto", height: "auto" }}
               priority 
             />
           </div>

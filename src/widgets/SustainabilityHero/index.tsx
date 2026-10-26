@@ -1,50 +1,27 @@
-"use client";
-
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  Leaf, 
-  ArrowRight,
-  Calculator,
-  ChevronRight
-} from 'lucide-react';
-
-const METRICS = [
-  { value: "18,450 MT", label: "Landfill Diverted" },
-  { value: "42,800 MT", label: "CO₂e Avoided" },
-  { value: "$24.5M+", label: "Capital Recovered" },
-  { value: "100%", label: "Direct P2P Logistics" },
-];
+import { Leaf, ArrowRight, Calculator, ChevronRight } from 'lucide-react';
 
 export default function SustainabilityHero() {
-  const scrollToCalculator = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const el = document.getElementById('sustainability-calculator');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   return (
-    <section className="relative w-full overflow-hidden bg-[#0a1e17] text-white pt-8 sm:pt-12 pb-14 sm:pb-20 border-b border-emerald-950">
-      {/* Background Banner Image */}
+    <section className="relative w-full overflow-hidden bg-[#051711] text-white pt-12 pb-20 sm:pt-16 sm:pb-24 border-b border-emerald-950">
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#041a13]/95 via-[#041a13]/85 to-[#041a13]/60 z-10" />
-        <Image 
-          src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=2000&q=80" 
-          alt="Sustainability & Circular Economy Banner"
+        <div className="absolute inset-0 bg-gradient-to-b from-[#041a13]/92 via-[#041a13]/88 to-[#051711] z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,123,95,0.25),transparent_60%)] z-10" />
+        <Image
+          src="/sustainability-hero.jpg"
+          alt="Sustainability at Surplus Market"
           fill
           sizes="100vw"
           priority
-          className="object-cover opacity-45 mix-blend-luminosity"
+          className="object-cover opacity-35 mix-blend-luminosity"
         />
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl relative z-20">
-        
-        {/* Subtle Breadcrumb */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-emerald-200/70 mb-8 font-medium">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-20">
+        {/* Breadcrumb */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-emerald-200/80 mb-6 font-medium">
           <Link href="/" className="hover:text-white transition-colors">
             Home
           </Link>
@@ -54,63 +31,42 @@ export default function SustainabilityHero() {
           </span>
         </nav>
 
-        {/* Hero Header Content */}
-        <div className="max-w-3xl space-y-6">
-          
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-900/60 border border-emerald-500/30 text-emerald-300 text-xs font-semibold tracking-wide">
-            <Leaf className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Circular Economy &amp; Scope 3</span>
+        <div className="max-w-4xl space-y-6">
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-emerald-400/30 bg-emerald-950/80 backdrop-blur-md px-4 py-1.5 text-xs font-semibold text-emerald-300 shadow-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <Leaf className="h-3.5 w-3.5 text-emerald-400" />
+            <span>Sustainability at Surplus Market</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-[3.5rem] font-bold tracking-tight text-white leading-[1.12]">
-            Divert industrial surplus. <br />
-            <span className="text-emerald-400">Quantify your carbon impact.</span>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.15] tracking-tight text-white">
+            Reducing Waste, Boosting Impact: <br />
+            <span className="text-emerald-400">Building a Sustainable Future Together</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-emerald-100/80 leading-relaxed max-w-2xl font-normal">
-            Surplus connects enterprise sellers directly with qualified buyers across the GCC, turning excess inventory into working capital and audited Scope 3 emissions certificates.
+          <p className="max-w-2xl text-base sm:text-lg text-emerald-100/90 leading-relaxed font-normal">
+            Transform excess inventory into measurable carbon offsets, circular savings, and recovered capital.
           </p>
 
-          <div className="flex flex-wrap items-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center gap-4 pt-2">
             <Link
-              href="/sell"
-              className="px-6 py-3 rounded-full bg-[#107b5f] hover:bg-[#0c664e] text-white font-semibold text-sm transition-colors flex items-center gap-2 cursor-pointer shadow-md"
+              href="/inventory-calculator"
+              className="inline-flex items-center gap-2 rounded-full bg-[#107b5f] hover:bg-[#0c664e] px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-950/40 transition-all cursor-pointer hover:shadow-xl hover:-translate-y-0.5"
             >
-              <span>List Surplus Inventory</span>
-              <ArrowRight className="w-4 h-4" />
+              <Calculator className="h-4 w-4" />
+              <span>Inventory Aging Calculator</span>
             </Link>
-
             <Link
               href="/browse"
-              className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/15 text-white border border-white/20 font-semibold text-sm transition-colors flex items-center gap-2 cursor-pointer backdrop-blur-sm"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 hover:bg-white/15 px-7 py-3.5 text-sm font-bold text-white backdrop-blur-md transition-all cursor-pointer hover:border-white/40"
             >
-              <span>Browse Lots</span>
+              <span>Explore Surplus Deals</span>
+              <ArrowRight className="h-4 w-4 text-emerald-400" />
             </Link>
-
-            <button
-              onClick={scrollToCalculator}
-              className="px-4 py-3 text-xs font-semibold text-emerald-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Calculator className="w-4 h-4" />
-              <span>Calculate Impact</span>
-            </button>
           </div>
         </div>
-
-        {/* Metrics Strip */}
-        <div className="mt-14 sm:mt-16 pt-8 border-t border-white/10 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-          {METRICS.map((metric, idx) => (
-            <div key={idx} className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 sm:p-5 space-y-1">
-              <div className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-mono">
-                {metric.value}
-              </div>
-              <div className="text-xs sm:text-sm text-emerald-200/80 font-medium">
-                {metric.label}
-              </div>
-            </div>
-          ))}
-        </div>
-
       </div>
     </section>
   );
