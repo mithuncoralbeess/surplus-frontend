@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -18,7 +18,8 @@ import {
   Tag,
   Package,
   PlayCircle,
-  Box
+  Box,
+  type LucideIcon
 } from 'lucide-react';
 import { useAppSelector } from '../../store';
 import { useLanguage } from '../../context/LanguageContext';
@@ -34,7 +35,7 @@ const DEFAULT_CATEGORIES = [
   { name: 'Abrasives', count: 30, icon: Disc },
 ];
 
-const ICON_MAP: Record<string, any> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   'building materials': Hammer,
   'electricals': Zap,
   'hand tools': Wrench,
@@ -50,40 +51,18 @@ const getCategoryIcon = (name: string) => {
   return ICON_MAP[normalized] || Box;
 };
 
-const FORMATS = [
-  {
-    title: 'Latest Arrivals',
-    badge: 'Fresh',
-    desc: 'Fresh verified inventory added this...',
-    icon: Sparkles,
-    href: '/buy',
-  },
-  {
-    title: 'Verified Deals',
-    badge: 'Hot Deals',
-    desc: 'Discounted liquidation inventory rea...',
-    icon: Tag,
-    href: '/buy',
-  },
-  {
-    title: 'Wholesale Lots & Pallets',
-    badge: '> 10 SKUs',
-    desc: 'Full container & pallet batch manifests',
-    icon: Package,
-    href: '/buy',
-  },
-];
-
 const BuyMegamenu = () => {
   const pathname = usePathname();
   const { t, tCategory } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
-  const { categories, loading } = useAppSelector((state) => state.categories);
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  const { categories } = useAppSelector((state) => state.categories);
 
   // Close the megamenu whenever the route changes
-  useEffect(() => {
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setIsOpen(false);
-  }, [pathname]);
+  }
 
   const isBuyActive = pathname === '/buy' || pathname.startsWith('/buy') || pathname === '/browse' || pathname.startsWith('/browse') || pathname === '/shop-by-category' || pathname.startsWith('/category');
 
@@ -164,9 +143,6 @@ const BuyMegamenu = () => {
                 </h3>
               </div>
               <div className="flex items-center gap-2">
-                <Link href="/buy" className="text-xs font-bold text-white bg-[#0f7a61] hover:bg-[#0c6651] px-3.5 py-1.5 rounded-lg flex items-center transition-all shadow-xs">
-                  {t('megamenu.allBuyLots', 'All Buy Lots')} <ArrowRight className="w-3.5 h-3.5 ml-1 rtl:ml-0 rtl:mr-1 rtl:rotate-180" />
-                </Link>
                 <Link href="/shop-by-category" className="text-sm font-bold text-primary hover:text-primary-dark flex items-center transition-colors pb-1">
                   {t('megamenu.allCategories', 'All Categories')} <ArrowRight className="w-4 h-4 ml-1 rtl:ml-0 rtl:mr-1 rtl:rotate-180" />
                 </Link>

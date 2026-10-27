@@ -4,6 +4,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, BellRing, Sparkles, X, ChevronRight, ShieldCheck } from 'lucide-react';
 import WhatsAppSubscriptionModal from '../WhatsAppSubscriptionModal';
 
+// Toggle to true whenever you want to re-enable the VIP Liquidation Drops feature
+const SHOW_VIP_DROPS = false;
+
 interface WhatsAppFloatingButtonProps {
   phoneNumber?: string;
   defaultMessage?: string;
@@ -82,13 +85,15 @@ export default function WhatsAppFloatingButton({
                 Surplus WhatsApp Services
               </h4>
               <p className="text-xs text-emerald-100/90 mt-0.5">
-                Fast-track inquiries, custom manifests & liquidation alerts.
+                {SHOW_VIP_DROPS
+                  ? 'Fast-track inquiries, custom manifests & liquidation alerts.'
+                  : 'Fast-track inquiries, custom manifests & direct deals support.'}
               </p>
             </div>
 
             {/* Menu Options */}
             <div className="p-3 space-y-2">
-              {/* Option 1: Direct WhatsApp Chat */}
+              {/* Option 1: Direct WhatsApp Chat with Deals Desk (Always Active) */}
               <button
                 type="button"
                 onClick={handleOpenDirectChat}
@@ -110,41 +115,42 @@ export default function WhatsAppFloatingButton({
                 <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#0a5c48] group-hover:translate-x-0.5 transition-all" />
               </button>
 
-              {/* Option 2: Join WhatsApp Deal Alerts (50%-80% off drops) */}
-              <button
-                type="button"
-                onClick={handleOpenSubscription}
-                className="w-full p-3 rounded-2xl bg-gradient-to-r from-emerald-50/70 to-teal-50/50 hover:from-emerald-100/70 hover:to-teal-100/70 border border-emerald-100 transition-all flex items-center justify-between text-left group cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#0a5c48] text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
-                    <BellRing className="w-5 h-5 text-emerald-300" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-black text-gray-900 group-hover:text-[#0a5c48] transition-colors">
-                        VIP Liquidation Drops
-                      </span>
-                      <span className="text-[9px] font-extrabold uppercase bg-emerald-200/60 text-[#074737] px-1.5 py-0.2 rounded-full">
-                        50-80% Off
-                      </span>
+              {/* Option 2: Join WhatsApp Deal Alerts (50%-80% off drops) - Hidden for now, set SHOW_VIP_DROPS = true to re-enable */}
+              {SHOW_VIP_DROPS && (
+                <button
+                  type="button"
+                  onClick={handleOpenSubscription}
+                  className="w-full p-3 rounded-2xl bg-gradient-to-r from-emerald-50/70 to-teal-50/50 hover:from-emerald-100/70 hover:to-teal-100/70 border border-emerald-100 transition-all flex items-center justify-between text-left group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#0a5c48] text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                      <BellRing className="w-5 h-5 text-emerald-300" />
                     </div>
-                    <div className="text-[11px] text-gray-600">
-                      Receive matched drops directly via WhatsApp
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-black text-gray-900 group-hover:text-[#0a5c48] transition-colors">
+                          VIP Liquidation Drops
+                        </span>
+                        <span className="text-[9px] font-extrabold uppercase bg-emerald-200/60 text-[#074737] px-1.5 py-0.2 rounded-full">
+                          50-80% Off
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-gray-600">
+                        Receive matched drops directly via WhatsApp
+                      </div>
                     </div>
                   </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#0a5c48] group-hover:translate-x-0.5 transition-all" />
-              </button>
+                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#0a5c48] group-hover:translate-x-0.5 transition-all" />
+                </button>
+              )}
             </div>
 
             {/* Bottom Footer Note */}
-            <div className="px-4 py-2.5 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500">
-              <span className="flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-emerald-600" />
+            <div className="px-4 py-2.5 bg-gray-50/80 border-t border-gray-100 flex items-center justify-center text-[10px] text-gray-500">
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                 Verified B2B Liquidation
               </span>
-              <span>Sunday–Thursday</span>
             </div>
           </div>
         )}
@@ -162,7 +168,9 @@ export default function WhatsAppFloatingButton({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0a5c48] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0a5c48]"></span>
               </span>
-              <span className="font-semibold text-gray-900">WhatsApp Desk & Drops</span>
+              <span className="font-semibold text-gray-900">
+                {SHOW_VIP_DROPS ? 'WhatsApp Desk & Drops' : 'Chat with Deals Desk'}
+              </span>
             </div>
           )}
 
@@ -198,11 +206,13 @@ export default function WhatsAppFloatingButton({
         </div>
       </div>
 
-      {/* Embedded Subscription Modal */}
-      <WhatsAppSubscriptionModal
-        isOpen={isSubscriptionModalOpen}
-        onClose={() => setIsSubscriptionModalOpen(false)}
-      />
+      {/* Embedded Subscription Modal (Ready to use when SHOW_VIP_DROPS is enabled) */}
+      {SHOW_VIP_DROPS && (
+        <WhatsAppSubscriptionModal
+          isOpen={isSubscriptionModalOpen}
+          onClose={() => setIsSubscriptionModalOpen(false)}
+        />
+      )}
     </>
   );
 }
