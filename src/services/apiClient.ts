@@ -34,6 +34,10 @@ function resolveRequestUrl(endpoint: string): string {
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
+  raw?: any;
+  total_pages?: number;
+  count?: number;
+  current_page?: number;
   message?: string;
   status?: number;
   fromCache?: boolean;
@@ -309,6 +313,10 @@ async function executeNetworkFetch<T = any>(
       success: true,
       status: response.status,
       data: json.data !== undefined ? json.data : json,
+      raw: json,
+      total_pages: typeof json === 'object' && json !== null ? json.total_pages : undefined,
+      count: typeof json === 'object' && json !== null ? json.count : undefined,
+      current_page: typeof json === 'object' && json !== null ? json.current_page : undefined,
       message: json.message,
     };
   } catch (error: any) {

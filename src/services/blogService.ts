@@ -196,78 +196,88 @@ export function mapApiBlogToBlogPost(apiPost: ApiBlogPost): BlogPost {
   };
 }
 
+export interface BlogsPageResponse {
+  posts: BlogPost[];
+  totalPages: number;
+  totalCount: number;
+  currentPage: number;
+}
+
 /**
- * Fetch all blogs from API: GET /api/blogs/?all=true
- * Real-time dynamic fetch - automatically fetches across all paginated pages
- * to ensure all published blogs (52+) from the backend API are retrieved and displayed.
+ * Fetch a specific page of blogs from API: GET /api/blogs/?page=<page>
  */
-export async function getBlogs(): Promise<BlogPost[]> {
+export async function getBlogsPage(page: number = 1): Promise<BlogsPageResponse> {
   try {
-    const res = await apiClient('/api/blogs/?all=true&limit=100', {
+    const res = await apiClient<any>(`/api/blogs/?page=${page}`, {
       cacheTtl: false,
       revalidate: true,
       persistCache: false,
       silent: true,
     });
 
-    if (!res.success || !res.data) {
-      return [];
+    if (!res.success) {
+      return { posts: [], totalPages: 1, totalCount: 0, currentPage: page };
     }
 
-    const json = res.data;
+    const rawObj = res.raw || {};
+    const totalPages = Number(res.total_pages || rawObj.total_pages || (res.data as any)?.total_pages || 1);
+    const totalCount = Number(res.count || rawObj.count || (res.data as any)?.count || 0);
+    const currentPage = Number(res.current_page || rawObj.current_page || (res.data as any)?.current_page || page);
+
     let rawPosts: ApiBlogPost[] = [];
-
-    if (Array.isArray(json)) {
-      rawPosts = json;
-    } else if (Array.isArray(json.blogs)) {
-      rawPosts = [...json.blogs];
-    } else if (Array.isArray(json.data)) {
-      rawPosts = [...json.data];
-    } else if (json.data?.blogs && Array.isArray(json.data.blogs)) {
-      rawPosts = [...json.data.blogs];
-    } else if (Array.isArray(json.results)) {
-      rawPosts = [...json.results];
+    if (Array.isArray(res.data)) {
+      rawPosts = res.data;
+    } else if (Array.isArray((res.data as any)?.blogs)) {
+      rawPosts = (res.data as any).blogs;
+    } else if (Array.isArray(rawObj.blogs)) {
+      rawPosts = rawObj.blogs;
+    } else if (Array.isArray(rawObj.data)) {
+      rawPosts = rawObj.data;
+    } else if (Array.isArray(rawObj.results)) {
+      rawPosts = rawObj.results;
     }
 
-    // If the backend paginated the response across multiple pages, fetch the remaining pages
-    const totalPages = Number(json.total_pages || 1);
-    if (totalPages > 1 && rawPosts.length < (Number(json.count) || 100)) {
-      const pageRequests = [];
-      for (let p = 2; p <= totalPages; p++) {
-        pageRequests.push(
-          apiClient(`/api/blogs/?page=${p}`, {
-            cacheTtl: false,
-            revalidate: true,
-            persistCache: false,
-            silent: true,
-          })
-        );
-      }
+    return {
+      posts: rawPosts.map(mapApiBlogToBlogPost),
+      totalPages,
+      totalCount: totalCount || (totalPages * 12),
+      currentPage,
+    };
+  } catch (error) {
+    console.warn(`[Blog API] Network error fetching page ${page}:`, error);
+    return { posts: [], totalPages: 1, totalCount: 0, currentPage: page };
+  }
+}
 
+/**
+ * Fetch all blogs from API across all paginated pages.
+ * Real-time dynamic fetch - automatically fetches across all paginated pages
+ * to ensure all published blogs (52+) from the backend API are retrieved.
+ */
+export async function getBlogs(): Promise<BlogPost[]> {
+  try {
+    const firstPage = await getBlogsPage(1);
+    const allPosts: BlogPost[] = [...firstPage.posts];
+
+    if (firstPage.totalPages > 1) {
+      const pageRequests = [];
+      for (let p = 2; p <= firstPage.totalPages; p++) {
+        pageRequests.push(getBlogsPage(p));
+      }
       const pageResponses = await Promise.all(pageRequests);
       for (const pRes of pageResponses) {
-        if (pRes.success && pRes.data) {
-          const pJson = pRes.data;
-          const pItems: ApiBlogPost[] = Array.isArray(pJson)
-            ? pJson
-            : Array.isArray(pJson.blogs)
-            ? pJson.blogs
-            : Array.isArray(pJson.data)
-            ? pJson.data
-            : pJson.results || [];
-          rawPosts.push(...pItems);
-        }
+        allPosts.push(...pRes.posts);
       }
     }
 
-    if (rawPosts.length === 0) {
+    if (allPosts.length === 0) {
       return [];
     }
 
-    // Deduplicate by slug
+    // Deduplicate by slug or id
     const seen = new Set<string>();
-    const uniquePosts: ApiBlogPost[] = [];
-    for (const post of rawPosts) {
+    const uniquePosts: BlogPost[] = [];
+    for (const post of allPosts) {
       const identifier = post.slug || String(post.id);
       if (!seen.has(identifier)) {
         seen.add(identifier);
@@ -275,7 +285,7 @@ export async function getBlogs(): Promise<BlogPost[]> {
       }
     }
 
-    return uniquePosts.map(mapApiBlogToBlogPost);
+    return uniquePosts;
   } catch (error) {
     console.warn('[Blog API] Network error fetching blogs:', error);
     return [];

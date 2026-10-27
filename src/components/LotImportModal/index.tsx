@@ -135,12 +135,9 @@ const step3Schema = z.object({
     .min(1, "Key Brands Included is required")
     .max(300, "Key Brands cannot exceed 300 characters")
     .refine(cyberAttackFilter, "Security Violation: HTML, scripts, or SQL injection payload detected in Key Brands"),
-  askPrice: z.string()
-    .min(1, "Ask Price (Surplus Payout) is required")
-    .refine(val => {
-      const num = parseFloat(val);
-      return !isNaN(num) && num > 0 && num <= 1000000000;
-    }, "Ask Price must be a valid positive amount below 1,000,000,000"),
+  askPrice: z.string().optional(),
+  openForOffers: z.boolean().optional(),
+  saleMethod: z.string().optional(),
   mediaFiles: z.array(z.any())
     .min(1, "At least 1 product or warehouse image/video is required")
     .max(20, "Maximum 20 media files allowed per listing")
@@ -161,21 +158,37 @@ const step3Schema = z.object({
     }, "Total Est. Retail Value must be a valid positive amount below 1,000,000,000"),
   totalRetail: z.number().optional(),
 }).refine(data => {
-  const ask = parseFloat(data.askPrice);
+  if (data.openForOffers) return true;
+  return Boolean(data.saleMethod && data.saleMethod.trim().length > 0);
+}, {
+  message: "Sale Method is required",
+  path: ["saleMethod"]
+}).refine(data => {
+  if (data.openForOffers) return true;
+  if (!data.askPrice || data.askPrice.trim() === '') return false;
+  const num = parseFloat(data.askPrice);
+  return !isNaN(num) && num > 0 && num <= 1000000000;
+}, {
+  message: "Liquidation Price (Surplus Payout) is required and must be a valid positive amount below 1,000,000,000",
+  path: ["askPrice"]
+}).refine(data => {
+  if (data.openForOffers) return true;
+  const ask = parseFloat(data.askPrice || '0');
   const retail = parseFloat(data.msrp || String(data.totalRetail || 0));
   if (isNaN(ask) || isNaN(retail) || retail <= 0) return true;
   return ask < retail;
 }, {
-  message: "Ask Price must be strictly below the Total Est. Retail Value (MSRP)",
+  message: "Liquidation Price must be strictly below the Total Est. Retail Value (MSRP)",
   path: ["askPrice"]
 }).refine(data => {
-  const ask = parseFloat(data.askPrice);
+  if (data.openForOffers) return true;
+  const ask = parseFloat(data.askPrice || '0');
   const retail = parseFloat(data.msrp || String(data.totalRetail || 0));
   if (isNaN(ask) || isNaN(retail) || retail <= 0) return true;
   const discountPercent = ((retail - ask) / retail) * 100;
   return discountPercent >= 59.999;
 }, {
-  message: "Ask Price must have at least a 60% discount off Total Est. Retail Value (MSRP)",
+  message: "Liquidation Price must have at least a 60% discount off Total Est. Retail Value (MSRP)",
   path: ["askPrice"]
 });
 
@@ -254,7 +267,7 @@ const shippingTermsOptions = [
 ];
 
 const saleMethodOptions = [
-  { value: 'offer', label: 'Accept Offers' },
+  { value: 'offer', label: 'Negotiable' },
   { value: 'fixed', label: 'Fixed Price' }
 ];
 
@@ -330,12 +343,12 @@ const FastInput = React.memo(React.forwardRef<HTMLInputElement, FastInputProps>(
   const isFocusedRef = useRef(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sync value from parent ONLY when input is not actively focused by the user
+  // Sync value from parent ONLY when input is not actively focused by the user or when disabled
   useEffect(() => {
-    if (!isFocusedRef.current) {
+    if (!isFocusedRef.current || props.disabled) {
       setLocalVal(String(value ?? ''));
     }
-  }, [value]);
+  }, [value, props.disabled]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
@@ -524,8 +537,9 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
     currency: 'USD - US Dollar',
     msrp: '',
     askPrice: '',
+    openForOffers: false,
     excludedCountries: [] as string[],
-    saleMethod: 'offer',
+    saleMethod: '',
     allowCounterOffers: true,
     certificate: false,
     certificateDocument: null as File | null
@@ -628,6 +642,22 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
     const ask = parseFloat(formData.askPrice);
     const retail = parseFloat(formData.msrp || String(totalRetail || 0));
     const currSymbol = formData.currency?.split(' ')[0] || 'USD';
+
+    if (formData.openForOffers) {
+      return {
+        hasMsrp: !isNaN(retail) && retail > 0,
+        hasAsk: false,
+        discountPercent: 0,
+        maxAllowedPrice: !isNaN(retail) && retail > 0 ? (retail * 0.40).toFixed(2) : '0.00',
+        publicPrice: 'Negotiable',
+        publicMarkup: '',
+        currSymbol,
+        isBelowRetail: true,
+        meetsMinDiscount: true,
+        error: '',
+      };
+    }
+
     const publicPrice = !isNaN(ask) && ask > 0 ? (ask * 1.10).toFixed(2) : '';
     const publicMarkup = !isNaN(ask) && ask > 0 ? (ask * 0.10).toFixed(2) : '';
 
@@ -687,7 +717,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       meetsMinDiscount,
       error,
     };
-  }, [formData.askPrice, formData.msrp, formData.currency, totalRetail]);
+  }, [formData.askPrice, formData.msrp, formData.currency, formData.openForOffers, totalRetail]);
 
   useEffect(() => {
     if (session?.user) {
@@ -1087,7 +1117,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
             distinctSkus: String(parsedItems.length),
             manualUnits: String(totalQtySum),
             msrp: totalRetailSum > 0 ? String(totalRetailSum.toFixed(2)) : prev.msrp,
-            askPrice: initialAsk || (totalAskSum > 0 ? String(totalAskSum.toFixed(2)) : prev.askPrice),
+            askPrice: prev.openForOffers ? '' : (initialAsk || (totalAskSum > 0 ? String(totalAskSum.toFixed(2)) : prev.askPrice)),
             keyBrands: Array.from(brandSet).join(', ') || prev.keyBrands
           }));
 
@@ -1357,21 +1387,23 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
 
       // --- 22-26. Pricing & Sales Method ---
       const effectiveRetail = Number(formData.msrp) || totalRetail || 0;
-      const discountVal = effectiveRetail > 0 && Number(formData.askPrice) > 0 
-        ? Math.round(((effectiveRetail - Number(formData.askPrice)) / effectiveRetail) * 100)
+      const askVal = formData.openForOffers ? 0 : (Number(formData.askPrice) || 0);
+      const discountVal = !formData.openForOffers && effectiveRetail > 0 && askVal > 0 
+        ? Math.round(((effectiveRetail - askVal) / effectiveRetail) * 100)
         : 0;
       data.append('currency', sanitizeInput(String(formData.currency || 'USD')));
       data.append('total_est_retail_value_msrp', String(effectiveRetail));
       data.append('total_retail', String(effectiveRetail));
       data.append('msrp', String(effectiveRetail));
-      data.append('ask_price_surplus_payout', String(formData.askPrice || 0));
-      data.append('liquidation_price', String(formData.askPrice || 0));
-      data.append('liquidating_price', String(formData.askPrice || 0));
-      data.append('asking_price', String(formData.askPrice || 0));
-      data.append('price', String(formData.askPrice || 0));
-      data.append('offer', discountVal > 0 ? `${discountVal}% Off MSRP` : '');
+      data.append('open_for_offers', formData.openForOffers ? 'true' : 'false');
+      data.append('ask_price_surplus_payout', String(askVal));
+      data.append('liquidation_price', String(askVal));
+      data.append('liquidating_price', String(askVal));
+      data.append('asking_price', String(askVal));
+      data.append('price', String(askVal));
+      data.append('offer', formData.openForOffers ? 'Open for Offers' : (discountVal > 0 ? `${discountVal}% Off MSRP` : ''));
       data.append('excluded_export_countries', JSON.stringify(formData.excludedCountries || []));
-      data.append('sale_method', sanitizeInput(String(formData.saleMethod || 'offer')));
+      data.append('sale_method', sanitizeInput(String(formData.openForOffers ? 'offer' : (formData.saleMethod || 'offer'))));
 
       // --- 27. Manifest Data ---
       if (manifestFile) {
@@ -1450,7 +1482,9 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
               category: formData.category || 'Wholesale Lots & Batches',
               units: parseInt(formData.manualUnits || String(totalUnits), 10) || totalUnits || 1,
               distinctSkus: parseInt(formData.distinctSkus || String(manifestData.length), 10) || manifestData.length || 1,
-              liquidatingPrice: parseFloat(formData.askPrice) || 0,
+              liquidatingPrice: formData.openForOffers ? 0 : (parseFloat(formData.askPrice) || 0),
+              openForOffers: formData.openForOffers,
+              saleMethod: formData.openForOffers ? 'offer' : formData.saleMethod,
               msrp: parseFloat(formData.msrp) || 0,
               currency: 'USD',
               condition: formData.condition || 'Factory Sealed Wholesale',
@@ -2300,10 +2334,51 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
 
               {/* Pricing & Terms */}
               <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <h4 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 mb-6 flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-[#0a5c48]" /> Pricing & Terms
+                <h4 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 mb-5 flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-[#0a5c48]" /> Pricing & Terms
+                  </span>
                 </h4>
-                
+
+                {/* Open for offers Checkbox */}
+                <div className="p-4 bg-emerald-50/60 border border-emerald-200/80 rounded-xl mb-5 flex items-center justify-between transition-all">
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      id="openForOffersCheckbox"
+                      checked={formData.openForOffers}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        handleInputChange('openForOffers', checked);
+                        if (checked) {
+                          handleInputChange('askPrice', '');
+                          handleInputChange('saleMethod', 'offer');
+                          setFormErrors(prev => {
+                            const copy = { ...prev };
+                            delete copy.askPrice;
+                            delete copy.saleMethod;
+                            return copy;
+                          });
+                        } else {
+                          handleInputChange('saleMethod', '');
+                        }
+                      }}
+                      className="w-5 h-5 text-[#0a5c48] border-gray-300 rounded focus:ring-[#0a5c48] cursor-pointer accent-[#0a5c48]"
+                    />
+                    <div>
+                      <span className="text-sm font-bold text-gray-900 block">Open for offers</span>
+                      <span className="text-xs text-gray-500 block">
+                        Allow buyers to propose custom offers (Liquidation price not required)
+                      </span>
+                    </div>
+                  </label>
+                  {formData.openForOffers && (
+                    <span className="text-xs font-bold text-[#0a5c48] bg-[#e0f0e9] px-3 py-1 rounded-full shrink-0">
+                      Offers Enabled
+                    </span>
+                  )}
+                </div>
+
                 <div className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                     <div>
@@ -2337,21 +2412,33 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Liquidation Price (Surplus Payout) <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Liquidation Price (Surplus Payout) {!formData.openForOffers && <span className="text-red-500">*</span>}
+                      </label>
                       <div className="relative flex items-center">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-medium ${formData.openForOffers ? 'text-gray-400' : 'text-gray-500'}`}>
                           {pricingAnalysis.currSymbol === 'AED' ? 'AED' : pricingAnalysis.currSymbol === 'SAR' ? 'SAR' : '$'}
                         </span>
                         <FastInput 
                           type="number" 
                           step="0.01"
                           min="0.01"
-                          className={`w-full bg-white border border-gray-300 rounded-lg pl-10 ${pricingAnalysis.hasMsrp ? 'pr-32' : 'pr-4'} py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-shadow shadow-sm font-medium placeholder-gray-400`}
-                          placeholder="0.00" 
-                          value={formData.askPrice}
-                          onValueChange={val => handleInputChange('askPrice', val)}
+                          disabled={formData.openForOffers}
+                          readOnly={formData.openForOffers}
+                          className={`w-full rounded-lg pl-10 ${(!formData.openForOffers && pricingAnalysis.hasMsrp) ? 'pr-32' : 'pr-4'} py-2.5 transition-shadow shadow-sm font-medium ${
+                            formData.openForOffers 
+                              ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed select-none' 
+                              : 'bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent placeholder-gray-400'
+                          }`}
+                          placeholder={formData.openForOffers ? "Not Applicable" : "0.00"} 
+                          value={formData.openForOffers ? '' : formData.askPrice}
+                          onValueChange={val => {
+                            if (!formData.openForOffers) {
+                              handleInputChange('askPrice', val);
+                            }
+                          }}
                         />
-                        {pricingAnalysis.hasMsrp && (
+                        {!formData.openForOffers && pricingAnalysis.hasMsrp && (
                           <button
                             type="button"
                             onClick={() => handleInputChange('askPrice', pricingAnalysis.maxAllowedPrice)}
@@ -2362,12 +2449,12 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                           </button>
                         )}
                       </div>
-                      {renderError('askPrice')}
+                      {!formData.openForOffers && renderError('askPrice')}
                     </div>
                   </div>
 
                   {/* Real-time Discount & Liquidation Verification Pill */}
-                  {pricingAnalysis.hasMsrp && pricingAnalysis.hasAsk && (
+                  {!formData.openForOffers && pricingAnalysis.hasMsrp && pricingAnalysis.hasAsk && (
                     <div>
                       {pricingAnalysis.meetsMinDiscount ? (
                         <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs sm:text-sm font-semibold">
@@ -2395,7 +2482,9 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                         +10% charge added when listing to public
                       </span>
                       <span className="text-blue-700 text-xs leading-relaxed block">
-                        {pricingAnalysis.hasAsk ? (
+                        {formData.openForOffers ? (
+                          <>This lot is open for offers. A standard +10% marketplace charge will be added to the final agreed offer price for public buyers.</>
+                        ) : pricingAnalysis.hasAsk ? (
                           <>
                             Your surplus payout price is <strong>{pricingAnalysis.currSymbol} {parseFloat(formData.askPrice).toFixed(2)}</strong>.
                             When published to public buyers, it will be listed at <strong>{pricingAnalysis.currSymbol} {pricingAnalysis.publicPrice}</strong> (+10% charge added to public buyers).
@@ -2420,16 +2509,22 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Sale Method</label>
-                    <Select
-                      options={saleMethodOptions}
-                      styles={customSelectStyles}
-                      value={saleMethodOptions.find(opt => opt.value === formData.saleMethod) || null}
-                      onChange={(option: any) => handleInputChange('saleMethod', option ? option.value : '')}
-                      placeholder="Select Sale Method"
-                    />
-                  </div>
+                  {/* Sale Method (Hidden when open for offers is checked; required when unchecked) */}
+                  {!formData.openForOffers && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Sale Method <span className="text-red-500">*</span>
+                      </label>
+                      <Select
+                        options={saleMethodOptions}
+                        styles={customSelectStyles}
+                        value={saleMethodOptions.find(opt => opt.value === formData.saleMethod) || null}
+                        onChange={(option: any) => handleInputChange('saleMethod', option ? option.value : '')}
+                        placeholder="Select Sale Method"
+                      />
+                      {renderError('saleMethod')}
+                    </div>
+                  )}
                 </div>
               </section>
 
@@ -2671,12 +2766,30 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600 font-medium">Liquidation Price:</span>
-                          <span className="font-bold text-[#0a5c48] text-sm">{pricingAnalysis.currSymbol} {parseFloat(formData.askPrice || '0').toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                          <span className="font-bold text-[#0a5c48] text-sm">
+                            {formData.openForOffers 
+                              ? 'Open for Offers (Negotiable)' 
+                              : `${pricingAnalysis.currSymbol} ${parseFloat(formData.askPrice || '0').toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+                          </span>
                         </div>
-                        {pricingAnalysis.hasAsk && (
+                        {!formData.openForOffers && pricingAnalysis.hasAsk && (
                           <div className="flex justify-between items-center text-[11px] text-emerald-800 pt-1.5 border-t border-emerald-200/80 font-semibold">
                             <span>Liquidation Discount: {pricingAnalysis.discountPercent}% OFF MSRP</span>
                             <span>Price: {pricingAnalysis.currSymbol} {pricingAnalysis.publicPrice}</span>
+                          </div>
+                        )}
+                        {!formData.openForOffers && (
+                          <div className="flex justify-between items-center text-[11px] text-gray-600 pt-1 border-t border-emerald-200/40">
+                            <span className="font-medium">Sale Method:</span>
+                            <span className="font-bold text-gray-900">
+                              {saleMethodOptions.find(o => o.value === formData.saleMethod)?.label || formData.saleMethod || 'N/A'}
+                            </span>
+                          </div>
+                        )}
+                        {formData.openForOffers && (
+                          <div className="flex justify-between items-center text-[11px] text-emerald-800 pt-1 border-t border-emerald-200/40 font-semibold">
+                            <span>Terms:</span>
+                            <span>Open for Offers (Negotiable)</span>
                           </div>
                         )}
                       </div>

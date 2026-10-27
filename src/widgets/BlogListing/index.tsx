@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, Variants } from '../../lib/motion';
-import { Search, Clock, ArrowRight, Sparkles, Tag, ChevronRight, BookOpen } from 'lucide-react';
+import { Search, Clock, ArrowRight, Sparkles, Tag, ChevronRight, BookOpen, ChevronDown, Loader2 } from 'lucide-react';
 import { BlogPost } from '../../data/blogData';
-import { getBlogs } from '../../services/blogService';
+import { getBlogs, getBlogsPage } from '../../services/blogService';
 
 interface BlogListingProps {
   initialPosts?: BlogPost[];
@@ -29,19 +29,30 @@ const itemVariants: Variants = {
   }
 };
 
+const BATCH_SIZE = 9;
+
 export default function BlogListing({ initialPosts }: BlogListingProps) {
   const [posts, setPosts] = useState<BlogPost[]>(initialPosts || []);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(52);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(5);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (initialPosts && initialPosts.length > 0) {
       setPosts(initialPosts);
+      if (initialPosts.length > BATCH_SIZE) {
+        setTotalCount(initialPosts.length);
+      }
     }
     // Always fetch fresh full list from API to ensure all 52 blogs are present
     getBlogs().then((fetched) => {
       if (fetched && fetched.length > 0) {
         setPosts(fetched);
+        setTotalCount(fetched.length);
       }
     });
   }, [initialPosts]);
@@ -70,6 +81,52 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
       return matchesCategory && matchesSearch;
     });
   }, [posts, selectedCategory, searchQuery]);
+
+  const displayedPosts = useMemo(() => {
+    return filteredPosts.slice(0, visibleCount);
+  }, [filteredPosts, visibleCount]);
+
+  const hasMore = visibleCount < filteredPosts.length || (posts.length < totalCount && currentPage < totalPages);
+
+  const handleLoadMore = async () => {
+    if (visibleCount < filteredPosts.length) {
+      setVisibleCount(prev => prev + BATCH_SIZE);
+      return;
+    }
+
+    if (posts.length < totalCount && currentPage < totalPages) {
+      setIsLoadingMore(true);
+      try {
+        const nextPage = Math.floor(posts.length / 12) + 1;
+        const res = await getBlogsPage(nextPage);
+        if (res.posts.length > 0) {
+          setPosts(prev => {
+            const seen = new Set(prev.map(p => p.slug || p.id));
+            const fresh = res.posts.filter(p => !seen.has(p.slug || p.id));
+            return [...prev, ...fresh];
+          });
+          setCurrentPage(res.currentPage);
+          setTotalPages(res.totalPages);
+          setTotalCount(res.totalCount);
+          setVisibleCount(prev => prev + BATCH_SIZE);
+        }
+      } catch (err) {
+        console.warn("Failed to load more blogs:", err);
+      } finally {
+        setIsLoadingMore(false);
+      }
+    }
+  };
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setVisibleCount(BATCH_SIZE);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setVisibleCount(BATCH_SIZE);
+  };
 
   return (
     <section className="w-full py-16 bg-gray-50/50">
@@ -166,11 +223,11 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
             {categories.map(category => (
               <button
                 key={category}
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => handleCategorySelect(category)}
                 className={`px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                   selectedCategory === category
                     ? "bg-[#0a5c48] text-white shadow-sm"
-                    : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-100/70"
+                    : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-100/70 cursor-pointer"
                 }`}
               >
                 {category}
@@ -185,7 +242,7 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
               type="text" 
               placeholder="Search articles & topics..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={e => handleSearchChange(e.target.value)}
               className="w-full bg-white border border-gray-200 rounded-full pl-10 pr-4 py-2.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent transition-all shadow-sm"
             />
           </div>
@@ -198,98 +255,124 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
             <h3 className="text-xl font-bold text-gray-900 mb-2">No Articles Found</h3>
             <p className="text-sm text-gray-500 mb-6">We couldn't find any articles matching "{searchQuery}". Try searching for another topic or resetting filters.</p>
             <button 
-              onClick={() => { setSelectedCategory("All"); setSearchQuery(""); }}
-              className="px-6 py-2.5 bg-[#0a5c48] text-white rounded-full text-xs font-semibold hover:bg-[#084838] transition-colors"
+              onClick={() => { setSelectedCategory("All"); setSearchQuery(""); setVisibleCount(BATCH_SIZE); }}
+              className="px-6 py-2.5 bg-[#0a5c48] text-white rounded-full text-xs font-semibold hover:bg-[#084838] transition-colors cursor-pointer"
             >
               Reset Filters
             </button>
           </div>
         ) : (
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20"
-          >
-            {filteredPosts.map(post => (
-              <motion.article 
-                key={post.id}
-                variants={itemVariants}
-                className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between group"
-              >
-                <div>
-                  {/* Card Image */}
-                  <div className="relative h-48 sm:h-52 overflow-hidden bg-gray-100 flex items-center justify-center">
-                    {post.coverImage ? (
-                      <Image 
-                        src={post.coverImage} 
-                        alt={post.title}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-[#0a5c48]/10 via-emerald-50 to-gray-100 flex items-center justify-center text-[#0a5c48]">
-                        <BookOpen className="w-10 h-10 opacity-30" />
-                      </div>
-                    )}
-                    <span className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm text-[#0a5c48] text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
-                      {post.category}
-                    </span>
-                  </div>
-
-                  {/* Card Body */}
-                  <div className="p-5 sm:p-6 pb-2">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 font-medium mb-2">
-                      <span>{post.publishedAt}</span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1 text-gray-500">
-                        <Clock className="w-3.5 h-3.5" /> {post.readTime}
+          <>
+            <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12"
+            >
+              {displayedPosts.map(post => (
+                <motion.article 
+                  key={post.id}
+                  variants={itemVariants}
+                  className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between group"
+                >
+                  <div>
+                    {/* Card Image */}
+                    <div className="relative h-48 sm:h-52 overflow-hidden bg-gray-100 flex items-center justify-center">
+                      {post.coverImage ? (
+                        <Image 
+                          src={post.coverImage} 
+                          alt={post.title}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-[#0a5c48]/10 via-emerald-50 to-gray-100 flex items-center justify-center text-[#0a5c48]">
+                          <BookOpen className="w-10 h-10 opacity-30" />
+                        </div>
+                      )}
+                      <span className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm text-[#0a5c48] text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                        {post.category}
                       </span>
                     </div>
 
-                    <Link href={`/blog/${post.slug}`}>
-                      <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-snug mb-2 group-hover:text-[#0a5c48] transition-colors line-clamp-2">
-                        {post.title}
-                      </h3>
-                    </Link>
-
-                    <p className="text-xs sm:text-sm text-gray-600 leading-relaxed line-clamp-3">
-                      {post.excerpt}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Card Footer */}
-                <div className="px-5 sm:px-6 py-3.5 border-t border-gray-100 flex items-center justify-between mt-auto">
-                  <div className="flex items-center gap-2.5">
-                    {post.author.avatar ? (
-                      <Image 
-                        src={post.author.avatar} 
-                        alt={post.author.name}
-                        width={32}
-                        height={32}
-                        sizes="32px"
-                        className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full object-cover border border-gray-200 shrink-0 aspect-square" 
-                      />
-                    ) : (
-                      <div className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-[#0a5c48]/10 text-[#0a5c48] font-bold text-xs flex items-center justify-center shrink-0 border border-[#0a5c48]/20">
-                        {post.author.name?.[0]?.toUpperCase() || 'S'}
+                    {/* Card Body */}
+                    <div className="p-5 sm:p-6 pb-2">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 font-medium mb-2">
+                        <span>{post.publishedAt}</span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1 text-gray-500">
+                          <Clock className="w-3.5 h-3.5" /> {post.readTime}
+                        </span>
                       </div>
-                    )}
-                    <span className="text-xs font-semibold text-gray-800">{post.author.name}</span>
+
+                      <Link href={`/blog/${post.slug}`}>
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900 leading-snug mb-2 group-hover:text-[#0a5c48] transition-colors line-clamp-2">
+                          {post.title}
+                        </h3>
+                      </Link>
+
+                      <p className="text-xs sm:text-sm text-gray-600 leading-relaxed line-clamp-3">
+                        {post.excerpt}
+                      </p>
+                    </div>
                   </div>
 
-                  <Link 
-                    href={`/blog/${post.slug}`}
-                    className="text-xs font-bold text-[#0a5c48] hover:underline inline-flex items-center gap-1"
-                  >
-                    Read <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </motion.article>
-            ))}
-          </motion.div>
+                  {/* Card Footer */}
+                  <div className="px-5 sm:px-6 py-3.5 border-t border-gray-100 flex items-center justify-between mt-auto">
+                    <div className="flex items-center gap-2.5">
+                      {post.author.avatar ? (
+                        <Image 
+                          src={post.author.avatar} 
+                          alt={post.author.name}
+                          width={32}
+                          height={32}
+                          sizes="32px"
+                          className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full object-cover border border-gray-200 shrink-0 aspect-square" 
+                        />
+                      ) : (
+                        <div className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-[#0a5c48]/10 text-[#0a5c48] font-bold text-xs flex items-center justify-center shrink-0 border border-[#0a5c48]/20">
+                          {post.author.name?.[0]?.toUpperCase() || 'S'}
+                        </div>
+                      )}
+                      <span className="text-xs font-semibold text-gray-800">{post.author.name}</span>
+                    </div>
+
+                    <Link 
+                      href={`/blog/${post.slug}`}
+                      className="text-xs font-bold text-[#0a5c48] hover:underline inline-flex items-center gap-1"
+                    >
+                      Read <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </motion.article>
+              ))}
+            </motion.div>
+
+            {/* Load More Section */}
+            {hasMore && (
+              <div className="flex items-center justify-center mt-6 mb-20">
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
+                  className="inline-flex items-center justify-center gap-2.5 px-9 py-3.5 bg-white hover:bg-[#0a5c48] text-[#0a5c48] hover:text-white border-2 border-[#0a5c48] font-bold text-sm rounded-full transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-[#0a5c48] group-hover:text-white" />
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Load More</span>
+                      <ChevronDown className="w-4 h-4 text-[#0a5c48] group-hover:text-white group-hover:translate-y-0.5 transition-transform" />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Newsletter CTA Box */}
