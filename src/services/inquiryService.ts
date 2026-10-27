@@ -99,8 +99,6 @@ export const inquiryService = {
 Company: ${payload.company_name}
 Contact Person: ${payload.contact_person}
 Destination Port / Location: ${payload.destination_port || 'N/A'}, ${payload.country || ''}
-Incoterm: ${payload.incoterm || 'EXW'}
-Payment Term: ${payload.payment_method || 'Escrow'}
 Total Units: ${payload.total_units}
 Estimated Total Value: $${payload.estimated_value} (${payload.currency})
 

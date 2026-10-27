@@ -2200,12 +2200,6 @@ export default function UserProfileWidget() {
                               <span>{itemsCount} item{itemsCount > 1 ? 's' : ''}</span>
                               <span>&bull;</span>
                               <span>{rfq.total_units.toLocaleString()} total units</span>
-                              {rfq.incoterm && (
-                                <>
-                                  <span>&bull;</span>
-                                  <span className="font-medium text-gray-600">{rfq.incoterm}</span>
-                                </>
-                              )}
                             </p>
                           </div>
 
@@ -2948,22 +2942,14 @@ export default function UserProfileWidget() {
             </div>
 
             {/* Meta Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-5 p-4 rounded-2xl bg-gray-50 border border-gray-100 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-5 p-4 rounded-2xl bg-gray-50 border border-gray-100 text-xs">
               <div>
                 <span className="text-gray-400 block font-medium">Contact Person</span>
                 <span className="font-semibold text-gray-900">{selectedRfqDetail.contact_person || fullName || 'N/A'}</span>
               </div>
               <div>
                 <span className="text-gray-400 block font-medium">Destination</span>
-                <span className="font-semibold text-gray-900">{selectedRfqDetail.destination_port || selectedRfqDetail.country || 'EXW / Direct'}</span>
-              </div>
-              <div>
-                <span className="text-gray-400 block font-medium">Incoterm</span>
-                <span className="font-semibold text-gray-900">{selectedRfqDetail.incoterm || 'EXW'}</span>
-              </div>
-              <div>
-                <span className="text-gray-400 block font-medium">Payment Term</span>
-                <span className="font-semibold text-gray-900">{selectedRfqDetail.payment_method || 'Escrow'}</span>
+                <span className="font-semibold text-gray-900">{selectedRfqDetail.destination_port || selectedRfqDetail.country || 'Direct Delivery'}</span>
               </div>
             </div>
 

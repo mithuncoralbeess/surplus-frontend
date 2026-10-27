@@ -17,18 +17,7 @@ import { authService } from '../../services/authService';
 import AuthModal from '../../components/AuthModal';
 import { scrollToTop } from '../../lib/scroll';
 
-const INCOTERMS = [
-  { value: 'EXW', label: 'EXW - Ex Works (Buyer arranges all transport)' },
-  { value: 'FOB', label: 'FOB - Free on Board (Loaded onto vessel)' },
-  { value: 'CIF', label: 'CIF - Cost, Insurance & Freight (To destination port)' },
-  { value: 'DDP', label: 'DDP - Delivered Duty Paid (To your warehouse)' },
-];
 
-const PAYMENT_METHODS = [
-  { value: 'Escrow', label: 'Surplus Escrow Protected (Recommended for high volume)' },
-  { value: 'WireTransfer', label: 'Direct Bank Wire (T/T Swift)' },
-  { value: 'LetterOfCredit', label: 'Irrevocable Commercial Letter of Credit (L/C)' },
-];
 
 const matchCountry = (locationStr?: string): string | null => {
   if (!locationStr) return null;
@@ -135,8 +124,6 @@ export default function CartWidget() {
   const [phone, setPhone] = useState('');
   const [country, setCountry] = useState('United Arab Emirates');
   const [destinationPort, setDestinationPort] = useState('');
-  const [incoterm, setIncoterm] = useState('CIF');
-  const [paymentMethod, setPaymentMethod] = useState('Escrow');
   const [additionalNotes, setAdditionalNotes] = useState('');
 
   // Track if user has manually edited any fields so we don't overwrite manual inputs
@@ -248,8 +235,6 @@ export default function CartWidget() {
         country,
         business_location: userObj.business_location || userObj.location || destinationPort || '',
         destination_port: destinationPort,
-        incoterm,
-        payment_method: paymentMethod,
         additional_notes: additionalNotes,
         items: items.map(item => ({
           id: item.id,
@@ -292,8 +277,6 @@ export default function CartWidget() {
             phone,
             country,
             destination_port: destinationPort,
-            incoterm,
-            payment_method: paymentMethod,
             additional_notes: additionalNotes,
             total_units: totalUnits,
             estimated_value: totalPrice,
@@ -898,39 +881,7 @@ export default function CartWidget() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Preferred Delivery Term (Incoterm)
-                </label>
-                <select
-                  value={incoterm}
-                  onChange={(e) => setIncoterm(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-[#0f7a61]"
-                >
-                  {INCOTERMS.map((term) => (
-                    <option key={term.value} value={term.value}>
-                      {term.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Preferred Settlement Method
-                </label>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-[#0f7a61]"
-                >
-                  {PAYMENT_METHODS.map((pm) => (
-                    <option key={pm.value} value={pm.value}>
-                      {pm.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
