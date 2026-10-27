@@ -22,6 +22,9 @@ export interface LotCardProps {
   pallets?: number;
   msrp?: number;
   price?: number;
+  liquidation_price?: number;
+  liquidationPrice?: number;
+  liquidating_price?: number;
   originalPrice?: number;
   offer?: string;
   currency?: string;
@@ -30,6 +33,14 @@ export interface LotCardProps {
   manifest_items?: any[];
   isLoading?: boolean;
   onViewManifest?: () => void;
+  open_for_offers?: boolean | string;
+  openForOffers?: boolean | string;
+  is_open_for_offers?: boolean | string;
+  sale_method?: string;
+  saleMethod?: string;
+  sales_method?: string;
+  salesMethod?: string;
+  [key: string]: any;
 }
 
 const LotCard: React.FC<LotCardProps> = ({
@@ -41,6 +52,9 @@ const LotCard: React.FC<LotCardProps> = ({
   pallets = 1,
   msrp = 0,
   price = 0,
+  liquidation_price,
+  liquidationPrice,
+  liquidating_price,
   originalPrice,
   offer,
   currency,
@@ -48,6 +62,14 @@ const LotCard: React.FC<LotCardProps> = ({
   category = "Surplus Lot",
   isLoading = false,
   onViewManifest,
+  open_for_offers,
+  openForOffers,
+  is_open_for_offers,
+  sale_method,
+  saleMethod,
+  sales_method,
+  salesMethod,
+  ...rest
 }) => {
   const { formatPrice, convertToUsd } = useCurrency();
   const { addToCart, isInCart } = useCart();
@@ -55,9 +77,41 @@ const LotCard: React.FC<LotCardProps> = ({
   const [imageError, setImageError] = useState(false);
   const inCart = id ? isInCart(id) : false;
 
+  const isOpenForOffers = Boolean(
+    open_for_offers === true ||
+    open_for_offers === 'true' ||
+    openForOffers === true ||
+    openForOffers === 'true' ||
+    is_open_for_offers === true ||
+    is_open_for_offers === 'true' ||
+    (typeof offer === 'string' && /open\s*for\s*offer/i.test(offer)) ||
+    (typeof rest?.raw_data === 'object' && (rest?.raw_data?.open_for_offers === true || rest?.raw_data?.open_for_offers === 'true'))
+  );
+
+  const rawSaleMethod = String(
+    sale_method ||
+    saleMethod ||
+    sales_method ||
+    salesMethod ||
+    rest?.raw_data?.sale_method ||
+    rest?.raw_data?.sales_method ||
+    ''
+  ).trim().toLowerCase();
+
+  const isNegotiable =
+    rawSaleMethod === 'negotiable' ||
+    rawSaleMethod === 'offer' ||
+    rawSaleMethod.includes('negotiat') ||
+    rawSaleMethod.includes('offer');
+
+  const effectiveMsrp = Number(msrp || originalPrice || 0);
+  const effectivePrice = Number(price || liquidation_price || liquidationPrice || liquidating_price || 0);
+  const displayOnlyPrice = effectiveMsrp > 0 ? effectiveMsrp : effectivePrice;
+
   const handleAddLot = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    const cartPrice = isOpenForOffers ? displayOnlyPrice : effectivePrice;
     addToCart({
       id: String(id || title),
       productId: id,
@@ -65,7 +119,7 @@ const LotCard: React.FC<LotCardProps> = ({
       title,
       category: category || 'Surplus Lot',
       quantity: 1,
-      unitPrice: convertToUsd(price, currency),
+      unitPrice: convertToUsd(cartPrice, currency),
       image,
       moq: 1,
       estQty: units || 1,
@@ -111,12 +165,6 @@ const LotCard: React.FC<LotCardProps> = ({
     );
   }
 
-  const effectiveMsrp = msrp || originalPrice || 0;
-  const effectivePrice = price || 0;
-  const discountPercent = effectiveMsrp > effectivePrice && effectiveMsrp > 0
-    ? Math.round(((effectiveMsrp - effectivePrice) / effectiveMsrp) * 100)
-    : 0;
-
   const conditionText = typeof condition === 'object' && condition !== null
     ? (condition as any).name || (condition as any).title || ''
     : String(condition || '');
@@ -133,28 +181,6 @@ const LotCard: React.FC<LotCardProps> = ({
 
   const lotIdText = String(id || 'LOT');
   const lotLink = createLotUrl(title || lotIdText, lotIdText);
-
-  const formatDropBadge = (raw?: string) => {
-    if (!raw) return null;
-    const str = raw.trim();
-    if (/open\s*to/i.test(str) || /droper/i.test(str)) {
-      return null;
-    }
-    const matchPct = str.match(/(\d+(?:\.\d+)?)\s*%/);
-    if (matchPct) {
-      return `${Math.round(parseFloat(matchPct[1]))}% DROP`;
-    }
-    const num = parseFloat(str);
-    if (!isNaN(num) && num > 0 && !str.includes(' ')) {
-      return `${Math.round(num)}% DROP`;
-    }
-    if (str.toLowerCase().includes('drop')) {
-      return str;
-    }
-    return null;
-  };
-
-  const displayDrop = formatDropBadge(offer) || (discountPercent > 0 ? `${discountPercent}% DROP` : null);
 
   return (
     <div className="group relative flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full">
@@ -190,11 +216,21 @@ const LotCard: React.FC<LotCardProps> = ({
           <span className="text-[10px] font-bold text-[#0f7a61] tracking-wide uppercase">Wholesale Lot</span>
         </div>
 
-        {/* Drop Badge */}
-        {displayDrop && (
-          <div className="absolute top-3 right-3 bg-rose-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1 z-10">
+        {/* Status Badge: Open for Offers / Open for Negotiation / Fixed Price */}
+        {isOpenForOffers ? (
+          <div className="absolute top-3 right-3 bg-emerald-600 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1 z-10">
             <Tag className="w-3 h-3" />
-            <span>{displayDrop}</span>
+            <span>Open for Offers</span>
+          </div>
+        ) : isNegotiable ? (
+          <div className="absolute top-3 right-3 bg-amber-500 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1 z-10">
+            <Tag className="w-3 h-3" />
+            <span>Open for Negotiation</span>
+          </div>
+        ) : (
+          <div className="absolute top-3 right-3 bg-slate-700 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1 z-10">
+            <Tag className="w-3 h-3" />
+            <span>Fixed Price</span>
           </div>
         )}
       </Link>
@@ -252,13 +288,21 @@ const LotCard: React.FC<LotCardProps> = ({
         {/* Price Row */}
         <div className="mb-4">
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span suppressHydrationWarning className="text-[18px] xl:text-[22px] font-extrabold text-[#0f7a61] leading-none">
-              {formatPrice(effectivePrice, currency)}
-            </span>
-            {effectiveMsrp > effectivePrice && (
-              <span suppressHydrationWarning className="text-md text-gray-700 line-through font-medium">
-                {formatPrice(effectiveMsrp, currency)}
+            {isOpenForOffers ? (
+              <span suppressHydrationWarning className="text-[18px] xl:text-[22px] font-extrabold text-[#0f7a61] leading-none">
+                {formatPrice(displayOnlyPrice, currency)}
               </span>
+            ) : (
+              <>
+                <span suppressHydrationWarning className="text-[18px] xl:text-[22px] font-extrabold text-[#0f7a61] leading-none">
+                  {formatPrice(effectivePrice, currency)}
+                </span>
+                {effectiveMsrp > effectivePrice && (
+                  <span suppressHydrationWarning className="text-md text-gray-700 line-through font-medium">
+                    {formatPrice(effectiveMsrp, currency)}
+                  </span>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -98,6 +98,12 @@ export interface LotItem {
   currency?: string;
   excluded_export_countries?: string[];
   sale_method?: string;
+  saleMethod?: string;
+  sales_method?: string;
+  salesMethod?: string;
+  open_for_offers?: boolean;
+  openForOffers?: boolean;
+  is_open_for_offers?: boolean;
   file?: string;
   file_url?: string;
   manifest_items?: any[];
@@ -404,6 +410,16 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
   }
   const locationName = resolvedLocation;
 
+  const isOpenForOffers = Boolean(
+    item.open_for_offers === true ||
+    item.open_for_offers === 'true' ||
+    item.openForOffers === true ||
+    item.openForOffers === 'true' ||
+    item.is_open_for_offers === true ||
+    item.is_open_for_offers === 'true' ||
+    (typeof item.offer === 'string' && /open\s*for\s*offer/i.test(item.offer))
+  );
+
   const rawLotOffer = item.offer !== undefined && item.offer !== null && String(item.offer).trim() !== '' ? String(item.offer).trim() : undefined;
   const rawApiLotDiscount = Number(
     item.discount_percent ??
@@ -481,11 +497,11 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     number_of_distinct_skus: distinctSkus,
     msrp: msrp,
     total_est_retail_value_msrp: msrp,
-    price: price || liquidationPrice,
-    liquidation_price: liquidationPrice || price,
-    liquidating_price: liquidationPrice || price,
-    ask_price_surplus_payout: liquidationPrice || price,
-    offer: lotOfferTag,
+    price: isOpenForOffers ? (msrp > 0 ? msrp : (price || 0)) : (price || liquidationPrice),
+    liquidation_price: isOpenForOffers ? 0 : (liquidationPrice || price),
+    liquidating_price: isOpenForOffers ? 0 : (liquidationPrice || price),
+    ask_price_surplus_payout: isOpenForOffers ? 0 : (liquidationPrice || price),
+    offer: isOpenForOffers ? 'Open for Offers' : lotOfferTag,
     location: locationName,
     inventory_location: locationName,
     inventory_country: inventoryCountry,
@@ -511,7 +527,13 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     shipping_terms: item.shipping_terms || 'Buyer Arranges Freight',
     currency: 'USD',
     excluded_export_countries: Array.isArray(item.excluded_export_countries) ? item.excluded_export_countries : [],
-    sale_method: item.sale_method || 'offer',
+    sale_method: item.sale_method || item.saleMethod || (isOpenForOffers ? 'offer' : ''),
+    saleMethod: item.sale_method || item.saleMethod || (isOpenForOffers ? 'offer' : ''),
+    sales_method: item.sale_method || item.saleMethod || (isOpenForOffers ? 'offer' : ''),
+    salesMethod: item.sale_method || item.saleMethod || (isOpenForOffers ? 'offer' : ''),
+    open_for_offers: isOpenForOffers,
+    openForOffers: isOpenForOffers,
+    is_open_for_offers: isOpenForOffers,
     file: manifestUrl,
     file_url: manifestUrl,
     manifest_items: productsList,

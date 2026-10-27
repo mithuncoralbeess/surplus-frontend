@@ -266,11 +266,14 @@ const BrowseResults = () => {
                       price={item.price}
                       msrp={item.retailPrice}
                       originalPrice={item.retailPrice}
-                      offer={item.discountPercent >= 10 ? `${item.discountPercent}% DROP` : undefined}
                       location={item.location}
                       category={item.category}
                       currency="USD"
                       isLoading={false}
+                      open_for_offers={item.open_for_offers}
+                      openForOffers={item.openForOffers}
+                      sale_method={item.sale_method}
+                      saleMethod={item.saleMethod}
                     />
                   </div>
                 );

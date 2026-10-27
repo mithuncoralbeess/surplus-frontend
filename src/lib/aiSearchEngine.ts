@@ -21,6 +21,10 @@ export interface AiSearchResultItem extends SurplusItem {
   isLot?: boolean;
   lotNumber?: string;
   totalUnits?: number;
+  open_for_offers?: boolean;
+  openForOffers?: boolean;
+  sale_method?: string;
+  saleMethod?: string;
 }
 
 export interface AiSearchResponse {
@@ -769,12 +773,23 @@ export function mapBackendProductToAiItem(p: any): AiSearchResultItem {
 }
 
 function mapBackendLotToAiItem(lot: any): AiSearchResultItem {
+  const isOpenForOffers = Boolean(
+    lot.open_for_offers === true ||
+    lot.open_for_offers === 'true' ||
+    lot.openForOffers === true ||
+    lot.openForOffers === 'true' ||
+    lot.is_open_for_offers === true ||
+    lot.is_open_for_offers === 'true' ||
+    (typeof lot.offer === 'string' && /open\s*for\s*offer/i.test(lot.offer))
+  );
   const rawLotCurrency = lot.currency || 'USD';
-  const rawLotPrice = parseFloat(lot.price || lot.ask_price_surplus_payout || lot.asking_price || lot.liquidating_price || 0) || 0;
-  const rawLotMsrp = parseFloat(lot.msrp || lot.total_est_retail_value_msrp || lot.retail_price || 0) || Math.round(rawLotPrice * 1.5);
-  const price = convertToUsd(rawLotPrice, rawLotCurrency);
+  const rawLotPrice = isOpenForOffers 
+    ? 0 
+    : (parseFloat(lot.price || lot.liquidation_price || lot.ask_price_surplus_payout || lot.asking_price || lot.liquidating_price || 0) || 0);
+  const rawLotMsrp = parseFloat(lot.msrp || lot.total_est_retail_value_msrp || lot.retail_price || 0) || Math.round((rawLotPrice || 1000) * 1.5);
+  const price = isOpenForOffers ? convertToUsd(rawLotMsrp, rawLotCurrency) : convertToUsd(rawLotPrice, rawLotCurrency);
   const retailPrice = convertToUsd(rawLotMsrp, rawLotCurrency);
-  const discountPercent = retailPrice > price && retailPrice > 0 ? Math.round(((retailPrice - price) / retailPrice) * 100) : 0;
+  const discountPercent = !isOpenForOffers && retailPrice > price && retailPrice > 0 ? Math.round(((retailPrice - price) / retailPrice) * 100) : 0;
 
   let img = lot.image || (Array.isArray(lot.warehouse_images) && lot.warehouse_images[0]) || (Array.isArray(lot.images) && lot.images[0]) || '';
   if (!img) {
@@ -829,7 +844,11 @@ function mapBackendLotToAiItem(lot: any): AiSearchResultItem {
       : ['Wholesale surplus lot match'],
     isLot: true,
     lotNumber: sku,
-    totalUnits: totalUnits
+    totalUnits: totalUnits,
+    open_for_offers: isOpenForOffers,
+    openForOffers: isOpenForOffers,
+    sale_method: lot.sale_method || lot.saleMethod || (isOpenForOffers ? 'offer' : ''),
+    saleMethod: lot.sale_method || lot.saleMethod || (isOpenForOffers ? 'offer' : '')
   };
 }
 
