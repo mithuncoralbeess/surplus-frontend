@@ -3,6 +3,8 @@ import CommonBanner from '../../widgets/CommonBanner';
 import BlogListing from '../../widgets/BlogListing';
 import { getBlogs } from '../../services/blogService';
 
+export const dynamic = 'force-dynamic';
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://surplusmarket.com';
 
 export const metadata = {

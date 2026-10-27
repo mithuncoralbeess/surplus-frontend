@@ -4,6 +4,8 @@ import { getBlogs, getBlogBySlug } from '../../../services/blogService';
 import BlogDetail from '../../../widgets/BlogDetail';
 import { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }

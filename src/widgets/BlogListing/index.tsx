@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion, Variants } from '../../lib/motion';
 import { Search, Clock, ArrowRight, Sparkles, Tag, ChevronRight, BookOpen } from 'lucide-react';
-import { BLOG_CATEGORIES, BlogPost } from '../../data/blogData';
+import { BlogPost } from '../../data/blogData';
 import { getBlogs } from '../../services/blogService';
 
 interface BlogListingProps {
@@ -35,14 +35,26 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   React.useEffect(() => {
-    if (!initialPosts || initialPosts.length === 0) {
-      getBlogs().then((fetched) => {
-        if (fetched && fetched.length > 0) {
-          setPosts(fetched);
-        }
-      });
+    if (initialPosts && initialPosts.length > 0) {
+      setPosts(initialPosts);
     }
+    // Always fetch fresh full list from API to ensure all 52 blogs are present
+    getBlogs().then((fetched) => {
+      if (fetched && fetched.length > 0) {
+        setPosts(fetched);
+      }
+    });
   }, [initialPosts]);
+
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    posts.forEach(post => {
+      if (post.category && post.category.trim()) {
+        set.add(post.category.trim());
+      }
+    });
+    return ["All", ...Array.from(set)];
+  }, [posts]);
 
   const featuredPost = useMemo(() => {
     return posts.find(post => post.featured) || posts[0];
@@ -151,7 +163,7 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
           {/* Category Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
-            {BLOG_CATEGORIES.map(category => (
+            {categories.map(category => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
