@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
@@ -24,6 +24,12 @@ export default function MaintenanceWidget() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.title = "Under Maintenance | Surplus Market";
+    }
+  }, []);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,7 +112,7 @@ export default function MaintenanceWidget() {
           {isSubmitted ? (
             <div className="p-4 bg-[#0c4033]/90 border border-[#14b875]/40 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-2.5 animate-in fade-in duration-300">
               <CheckCircle2 className="w-5 h-5 text-[#14b875] shrink-0" />
-              <span>Thank you! Weâ€™ll notify you as soon as we are live.</span>
+              <span>Thank you! We'll notify you as soon as we are live.</span>
             </div>
           ) : (
             <form onSubmit={handleSubscribe} className="space-y-2">
@@ -150,25 +156,25 @@ export default function MaintenanceWidget() {
             <button
               type="button"
               onClick={handleRefresh}
-              className="inline-flex items-center gap-2 bg-[#0a5c48] hover:bg-[#0c6651] text-white px-6 py-3 rounded-full text-sm font-bold transition-all shadow-lg hover:shadow-[#0a5c48]/20"
+              className="inline-flex items-center gap-2 bg-[#0a5c48] hover:bg-[#0c6651] text-white px-6 py-3 rounded-full text-sm font-bold transition-all shadow-lg hover:shadow-[#0a5c48]/20 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" /> Check Status Now
             </button>
-            <Link
-              href="/contact"
+            <a
+              href="mailto:support@surplusmarket.com?subject=Surplus%20Market%20Support%20Inquiry"
               className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white px-6 py-3 rounded-full text-sm font-bold border border-white/15 transition-all"
             >
               <MessageSquare className="w-4 h-4 text-[#14b875]" /> Contact Support Desk
-            </Link>
+            </a>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400 pt-2">
-            <span className="flex items-center gap-1.5">
+            <a href="mailto:support@surplusmarket.com" className="flex items-center gap-1.5 hover:text-white transition-colors">
               <MailCheck className="w-3.5 h-3.5 text-[#14b875]" /> support@surplusmarket.com
-            </span>
-            <span className="flex items-center gap-1.5">
+            </a>
+            <a href="tel:+97430269988" className="flex items-center gap-1.5 hover:text-white transition-colors">
               <Phone className="w-3.5 h-3.5 text-[#14b875]" /> +974 3026 9988
-            </span>
+            </a>
           </div>
         </div>
 

@@ -5,11 +5,13 @@ import Header from '../../widgets/Header';
 import Footer from '../Footer';
 import MaintenanceWidget from '../../widgets/Maintenance';
 import WhatsAppFloatingButton from '../WhatsAppFloatingButton';
+import CartDrawer from '../CartDrawer';
 import { apiClient } from '../../services/apiClient';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean>(() => {
-    return process.env.NEXT_PUBLIC_IS_MAINTENANCE === 'true';
+    // If NEXT_PUBLIC_IS_MAINTENANCE is explicitly false, start in normal mode; otherwise default to maintenance
+    return process.env.NEXT_PUBLIC_IS_MAINTENANCE !== 'false';
   });
 
   const checkMaintenanceStatus = useCallback(async () => {
@@ -21,7 +23,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     try {
       const res = await apiClient('/api/maintenance-status/', {
         silent: true,
-        timeout: 8000,
+        timeout: 6000,
       });
 
       if (res.status === 503) {
@@ -58,18 +60,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         setIsMaintenanceMode(isMaintenance);
       } else {
-        // If server is cold-starting or unreachable, keep default live state
-        setIsMaintenanceMode(false);
+        // If server is unreachable or backend is down, remain in maintenance mode
+        setIsMaintenanceMode(true);
       }
     } catch {
-      setIsMaintenanceMode(false);
+      // Backend connection failed or down, keep maintenance mode active
+      setIsMaintenanceMode(true);
     }
   }, []);
 
   useEffect(() => {
     checkMaintenanceStatus();
 
-    // Check on window focus and poll at gentle 45s interval to avoid hammering cold starts
+    // Check on window focus and poll at 45s interval to detect when backend comes back up
     const interval = setInterval(checkMaintenanceStatus, 45000);
     const handleFocus = () => checkMaintenanceStatus();
     window.addEventListener('focus', handleFocus);
@@ -80,7 +83,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [checkMaintenanceStatus]);
 
-  // Conditionally render Under Maintenance design on homepage / all routes when maintenance mode is active
+  // Exclusively render Under Maintenance page on all routes when maintenance mode is active
   if (isMaintenanceMode) {
     return (
       <main className="flex-1 min-h-screen">
@@ -95,6 +98,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1">{children}</div>
       <Footer />
       <WhatsAppFloatingButton />
+      <CartDrawer />
     </>
   );
 }

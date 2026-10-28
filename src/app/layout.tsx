@@ -12,7 +12,6 @@ import { CurrencyProvider } from "../context/CurrencyContext";
 import { LanguageProvider } from "../context/LanguageContext";
 import { NotificationProvider } from "../context/NotificationContext";
 import { CartProvider } from "../context/CartContext";
-import CartDrawer from "../components/CartDrawer";
 import ReduxProvider from "../store/ReduxProvider";
 
 const inter = Inter({
@@ -90,7 +89,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                       <AppShell>
                         {children}
                       </AppShell>
-                      <CartDrawer />
                     </SmoothScroll>
                   </CartProvider>
                 </NotificationProvider>

@@ -35,13 +35,14 @@ function SessionWatcher() {
   }, []);
 
   useEffect(() => {
-    if (status !== 'authenticated' || !session?.user?.email) {
+    if (status !== 'authenticated' || !session?.user?.email || process.env.NEXT_PUBLIC_IS_MAINTENANCE === 'true') {
       return;
     }
 
     const email = session.user.email;
 
     const verifyAccountStatus = async () => {
+      if (process.env.NEXT_PUBLIC_IS_MAINTENANCE === 'true') return;
       if (checkingRef.current) return;
       checkingRef.current = true;
 
