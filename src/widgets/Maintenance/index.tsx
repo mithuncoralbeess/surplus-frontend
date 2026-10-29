@@ -161,7 +161,7 @@ export default function MaintenanceWidget() {
               <RefreshCw className="w-4 h-4" /> Check Status Now
             </button>
             <a
-              href="mailto:support@surplusmarket.com?subject=Surplus%20Market%20Support%20Inquiry"
+              href="mailto:contact@surplusmarket.com?subject=Surplus%20Market%20Support%20Inquiry"
               className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white px-6 py-3 rounded-full text-sm font-bold border border-white/15 transition-all"
             >
               <MessageSquare className="w-4 h-4 text-[#14b875]" /> Contact Support Desk
@@ -169,8 +169,8 @@ export default function MaintenanceWidget() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400 pt-2">
-            <a href="mailto:support@surplusmarket.com" className="flex items-center gap-1.5 hover:text-white transition-colors">
-              <MailCheck className="w-3.5 h-3.5 text-[#14b875]" /> support@surplusmarket.com
+            <a href="mailto:contact@surplusmarket.com" className="flex items-center gap-1.5 hover:text-white transition-colors">
+              <MailCheck className="w-3.5 h-3.5 text-[#14b875]" /> contact@surplusmarket.com
             </a>
             <a href="tel:+97430269988" className="flex items-center gap-1.5 hover:text-white transition-colors">
               <Phone className="w-3.5 h-3.5 text-[#14b875]" /> +974 3026 9988

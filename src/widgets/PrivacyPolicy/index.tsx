@@ -204,7 +204,7 @@ export default function PrivacyPolicyWidget() {
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-[#0a5c48] bg-white rounded-full p-0.5 shrink-0" />
-                  <span>By email: <a href="mailto:support@surplusmarket.com" className="font-semibold text-white hover:underline">support@surplusmarket.com</a></span>
+                  <span>By email: <a href="mailto:contact@surplusmarket.com" className="font-semibold text-white hover:underline">contact@surplusmarket.com</a></span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-[#0a5c48] bg-white rounded-full p-0.5 shrink-0" />

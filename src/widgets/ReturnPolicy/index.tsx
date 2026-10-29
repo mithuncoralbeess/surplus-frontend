@@ -123,8 +123,8 @@ export default function ReturnPolicyWidget() {
                     <h3 className="text-base font-bold text-gray-900 mb-1">Request RMA Number</h3>
                     <p className="text-xs sm:text-sm text-gray-600">
                       Contact our support team via email at{' '}
-                      <a href="mailto:support@surplusmarket.com" className="text-[#0a5c48] font-semibold underline">
-                        support@surplusmarket.com
+                      <a href="mailto:contact@surplusmarket.com" className="text-[#0a5c48] font-semibold underline">
+                        contact@surplusmarket.com
                       </a>{' '}
                       or call{' '}
                       <a href="tel:+97430269988" className="text-[#0a5c48] font-semibold underline">
@@ -213,8 +213,8 @@ export default function ReturnPolicyWidget() {
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                   If you haven’t received your refund after 10 business days, first check your bank account again. Then contact your credit card company, as it may take some time before your refund is officially posted. If you’ve done this and still have not received your refund, please contact us at{' '}
-                  <a href="mailto:support@surplusmarket.com" className="text-[#0a5c48] font-semibold underline">
-                    support@surplusmarket.com
+                  <a href="mailto:contact@surplusmarket.com" className="text-[#0a5c48] font-semibold underline">
+                    contact@surplusmarket.com
                   </a>.
                 </p>
               </div>
@@ -233,8 +233,8 @@ export default function ReturnPolicyWidget() {
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                     We only replace items if they are defective or damaged. If you need to exchange it for the same item, send us an email at{' '}
-                    <a href="mailto:support@surplusmarket.com" className="text-[#0a5c48] font-semibold underline">
-                      support@surplusmarket.com
+                    <a href="mailto:contact@surplusmarket.com" className="text-[#0a5c48] font-semibold underline">
+                      contact@surplusmarket.com
                     </a>{' '}
                     to receive further instructions.
                   </p>
@@ -261,7 +261,7 @@ export default function ReturnPolicyWidget() {
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-[#0a5c48] bg-white rounded-full p-0.5 shrink-0" />
-                  <span>Email: <a href="mailto:support@surplusmarket.com" className="font-semibold text-white hover:underline">support@surplusmarket.com</a></span>
+                  <span>Email: <a href="mailto:contact@surplusmarket.com" className="font-semibold text-white hover:underline">contact@surplusmarket.com</a></span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-[#0a5c48] bg-white rounded-full p-0.5 shrink-0" />

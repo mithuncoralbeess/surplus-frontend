@@ -111,7 +111,7 @@ export default function WarrantyPolicyWidget() {
                   <ul className="space-y-2 text-xs sm:text-sm text-gray-700">
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-[#0a5c48] shrink-0" />
-                      <span><strong>By email:</strong> support@surplusmarket.com</span>
+                      <span><strong>By email:</strong> contact@surplusmarket.com</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-[#0a5c48] shrink-0" />
@@ -160,7 +160,7 @@ export default function WarrantyPolicyWidget() {
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-[#0a5c48] bg-white rounded-full p-0.5 shrink-0" />
-                  <span>By email: <a href="mailto:support@surplusmarket.com" className="font-semibold text-white hover:underline">support@surplusmarket.com</a></span>
+                  <span>By email: <a href="mailto:contact@surplusmarket.com" className="font-semibold text-white hover:underline">contact@surplusmarket.com</a></span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-[#0a5c48] bg-white rounded-full p-0.5 shrink-0" />

@@ -305,10 +305,10 @@ export default function FAQPageWidget() {
 
             <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
               <a 
-                href="mailto:support@surplusmarket.com" 
+                href="mailto:contact@surplusmarket.com" 
                 className="w-full sm:w-auto text-center bg-green-400 text-[#0a1e17] hover:bg-green-300 px-6 py-3 rounded-full text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2"
               >
-                <Mail className="w-4 h-4" /> support@surplusmarket.com
+                <Mail className="w-4 h-4" /> contact@surplusmarket.com
               </a>
               <Link 
                 href="/contact" 
