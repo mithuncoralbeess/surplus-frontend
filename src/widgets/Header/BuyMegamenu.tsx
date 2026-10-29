@@ -117,7 +117,7 @@ const BuyMegamenu = () => {
       <Link 
         href="/buy"
         onClick={() => setIsOpen(false)}
-        className={`flex items-center font-medium text-[16px] transition-all py-1 header-nav-link whitespace-nowrap ${
+        className={`flex items-center font-medium lg:text-[14px] xl:text-[15.5px] 2xl:text-[16px] transition-all py-1 px-1.5 xl:px-2.5 header-nav-link whitespace-nowrap ${
           isBuyActive || isOpen 
             ? 'text-[#0f7a61] font-semibold' 
             : 'text-gray-600 hover:text-gray-900'

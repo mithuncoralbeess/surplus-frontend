@@ -8,7 +8,7 @@
 $breakpoints: (
   sm: 576px,
   md: 768px,
-  lg: 992px,
+  lg: 1024px,
   xl: 1200px,
   xxl: 1400px,
   xxxl: 1600px
@@ -17,7 +17,7 @@ $breakpoints: (
 $container-max-widths: (
   sm: 540px,
   md: 720px,
-  lg: 960px,
+  lg: 980px,
   xl: 1170px,
   xxl: 1320px,
   xxxl: 1520px
@@ -346,16 +346,30 @@ button {
   }
 }
 
-/* Base / Mobile & Small Tablet (< 992px) */
+/* Base / Mobile & Small Tablet (< 1024px) */
 .header-left-group {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .header-logo {
   width: 125px !important;
   height: auto !important;
+}
+
+@media (max-width: 380px) {
+  .header-logo {
+    width: 112px !important;
+    height: auto !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .header-logo {
+    width: 145px !important;
+    height: auto !important;
+  }
 }
 
 .header-nav {
@@ -368,38 +382,38 @@ button {
   gap: 0.35rem;
 }
 
-/* Large Screens (lg: 992px to 1199px) */
+/* Large Screens (lg: 1024px to 1199px) */
 @media (min-width: map.get($breakpoints, lg)) {
   .header-left-group {
-    gap: 0.875rem;
+    gap: 0.75rem;
   }
 
   .header-logo {
-    width: 130px !important;
+    width: 135px !important;
     height: auto !important;
   }
 
   .header-nav {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
 
   .header-nav-link {
-    font-size: 16px !important;
+    font-size: 14px !important;
   }
 
   .header-right-actions {
-    gap: 0.5rem;
+    gap: 0.45rem;
 
     svg:not(.region-flag-svg):not(.selector-chevron) {
-      width: 20px !important;
-      height: 20px !important;
+      width: 19px !important;
+      height: 19px !important;
     }
   }
 
   .header-selector-btn {
     padding: 0.35rem 0.65rem !important;
-    font-size: 13.5px !important;
+    font-size: 13px !important;
     font-weight: 500;
   }
 
@@ -426,16 +440,16 @@ button {
   }
 
   .header-logo {
-    width: 145px !important;
+    width: 155px !important;
     height: auto !important;
   }
 
   .header-nav {
-    gap: 1rem;
+    gap: 0.85rem;
   }
 
   .header-nav-link {
-    font-size: 16px !important;
+    font-size: 15px !important;
   }
 
   .header-right-actions {
@@ -476,7 +490,7 @@ button {
   }
 
   .header-logo {
-    width: 180px !important;
+    width: 175px !important;
     height: auto !important;
   }
 
@@ -490,11 +504,11 @@ button {
   }
 
   .header-right-actions {
-    gap: 0.5rem;
+    gap: 0.75rem;
 
     svg:not(.region-flag-svg):not(.selector-chevron) {
-      width: 19px !important;
-      height: 19px !important;
+      width: 20px !important;
+      height: 20px !important;
     }
   }
 
@@ -504,13 +518,13 @@ button {
   }
 
   .header-auth-link {
-    font-size: 16px !important;
+    font-size: 15.5px !important;
     font-weight: 600 !important;
   }
 
   .header-auth-btn {
     padding: 0.5rem 1.25rem !important;
-    font-size: 16px !important;
+    font-size: 15.5px !important;
   }
 
   .megamenu-right-panel {
@@ -527,7 +541,7 @@ button {
   }
 
   .header-logo {
-    width: 185px !important;
+    width: 180px !important;
     height: auto !important;
   }
 
@@ -541,7 +555,7 @@ button {
   }
 
   .header-right-actions {
-    gap: 0.625rem;
+    gap: 0.75rem;
 
     svg:not(.region-flag-svg):not(.selector-chevron) {
       width: 20px !important;
@@ -555,13 +569,13 @@ button {
   }
 
   .header-auth-link {
-    font-size: 16.5px !important;
+    font-size: 16px !important;
     font-weight: 600 !important;
   }
 
   .header-auth-btn {
     padding: 0.55rem 1.35rem !important;
-    font-size: 16.5px !important;
+    font-size: 16px !important;
   }
 }
 
@@ -572,7 +586,7 @@ button {
   }
 
   .header-logo {
-    width: 195px !important;
+    width: 185px !important;
     height: auto !important;
   }
 
@@ -586,7 +600,7 @@ button {
   }
 
   .header-right-actions {
-    gap: 0.75rem;
+    gap: 0.85rem;
 
     svg:not(.region-flag-svg):not(.selector-chevron) {
       width: 21px !important;
@@ -600,13 +614,13 @@ button {
   }
 
   .header-auth-link {
-    font-size: 17px !important;
+    font-size: 16.5px !important;
     font-weight: 600 !important;
   }
 
   .header-auth-btn {
     padding: 0.6rem 1.5rem !important;
-    font-size: 17px !important;
+    font-size: 16.5px !important;
   }
 
   .megamenu-right-panel {
