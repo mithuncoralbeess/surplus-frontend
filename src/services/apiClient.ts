@@ -118,7 +118,6 @@ const PERSISTENT_ENDPOINTS = [
   '/api/lots/',
   '/api/categories/',
   '/categories/',
-  '/api/maintenance-status/',
   '/api/seo/',
   '/api/blogs/'
 ];
