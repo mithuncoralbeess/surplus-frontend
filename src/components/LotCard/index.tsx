@@ -40,6 +40,10 @@ export interface LotCardProps {
   saleMethod?: string;
   sales_method?: string;
   salesMethod?: string;
+  inventory_country?: string;
+  inventoryCountry?: string;
+  country?: string;
+  inventory_location?: string;
   [key: string]: any;
 }
 
@@ -69,6 +73,10 @@ const LotCard: React.FC<LotCardProps> = ({
   saleMethod,
   sales_method,
   salesMethod,
+  inventory_country,
+  inventoryCountry,
+  country,
+  inventory_location,
   ...rest
 }) => {
   const { formatPrice, convertToUsd } = useCurrency();
@@ -171,9 +179,75 @@ const LotCard: React.FC<LotCardProps> = ({
 
   const isDefaultCondition = !conditionText || conditionText === 'Surplus Inventory (Unexpired)' || conditionText === 'Surplus Inventory';
 
-  const locationText = typeof location === 'object' && location !== null
-    ? (location as any).name || (location as any).country || 'Warehouse'
-    : String(location || 'Warehouse');
+  const cleanStr = (val: any): string => {
+    if (!val) return '';
+    if (typeof val === 'string') return val.trim();
+    if (typeof val === 'object') {
+      return String(val.name || val.label || val.country || val.title || '').trim();
+    }
+    return String(val).trim();
+  };
+
+  const explicitCountry =
+    cleanStr(inventory_country) ||
+    cleanStr(inventoryCountry) ||
+    cleanStr(country) ||
+    cleanStr(rest?.inventory_country) ||
+    cleanStr(rest?.inventoryCountry) ||
+    cleanStr(rest?.country) ||
+    cleanStr(rest?.raw_data?.inventory_country) ||
+    cleanStr(rest?.raw_data?.country);
+
+  const rawLocationString =
+    cleanStr(inventory_location) ||
+    cleanStr(location) ||
+    cleanStr(rest?.inventory_location) ||
+    cleanStr(rest?.location) ||
+    cleanStr(rest?.raw_data?.inventory_location) ||
+    cleanStr(rest?.raw_data?.location);
+
+  const detectCountryFromText = (text: string): string => {
+    if (!text) return '';
+    const lower = text.toLowerCase();
+    if (/\bindia\b|\bmaharashtra\b|\bmumbai\b|\bvasai\b|\bdelhi\b|\bbangalore\b|\bbengaluru\b|\bchennai\b|\bkolkata\b|\bhyderabad\b|\bpune\b|\bahmedabad\b|\bgujarat\b|\bkerala\b/i.test(lower)) {
+      return 'India';
+    }
+    if (/\bunited arab emirates\b|\buae\b|\bdubai\b|\babu dhabi\b|\bsharjah\b|\bajman\b/i.test(lower)) {
+      return 'United Arab Emirates';
+    }
+    if (/\bsaudi arabia\b|\bksa\b|\briyadh\b|\bjeddah\b|\bdammam\b|\bmecca\b|\bmedina\b/i.test(lower)) {
+      return 'Saudi Arabia';
+    }
+    if (/\bqatar\b|\bdoha\b/i.test(lower)) {
+      return 'Qatar';
+    }
+    if (/\bunited states\b|\busa\b|\bcalifornia\b|\btexas\b|\bnew york\b|\bflorida\b/i.test(lower)) {
+      return 'United States';
+    }
+    if (/\bunited kingdom\b|\buk\b|\blondon\b/i.test(lower)) {
+      return 'United Kingdom';
+    }
+    if (/\bgermany\b|\bberlin\b|\bmunich\b/i.test(lower)) {
+      return 'Germany';
+    }
+    if (/\bchina\b|\bbeijing\b|\bshanghai\b|\bshenzhen\b/i.test(lower)) {
+      return 'China';
+    }
+    if (/\bkuwait\b/i.test(lower)) return 'Kuwait';
+    if (/\boman\b|\bmuscat\b/i.test(lower)) return 'Oman';
+    if (/\bbahrain\b|\bmanama\b/i.test(lower)) return 'Bahrain';
+
+    if (text.includes(',')) {
+      const parts = text.split(',').map(p => p.trim()).filter(Boolean);
+      const lastPart = parts[parts.length - 1];
+      if (lastPart && !/\d{3,}/.test(lastPart) && lastPart.length < 35) {
+        return lastPart;
+      }
+    }
+    return '';
+  };
+
+  const inventoryCountryText = explicitCountry || detectCountryFromText(rawLocationString) || rawLocationString || 'Warehouse';
 
   const categoryText = typeof category === 'object' && category !== null
     ? (category as any).name || (category as any).title || 'Surplus Lot'
@@ -256,13 +330,13 @@ const LotCard: React.FC<LotCardProps> = ({
           </h3>
         </Link>
 
-        {/* Inventory Location - Available in (Below Title) */}
-        {locationText && (
+        {/* Inventory Country - Available in (Below Title) */}
+        {inventoryCountryText && (
           <div className="flex items-center gap-1.5 text-[11px] xl:text-[12px] text-gray-500 mb-3 font-medium">
             <MapPin className="w-3.5 h-3.5 text-[#0f7a61] shrink-0" />
             <span className="text-gray-500">Available in</span>
-            <span className="font-bold text-gray-800 truncate" title={locationText}>
-              {locationText}
+            <span className="font-bold text-gray-800 truncate" title={rawLocationString || inventoryCountryText}>
+              {inventoryCountryText}
             </span>
           </div>
         )}

@@ -267,6 +267,8 @@ const BrowseResults = () => {
                       msrp={item.retailPrice}
                       originalPrice={item.retailPrice}
                       location={item.location}
+                      inventory_country={(item as any).inventory_country || (item as any).country}
+                      country={(item as any).country || (item as any).inventory_country}
                       category={item.category}
                       currency="USD"
                       isLoading={false}

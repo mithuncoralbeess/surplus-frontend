@@ -204,6 +204,39 @@ export function sanitizeImageUrl(url: any): string {
   return cleaned;
 }
 
+export function detectCountryFromLocation(text?: string): string {
+  if (!text || typeof text !== 'string') return '';
+  const lower = text.toLowerCase();
+  if (/\bindia\b|\bmaharashtra\b|\bmumbai\b|\bvasai\b|\bdelhi\b|\bbangalore\b|\bbengaluru\b|\bchennai\b|\bkolkata\b|\bhyderabad\b|\bpune\b|\bahmedabad\b|\bgujarat\b|\bkerala\b/i.test(lower)) {
+    return 'India';
+  }
+  if (/\bunited arab emirates\b|\buae\b|\bdubai\b|\babu dhabi\b|\bsharjah\b|\bajman\b/i.test(lower)) {
+    return 'United Arab Emirates';
+  }
+  if (/\bsaudi arabia\b|\bksa\b|\briyadh\b|\bjeddah\b|\bdammam\b|\bmecca\b|\bmedina\b/i.test(lower)) {
+    return 'Saudi Arabia';
+  }
+  if (/\bqatar\b|\bdoha\b/i.test(lower)) {
+    return 'Qatar';
+  }
+  if (/\bunited states\b|\busa\b|\bcalifornia\b|\btexas\b|\bnew york\b|\bflorida\b/i.test(lower)) {
+    return 'United States';
+  }
+  if (/\bunited kingdom\b|\buk\b|\blondon\b/i.test(lower)) {
+    return 'United Kingdom';
+  }
+  if (/\bgermany\b|\bberlin\b|\bmunich\b/i.test(lower)) {
+    return 'Germany';
+  }
+  if (/\bchina\b|\bbeijing\b|\bshanghai\b|\bshenzhen\b/i.test(lower)) {
+    return 'China';
+  }
+  if (/\bkuwait\b/i.test(lower)) return 'Kuwait';
+  if (/\boman\b|\bmuscat\b/i.test(lower)) return 'Oman';
+  if (/\bbahrain\b|\bmanama\b/i.test(lower)) return 'Bahrain';
+  return '';
+}
+
 export function mapApiProductToProductItem(item: any, index: number): ProductItem {
   const rawCurrency = (item.currency || 'USD').toUpperCase().trim();
   const rawLiquidatingPrice = Number(item.liquidating_price || item.liquidation_price || item.liquidatingPrice || 0);
@@ -412,15 +445,19 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
 
   const conditionName = extractStringValue(item.condition, 'New');
   
-  const inventoryCountry = extractStringValue(item.inventory_country || item.country, '');
+  const rawCountry = extractStringValue(item.inventory_country || item.country, '');
+  const rawLoc = extractStringValue(item.inventory_location || item.location, '');
+  const inventoryCountry = rawCountry || detectCountryFromLocation(rawLoc) || '';
   const inventoryCity = extractStringValue(item.inventory_city || item.city, '');
   let resolvedLocation = '';
   if (inventoryCity && inventoryCountry) {
     resolvedLocation = `${inventoryCity}, ${inventoryCountry}`;
-  } else if (inventoryCity || inventoryCountry) {
-    resolvedLocation = inventoryCity || inventoryCountry;
+  } else if (inventoryCountry) {
+    resolvedLocation = inventoryCountry;
+  } else if (inventoryCity) {
+    resolvedLocation = inventoryCity;
   } else {
-    resolvedLocation = extractStringValue(item.inventory_location || item.location, 'Dubai, UAE');
+    resolvedLocation = rawLoc || 'Dubai, UAE';
   }
   const locationName = resolvedLocation;
 
