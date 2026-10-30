@@ -13,8 +13,12 @@ const TABS = ['Best Selling', 'New Arrivals', 'Featured Deals'];
 const getCachedTabProducts = (tab: string): ProductItem[] => {
   if (typeof window !== 'undefined') {
     try {
-      const saved = sessionStorage.getItem(`surplus_curated_${tab}`);
-      if (saved) return JSON.parse(saved);
+      sessionStorage.removeItem(`surplus_curated_${tab}`);
+      const saved = sessionStorage.getItem(`surplus_curated_v2_${tab}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch {}
   }
   return [];
@@ -78,10 +82,16 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
 
           // Limit to maximum 8 items per tab
           const curatedList = singleProducts.slice(0, 8);
-          cacheRef.current[cacheKey] = curatedList;
-          if (typeof window !== 'undefined') {
+          if (curatedList.length > 0) {
+            cacheRef.current[cacheKey] = curatedList;
+            if (typeof window !== 'undefined') {
+              try {
+                sessionStorage.setItem(`surplus_curated_v2_${activeTab}`, JSON.stringify(curatedList));
+              } catch {}
+            }
+          } else if (typeof window !== 'undefined') {
             try {
-              sessionStorage.setItem(`surplus_curated_${activeTab}`, JSON.stringify(curatedList));
+              sessionStorage.removeItem(`surplus_curated_v2_${activeTab}`);
             } catch {}
           }
           setProducts(curatedList);

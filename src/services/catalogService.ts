@@ -629,7 +629,7 @@ export const catalogService = {
 
     const queryKey = JSON.stringify(params || {});
     const cachedQuery = queryProductsCache.get(queryKey);
-    if (cachedQuery && (Date.now() - cachedQuery.timestamp < CACHE_TTL_MS)) {
+    if (cachedQuery && cachedQuery.data.length > 0 && (Date.now() - cachedQuery.timestamp < CACHE_TTL_MS)) {
       return cachedQuery.data;
     }
 
@@ -713,11 +713,13 @@ export const catalogService = {
         productCache.set(p.title.toLowerCase().trim(), p);
       });
 
-      queryProductsCache.set(queryKey, { data: mappedList, timestamp: Date.now() });
+      if (mappedList.length > 0) {
+        queryProductsCache.set(queryKey, { data: mappedList, timestamp: Date.now() });
 
-      if (isDefaultQuery) {
-        allProductsCache = mappedList;
-        lastProductsFetchTime = Date.now();
+        if (isDefaultQuery) {
+          allProductsCache = mappedList;
+          lastProductsFetchTime = Date.now();
+        }
       }
 
       return mappedList;

@@ -87,8 +87,8 @@ const inFlightRequests = new Map<string, Promise<ApiResponse<any>>>();
 const DEFAULT_CACHE_TTL_MS = 3 * 60 * 1000;
 
 // LocalStorage Persistent Cache Key Prefix
-const STORAGE_PREFIX = 'surplus_api_cache_v4:';
-const LEGACY_STORAGE_PREFIXES = ['surplus_api_cache_v1:', 'surplus_api_cache_v2:', 'surplus_api_cache_v3:'];
+const STORAGE_PREFIX = 'surplus_api_cache_v5:';
+const LEGACY_STORAGE_PREFIXES = ['surplus_api_cache_v1:', 'surplus_api_cache_v2:', 'surplus_api_cache_v3:', 'surplus_api_cache_v4:'];
 
 function purgeLegacyStorageCaches(): void {
   if (typeof window === 'undefined') return;
@@ -390,6 +390,26 @@ export async function apiClient<T = any>(
     }
 
     if (entry) {
+      const cachedData: any = entry.response?.data;
+      const isEmptyCatalogCache =
+        cachedData &&
+        ((Array.isArray(cachedData) && cachedData.length === 0) ||
+          (Array.isArray(cachedData.products) && cachedData.products.length === 0) ||
+          (Array.isArray(cachedData.lots) && cachedData.lots.length === 0) ||
+          (Array.isArray(cachedData.results) && cachedData.results.length === 0));
+
+      if (isEmptyCatalogCache) {
+        memoryCache.delete(cacheKey);
+        if (allowPersistence && typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem(`${STORAGE_PREFIX}${cacheKey}`);
+          } catch {}
+        }
+        entry = undefined;
+      }
+    }
+
+    if (entry) {
       const now = Date.now();
       const isFresh = now < entry.expiresAt;
 
@@ -460,16 +480,26 @@ export async function apiClient<T = any>(
   try {
     const response = await fetchPromise;
 
-    // Cache successful GET responses
+    // Cache successful GET responses (skip caching empty catalog lists so newly activated items appear immediately)
     if (shouldCache && response.success && response.data !== undefined) {
-      const newEntry: CacheEntry<T> = {
-        response,
-        timestamp: Date.now(),
-        expiresAt: Date.now() + ttlMs,
-      };
-      memoryCache.set(cacheKey, newEntry);
-      if (allowPersistence) {
-        writeStorageCache(cacheKey, newEntry);
+      const resData: any = response.data;
+      const isEmptyList =
+        resData &&
+        ((Array.isArray(resData) && resData.length === 0) ||
+          (Array.isArray(resData.products) && resData.products.length === 0) ||
+          (Array.isArray(resData.lots) && resData.lots.length === 0) ||
+          (Array.isArray(resData.results) && resData.results.length === 0));
+
+      if (!isEmptyList) {
+        const newEntry: CacheEntry<T> = {
+          response,
+          timestamp: Date.now(),
+          expiresAt: Date.now() + ttlMs,
+        };
+        memoryCache.set(cacheKey, newEntry);
+        if (allowPersistence) {
+          writeStorageCache(cacheKey, newEntry);
+        }
       }
     }
 
