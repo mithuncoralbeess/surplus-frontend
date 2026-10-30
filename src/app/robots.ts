@@ -14,6 +14,7 @@ export default function robots(): MetadataRoute.Robots {
           '/cart/',
           '/auth/',
           '/admin/',
+          '/maintenance/',
         ],
       },
       {
@@ -25,6 +26,7 @@ export default function robots(): MetadataRoute.Robots {
           '/cart/',
           '/auth/',
           '/admin/',
+          '/maintenance/',
         ],
       },
       {
@@ -36,6 +38,7 @@ export default function robots(): MetadataRoute.Robots {
           '/cart/',
           '/auth/',
           '/admin/',
+          '/maintenance/',
         ],
       },
     ],

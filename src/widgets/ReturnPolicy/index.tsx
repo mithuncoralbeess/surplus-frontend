@@ -30,10 +30,10 @@ export default function ReturnPolicyWidget() {
         ]}
       />
 
-      <section className="w-full py-16">
+      <section className="w-full py-10 sm:py-16">
         <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
           
-          <div className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200 shadow-sm space-y-12">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200 shadow-sm space-y-10 sm:space-y-12">
             
             {/* Overview Box */}
             <div className="bg-[#e0f0e9]/50 border border-[#0a5c48]/20 rounded-2xl p-6 sm:p-8">

@@ -27,14 +27,8 @@ interface CuratedProductsProps {
 const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('Best Selling');
-  const [products, setProducts] = useState<ProductItem[]>(() => {
-    if (initialProducts.length > 0) return initialProducts;
-    return getCachedTabProducts('Best Selling');
-  });
-  const [loading, setLoading] = useState<boolean>(() => {
-    if (initialProducts.length > 0) return false;
-    return getCachedTabProducts('Best Selling').length === 0;
-  });
+  const [products, setProducts] = useState<ProductItem[]>(initialProducts);
+  const [loading, setLoading] = useState<boolean>(initialProducts.length === 0);
   const cacheRef = useRef<Record<string, ProductItem[]>>({});
 
   useEffect(() => {
@@ -48,7 +42,7 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
       return;
     }
 
-    // Check sessionStorage cache for 0ms cold tab switch
+    // Check sessionStorage cache on client mount
     const localCached = getCachedTabProducts(activeTab);
     if (localCached.length > 0) {
       cacheRef.current[cacheKey] = localCached;
@@ -129,21 +123,23 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
           </h2>
 
           {/* Tabs */}
-          <div className="inline-flex items-center bg-white border border-gray-100 rounded-full p-1.5 shadow-sm">
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`
-                  px-6 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer
-                  ${activeTab === tab
-                    ? 'bg-primary text-white shadow-md'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
-                `}
-              >
-                {tab}
-              </button>
-            ))}
+          <div className="w-full flex justify-center overflow-x-auto scrollbar-hide py-1">
+            <div className="inline-flex items-center bg-white border border-gray-100 rounded-full p-1 sm:p-1.5 shadow-sm whitespace-nowrap">
+              {TABS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`
+                    px-3.5 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all cursor-pointer whitespace-nowrap shrink-0
+                    ${activeTab === tab
+                      ? 'bg-primary text-white shadow-md'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
+                  `}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
           </div>
         </motion.div>
 

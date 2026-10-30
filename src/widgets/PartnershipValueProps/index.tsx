@@ -52,7 +52,7 @@ const itemVariants: Variants = {
 
 const PartnershipValueProps = () => {
   return (
-    <section className="w-full pt-24 pb-12 relative overflow-hidden">
+    <section className="w-full py-12 md:py-20 relative overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8 max-w-7xl relative z-10">
         
         {/* Header */}
@@ -61,17 +61,17 @@ const PartnershipValueProps = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-16"
+          className="mb-10 sm:mb-16"
         >
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-3 sm:mb-4">
             <span className="text-[11px] font-bold text-[#0a5c48] tracking-widest uppercase">
               PARTNERSHIP OPPORTUNITIES
             </span>
           </div>
-          <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-6 leading-[1.1] max-w-2xl">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight mb-4 sm:mb-6 leading-tight max-w-2xl">
             Our Collaboration Models
           </h2>
-          <p className="text-lg text-gray-500 leading-relaxed max-w-3xl">
+          <p className="text-sm sm:text-base md:text-lg text-gray-500 leading-relaxed max-w-3xl">
             Explore the different ways we partner with businesses to create mutual value and scale operations across the surplus ecosystem.
           </p>
         </motion.div>
@@ -82,7 +82,7 @@ const PartnershipValueProps = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 lg:gap-8"
         >
           {BENEFITS.map((benefit, index) => {
             const Icon = benefit.icon;
@@ -90,22 +90,23 @@ const PartnershipValueProps = () => {
               <motion.div 
                 key={index}
                 variants={itemVariants}
-                className="group p-8 rounded-3xl border border-gray-200 bg-white shadow-sm hover:shadow-xl hover:shadow-black/[0.03] hover:border-[#0a5c48]/30 transition-all duration-300 flex flex-col h-full cursor-pointer"
+                className="group p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-gray-200 bg-white shadow-sm hover:shadow-xl hover:shadow-black/[0.03] hover:border-[#0a5c48]/30 transition-all duration-300 flex flex-col h-full cursor-pointer"
               >
-                <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 rounded-full bg-[#e0f0e9] flex items-center justify-center text-[#0a5c48] group-hover:scale-110 transition-transform duration-300">
+                <div className="flex justify-between items-start mb-5 sm:mb-6">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#e0f0e9] flex items-center justify-center text-[#0a5c48] group-hover:scale-110 transition-transform duration-300">
                     <Icon className="w-5 h-5" strokeWidth={2} />
                   </div>
-                  <span className="text-sm font-semibold text-[#0a5c48] bg-[#e0f0e9]/50 px-3 py-1 rounded-full">{benefit.category}</span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#0a5c48] bg-[#e0f0e9]/50 px-3 py-1 rounded-full">{benefit.category}</span>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">
                   {benefit.title}
                 </h3>
-                <p className="text-[15px] text-gray-500 leading-relaxed flex-grow mb-8">
+                <p className="text-sm sm:text-[15px] text-gray-500 leading-relaxed flex-grow mb-6 sm:mb-8">
                   {benefit.description}
                 </p>
-                <div className="flex items-center text-[#0a5c48] font-semibold text-sm group-hover:gap-3 transition-all duration-300 gap-2 mt-auto">
-                  Explore opportunities <ArrowRight className="w-4 h-4" />
+                <div className="flex items-center text-[#0a5c48] font-semibold text-xs sm:text-sm group-hover:gap-3 transition-all duration-300 gap-2 mt-auto">
+                  <span>Explore opportunities</span>
+                  <ArrowRight className="w-4 h-4" />
                 </div>
               </motion.div>
             );

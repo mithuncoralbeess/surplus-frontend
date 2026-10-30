@@ -31,25 +31,25 @@ export default function AboutHero() {
           <span className="text-xs font-bold text-amber-400 uppercase tracking-widest block">
             ABOUT SURPLUS MARKET
           </span>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-none text-white">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white">
             Your trusted B2B liquidation partner.
           </h1>
-          <p className="text-lg sm:text-xl text-gray-100 font-normal leading-relaxed pt-2">
+          <p className="text-base sm:text-lg md:text-xl text-gray-100 font-normal leading-relaxed pt-2">
             Rooted in Qatar, built for the world - we transform idle inventory into circular value for enterprises, SMEs, and the planet.
           </p>
         </div>
 
         {/* Stat Cards Grid (4 in a row) */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 pt-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 pt-6">
           {STATS.map((stat, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: idx * 0.1 }}
-              className="bg-white/10 backdrop-blur-md border border-white/15 rounded-3xl p-6 sm:p-8"
+              className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8"
             >
-              <div className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-1">
+              <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-1">
                 {stat.value}
               </div>
               <div className="text-xs sm:text-sm text-gray-200 font-medium">

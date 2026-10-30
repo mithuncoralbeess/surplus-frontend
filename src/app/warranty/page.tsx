@@ -1,5 +1,6 @@
 import React from 'react';
 import WarrantyPolicyWidget from '../../widgets/WarrantyPolicy';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
@@ -26,6 +27,12 @@ export async function generateMetadata() {
 export default function WarrantyPolicyPage() {
   return (
     <main className="min-h-screen bg-gray-50/50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Service & Warranty Policy', url: '/warranty' },
+        ]}
+      />
       <WarrantyPolicyWidget />
     </main>
   );

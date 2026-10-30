@@ -258,10 +258,10 @@ const HomeBanner = () => {
           {/* ========================================================================= */}
           {/* RIGHT COLUMN: Dark Dashboard Card (Original Design Maintained)            */}
           {/* ========================================================================= */}
-          <div className="relative w-full lg:w-[41%] aspect-square max-w-[600px] min-[1350px]:max-w-[520px] min-[1600px]:max-w-[600px] mx-auto lg:ml-auto lg:mr-0">
+          <div className="relative w-full lg:w-[41%] aspect-auto sm:aspect-square min-h-[380px] sm:min-h-[460px] max-w-[600px] min-[1350px]:max-w-[520px] min-[1600px]:max-w-[600px] mx-auto lg:ml-auto lg:mr-0">
 
             {/* Dark Card Container */}
-            <div className="absolute inset-0 bg-dashboard-bg rounded-[2rem] shadow-2xl p-6 md:p-8 min-[1350px]:p-5 min-[1600px]:p-8 flex flex-col justify-between overflow-hidden">
+            <div className="sm:absolute inset-0 bg-dashboard-bg rounded-[2rem] shadow-2xl p-5 sm:p-6 md:p-8 min-[1350px]:p-5 min-[1600px]:p-8 flex flex-col justify-between overflow-hidden relative">
 
               {/* Background grid overlay pattern */}
               <div

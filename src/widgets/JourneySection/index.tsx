@@ -147,14 +147,14 @@ const JourneySection = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex items-end justify-between mt-auto pt-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-auto pt-4">
               <div>
-                <div className="text-3xl font-extrabold text-gray-900 leading-none mb-1">82 markets</div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-none mb-1">82 markets</div>
                 <div className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">AI-Ranked Verified Inventory</div>
               </div>
               <Link 
                 href="/buy"
-                className="bg-[#185545] hover:bg-[#0f3b2f] text-white px-7 py-3 rounded-full font-bold text-[15px] transition-colors flex items-center gap-2 shadow-md cursor-pointer"
+                className="w-full sm:w-auto justify-center bg-[#185545] hover:bg-[#0f3b2f] text-white px-6 sm:px-7 py-3 rounded-full font-bold text-sm sm:text-[15px] transition-colors flex items-center gap-2 shadow-md cursor-pointer"
               >
                 Start Buying <ArrowRight className="w-4.5 h-4.5" />
               </Link>
@@ -167,7 +167,7 @@ const JourneySection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-            className="rounded-[2.5rem] p-5 md:p-6 flex flex-col relative overflow-hidden border border-[#d6efe3]"
+            className="rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-6 flex flex-col relative overflow-hidden border border-[#d6efe3]"
             style={{ backgroundImage: 'linear-gradient(135deg, #ecfdf5 0%, #fff 55%, #d1fae5 100%)' }}
           >
             {/* Top Bar */}
@@ -176,8 +176,8 @@ const JourneySection = () => {
                 <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
                 <span className="text-[10px] font-bold text-primary tracking-widest uppercase">Seller Journey</span>
               </div>
-              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm border border-[#d6efe3]">
-                <Package className="w-5 h-5 text-gray-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center shadow-sm border border-[#d6efe3]">
+                <Package className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
               </div>
             </div>
 
@@ -189,27 +189,27 @@ const JourneySection = () => {
             <div className="flex flex-col gap-1.5 flex-1 mb-5">
               {SELLER_STEPS.map((step, idx) => (
                 <div key={idx} className="bg-white/90 backdrop-blur-sm border border-white rounded-2xl py-2 px-3 flex items-start gap-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] transition-transform hover:-translate-y-0.5">
-                  <div className="w-9 h-9 rounded-full bg-[#185545] flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#185545] flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                     {step.icon}
                   </div>
                   <div>
                     <div className="text-[10px] font-bold text-primary tracking-wider uppercase mb-0.5">Step {idx + 1}</div>
-                    <div className="font-bold text-gray-900 text-[14px] leading-tight mb-1">{step.title}</div>
-                    <div className="text-[13px] text-gray-500 leading-snug">{step.desc}</div>
+                    <div className="font-bold text-gray-900 text-sm leading-tight mb-1">{step.title}</div>
+                    <div className="text-xs sm:text-[13px] text-gray-500 leading-snug">{step.desc}</div>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Footer */}
-            <div className="flex items-end justify-between mt-auto pt-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-auto pt-4">
               <div>
-                <div className="text-3xl font-extrabold text-gray-900 leading-none mb-1">$412M</div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-none mb-1">$412M</div>
                 <div className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">Value Recovered For Sellers</div>
               </div>
               <Link 
                 href="/sell"
-                className="bg-[#185545] hover:bg-[#0f3b2f] text-white px-7 py-3 rounded-full font-bold text-[15px] transition-colors flex items-center gap-2 shadow-md cursor-pointer"
+                className="w-full sm:w-auto justify-center bg-[#185545] hover:bg-[#0f3b2f] text-white px-6 sm:px-7 py-3 rounded-full font-bold text-sm sm:text-[15px] transition-colors flex items-center gap-2 shadow-md cursor-pointer"
               >
                 Start Selling <ArrowRight className="w-4.5 h-4.5" />
               </Link>

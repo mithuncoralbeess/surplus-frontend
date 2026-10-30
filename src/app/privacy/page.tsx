@@ -1,5 +1,6 @@
 import React from 'react';
 import PrivacyPolicyWidget from '../../widgets/PrivacyPolicy';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
@@ -18,6 +19,12 @@ export async function generateMetadata() {
 export default function PrivacyPolicyPage() {
   return (
     <main className="min-h-screen bg-gray-50/50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Privacy Policy', url: '/privacy' },
+        ]}
+      />
       <PrivacyPolicyWidget />
     </main>
   );

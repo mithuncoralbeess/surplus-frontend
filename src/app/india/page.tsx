@@ -1,5 +1,6 @@
 import React from 'react';
 import IndiaMarketplaceWidget from '../../widgets/IndiaMarketplace';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
@@ -27,6 +28,12 @@ export async function generateMetadata() {
 export default function IndiaRegionalPage() {
   return (
     <main className="min-h-screen bg-gray-50/50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'India Marketplace', url: '/india' },
+        ]}
+      />
       <IndiaMarketplaceWidget />
     </main>
   );

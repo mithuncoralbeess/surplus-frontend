@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { motion } from '../../lib/motion';
+import { FaqJsonLd } from '../../components/StructuredData';
 
-const FAQ_DATA = [
+export const FAQ_DATA = [
   {
     question: "What types of surplus inventory can I sell?",
     answer: "We accept a wide range of surplus, including electronics, apparel, industrial equipment, and consumer goods. All items must pass our condition verification process before being listed to our verified buyers."
@@ -39,6 +40,7 @@ const FAQ = () => {
       className="w-full py-24 relative"
       style={{ backgroundColor: 'oklch(18% .02 180)' }}
     >
+      <FaqJsonLd faqs={FAQ_DATA} />
       <div className="container mx-auto px-4 lg:px-8 max-w-4xl relative z-10">
         
         {/* Header */}

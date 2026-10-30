@@ -1,18 +1,20 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { User, LogOut, Menu } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { User, LogOut, Menu, X } from 'lucide-react';
 import HeaderCartDropdown from '../../components/HeaderCartDropdown';
 import HeaderNotificationsDropdown from '../../components/HeaderNotificationsDropdown';
 import BuyMegamenu from './BuyMegamenu';
 import MobileNavDrawer from './MobileNavDrawer';
-import AuthModal from '../../components/AuthModal';
 import { useSession } from 'next-auth/react';
 import { performLogout } from '../../lib/authCleanup';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '../../context/LanguageContext';
+
+const AuthModal = dynamic(() => import('../../components/AuthModal'), { ssr: false });
 
 const Header = () => {
   const pathname = usePathname();
@@ -21,6 +23,10 @@ const Header = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleCloseMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
 
   const openAuth = (mode: 'login' | 'register') => {
     setAuthMode(mode);
@@ -83,11 +89,11 @@ const Header = () => {
           </div>
 
           {/* Mobile & Tablet Right Actions (< 1024px) */}
-          <div className="flex lg:hidden items-center gap-1.5 sm:gap-2.5 header-mobile-actions">
+          <div className="flex lg:hidden items-center gap-1.5 sm:gap-2 header-mobile-actions">
             {/* Quick Buy Pill (Visible on sm+: >= 576px) */}
             <Link 
               href="/buy" 
-              className="hidden sm:inline-flex text-xs font-bold text-[#0f7a61] bg-[#e6f7ef] hover:bg-[#d0f0e4] px-3 py-1.5 rounded-full transition-colors items-center gap-1 shadow-2xs"
+              className="hidden sm:inline-flex text-xs font-bold text-[#0f7a61] bg-[#e6f7ef] hover:bg-[#d0f0e4] px-2.5 py-1.5 rounded-full transition-colors items-center gap-1 shadow-2xs"
             >
               {t('nav.buy', 'Buy')}
             </Link>
@@ -95,7 +101,7 @@ const Header = () => {
             {/* Quick Sell Pill (Visible on md+: >= 768px) */}
             <Link 
               href="/sell" 
-              className="hidden md:inline-flex text-xs font-bold text-gray-700 hover:text-[#0f7a61] bg-gray-100 hover:bg-[#e6f7ef] px-3 py-1.5 rounded-full transition-colors items-center gap-1 shadow-2xs"
+              className="hidden md:inline-flex text-xs font-bold text-gray-700 hover:text-[#0f7a61] bg-gray-100 hover:bg-[#e6f7ef] px-2.5 py-1.5 rounded-full transition-colors items-center gap-1 shadow-2xs"
             >
               {t('nav.sell', 'Sell')}
             </Link>
@@ -103,18 +109,16 @@ const Header = () => {
             {/* Cart Dropdown (Visible on all screens) */}
             <HeaderCartDropdown />
 
-            {/* Notifications Dropdown (Tablet md+: >= 768px when authenticated) */}
+            {/* Notifications Dropdown (when authenticated) */}
             {session ? (
-              <div className="hidden md:flex items-center">
-                <HeaderNotificationsDropdown />
-              </div>
+              <HeaderNotificationsDropdown />
             ) : null}
 
             {/* User Avatar / Sign In */}
             {session ? (
               <Link 
                 href="/profile"
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-[#0f7a61] text-white font-bold text-xs ml-0.5 shadow-2xs"
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-[#0f7a61] text-white font-bold text-xs shadow-2xs shrink-0"
                 title={session.user?.name || 'Profile'}
                 aria-label="User Profile"
               >
@@ -123,21 +127,29 @@ const Header = () => {
             ) : (
               <button 
                 onClick={() => openAuth('login')} 
-                className="hidden sm:inline-flex text-gray-700 hover:text-[#0f7a61] text-xs font-bold px-2 py-1 ml-0.5 cursor-pointer"
+                className="text-gray-700 hover:text-[#0f7a61] text-xs font-bold px-2 py-1 ml-0.5 cursor-pointer shrink-0"
               >
                 {t('nav.signIn', 'Sign In')}
               </button>
             )}
 
-            {/* Hamburger Menu Toggle Button */}
+            {/* Hamburger / Close Menu Toggle Button */}
             <button
               type="button"
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gray-50 hover:bg-[#e6f7ef] text-gray-700 hover:text-[#0f7a61] border border-gray-200/80 transition-all cursor-pointer ml-1 active:scale-95 shadow-2xs"
-              aria-label="Open navigation menu"
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              className={`flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl transition-all cursor-pointer active:scale-95 shadow-2xs shrink-0 ${
+                isMobileMenuOpen 
+                  ? 'bg-[#e6f7ef] text-[#0f7a61] border border-[#0f7a61]/40' 
+                  : 'bg-gray-50 hover:bg-[#e6f7ef] text-gray-700 hover:text-[#0f7a61] border border-gray-200/80'
+              }`}
+              aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-expanded={isMobileMenuOpen}
             >
-              <Menu className="w-5 h-5" />
+              {isMobileMenuOpen ? (
+                <X className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200" />
+              ) : (
+                <Menu className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200" />
+              )}
             </button>
           </div>
 
@@ -219,7 +231,7 @@ const Header = () => {
       {/* Mobile & Tablet Navigation Drawer */}
       <MobileNavDrawer 
         isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
+        onClose={handleCloseMobileMenu}
         session={session}
         openAuth={openAuth}
       />

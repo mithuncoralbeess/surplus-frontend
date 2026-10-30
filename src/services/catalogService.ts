@@ -176,6 +176,10 @@ export interface LotRequestPayload {
   country?: string;
   city?: string;
   notes?: string;
+  open_for_offers?: boolean | string;
+  openForOffers?: boolean | string;
+  is_open_for_offers?: boolean | string;
+  sale_method?: string;
 }
 
 export function extractStringValue(val: any, fallback: string = ''): string {
@@ -386,8 +390,18 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     image = '';
   }
 
+  const isOpenForOffers = Boolean(
+    item.open_for_offers === true ||
+    item.open_for_offers === 'true' ||
+    item.openForOffers === true ||
+    item.openForOffers === 'true' ||
+    item.is_open_for_offers === true ||
+    item.is_open_for_offers === 'true' ||
+    (typeof item.offer === 'string' && /open\s*for\s*offer/i.test(item.offer))
+  );
+
   const discountTarget = liquidationPrice > 0 ? liquidationPrice : price;
-  const discount = msrp > discountTarget && msrp > 0 ? Math.round(((msrp - discountTarget) / msrp) * 100) : 0;
+  const discount = !isOpenForOffers && msrp > discountTarget && msrp > 0 ? Math.round(((msrp - discountTarget) / msrp) * 100) : 0;
   
   let categoryName = 'General Inventory';
   if (Array.isArray(item.category_allocations) && item.category_allocations.length > 0) {
@@ -410,16 +424,6 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
   }
   const locationName = resolvedLocation;
 
-  const isOpenForOffers = Boolean(
-    item.open_for_offers === true ||
-    item.open_for_offers === 'true' ||
-    item.openForOffers === true ||
-    item.openForOffers === 'true' ||
-    item.is_open_for_offers === true ||
-    item.is_open_for_offers === 'true' ||
-    (typeof item.offer === 'string' && /open\s*for\s*offer/i.test(item.offer))
-  );
-
   const rawLotOffer = item.offer !== undefined && item.offer !== null && String(item.offer).trim() !== '' ? String(item.offer).trim() : undefined;
   const rawApiLotDiscount = Number(
     item.discount_percent ??
@@ -432,26 +436,28 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
   );
 
   let lotOfferTag: string | undefined = undefined;
-  if (rawLotOffer && !/open\s*to/i.test(rawLotOffer) && !/droper/i.test(rawLotOffer)) {
-    const matchPct = rawLotOffer.match(/(\d+(?:\.\d+)?)\s*%/);
-    if (matchPct) {
-      lotOfferTag = `${Math.round(parseFloat(matchPct[1]))}% DROP`;
-    } else {
-      const numLotOffer = parseFloat(rawLotOffer);
-      if (!isNaN(numLotOffer) && numLotOffer > 0 && !rawLotOffer.includes(' ')) {
-        lotOfferTag = `${Math.round(numLotOffer)}% DROP`;
-      } else if (rawLotOffer.toLowerCase().includes('drop')) {
-        lotOfferTag = rawLotOffer;
+  if (!isOpenForOffers) {
+    if (rawLotOffer && !/open\s*to/i.test(rawLotOffer) && !/droper/i.test(rawLotOffer)) {
+      const matchPct = rawLotOffer.match(/(\d+(?:\.\d+)?)\s*%/);
+      if (matchPct) {
+        lotOfferTag = `${Math.round(parseFloat(matchPct[1]))}% DROP`;
+      } else {
+        const numLotOffer = parseFloat(rawLotOffer);
+        if (!isNaN(numLotOffer) && numLotOffer > 0 && !rawLotOffer.includes(' ')) {
+          lotOfferTag = `${Math.round(numLotOffer)}% DROP`;
+        } else if (rawLotOffer.toLowerCase().includes('drop')) {
+          lotOfferTag = rawLotOffer;
+        }
       }
     }
-  }
 
-  if (!lotOfferTag && rawApiLotDiscount > 0) {
-    lotOfferTag = `${Math.round(rawApiLotDiscount)}% DROP`;
-  }
+    if (!lotOfferTag && rawApiLotDiscount > 0) {
+      lotOfferTag = `${Math.round(rawApiLotDiscount)}% DROP`;
+    }
 
-  if (!lotOfferTag && discount > 0) {
-    lotOfferTag = `${discount}% DROP`;
+    if (!lotOfferTag && discount > 0) {
+      lotOfferTag = `${discount}% DROP`;
+    }
   }
 
   const productsList = Array.isArray(item.products) && item.products.length > 0
@@ -497,7 +503,7 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     number_of_distinct_skus: distinctSkus,
     msrp: msrp,
     total_est_retail_value_msrp: msrp,
-    price: isOpenForOffers ? (msrp > 0 ? msrp : (price || 0)) : (price || liquidationPrice),
+    price: isOpenForOffers ? 0 : (price || liquidationPrice),
     liquidation_price: isOpenForOffers ? 0 : (liquidationPrice || price),
     liquidating_price: isOpenForOffers ? 0 : (liquidationPrice || price),
     ask_price_surplus_payout: isOpenForOffers ? 0 : (liquidationPrice || price),
@@ -1004,14 +1010,19 @@ export const catalogService = {
   },
 
   async submitLotRequest(payload: LotRequestPayload): Promise<ApiResponse> {
-    const askingPrice = Number(payload.asking_price || payload.price || 0);
+    const isOpenForOffers = Boolean(
+      payload.open_for_offers === true ||
+      (payload.open_for_offers as any) === 'true' ||
+      (typeof payload.offer === 'string' && /open\s*for\s*offer/i.test(payload.offer))
+    );
+    const askingPrice = isOpenForOffers ? 0 : Number(payload.asking_price || payload.price || 0);
     const retailMsrp = Number(payload.total_retail || payload.msrp || 0);
-    const discount = retailMsrp > askingPrice && retailMsrp > 0
+    const discount = !isOpenForOffers && retailMsrp > askingPrice && retailMsrp > 0
       ? Math.round(((retailMsrp - askingPrice) / retailMsrp) * 100)
       : 0;
-    const computedOffer = payload.offer !== undefined
-      ? payload.offer
-      : (discount > 0 ? `${discount}% DROP` : '');
+    const computedOffer = isOpenForOffers
+      ? 'Open for Offers'
+      : (payload.offer !== undefined ? payload.offer : (discount > 0 ? `${discount}% DROP` : ''));
 
     const resolvedLoc = payload.inventory_city && payload.inventory_country
       ? `${payload.inventory_city}, ${payload.inventory_country}`
@@ -1028,6 +1039,7 @@ export const catalogService = {
       msrp: retailMsrp,
       total_retail: retailMsrp,
       total_est_retail_value_msrp: retailMsrp,
+      open_for_offers: isOpenForOffers,
       total_units: payload.total_units,
       total_units_quantity: payload.total_units,
       inventory_country: payload.inventory_country || payload.country || '',

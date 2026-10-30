@@ -4,12 +4,16 @@ import CommonBanner from '../../widgets/CommonBanner';
 import InventoryListingOptions from '../../widgets/InventoryListingOptions';
 import SellValueProps from '../../widgets/SellValueProps';
 import SellCTA from '../../widgets/SellCTA';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
 const fallbackMetadata: Metadata = {
   title: "Sell Excess Inventory & Liquidate Stock | Surplus Market",
   description: "Sell your excess inventory, overstock lots, and equipment to verified global B2B buyers without hassle or public price erosion.",
+  alternates: {
+    canonical: "https://surplusmarket.com/sell",
+  },
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,6 +23,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function SellPage() {
   return (
     <main className="flex min-h-screen flex-col items-center">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Sell Surplus', url: '/sell' },
+        ]}
+      />
       <CommonBanner 
         title="Turn excess inventory into recovered value."
         subtitle="You never see or speak to buyers. Surplus Market negotiates, verifies, collects payment and coordinates delivery - you focus on your business."

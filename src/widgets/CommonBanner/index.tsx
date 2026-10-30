@@ -24,10 +24,10 @@ const CommonBanner: React.FC<CommonBannerProps> = ({
   children
 }) => {
   return (
-    <section className="relative w-full h-[320px] md:h-[400px] overflow-hidden bg-[#0a1e17] flex items-center pt-16">
+    <section className="relative w-full min-h-[260px] sm:min-h-[300px] md:min-h-[360px] overflow-hidden bg-[#0a1e17] flex items-center py-10 sm:py-14 md:py-18 pt-20 sm:pt-24">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a1f]/95 via-[#0d2a1f]/80 to-transparent z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a1f]/95 via-[#0d2a1f]/85 to-transparent z-10"></div>
         {image && image.trim() !== '' && (
           <Image 
             src={image} 
@@ -40,26 +40,26 @@ const CommonBanner: React.FC<CommonBannerProps> = ({
         )}
       </div>
 
-      <div className={`container mx-auto px-4 lg:px-8 max-w-[1600px] relative z-20 ${align === 'center' ? 'text-center flex flex-col items-center' : 'text-left'}`}>
+      <div className={`container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1600px] relative z-20 ${align === 'center' ? 'text-center flex flex-col items-center' : 'text-left'}`}>
         {breadcrumbs && breadcrumbs.length > 0 && (
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className={`flex items-center gap-2 text-[13px] text-gray-300/80 mb-6 font-medium ${align === 'center' ? 'justify-center' : 'justify-start'}`}
+            className={`flex items-center gap-1.5 sm:gap-2 text-[12px] sm:text-[13px] text-gray-300/80 mb-4 sm:mb-6 font-medium overflow-x-auto scrollbar-hide max-w-full whitespace-nowrap py-0.5 ${align === 'center' ? 'justify-center' : 'justify-start'}`}
           >
             {breadcrumbs.map((crumb, index) => (
               <React.Fragment key={index}>
-                {index > 0 && <ChevronRight className="w-3.5 h-3.5" />}
+                {index > 0 && <ChevronRight className="w-3.5 h-3.5 shrink-0" />}
                 {crumb.href ? (
-                  <Link href={crumb.href} className="hover:text-white transition-colors flex items-center gap-1">
+                  <Link href={crumb.href} className="hover:text-white transition-colors flex items-center gap-1 shrink-0">
                     {index === 0 && (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     )}
-                    {crumb.label}
+                    <span>{crumb.label}</span>
                   </Link>
                 ) : (
-                  <span className="text-white font-bold">{crumb.label}</span>
+                  <span className="text-white font-bold shrink-0">{crumb.label}</span>
                 )}
               </React.Fragment>
             ))}
@@ -70,7 +70,7 @@ const CommonBanner: React.FC<CommonBannerProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className={`text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-4 ${align === 'center' ? 'max-w-4xl mx-auto' : 'max-w-4xl'}`}
+          className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mb-3 sm:mb-4 leading-tight ${align === 'center' ? 'max-w-4xl mx-auto' : 'max-w-4xl'}`}
         >
           {title}
         </motion.h1>
@@ -80,7 +80,7 @@ const CommonBanner: React.FC<CommonBannerProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-            className={`text-[16px] text-gray-300 max-w-2xl ${align === 'center' ? 'mx-auto' : ''}`}
+            className={`text-xs sm:text-sm md:text-base text-gray-300 max-w-2xl leading-relaxed ${align === 'center' ? 'mx-auto' : ''}`}
           >
             {subtitle}
           </motion.p>
@@ -91,7 +91,7 @@ const CommonBanner: React.FC<CommonBannerProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-            className={`mt-8 flex flex-col sm:flex-row gap-4 ${align === 'center' ? 'justify-center mx-auto' : 'justify-start'}`}
+            className={`mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto ${align === 'center' ? 'justify-center mx-auto' : 'justify-start'}`}
           >
             {children}
           </motion.div>

@@ -1,12 +1,16 @@
 import React from 'react';
 import CommonBanner from '../../widgets/CommonBanner';
 import ContactForm from '../../widgets/ContactForm';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
 const fallbackMetadata = {
   title: "Contact Us | Surplus Marketplace",
   description: "Get in touch with our surplus inventory experts for buyer support, vendor onboarding, freight logistics, or general enquiries.",
+  alternates: {
+    canonical: "https://surplusmarket.com/contact",
+  },
 };
 
 export async function generateMetadata() {
@@ -16,6 +20,12 @@ export async function generateMetadata() {
 export default function ContactPage() {
   return (
     <main className="flex min-h-screen flex-col items-center bg-gray-50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Contact Us', url: '/contact' },
+        ]}
+      />
       <CommonBanner 
         title="Contact Our Global Surplus Operations Team"
         subtitle="Whether you need assistance with buying bulk inventory, listing a lot, logistics, or custom enterprise solutions, our team is ready to assist you."

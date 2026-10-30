@@ -3,12 +3,16 @@ import CommonBanner from '../../widgets/CommonBanner';
 import PartnershipValueProps from '../../widgets/PartnershipValueProps';
 import PartnershipForm from '../../widgets/PartnershipForm';
 import PartnershipCTA from '../../widgets/PartnershipCTA';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../services/pageSeoService';
 
 const fallbackMetadata: Metadata = {
   title: "Partner With Us | Surplus Market",
   description: "Build a strategic partnership with Surplus Market to connect excess inventory, buyers, services, and commercial opportunities globally.",
+  alternates: {
+    canonical: "https://surplusmarket.com/partnership",
+  },
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -18,6 +22,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function PartnershipPage() {
   return (
     <main className="flex min-h-screen flex-col items-center bg-gray-50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Partnership', url: '/partnership' },
+        ]}
+      />
       <CommonBanner 
         title="Let's Build a Partnership That Works"
         subtitle="Have a network, capability, inventory, or service that can create value in the surplus ecosystem? We're always open to working with businesses that can help us connect the right inventory, buyers, services, and opportunities."

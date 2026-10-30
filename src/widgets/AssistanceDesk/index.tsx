@@ -190,8 +190,8 @@ export default function AssistanceDesk() {
         </div>
 
         {/* Segmented Top Tab Bar */}
-        <div className="flex justify-center mb-8">
-          <div className="inline-flex items-center gap-1 sm:gap-2 p-1.5 rounded-full border border-gray-200/90 bg-white shadow-xs flex-wrap sm:flex-nowrap justify-center max-w-full">
+        <div className="flex justify-start sm:justify-center mb-8 w-full overflow-x-auto scrollbar-hide py-1">
+          <div className="inline-flex items-center gap-1 sm:gap-2 p-1.5 rounded-full border border-gray-200/90 bg-white shadow-xs whitespace-nowrap">
             
             {/* Tab 1: Request a Product */}
             <button
@@ -253,7 +253,7 @@ export default function AssistanceDesk() {
         </div>
 
         {/* Main Content Card Container */}
-        <div className="bg-white rounded-3xl border border-gray-200/90 shadow-sm p-6 sm:p-10 lg:p-12 mb-12">
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200/90 shadow-sm p-5 sm:p-8 lg:p-12 mb-12">
           
           {submittedTicket ? (
             /* Success confirmation screen */

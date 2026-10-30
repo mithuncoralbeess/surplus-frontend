@@ -1117,7 +1117,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
             distinctSkus: String(parsedItems.length),
             manualUnits: String(totalQtySum),
             msrp: totalRetailSum > 0 ? String(totalRetailSum.toFixed(2)) : prev.msrp,
-            askPrice: prev.openForOffers ? '' : (initialAsk || (totalAskSum > 0 ? String(totalAskSum.toFixed(2)) : prev.askPrice)),
+            askPrice: prev.openForOffers ? '0' : (initialAsk || (totalAskSum > 0 ? String(totalAskSum.toFixed(2)) : prev.askPrice)),
             keyBrands: Array.from(brandSet).join(', ') || prev.keyBrands
           }));
 
@@ -1396,11 +1396,11 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       data.append('total_retail', String(effectiveRetail));
       data.append('msrp', String(effectiveRetail));
       data.append('open_for_offers', formData.openForOffers ? 'true' : 'false');
-      data.append('ask_price_surplus_payout', String(askVal));
-      data.append('liquidation_price', String(askVal));
-      data.append('liquidating_price', String(askVal));
-      data.append('asking_price', String(askVal));
-      data.append('price', String(askVal));
+      data.append('ask_price_surplus_payout', formData.openForOffers ? '0' : String(askVal));
+      data.append('liquidation_price', formData.openForOffers ? '0' : String(askVal));
+      data.append('liquidating_price', formData.openForOffers ? '0' : String(askVal));
+      data.append('asking_price', formData.openForOffers ? '0' : String(askVal));
+      data.append('price', formData.openForOffers ? '0' : String(askVal));
       data.append('offer', formData.openForOffers ? 'Open for Offers' : (discountVal > 0 ? `${discountVal}% Off MSRP` : ''));
       data.append('excluded_export_countries', JSON.stringify(formData.excludedCountries || []));
       data.append('sale_method', sanitizeInput(String(formData.openForOffers ? 'offer' : (formData.saleMethod || 'offer'))));
@@ -1439,7 +1439,11 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
         if (msrp !== undefined && msrp !== null && Number(msrp) > 0) compact.msrp = Number(msrp);
 
         const price = item.askPrice ?? item.asking_price ?? item.price;
-        if (price !== undefined && price !== null && Number(price) > 0) compact.price = Number(price);
+        if (formData.openForOffers) {
+          compact.price = 0;
+        } else if (price !== undefined && price !== null && Number(price) > 0) {
+          compact.price = Number(price);
+        }
 
         const country = item.country_of_origin || item.country;
         if (country && typeof country === 'string' && country.trim()) compact.country = country.trim();
@@ -2351,7 +2355,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                         const checked = e.target.checked;
                         handleInputChange('openForOffers', checked);
                         if (checked) {
-                          handleInputChange('askPrice', '');
+                          handleInputChange('askPrice', '0');
                           handleInputChange('saleMethod', 'offer');
                           setFormErrors(prev => {
                             const copy = { ...prev };
@@ -2360,6 +2364,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                             return copy;
                           });
                         } else {
+                          handleInputChange('askPrice', '');
                           handleInputChange('saleMethod', '');
                         }
                       }}
@@ -2422,7 +2427,7 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                         <FastInput 
                           type="number" 
                           step="0.01"
-                          min="0.01"
+                          min="0"
                           disabled={formData.openForOffers}
                           readOnly={formData.openForOffers}
                           className={`w-full rounded-lg pl-10 ${(!formData.openForOffers && pricingAnalysis.hasMsrp) ? 'pr-32' : 'pr-4'} py-2.5 transition-shadow shadow-sm font-medium ${
@@ -2430,8 +2435,8 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                               ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed select-none' 
                               : 'bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0a5c48] focus:border-transparent placeholder-gray-400'
                           }`}
-                          placeholder={formData.openForOffers ? "Not Applicable" : "0.00"} 
-                          value={formData.openForOffers ? '' : formData.askPrice}
+                          placeholder="0.00" 
+                          value={formData.openForOffers ? '0' : formData.askPrice}
                           onValueChange={val => {
                             if (!formData.openForOffers) {
                               handleInputChange('askPrice', val);

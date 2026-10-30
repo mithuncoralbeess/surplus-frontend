@@ -105,10 +105,10 @@ export default function CategoryExplorer() {
         {/* Header Row */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
           <div className="max-w-3xl">
-            <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
               {t('megamenu.shopByCategory', 'Explore All Categories')}
             </h1>
-            <p className="text-base text-gray-600 leading-relaxed">
+            <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
               Browse through our complete catalog of {totalCategories > 0 ? totalCategories : 'all'} categories, curated collections, and specialized subcategories.
             </p>
           </div>
@@ -177,7 +177,7 @@ export default function CategoryExplorer() {
 
         {/* 4-Column Grid of Category Cards */}
         {loading && categories.length === 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {Array.from({ length: 8 }).map((_, idx) => (
               <div key={idx} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm animate-pulse flex flex-col justify-between h-[340px]">
                 <div>
@@ -198,7 +198,7 @@ export default function CategoryExplorer() {
             ))}
           </div>
         ) : filteredCategories.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {filteredCategories.map((cat, idx) => {
               const catId = String(cat.id);
               const Icon = getCategoryIcon(cat.name);

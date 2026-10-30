@@ -25,20 +25,21 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [] }) => {
   const { t } = useLanguage();
   const TABS = [t('common.viewAll', 'View All'), 'Electronics', 'Apparel', 'Home Goods'];
   const [activeTab, setActiveTab] = useState('View All');
-  const [lots, setLots] = useState<LotItem[]>(() => {
-    if (initialLots.length > 0) return initialLots;
-    return getCachedLots();
-  });
-  const [loading, setLoading] = useState<boolean>(() => {
-    if (initialLots.length > 0) return false;
-    return getCachedLots().length === 0;
-  });
+  const [lots, setLots] = useState<LotItem[]>(initialLots);
+  const [loading, setLoading] = useState<boolean>(initialLots.length === 0);
 
   useEffect(() => {
     let isMounted = true;
-    
-    // If initialLots or cache provided and we are on initial 'View All' tab, skip redundant fetch
-    if (activeTab === 'View All' && lots.length > 0) {
+
+    // Check sessionStorage cache on client mount
+    if (activeTab === 'View All' && lots.length === 0) {
+      const cached = getCachedLots();
+      if (cached.length > 0) {
+        setLots(cached);
+        setLoading(false);
+        return;
+      }
+    } else if (activeTab === 'View All' && lots.length > 0) {
       setLoading(false);
       return;
     }
@@ -97,21 +98,23 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [] }) => {
           </p>
 
           {/* Tabs */}
-          <div className="inline-flex items-center bg-white border border-gray-100 rounded-full p-1.5 shadow-sm">
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`
-                  px-6 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer
-                  ${activeTab === tab
-                    ? 'bg-primary text-white shadow-md'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
-                `}
-              >
-                {tab}
-              </button>
-            ))}
+          <div className="w-full flex justify-center overflow-x-auto scrollbar-hide py-1">
+            <div className="inline-flex items-center bg-white border border-gray-100 rounded-full p-1 sm:p-1.5 shadow-sm whitespace-nowrap">
+              {TABS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`
+                    px-3.5 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all cursor-pointer whitespace-nowrap shrink-0
+                    ${activeTab === tab
+                      ? 'bg-primary text-white shadow-md'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
+                  `}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
           </div>
         </motion.div>
 

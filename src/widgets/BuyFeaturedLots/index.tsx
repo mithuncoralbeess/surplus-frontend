@@ -913,7 +913,7 @@ export default function BuyFeaturedLots() {
           <div>
             {loading ? (
               /* Loading Skeletons for Lots */
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                 {Array.from({ length: 6 }).map((_, idx) => (
                   <LotCard
                     key={`skel-lot-${idx}`}
@@ -925,7 +925,7 @@ export default function BuyFeaturedLots() {
               </div>
             ) : sortedLots.length > 0 ? (
               /* Dynamic Lots from API using LotCard */
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                 {sortedLots.map((lot) => (
                   <div key={lot.id} className="h-full">
                     <LotCard

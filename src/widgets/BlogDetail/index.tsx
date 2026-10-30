@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { BlogPost } from '../../data/blogData';
 import { extractFaqsFromContent, stripFaqFromContent, fixContentImageUrls } from '../../services/blogService';
+import { BreadcrumbJsonLd, FaqJsonLd } from '../../components/StructuredData';
 
 interface BlogDetailProps {
   post: BlogPost;
@@ -61,6 +62,15 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
       itemType="https://schema.org/BlogPosting"
       suppressHydrationWarning
     >
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Blog', url: '/blog' },
+          { name: post.title, url: `/blog/${post.slug}` },
+        ]}
+      />
+      {faqs && faqs.length > 0 && <FaqJsonLd faqs={faqs} />}
+
       <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
         
         {/* Back Button / Breadcrumb link */}
@@ -93,14 +103,14 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
             </div>
 
             <h1 
-              className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight mb-6"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight mb-4 sm:mb-6"
               itemProp="headline"
             >
               {post.title}
             </h1>
 
             <p 
-              className="text-lg text-gray-600 leading-relaxed font-normal mb-8"
+              className="text-base sm:text-lg text-gray-600 leading-relaxed font-normal mb-6 sm:mb-8"
               itemProp="description"
             >
               {post.excerpt}
@@ -156,7 +166,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
 
         {/* Hero Cover Image (only when available from API) */}
         {post.coverImage && (
-          <div className="relative rounded-3xl overflow-hidden shadow-lg mb-12 border border-gray-200 h-[400px] sm:h-[480px]">
+          <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg mb-8 sm:mb-12 border border-gray-200 h-[220px] sm:h-[360px] md:h-[460px]">
             <Image 
               src={post.coverImage} 
               alt={post.title} 

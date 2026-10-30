@@ -10,13 +10,16 @@ import {
   Minus, Plus, ShoppingCart, Lock, ChevronRight, Check, Layers,
   List, MapPin, Globe, FileText, Info
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { catalogService, ProductItem } from '../../services/catalogService';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard';
-import VirtualWarehouseExplorer from '../../components/VirtualWarehouseExplorer';
+import { ProductJsonLd, BreadcrumbJsonLd } from '../../components/StructuredData';
 import { scrollToTop } from '../../lib/scroll';
 import { slugify } from '../../lib/slugs';
+
+const VirtualWarehouseExplorer = dynamic(() => import('../../components/VirtualWarehouseExplorer'), { ssr: false });
 
 interface ProductDetailWidgetProps {
   productId: string;
@@ -343,6 +346,28 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
             <span className="text-gray-900 font-bold truncate max-w-[180px] sm:max-w-[240px] md:max-w-xs lg:max-w-md">{product.title}</span>
           </div>
         </div>
+
+        {/* Structured Data: Product & BreadcrumbList */}
+        <ProductJsonLd
+          name={product.title}
+          description={product.description || `Verified wholesale surplus lot: ${product.title}`}
+          image={currentImage}
+          price={unitPrice}
+          priceCurrency={currencyCode}
+          sku={product.sku || String(product.id)}
+          brand={product.brand || 'Surplus Market'}
+          condition={product.condition || 'New / Overstock'}
+          availability="InStock"
+          url={`/buy/${encodeURIComponent(category || product.category || 'all')}/${encodeURIComponent(productId)}`}
+        />
+        <BreadcrumbJsonLd
+          items={[
+            { name: 'Home', url: '/' },
+            { name: 'Buy Inventory', url: '/buy' },
+            ...(product.category ? [{ name: product.category, url: `/buy?category=${encodeURIComponent(product.category)}` }] : []),
+            { name: product.title, url: `/buy/${encodeURIComponent(category || product.category || 'all')}/${encodeURIComponent(productId)}` },
+          ]}
+        />
 
         {/* Main Product Hero Layout (E-Commerce Integrated PDP) */}
         <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200/90 shadow-sm p-4 sm:p-6 lg:p-8 mb-8 sm:mb-10">

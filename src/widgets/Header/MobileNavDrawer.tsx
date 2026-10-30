@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { 
-  X, 
-  ChevronDown, 
-  User, 
-  LogOut, 
-  ShoppingBag, 
-  Bell, 
+import {
+  X,
+  ChevronDown,
+  User,
+  LogOut,
+  ShoppingBag,
+  Bell,
   ArrowRight,
   Leaf,
   Handshake,
@@ -83,11 +84,20 @@ export default function MobileNavDrawer({
   const { unreadCount } = useNotifications();
   const { categories } = useAppSelector((state) => state.categories);
 
+  const [mounted, setMounted] = useState(false);
   const [isBuyExpanded, setIsBuyExpanded] = useState(false);
+  const prevPathnameRef = useRef(pathname);
 
-  // Close drawer on route change
   useEffect(() => {
-    onClose();
+    setMounted(true);
+  }, []);
+
+  // Close drawer strictly on genuine route navigation
+  useEffect(() => {
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      onClose();
+    }
   }, [pathname, onClose]);
 
   // Handle body scroll locking and Escape key
@@ -115,64 +125,35 @@ export default function MobileNavDrawer({
   // Prepare display categories
   const displayCategories = categories && categories.length > 0
     ? categories.slice(0, 8).map((cat) => ({
-        id: cat.id,
-        name: cat.name,
-        count: (cat.subcategories?.length || cat.sub_categories?.length) 
-          ? `${cat.subcategories?.length || cat.sub_categories?.length} ${t('megamenu.subcategories', 'subcategories')}` 
-          : t('megamenu.itemsAvailable', 'Items available'),
-        icon: getCategoryIcon(cat.name),
-        slug: cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-      }))
+      id: cat.id,
+      name: cat.name,
+      count: (cat.subcategories?.length || cat.sub_categories?.length)
+        ? `${cat.subcategories?.length || cat.sub_categories?.length} ${t('megamenu.subcategories', 'subcategories')}`
+        : t('megamenu.itemsAvailable', 'Items available'),
+      icon: getCategoryIcon(cat.name),
+      slug: cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    }))
     : DEFAULT_CATEGORIES.map((cat) => ({
-        id: cat.slug,
-        name: cat.name,
-        count: `${cat.count} ${t('megamenu.items', 'items')}`,
-        icon: cat.icon,
-        slug: cat.slug,
-      }));
+      id: cat.slug,
+      name: cat.name,
+      count: `${cat.count} ${t('megamenu.items', 'items')}`,
+      icon: cat.icon,
+      slug: cat.slug,
+    }));
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] lg:hidden">
-      {/* Backdrop */}
+  return createPortal(
+    <div
+      data-lenis-prevent
+      className="fixed inset-x-0 bottom-0 top-16 sm:top-18 bg-white flex flex-col z-[9999] lg:hidden overflow-hidden animate-in slide-in-from-top-4 fade-in duration-200 border-t border-gray-100 shadow-xl"
+      aria-label="Mobile Navigation Menu"
+    >
+      {/* Full-Width Scrollable Content */}
       <div 
-        onClick={onClose}
-        className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-300 animate-in fade-in"
-        aria-hidden="true"
-      />
-
-      {/* Drawer Panel */}
-      <aside 
-        data-lenis-prevent
-        className={`fixed top-0 bottom-0 ${
-          dir === 'rtl' ? 'left-0' : 'right-0'
-        } w-[88vw] max-w-sm bg-white shadow-2xl flex flex-col z-10 transition-transform duration-300 ease-out overflow-hidden`}
-        aria-label="Mobile Navigation"
+        className="flex-1 overflow-y-auto scrollbar-hide w-full"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50/60 shrink-0">
-          <Link href="/" onClick={onClose} className="flex items-center">
-            <Image 
-              src="/surplus_main_logo.png" 
-              alt="Surplus Market Logo" 
-              width={140} 
-              height={32} 
-              className="object-contain w-auto h-7"
-              priority 
-            />
-          </Link>
-          <button
-            onClick={onClose}
-            aria-label="Close navigation"
-            className="w-9 h-9 rounded-full bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+        <div className="container py-5 space-y-5">
           {/* User Auth Card */}
           {session ? (
             <div className="bg-gradient-to-br from-[#0f7a61]/8 to-[#14b875]/8 border border-[#0f7a61]/20 rounded-2xl p-4">
@@ -243,46 +224,6 @@ export default function MobileNavDrawer({
             </div>
           )}
 
-          {/* Quick Shortcuts Bar */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                openCartDrawer();
-              }}
-              className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-[#e6f7ef]/50 border border-gray-100 text-gray-800 transition-colors text-left rtl:text-right cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <ShoppingBag className="w-4 h-4 text-[#0f7a61]" />
-                <span className="text-xs font-bold">{t('cartDropdown.rfqBasket', 'RFQ Basket')}</span>
-              </div>
-              {totalCount > 0 && (
-                <span className="bg-[#0f7a61] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                  {totalCount}
-                </span>
-              )}
-            </button>
-
-            {session && (
-              <Link
-                href="/profile"
-                onClick={onClose}
-                className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-[#e6f7ef]/50 border border-gray-100 text-gray-800 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-[#0f7a61]" />
-                  <span className="text-xs font-bold">{t('nav.notifications', 'Alerts')}</span>
-                </div>
-                {unreadCount > 0 && (
-                  <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    {unreadCount}
-                  </span>
-                )}
-              </Link>
-            )}
-          </div>
-
           {/* Primary Navigation Links */}
           <nav className="space-y-1">
             {/* Buy / Categories Accordion */}
@@ -290,20 +231,18 @@ export default function MobileNavDrawer({
               <button
                 type="button"
                 onClick={() => setIsBuyExpanded(!isBuyExpanded)}
-                className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-bold transition-colors cursor-pointer ${
-                  isActive('/buy') || isActive('/shop-by-category')
-                    ? 'text-[#0f7a61] bg-[#e6f7ef]/40'
-                    : 'text-gray-900 hover:bg-gray-100/70'
-                }`}
+                className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-bold transition-colors cursor-pointer ${isActive('/buy') || isActive('/shop-by-category')
+                  ? 'text-[#0f7a61] bg-[#e6f7ef]/40'
+                  : 'text-gray-900 hover:bg-gray-100/70'
+                  }`}
               >
                 <div className="flex items-center gap-2.5">
                   <Boxes className="w-4 h-4 text-[#0f7a61]" />
                   <span>{t('nav.buy', 'Buy Surplus')}</span>
                 </div>
-                <ChevronDown 
-                  className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                    isBuyExpanded ? 'rotate-180 text-[#0f7a61]' : ''
-                  }`} 
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isBuyExpanded ? 'rotate-180 text-[#0f7a61]' : ''
+                    }`}
                 />
               </button>
 
@@ -316,7 +255,7 @@ export default function MobileNavDrawer({
                   >
                     <span className="flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-[#0f7a61]" />
-                      {t('megamenu.allLots', 'All Liquidation Lots')}
+                      {t('megamenu.allLiquidation', 'All Liquidation')}
                     </span>
                     <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                   </Link>
@@ -329,7 +268,7 @@ export default function MobileNavDrawer({
                     <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                   </Link>
 
-                  <div className="pt-2 border-t border-gray-100 grid grid-cols-2 gap-1.5">
+                  <div className="pt-2 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {displayCategories.slice(0, 6).map((cat) => {
                       const Icon = cat.icon;
                       return (
@@ -357,11 +296,10 @@ export default function MobileNavDrawer({
             <Link
               href="/sell"
               onClick={onClose}
-              className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-bold transition-colors ${
-                isActive('/sell')
-                  ? 'bg-[#e6f7ef] text-[#0f7a61]'
-                  : 'text-gray-800 hover:bg-gray-50'
-              }`}
+              className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-bold transition-colors ${isActive('/sell')
+                ? 'bg-[#e6f7ef] text-[#0f7a61]'
+                : 'text-gray-800 hover:bg-gray-50'
+                }`}
             >
               <div className="flex items-center gap-2.5">
                 <Tag className="w-4 h-4 text-[#0f7a61]" />
@@ -376,11 +314,10 @@ export default function MobileNavDrawer({
             <Link
               href="/partnership"
               onClick={onClose}
-              className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-bold transition-colors ${
-                isActive('/partnership')
-                  ? 'bg-[#e6f7ef] text-[#0f7a61]'
-                  : 'text-gray-800 hover:bg-gray-50'
-              }`}
+              className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-bold transition-colors ${isActive('/partnership')
+                ? 'bg-[#e6f7ef] text-[#0f7a61]'
+                : 'text-gray-800 hover:bg-gray-50'
+                }`}
             >
               <div className="flex items-center gap-2.5">
                 <Handshake className="w-4 h-4 text-[#0f7a61]" />
@@ -393,11 +330,10 @@ export default function MobileNavDrawer({
             <Link
               href="/sustainability"
               onClick={onClose}
-              className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-bold transition-colors ${
-                isActive('/sustainability')
-                  ? 'bg-[#e6f7ef] text-[#0f7a61]'
-                  : 'text-gray-800 hover:bg-gray-50'
-              }`}
+              className={`flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-bold transition-colors ${isActive('/sustainability')
+                ? 'bg-[#e6f7ef] text-[#0f7a61]'
+                : 'text-gray-800 hover:bg-gray-50'
+                }`}
             >
               <div className="flex items-center gap-2.5">
                 <Leaf className="w-4 h-4 text-[#0f7a61]" />
@@ -440,18 +376,19 @@ export default function MobileNavDrawer({
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Drawer Footer */}
-        <div className="px-5 py-4 border-t border-gray-100 bg-gray-50/70 shrink-0 text-center">
-          <p className="text-[11px] text-gray-500 font-medium">
-            Surplus Market &bull; Circular Commerce Platform
-          </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">
-            Verified Liquidation Lots &bull; B2B Wholesale
-          </p>
-        </div>
-      </aside>
-    </div>
+      {/* Drawer Footer */}
+      <div className="px-5 sm:px-8 py-3.5 border-t border-gray-100 bg-gray-50/80 shrink-0 text-center w-full">
+        <p className="text-[11px] text-gray-500 font-medium">
+          Surplus Market &bull; Circular Commerce Platform
+        </p>
+        <p className="text-[10px] text-gray-400 mt-0.5">
+          Verified Liquidation Lots &bull; B2B Wholesale
+        </p>
+      </div>
+    </div>,
+    document.body
   );
 }
 

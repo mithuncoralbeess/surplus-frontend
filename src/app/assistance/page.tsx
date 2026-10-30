@@ -2,6 +2,7 @@ import React from 'react';
 import { Metadata } from 'next';
 import AssistanceDesk from '../../widgets/AssistanceDesk';
 import { getPageMetadata } from '../../services/pageSeoService';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 const fallbackMetadata: Metadata = {
   title: "Assistance Desk & Sourcing Support | Surplus Market",
@@ -34,6 +35,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function AssistancePage() {
   return (
     <main className="min-h-screen bg-[#fbfcfc]">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Assistance Desk', url: '/assistance' },
+        ]}
+      />
       <AssistanceDesk />
     </main>
   );

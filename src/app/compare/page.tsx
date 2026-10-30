@@ -1,5 +1,6 @@
 import React from 'react';
 import ChecklistComparisonWidget from '../../widgets/ChecklistComparison';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
@@ -27,6 +28,12 @@ export async function generateMetadata() {
 export default function ComparePage() {
   return (
     <main className="min-h-screen bg-gray-50/50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Guides & Comparisons', url: '/compare' },
+        ]}
+      />
       <ChecklistComparisonWidget />
     </main>
   );

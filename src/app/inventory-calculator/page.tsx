@@ -1,5 +1,6 @@
 import React from 'react';
 import InventoryCalculatorWidget from '../../widgets/InventoryCalculator';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
@@ -18,6 +19,12 @@ export async function generateMetadata() {
 export default function InventoryCalculatorPage() {
   return (
     <main className="min-h-screen bg-gray-50/50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Inventory Calculator', url: '/inventory-calculator' },
+        ]}
+      />
       <InventoryCalculatorWidget />
     </main>
   );

@@ -46,7 +46,7 @@ const HeaderCartDropdown: React.FC = () => {
       {isOpen && (
         <div 
           data-lenis-prevent
-          className="absolute top-full right-0 rtl:right-auto rtl:left-0 mt-3 w-80 sm:w-96 bg-white rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.14)] border border-gray-100 z-50 overflow-hidden"
+          className="absolute top-full right-0 rtl:right-auto rtl:left-0 mt-3 w-80 sm:w-96 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-[0_4px_25px_rgba(0,0,0,0.14)] border border-gray-100 z-50 overflow-hidden"
           onWheel={(e) => e.stopPropagation()}
         >
           {/* Header */}

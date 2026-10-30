@@ -185,7 +185,7 @@ export default function HeaderNotificationsDropdown() {
         <div 
           data-lenis-prevent
           onWheel={(e) => e.stopPropagation()}
-          className="absolute right-0 rtl:right-auto rtl:left-0 mt-3 w-80 sm:w-96 bg-white border border-gray-100 rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.14)] z-50 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150"
+          className="absolute right-0 rtl:right-auto rtl:left-0 mt-3 w-80 sm:w-96 max-w-[calc(100vw-1.5rem)] bg-white border border-gray-100 rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.14)] z-50 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150"
         >
           {/* Header */}
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10 shrink-0">

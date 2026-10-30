@@ -20,6 +20,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from '../../lib/motion';
+import { FaqJsonLd } from '../../components/StructuredData';
 
 export interface FAQItem {
   id: string;
@@ -169,6 +170,7 @@ export default function FAQPageWidget() {
 
   return (
     <div className="w-full flex flex-col items-center bg-gray-50/50">
+      <FaqJsonLd faqs={FULL_FAQ_ITEMS} />
       
       {/* Banner Header */}
       <CommonBanner 

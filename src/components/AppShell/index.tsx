@@ -2,12 +2,14 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import Header from '../../widgets/Header';
 import Footer from '../Footer';
 import MaintenanceWidget from '../../widgets/Maintenance';
-import WhatsAppFloatingButton from '../WhatsAppFloatingButton';
-import CartDrawer from '../CartDrawer';
 import { apiClient } from '../../services/apiClient';
+
+const WhatsAppFloatingButton = dynamic(() => import('../WhatsAppFloatingButton'), { ssr: false });
+const CartDrawer = dynamic(() => import('../CartDrawer'), { ssr: false });
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -94,7 +96,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       try {
         sessionStorage.removeItem('surplus_api_cache_v4:GET:/api/maintenance-status/');
         localStorage.removeItem('surplus_api_cache_v4:GET:/api/maintenance-status/');
-      } catch {}
+      } catch { }
     }
 
     checkMaintenanceStatus();
@@ -132,7 +134,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Header />
-      <div className="flex-1">{children}</div>
+      <div className="flex-1 w-full">{children}</div>
       <Footer />
       <WhatsAppFloatingButton />
       <CartDrawer />

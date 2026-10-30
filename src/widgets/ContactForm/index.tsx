@@ -201,7 +201,7 @@ export default function ContactForm() {
         
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 flex flex-col lg:flex-row">
           {/* Left Side - Contact Info Panel */}
-          <div className="lg:w-5/12 bg-[#0a1e17] text-white p-8 lg:p-10 relative overflow-hidden flex flex-col justify-between">
+          <div className="lg:w-5/12 bg-[#0a1e17] text-white p-6 sm:p-8 lg:p-10 relative overflow-hidden flex flex-col justify-between">
             {/* Background Glow */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#0a5c48]/20 blur-[80px] rounded-full pointer-events-none transform translate-x-1/2 -translate-y-1/2"></div>
 
@@ -278,7 +278,7 @@ export default function ContactForm() {
           </div>
 
           {/* Right Side - Form Panel */}
-          <div className="lg:w-7/12 p-8 sm:p-12">
+          <div className="lg:w-7/12 p-6 sm:p-8 lg:p-12">
             <form onSubmit={handleSubmit} className="space-y-6">
               {submitError && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium flex items-center justify-between">

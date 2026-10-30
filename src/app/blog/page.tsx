@@ -2,6 +2,7 @@ import React from 'react';
 import CommonBanner from '../../widgets/CommonBanner';
 import BlogListing from '../../widgets/BlogListing';
 import { getBlogs } from '../../services/blogService';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +39,12 @@ export default async function BlogPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-gray-50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Blog', url: '/blog' },
+        ]}
+      />
       <CommonBanner 
         title="Market Insights & Supply Chain Intelligence"
         subtitle="Expert perspectives on excess inventory liquidation, ESG carbon reporting, circular economy models, and secondary market trends."

@@ -1,5 +1,6 @@
 import React from 'react';
 import SaudiArabiaMarketplaceWidget from '../../widgets/SaudiArabiaMarketplace';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 export const metadata = {
   title: "Buy & Sell Excess Inventory in Saudi Arabia | Surplus Market",
@@ -21,6 +22,12 @@ export const metadata = {
 export default function SaudiArabiaRegionalPage() {
   return (
     <main className="min-h-screen bg-gray-50/50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Saudi Arabia Marketplace', url: '/saudi-arabia' },
+        ]}
+      />
       <SaudiArabiaMarketplaceWidget />
     </main>
   );

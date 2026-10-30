@@ -4,6 +4,10 @@ import UserProfileWidget from '../../widgets/UserProfile';
 export const metadata: Metadata = {
   title: 'My Profile & Business Account | Surplus Market',
   description: 'Manage your verified business profile, active RFQs, quotes, saved deals, and surplus inventory listings on Surplus Market.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function ProfilePage() {

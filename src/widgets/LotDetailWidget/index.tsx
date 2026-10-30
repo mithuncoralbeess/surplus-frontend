@@ -13,10 +13,13 @@ import {
   Box, ExternalLink, Globe, Clock, X,
   FileCheck, FileText, Download
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { catalogService, LotItem } from '../../services/catalogService';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
-import VirtualWarehouseExplorer from '../../components/VirtualWarehouseExplorer';
+import { ProductJsonLd, BreadcrumbJsonLd } from '../../components/StructuredData';
+
+const VirtualWarehouseExplorer = dynamic(() => import('../../components/VirtualWarehouseExplorer'), { ssr: false });
 
 interface LotDetailWidgetProps {
   lotId: string;
@@ -204,30 +207,48 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
     ? lot.key_brands_included.split(',').map(b => b.trim()).filter(Boolean)
     : [];
 
-  const formatDropString = (raw?: string) => {
-    if (!raw) return null;
-    const str = raw.trim();
-    if (/open\s*to/i.test(str) || /droper/i.test(str)) {
-      return null;
-    }
-    const matchPct = str.match(/(\d+(?:\.\d+)?)\s*%/);
-    if (matchPct) {
-      return `${Math.round(parseFloat(matchPct[1]))}% DROP`;
-    }
-    const num = parseFloat(str);
-    if (!isNaN(num) && num > 0 && !str.includes(' ')) {
-      return `${Math.round(num)}% DROP`;
-    }
-    if (str.toLowerCase().includes('drop')) {
-      return str;
-    }
-    return null;
-  };
+  const isOpenForOffers = Boolean(
+    lot.open_for_offers === true ||
+    (lot.open_for_offers as any) === 'true' ||
+    lot.openForOffers === true ||
+    (lot.openForOffers as any) === 'true' ||
+    lot.is_open_for_offers === true ||
+    (lot.is_open_for_offers as any) === 'true' ||
+    (typeof lot.offer === 'string' && /open\s*(?:for|to)\s*offer/i.test(lot.offer)) ||
+    (typeof (lot as any).raw_data === 'object' && ((lot as any).raw_data?.open_for_offers === true || (lot as any).raw_data?.open_for_offers === 'true'))
+  );
 
-  const discountPercent = msrp > price && msrp > 0
-    ? Math.round(((msrp - price) / msrp) * 100)
-    : 0;
-  const displayDrop = formatDropString(offer) || (discountPercent > 0 ? `${discountPercent}% DROP` : null);
+  const rawSaleMethod = String(
+    lot.sale_method ||
+    lot.saleMethod ||
+    lot.sales_method ||
+    lot.salesMethod ||
+    (lot as any).raw_data?.sale_method ||
+    (lot as any).raw_data?.sales_method ||
+    ''
+  ).trim().toLowerCase();
+
+  const isNegotiation =
+    rawSaleMethod === 'negotiation' ||
+    rawSaleMethod === 'negotiable' ||
+    rawSaleMethod.includes('negotiat');
+
+  let statusBadgeText: string | null = null;
+  let statusBadgeType: 'offer' | 'negotiation' | null = null;
+
+  if (isOpenForOffers) {
+    statusBadgeText = 'Open for Offer';
+    statusBadgeType = 'offer';
+  } else if (isNegotiation) {
+    statusBadgeText = 'Open for Negotiation';
+    statusBadgeType = 'negotiation';
+  }
+
+  const displaySaleMethod = isOpenForOffers
+    ? 'Open for Offer'
+    : isNegotiation
+    ? 'Open for Negotiation'
+    : (lot.sale_method || 'Fixed Price');
 
   const rawUnitType = lot.primary_unit_type?.trim();
   const unitTypeLabel = (!rawUnitType || rawUnitType.toLowerCase() === 'pieces / units' || rawUnitType.toLowerCase() === 'units' || rawUnitType.toLowerCase() === 'unit')
@@ -283,6 +304,27 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
           </div>
         </div>
 
+        {/* Structured Data: Product & BreadcrumbList */}
+        <ProductJsonLd
+          name={title}
+          description={lot.description || `Verified wholesale surplus lot: ${title}`}
+          image={selectedImage || image}
+          price={price}
+          priceCurrency="USD"
+          sku={lot.lot_number || String(lot.id)}
+          brand={brandsList[0] || 'Surplus Market'}
+          condition={condition}
+          availability="InStock"
+          url={`/buy/lot/${lotId}`}
+        />
+        <BreadcrumbJsonLd
+          items={[
+            { name: 'Home', url: '/' },
+            { name: 'Buy Surplus', url: '/buy' },
+            ...(category ? [{ name: category, url: `/buy?category=${encodeURIComponent(category)}` }] : []),
+            { name: title, url: `/buy/lot/${lotId}` },
+          ]}
+        />
 
         {/* Hero Section */}
         <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200/90 shadow-sm p-4 sm:p-6 lg:p-8 xl:p-10 mb-8 sm:mb-10">
@@ -303,9 +345,13 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                   <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 sm:px-3 sm:py-1 rounded-full border border-emerald-200 text-[10px] sm:text-xs font-extrabold text-[#0a5c48] shadow-xs flex items-center gap-1.5 uppercase tracking-wider">
                     <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#0f7a61]" /> Wholesale Lot
                   </span>
-                  {displayDrop && (
-                    <span className="bg-rose-500 text-white px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-extrabold uppercase shadow-xs flex items-center gap-1">
-                      <Tag className="w-3 h-3" /> {displayDrop}
+                  {statusBadgeText && (
+                    <span className={`px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-extrabold uppercase shadow-xs flex items-center gap-1 tracking-wide ${
+                      statusBadgeType === 'offer'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-amber-500 text-white'
+                    }`}>
+                      <Tag className="w-3 h-3" /> {statusBadgeText}
                     </span>
                   )}
                   <span className="bg-emerald-950/80 backdrop-blur-md text-emerald-300 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold flex items-center gap-1">
@@ -388,30 +434,44 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
               {/* Price Box */}
               <div className="bg-[#f8faf9] p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-emerald-100 flex flex-col justify-center gap-2">
                 <div className="flex items-center justify-between">
-                  <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">Price</div>
-                  {buyerSavings > 0 && (
+                  <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    {isOpenForOffers ? 'Estimated Retail Value (MSRP)' : 'Price'}
+                  </div>
+                  {!isOpenForOffers && buyerSavings > 0 && (
                     <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/70 px-2.5 py-0.5 rounded-full">
                       Buyer Saves: {formatPrice(buyerSavings, currencyCode)}
                     </span>
                   )}
                 </div>
                 <div className="flex items-baseline gap-2.5 sm:gap-3 flex-wrap">
-                  <span suppressHydrationWarning className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0f7a61]">
-                    {formatPrice(price, currencyCode)}
-                  </span>
-                  {msrp > price && (
-                    <span suppressHydrationWarning className="text-sm sm:text-base text-gray-500 line-through font-semibold">
-                      MSRP {formatPrice(msrp, currencyCode)}
+                  {isOpenForOffers ? (
+                    <span suppressHydrationWarning className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0f7a61]">
+                      {msrp > 0 ? formatPrice(msrp, currencyCode) : formatPrice(0, currencyCode)}
                     </span>
+                  ) : (
+                    <>
+                      <span suppressHydrationWarning className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0f7a61]">
+                        {formatPrice(price, currencyCode)}
+                      </span>
+                      {msrp > price && (
+                        <span suppressHydrationWarning className="text-sm sm:text-base text-gray-500 line-through font-semibold">
+                          MSRP {formatPrice(msrp, currencyCode)}
+                        </span>
+                      )}
+                    </>
                   )}
-                  {displayDrop && (
-                    <span className="bg-rose-50 border border-rose-200 text-rose-700 px-2.5 py-0.5 rounded-full text-xs font-extrabold flex items-center gap-1 shadow-xs">
-                      <Tag className="w-3 h-3 text-rose-600" />
-                      <span>{displayDrop}</span>
+                  {statusBadgeText && (
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold flex items-center gap-1 shadow-xs ${
+                      statusBadgeType === 'offer'
+                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                        : 'bg-amber-50 border border-amber-200 text-amber-800'
+                    }`}>
+                      <Tag className={`w-3 h-3 ${statusBadgeType === 'offer' ? 'text-emerald-600' : 'text-amber-600'}`} />
+                      <span>{statusBadgeText}</span>
                     </span>
                   )}
                 </div>
-                {unitCost > 0 && (
+                {!isOpenForOffers && unitCost > 0 && (
                   <div className="text-xs text-gray-500 font-medium pt-1">
                     Effective Unit Cost: <strong className="text-gray-900 font-bold">{formatPrice(unitCost, currencyCode)}</strong> / {unitTypeSingular} ({units.toLocaleString()} total {unitTypeLabel.toLowerCase()})
                   </div>
@@ -577,7 +637,7 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
             </div>
             <div className="bg-gray-50/70 p-3 rounded-xl border border-gray-100">
               <span className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Sale Method</span>
-              <span className="text-xs sm:text-sm font-bold text-gray-900 uppercase">{lot.sale_method || 'Offer'}</span>
+              <span className="text-xs sm:text-sm font-bold text-gray-900 uppercase">{displaySaleMethod}</span>
             </div>
             {Boolean(lot.primary_unit_type && lot.primary_unit_type.trim()) && (
               <div className="bg-gray-50/70 p-3 rounded-xl border border-gray-100">

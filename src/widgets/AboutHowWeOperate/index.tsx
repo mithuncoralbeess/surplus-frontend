@@ -29,16 +29,16 @@ export default function AboutHowWeOperate() {
           <span className="text-xs font-bold text-[#0a5c48] uppercase tracking-widest block">
             HOW WE OPERATE
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
             Transparent, efficient, built for scale.
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {HOW_WE_OPERATE.map((item, idx) => {
             const IconComp = item.icon;
             return (
-              <div key={idx} className="bg-white rounded-3xl p-8 border border-gray-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div key={idx} className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
                 <div>
                   <div className="w-12 h-12 rounded-2xl bg-[#e0f0e9] text-[#0a5c48] flex items-center justify-center font-bold mb-6">
                     <IconComp className="w-6 h-6" />

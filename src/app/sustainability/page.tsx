@@ -10,6 +10,7 @@ import SustainabilityGoals from '../../widgets/SustainabilityGoals';
 import SustainabilityWhyMatters from '../../widgets/SustainabilityWhyMatters';
 import SustainabilityModel from '../../widgets/SustainabilityModel';
 import SustainabilityCTA from '../../widgets/SustainabilityCTA';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 const fallbackMetadata: Metadata = {
   title: "Sustainability at Surplus Market | Reducing Waste, Boosting Impact",
@@ -23,6 +24,9 @@ const fallbackMetadata: Metadata = {
     "surplus deals",
     "inventory aging calculator",
   ],
+  alternates: {
+    canonical: "https://surplusmarket.com/sustainability",
+  },
 };
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -32,6 +36,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function SustainabilityPage() {
   return (
     <main className="w-full min-h-screen bg-white">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Sustainability', url: '/sustainability' },
+        ]}
+      />
       <SustainabilityHero />
       <SustainabilityMission />
       <SustainabilityProblem />

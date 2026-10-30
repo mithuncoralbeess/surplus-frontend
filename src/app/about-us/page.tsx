@@ -5,6 +5,7 @@ import AboutOurStory from '../../widgets/AboutOurStory';
 import AboutMissionVision from '../../widgets/AboutMissionVision';
 import AboutWhatWeDo from '../../widgets/AboutWhatWeDo';
 import AboutCTA from '../../widgets/AboutCTA';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
@@ -32,6 +33,12 @@ export async function generateMetadata() {
 export default function AboutUsPage() {
   return (
     <main className="min-h-screen bg-gray-50/50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'About Us', url: '/about-us' },
+        ]}
+      />
       <AboutHero />
       <AboutHowWeOperate />
       <AboutOurStory />

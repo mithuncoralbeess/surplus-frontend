@@ -1,5 +1,6 @@
 import React from 'react';
 import SaudiArabiaMarketplaceWidget from '../../widgets/SaudiArabiaMarketplace';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
@@ -18,6 +19,12 @@ export async function generateMetadata() {
 export default function SaudiPage() {
   return (
     <main className="min-h-screen bg-gray-50/50">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Saudi Arabia Marketplace', url: '/saudi' },
+        ]}
+      />
       <SaudiArabiaMarketplaceWidget />
     </main>
   );

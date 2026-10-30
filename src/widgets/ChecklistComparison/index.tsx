@@ -118,12 +118,12 @@ export default function ChecklistComparisonWidget() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {COMPARISON_GUIDES.map((guide, idx) => (
               <motion.div
                 key={idx}
                 whileHover={{ y: -4 }}
-                className="bg-white rounded-3xl p-8 border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+                className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -186,7 +186,7 @@ export default function ChecklistComparisonWidget() {
           </div>
 
           {/* Preview Checklist Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
             {PREVIEW_CHECKLISTS.map((chk, idx) => (
               <div 
                 key={idx} 

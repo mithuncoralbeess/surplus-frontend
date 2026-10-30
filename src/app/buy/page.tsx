@@ -4,6 +4,7 @@ import BuyHeroBanner from '../../widgets/BuyHeroBanner';
 import BuyFeaturedLots from '../../widgets/BuyFeaturedLots';
 import BuyTrustGuarantee from '../../widgets/BuyTrustGuarantee';
 import { getPageMetadata } from '../../services/pageSeoService';
+import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 const fallbackMetadata: Metadata = {
   title: "Buy Verified Surplus Lots, Liquidation Pallets & Overstock | Surplus Market",
@@ -18,6 +19,9 @@ const fallbackMetadata: Metadata = {
     "salvage and customer returns",
     "bulk excess inventory"
   ],
+  alternates: {
+    canonical: "https://surplusmarket.com/buy",
+  },
   openGraph: {
     title: "Buy Verified Surplus Lots & Liquidation Pallets | Surplus Market",
     description: "Source manifested pallets and truckloads directly from enterprise liquidators and tier-1 distributors at up to 85% below MSRP.",
@@ -35,6 +39,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function BuyPage() {
   return (
     <main className="min-h-screen bg-[#f8fafc] flex flex-col w-full">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: '/' },
+          { name: 'Buy Surplus Lots', url: '/buy' },
+        ]}
+      />
       {/* 1. Hero Banner with Liquidation Live Stats & Sourcing Search */}
       <BuyHeroBanner />
 
