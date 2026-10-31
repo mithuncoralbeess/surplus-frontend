@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 export interface CurrencyOption {
   code: string;
@@ -201,14 +201,29 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setIsAutoDetected(true);
     }
 
-    // Fetch live rates relative to USD from open forex API
-    async function fetchLiveExchangeRates() {
+    // Fetch live rates relative to USD from open forex API (cached for 6 hours, deferred after LCP)
+    const RATE_TS_KEY = 'surplus_live_exchange_rates_ts';
+    const lastFetched = typeof window !== 'undefined' ? Number(localStorage.getItem(RATE_TS_KEY) || 0) : 0;
+    const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+
+    if (lastFetched > 0 && Date.now() - lastFetched < SIX_HOURS_MS) {
+      setExchangeRates({ ...globalExchangeRates });
+      setIsLiveRates(true);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
       try {
         const response = await fetch('https://open.er-api.com/v6/latest/USD');
         if (response.ok) {
           const data = await response.json();
           if (data && data.rates) {
             updateGlobalExchangeRates(data.rates);
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem(RATE_TS_KEY, String(Date.now()));
+              } catch {}
+            }
             setExchangeRates(prev => ({
               ...prev,
               ...data.rates
@@ -219,43 +234,43 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } catch (err) {
         console.warn('Live forex exchange rates unavailable, using default rates.', err);
       }
-    }
+    }, 3500);
 
-    fetchLiveExchangeRates();
+    return () => clearTimeout(timer);
   }, []);
 
-  const setCurrency = (_code: string) => {
+  const setCurrency = useCallback((_code: string) => {
     // Platform displays in USD only
     if (typeof window !== 'undefined') {
       localStorage.setItem('surplus_currency', 'USD');
     }
-  };
+  }, []);
 
-  const setSelectedRegion = (region: string) => {
+  const setSelectedRegion = useCallback((region: string) => {
     setSelectedRegionState(region);
     setIsAutoDetected(false);
     if (typeof window !== 'undefined') {
       localStorage.setItem('surplus_region', region);
       localStorage.setItem('surplus_currency', 'USD');
     }
-  };
+  }, []);
 
-  const setRegionAndCurrency = (region: string, _code: string) => {
+  const setRegionAndCurrency = useCallback((region: string, _code: string) => {
     setSelectedRegionState(region);
     setIsAutoDetected(false);
     if (typeof window !== 'undefined') {
       localStorage.setItem('surplus_region', region);
       localStorage.setItem('surplus_currency', 'USD');
     }
-  };
+  }, []);
 
   const activeOption = INITIAL_CURRENCY_OPTIONS[0]; // Always USD ($)
 
-  const convertPriceToUsd = (amount: number | string | undefined | null, fromCurrency?: string): number => {
+  const convertPriceToUsd = useCallback((amount: number | string | undefined | null, fromCurrency?: string): number => {
     return convertToUsd(amount, fromCurrency, exchangeRates);
-  };
+  }, [exchangeRates]);
 
-  const formatPrice = (amount: number | string | undefined | null, fromCurrency?: string): string => {
+  const formatPrice = useCallback((amount: number | string | undefined | null, fromCurrency?: string): string => {
     const usdAmount = convertToUsd(amount, fromCurrency, exchangeRates);
     
     return new Intl.NumberFormat('en-US', {
@@ -263,23 +278,25 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       currency: 'USD',
       maximumFractionDigits: usdAmount >= 1000 ? 0 : 2
     }).format(usdAmount);
-  };
+  }, [exchangeRates]);
+
+  const contextValue = useMemo(() => ({
+    currency: 'USD',
+    selectedRegion,
+    detectedCountryCode,
+    isAutoDetected,
+    currencyOptions,
+    isLiveRates,
+    setCurrency,
+    setSelectedRegion,
+    setRegionAndCurrency,
+    convertToUsd: convertPriceToUsd,
+    formatPrice,
+    activeOption
+  }), [selectedRegion, detectedCountryCode, isAutoDetected, currencyOptions, isLiveRates, setCurrency, setSelectedRegion, setRegionAndCurrency, convertPriceToUsd, formatPrice, activeOption]);
 
   return (
-    <CurrencyContext.Provider value={{
-      currency: 'USD',
-      selectedRegion,
-      detectedCountryCode,
-      isAutoDetected,
-      currencyOptions,
-      isLiveRates,
-      setCurrency,
-      setSelectedRegion,
-      setRegionAndCurrency,
-      convertToUsd: convertPriceToUsd,
-      formatPrice,
-      activeOption
-    }}>
+    <CurrencyContext.Provider value={contextValue}>
       {children}
     </CurrencyContext.Provider>
   );

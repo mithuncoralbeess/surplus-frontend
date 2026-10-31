@@ -86,13 +86,15 @@ const HomeBanner = () => {
 
   return (
     <section className="w-full relative overflow-hidden py-12 lg:py-16 min-[1350px]:py-20 min-[1350px]:min-h-[calc(100vh-81px)] flex items-center bg-gradient-to-b from-emerald-50/40 via-white to-gray-50/50">
-      {/* Ambient background glow elements */}
+      {/* Ambient background glow elements (GPU-free radial gradients) */}
       <div
-        className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none"
+        className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(10, 92, 72, 0.12) 0%, transparent 70%)' }}
         aria-hidden="true"
       />
       <div
-        className="absolute top-1/2 -right-40 w-[600px] h-[600px] bg-emerald-400/10 rounded-full blur-[140px] pointer-events-none"
+        className="absolute top-1/2 -right-40 w-[600px] h-[600px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(52, 211, 153, 0.12) 0%, transparent 70%)' }}
         aria-hidden="true"
       />
       {/* Subtle modern dot-grid background overlay */}
@@ -282,9 +284,9 @@ const HomeBanner = () => {
                       <BarChart2 className="w-6 h-6 text-accent" />
                     </div>
                     <div>
-                      <h3 className="text-[16px] text-white font-medium leading-tight mb-1">
+                      <h2 className="text-[16px] text-white font-medium leading-tight mb-1">
                         Live Market Intelligence
-                      </h3>
+                      </h2>
                       <p className="text-dashboard-text text-[12px] xxl:text-xs font-bold tracking-wider uppercase">
                         Operating Dashboard
                       </p>
@@ -310,9 +312,9 @@ const HomeBanner = () => {
                 {/* How it works section */}
                 <div className="flex-1 flex flex-col pt-2 min-h-0">
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-[14px] xxl:text-base text-white font-medium tracking-widest uppercase">
+                    <h3 className="text-[14px] xxl:text-base text-white font-medium tracking-widest uppercase">
                       How Surplus Market Works
-                    </h4>
+                    </h3>
                     <span className="text-accent text-[12px] xxl:text-xs font-medium tracking-wider uppercase">
                       2 Min Tour
                     </span>
@@ -337,7 +339,9 @@ const HomeBanner = () => {
                         src="/hero-warehouse.jpg"
                         alt="Warehouse Surplus Tour"
                         fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 520px"
+                        sizes="(max-width: 768px) 92vw, (max-width: 1200px) 45vw, 480px"
+                        quality={75}
+                        fetchPriority="high"
                         className="object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
                         priority
                       />

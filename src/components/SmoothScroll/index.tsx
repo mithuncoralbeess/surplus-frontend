@@ -2,7 +2,6 @@
 
 import { ReactNode, useEffect, useRef, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import Lenis from "lenis";
 import { scrollToTop, scrollToHashOrTop } from "../../lib/scroll";
 
 /**
@@ -79,53 +78,79 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
-      smoothWheel: true,
-      wheelMultiplier: 1.0,
-      touchMultiplier: 1.5,
-      prevent: (node) => {
-        if (typeof document !== 'undefined') {
-          if (
-            document.body.classList.contains('modal-open') ||
-            document.body.style.overflow === 'hidden'
-          ) {
-            return true;
-          }
-        }
-        if (node && node instanceof HTMLElement) {
-          if (
-            node.hasAttribute('data-lenis-prevent') ||
-            node.closest('[data-lenis-prevent]') ||
-            node.closest('[class*="-menu"]') ||
-            node.closest('[class*="MenuList"]') ||
-            node.closest('[class*="menu-list"]') ||
-            node.closest('[role="listbox"]')
-          ) {
-            return true;
-          }
-        }
-        return false;
-      }
-    });
-
-    (window as any).__lenis = lenis;
-
+    let lenisInstance: any = null;
     let rafId = 0;
-    function raf(time: number) {
-      lenis.raf(time);
-      rafId = requestAnimationFrame(raf);
-    }
+    let isDisposed = false;
 
-    rafId = requestAnimationFrame(raf);
+    const initLenisOnFirstScroll = async () => {
+      window.removeEventListener('wheel', initLenisOnFirstScroll);
+      window.removeEventListener('touchstart', initLenisOnFirstScroll);
+
+      if (isDisposed) return;
+
+      try {
+        const { default: Lenis } = await import("lenis");
+        if (isDisposed) return;
+
+        lenisInstance = new Lenis({
+          duration: 1.2,
+          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          orientation: 'vertical',
+          gestureOrientation: 'vertical',
+          smoothWheel: true,
+          wheelMultiplier: 1.0,
+          touchMultiplier: 1.5,
+          prevent: (node: any) => {
+            if (typeof document !== 'undefined') {
+              if (
+                document.body.classList.contains('modal-open') ||
+                document.body.style.overflow === 'hidden'
+              ) {
+                return true;
+              }
+            }
+            if (node && node instanceof HTMLElement) {
+              if (
+                node.hasAttribute('data-lenis-prevent') ||
+                node.closest('[data-lenis-prevent]') ||
+                node.closest('[class*="-menu"]') ||
+                node.closest('[class*="MenuList"]') ||
+                node.closest('[class*="menu-list"]') ||
+                node.closest('[role="listbox"]')
+              ) {
+                return true;
+              }
+            }
+            return false;
+          }
+        });
+
+        (window as any).__lenis = lenisInstance;
+
+        function raf(time: number) {
+          if (isDisposed || !lenisInstance) return;
+          lenisInstance.raf(time);
+          rafId = requestAnimationFrame(raf);
+        }
+
+        rafId = requestAnimationFrame(raf);
+      } catch {
+        // Fallback to native smooth scroll if dynamic import fails
+      }
+    };
+
+    window.addEventListener('wheel', initLenisOnFirstScroll, { passive: true, once: true });
+    window.addEventListener('touchstart', initLenisOnFirstScroll, { passive: true, once: true });
 
     return () => {
-      cancelAnimationFrame(rafId);
+      isDisposed = true;
+      window.removeEventListener('wheel', initLenisOnFirstScroll);
+      window.removeEventListener('touchstart', initLenisOnFirstScroll);
+      if (rafId) cancelAnimationFrame(rafId);
       window.removeEventListener('submit', handleGlobalFormSubmit, true);
-      lenis.destroy();
+      if (lenisInstance) {
+        lenisInstance.destroy();
+      }
       (window as any).__lenis = null;
     };
   }, []);

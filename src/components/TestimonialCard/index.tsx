@@ -46,11 +46,11 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
           />
         </div>
         <div>
-          <h4 className="font-bold text-gray-900 text-[14px] leading-tight">
+          <h3 className="font-bold text-gray-900 text-[14px] leading-tight">
             {name}
-          </h4>
-          <p className="text-[12px] text-gray-500 mt-0.5">
-            {role}, <span className="font-medium text-gray-700">{company}</span>
+          </h3>
+          <p className="text-[12px] text-gray-600 mt-0.5">
+            {role}, <span className="font-medium text-gray-800">{company}</span>
           </p>
         </div>
       </div>

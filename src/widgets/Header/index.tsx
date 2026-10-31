@@ -8,12 +8,12 @@ import { User, LogOut, Menu, X } from 'lucide-react';
 import HeaderCartDropdown from '../../components/HeaderCartDropdown';
 import HeaderNotificationsDropdown from '../../components/HeaderNotificationsDropdown';
 import BuyMegamenu from './BuyMegamenu';
-import MobileNavDrawer from './MobileNavDrawer';
 import { useSession } from 'next-auth/react';
 import { performLogout } from '../../lib/authCleanup';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '../../context/LanguageContext';
 
+const MobileNavDrawer = dynamic(() => import('./MobileNavDrawer'), { ssr: false });
 const AuthModal = dynamic(() => import('../../components/AuthModal'), { ssr: false });
 
 const Header = () => {
@@ -229,19 +229,23 @@ const Header = () => {
       </div>
 
       {/* Mobile & Tablet Navigation Drawer */}
-      <MobileNavDrawer 
-        isOpen={isMobileMenuOpen}
-        onClose={handleCloseMobileMenu}
-        session={session}
-        openAuth={openAuth}
-      />
+      {isMobileMenuOpen && (
+        <MobileNavDrawer 
+          isOpen={isMobileMenuOpen}
+          onClose={handleCloseMobileMenu}
+          session={session}
+          openAuth={openAuth}
+        />
+      )}
 
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-        onSuccess={() => setIsAuthModalOpen(false)}
-        initialMode={authMode}
-      />
+      {isAuthModalOpen && (
+        <AuthModal 
+          isOpen={isAuthModalOpen} 
+          onClose={() => setIsAuthModalOpen(false)} 
+          onSuccess={() => setIsAuthModalOpen(false)}
+          initialMode={authMode}
+        />
+      )}
     </header>
   );
 };

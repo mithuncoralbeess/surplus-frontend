@@ -12,6 +12,7 @@ const CategoryFetcher: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const { categories } = useAppSelector((state) => state.categories);
 
   useEffect(() => {
+    let hasCached = false;
     // 1. Immediately hydrate from localStorage cache on client mount
     if (typeof window !== 'undefined' && categories.length === 0) {
       try {
@@ -20,6 +21,7 @@ const CategoryFetcher: React.FC<{ children: React.ReactNode }> = ({ children }) 
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
             dispatch(setCategories(parsed));
+            hasCached = true;
           }
         }
       } catch {
@@ -27,8 +29,12 @@ const CategoryFetcher: React.FC<{ children: React.ReactNode }> = ({ children }) 
       }
     }
 
-    // 2. Fetch fresh categories in background from API
-    dispatch(fetchCategories());
+    // 2. Defer background category refresh until after critical page load / LCP
+    const timer = setTimeout(() => {
+      dispatch(fetchCategories());
+    }, hasCached ? 4000 : 1800);
+
+    return () => clearTimeout(timer);
   }, [dispatch]);
 
   return <>{children}</>;

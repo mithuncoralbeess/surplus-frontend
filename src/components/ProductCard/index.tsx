@@ -21,6 +21,7 @@ export interface ProductCardProps {
   isCertified?: boolean;
   isNew?: boolean;
   isLoading?: boolean;
+  priority?: boolean;
   onAddRfq?: () => void;
   location?: string;
   inventory_location?: string;
@@ -46,6 +47,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   isCertified = false,
   isNew = false,
   isLoading = false,
+  priority = false,
   onAddRfq,
   location,
   inventory_location,
@@ -203,7 +205,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
             src={image}
             alt={title}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1536px) 33vw, 25vw"
+            priority={priority}
+            sizes="(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 280px"
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             onError={() => setImageError(true)}
           />
@@ -229,7 +232,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Drop Badge */}
         {displayDrop && (
-          <div className="absolute top-3 right-3 bg-rose-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1 z-10">
+          <div className="absolute top-3 right-3 bg-rose-600 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1 z-10">
             <Tag className="w-3 h-3" />
             <span>{displayDrop}</span>
           </div>

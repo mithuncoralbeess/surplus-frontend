@@ -48,10 +48,10 @@ const Footer = () => {
         {/* Newsletter Section */}
         <div className="py-12 border-b border-gray-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div>
-            <h3 className="text-2xl font-bold text-white mb-2">
+            <h2 className="text-2xl font-bold text-white mb-2">
               {t('footer.newsletterTitle', 'Never miss a deal! Subscribe to Surplus Newsletter.')}
-            </h3>
-            <p className="text-[15px] text-gray-400">
+            </h2>
+            <p className="text-[15px] text-gray-300">
               {t('footer.newsletterSubtitle', 'New arrivals, wholesale lots and price drops - straight to your inbox.')}
             </p>
           </div>
@@ -62,8 +62,9 @@ const Footer = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t('footer.emailPlaceholder', 'Enter your email')} 
+              aria-label={t('footer.emailPlaceholder', 'Enter your email')}
               required
-              className="w-full sm:w-[300px] bg-white/5 border border-white/10 rounded-full px-6 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#185545] transition-colors"
+              className="w-full sm:w-[300px] bg-white/5 border border-white/10 rounded-full px-6 py-3.5 text-white placeholder-gray-400 focus:outline-none focus:border-[#185545] transition-colors"
             />
             <button 
               type="submit"

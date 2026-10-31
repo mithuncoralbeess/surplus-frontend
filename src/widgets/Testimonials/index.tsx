@@ -1,12 +1,8 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import TestimonialCard from '../../components/TestimonialCard';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination, Autoplay } from 'swiper/modules';
 import { motion } from '../../lib/motion';
-import 'swiper/css';
-import 'swiper/css/pagination';
 
 const TESTIMONIALS = [
   {
@@ -52,13 +48,35 @@ const TESTIMONIALS = [
 ];
 
 const Testimonials = () => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const maxPage = 3; // 3 slides visible on desktop across 5 items -> indices 0, 1, 2
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % maxPage);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const visibleTestimonials = [
+    TESTIMONIALS[activeIndex % TESTIMONIALS.length],
+    TESTIMONIALS[(activeIndex + 1) % TESTIMONIALS.length],
+    TESTIMONIALS[(activeIndex + 2) % TESTIMONIALS.length],
+  ];
+
   return (
     <section className="w-full bg-[#f8fcf9] pt-24 pb-8 border-b border-gray-100 relative overflow-hidden">
       
       {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[100px]"></div>
-        <div className="absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-primary-alt/5 blur-[100px]"></div>
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(10, 92, 72, 0.06) 0%, transparent 70%)' }}
+        />
+        <div
+          className="absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(20, 184, 117, 0.06) 0%, transparent 70%)' }}
+        />
       </div>
 
       <div className="container mx-auto px-4 lg:px-8 max-w-7xl relative z-10">
@@ -86,40 +104,47 @@ const Testimonials = () => {
           </p>
         </motion.div>
 
-        {/* Testimonials Swiper */}
+        {/* Testimonials Grid Carousel (Zero Swiper bundle overhead) */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-          className="pb-4"
+          className="pb-12"
         >
-          <Swiper
-            modules={[Pagination, Autoplay]}
-            spaceBetween={24}
-            slidesPerView={1}
-            pagination={{ clickable: true }}
-            autoplay={{ delay: 5000, disableOnInteraction: false }}
-            breakpoints={{
-              640: {
-                slidesPerView: 2,
-              },
-              1024: {
-                slidesPerView: 3,
-              },
-            }}
-            className="w-full !pb-12"
-            style={{
-              '--swiper-pagination-color': '#185545',
-              '--swiper-pagination-bullet-inactive-color': '#cbd5e1'
-            } as React.CSSProperties}
-          >
-            {TESTIMONIALS.map((testimonial) => (
-              <SwiperSlide key={testimonial.id} className="h-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleTestimonials.map((testimonial, idx) => (
+              <div
+                key={`${testimonial.id}-${idx}`}
+                className={
+                  idx === 1
+                    ? 'hidden sm:block h-full'
+                    : idx === 2
+                    ? 'hidden lg:block h-full'
+                    : 'block h-full'
+                }
+              >
                 <TestimonialCard {...testimonial} />
-              </SwiperSlide>
+              </div>
             ))}
-          </Swiper>
+          </div>
+
+          {/* Pagination Dots */}
+          <div className="flex items-center justify-center gap-2.5 mt-8" role="tablist" aria-label="Testimonial slides">
+            {Array.from({ length: maxPage }).map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                role="tab"
+                aria-selected={activeIndex === idx}
+                aria-label={`Show testimonial slide ${idx + 1}`}
+                onClick={() => setActiveIndex(idx)}
+                className={`h-2.5 rounded-full transition-all cursor-pointer ${
+                  activeIndex === idx ? 'w-6 bg-[#185545]' : 'w-2.5 bg-slate-300 hover:bg-slate-400'
+                }`}
+              />
+            ))}
+          </div>
         </motion.div>
 
       </div>

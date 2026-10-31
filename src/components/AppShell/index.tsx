@@ -5,9 +5,9 @@ import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Header from '../../widgets/Header';
 import Footer from '../Footer';
-import MaintenanceWidget from '../../widgets/Maintenance';
 import { apiClient } from '../../services/apiClient';
 
+const MaintenanceWidget = dynamic(() => import('../../widgets/Maintenance'));
 const WhatsAppFloatingButton = dynamic(() => import('../WhatsAppFloatingButton'), { ssr: false });
 const CartDrawer = dynamic(() => import('../CartDrawer'), { ssr: false });
 
@@ -99,7 +99,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       } catch { }
     }
 
-    checkMaintenanceStatus();
+    // Defer initial maintenance check until after page load / LCP so it never competes with critical resources
+    const initialTimer = setTimeout(checkMaintenanceStatus, 3000);
 
     // Check periodically (every 30s) and on window focus to immediately detect dashboard toggle
     const interval = setInterval(checkMaintenanceStatus, 30000);
@@ -107,6 +108,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     window.addEventListener('focus', handleFocus);
 
     return () => {
+      clearTimeout(initialTimer);
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
     };

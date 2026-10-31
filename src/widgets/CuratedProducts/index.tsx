@@ -33,7 +33,9 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
   const [activeTab, setActiveTab] = useState('Best Selling');
   const [products, setProducts] = useState<ProductItem[]>(initialProducts);
   const [loading, setLoading] = useState<boolean>(initialProducts.length === 0);
-  const cacheRef = useRef<Record<string, ProductItem[]>>({});
+  const cacheRef = useRef<Record<string, ProductItem[]>>(
+    initialProducts.length > 0 ? { 'Best Selling': initialProducts } : {}
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -175,10 +177,11 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
               />
             ))
           ) : products.length > 0 ? (
-            products.slice(0, 8).map((product) => (
+            products.slice(0, 8).map((product, idx) => (
               <ProductCard
                 key={product.id}
                 {...product}
+                priority={idx < 4}
                 isLoading={false}
               />
             ))
