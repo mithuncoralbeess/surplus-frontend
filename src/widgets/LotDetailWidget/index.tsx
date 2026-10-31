@@ -433,23 +433,51 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
 
               {/* Price Box */}
               <div className="bg-[#f8faf9] p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-emerald-100 flex flex-col justify-center gap-2">
-                <div className="flex items-center justify-between">
-                  <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    {isOpenForOffers ? 'Estimated Retail Value (MSRP)' : 'Price'}
-                  </div>
-                  {!isOpenForOffers && buyerSavings > 0 && (
-                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/70 px-2.5 py-0.5 rounded-full">
-                      Buyer Saves: {formatPrice(buyerSavings, currencyCode)}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-baseline gap-2.5 sm:gap-3 flex-wrap">
-                  {isOpenForOffers ? (
-                    <span suppressHydrationWarning className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0f7a61]">
-                      {msrp > 0 ? formatPrice(msrp, currencyCode) : formatPrice(0, currencyCode)}
-                    </span>
-                  ) : (
-                    <>
+                {isOpenForOffers ? (
+                  <>
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="text-[10px] sm:text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                        Lot Pricing • Flexible Bid
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold flex items-center gap-1 shadow-xs bg-emerald-50 border border-emerald-200 text-emerald-800">
+                        <Tag className="w-3 h-3 text-emerald-600" />
+                        <span>Open for Offer</span>
+                      </span>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-4 flex-wrap">
+                      <div>
+                        <span className="text-2xl sm:text-3xl font-black text-[#0f7a61] leading-tight block">
+                          Open for Offers
+                        </span>
+                        <p className="text-xs text-gray-600 font-medium mt-1">
+                          No fixed asking price — add this lot to your RFQ basket and propose your target offer.
+                        </p>
+                      </div>
+                      {msrp > 0 && (
+                        <div className="bg-white/90 border border-gray-200/80 rounded-xl px-3.5 py-2 text-left sm:text-right shrink-0">
+                          <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            Est. Retail Value (MSRP)
+                          </span>
+                          <span suppressHydrationWarning className="text-base sm:text-lg font-extrabold text-gray-700">
+                            {formatPrice(msrp, currencyCode)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        Price
+                      </div>
+                      {buyerSavings > 0 && (
+                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/70 px-2.5 py-0.5 rounded-full">
+                          Buyer Saves: {formatPrice(buyerSavings, currencyCode)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-baseline gap-2.5 sm:gap-3 flex-wrap">
                       <span suppressHydrationWarning className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0f7a61]">
                         {formatPrice(price, currencyCode)}
                       </span>
@@ -458,23 +486,23 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
                           MSRP {formatPrice(msrp, currencyCode)}
                         </span>
                       )}
-                    </>
-                  )}
-                  {statusBadgeText && (
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold flex items-center gap-1 shadow-xs ${
-                      statusBadgeType === 'offer'
-                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-                        : 'bg-amber-50 border border-amber-200 text-amber-800'
-                    }`}>
-                      <Tag className={`w-3 h-3 ${statusBadgeType === 'offer' ? 'text-emerald-600' : 'text-amber-600'}`} />
-                      <span>{statusBadgeText}</span>
-                    </span>
-                  )}
-                </div>
-                {!isOpenForOffers && unitCost > 0 && (
-                  <div className="text-xs text-gray-500 font-medium pt-1">
-                    Effective Unit Cost: <strong className="text-gray-900 font-bold">{formatPrice(unitCost, currencyCode)}</strong> / {unitTypeSingular} ({units.toLocaleString()} total {unitTypeLabel.toLowerCase()})
-                  </div>
+                      {statusBadgeText && (
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold flex items-center gap-1 shadow-xs ${
+                          statusBadgeType === 'offer'
+                            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                            : 'bg-amber-50 border border-amber-200 text-amber-800'
+                        }`}>
+                          <Tag className={`w-3 h-3 ${statusBadgeType === 'offer' ? 'text-emerald-600' : 'text-amber-600'}`} />
+                          <span>{statusBadgeText}</span>
+                        </span>
+                      )}
+                    </div>
+                    {unitCost > 0 && (
+                      <div className="text-xs text-gray-500 font-medium pt-1">
+                        Effective Unit Cost: <strong className="text-gray-900 font-bold">{formatPrice(unitCost, currencyCode)}</strong> / {unitTypeSingular} ({units.toLocaleString()} total {unitTypeLabel.toLowerCase()})
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 

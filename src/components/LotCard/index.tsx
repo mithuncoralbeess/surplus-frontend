@@ -114,12 +114,11 @@ const LotCard: React.FC<LotCardProps> = ({
 
   const effectiveMsrp = Number(msrp || originalPrice || 0);
   const effectivePrice = Number(price || liquidation_price || liquidationPrice || liquidating_price || 0);
-  const displayOnlyPrice = effectiveMsrp > 0 ? effectiveMsrp : effectivePrice;
 
   const handleAddLot = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    const cartPrice = isOpenForOffers ? displayOnlyPrice : effectivePrice;
+    const cartPrice = isOpenForOffers ? 0 : effectivePrice;
     addToCart({
       id: String(id || title),
       productId: id,
@@ -127,7 +126,7 @@ const LotCard: React.FC<LotCardProps> = ({
       title,
       category: category || 'Surplus Lot',
       quantity: 1,
-      unitPrice: convertToUsd(cartPrice, currency),
+      unitPrice: cartPrice > 0 ? convertToUsd(cartPrice, currency) : 0,
       image,
       moq: 1,
       estQty: units || 1,
@@ -361,24 +360,43 @@ const LotCard: React.FC<LotCardProps> = ({
 
         {/* Price Row */}
         <div className="mb-4">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            {isOpenForOffers ? (
-              <span suppressHydrationWarning className="text-[18px] xl:text-[22px] font-extrabold text-[#0f7a61] leading-none">
-                {formatPrice(displayOnlyPrice, currency)}
-              </span>
-            ) : (
-              <>
+          {isOpenForOffers ? (
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[17px] xl:text-[20px] font-extrabold text-[#0f7a61] leading-tight">
+                  Open for Offers
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-[#0f7a61] border border-emerald-200/80 px-2 py-0.5 rounded-full">
+                  Make an Offer
+                </span>
+              </div>
+              {effectiveMsrp > 0 ? (
+                <span suppressHydrationWarning className="text-[11px] xl:text-[12px] text-gray-500 font-medium mt-1">
+                  Est. Retail Value (MSRP): <strong className="text-gray-700 font-semibold">{formatPrice(effectiveMsrp, currency)}</strong>
+                </span>
+              ) : (
+                <span className="text-[11px] xl:text-[12px] text-gray-500 font-medium mt-1">
+                  No fixed asking price — submit your bid via RFQ
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              <div className="flex items-baseline gap-2 flex-wrap">
                 <span suppressHydrationWarning className="text-[18px] xl:text-[22px] font-extrabold text-[#0f7a61] leading-none">
                   {formatPrice(effectivePrice, currency)}
                 </span>
                 {effectiveMsrp > effectivePrice && (
-                  <span suppressHydrationWarning className="text-md text-gray-700 line-through font-medium">
+                  <span suppressHydrationWarning className="text-sm text-gray-500 line-through font-medium">
                     {formatPrice(effectiveMsrp, currency)}
                   </span>
                 )}
-              </>
-            )}
-          </div>
+              </div>
+              <span className="text-[11px] xl:text-[12px] text-gray-500 font-medium mt-1">
+                {isNegotiable ? 'Asking lot price • Open to negotiation' : 'Total wholesale lot price'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Actions Row */}

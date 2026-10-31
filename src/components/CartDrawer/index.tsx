@@ -161,12 +161,25 @@ const CartDrawer: React.FC = () => {
 
                       {/* Pricing Info */}
                       <div className="flex items-baseline justify-between text-xs mb-2">
-                        <span className="text-gray-500 text-[11px]">
-                          Unit: <strong className="text-gray-700">{formatPrice(item.unitPrice)}</strong>
-                        </span>
-                        <span className="font-extrabold text-[#0f7a61] text-xs">
-                          Subtotal: {formatPrice(itemTotal)}
-                        </span>
+                        {item.unitPrice > 0 ? (
+                          <>
+                            <span className="text-gray-500 text-[11px]">
+                              Unit: <strong className="text-gray-700">{formatPrice(item.unitPrice)}</strong>
+                            </span>
+                            <span className="font-extrabold text-[#0f7a61] text-xs">
+                              Subtotal: {formatPrice(itemTotal)}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                              Open for Offers
+                            </span>
+                            <span className="font-semibold text-gray-500 text-[11px]">
+                              Propose offer in RFQ
+                            </span>
+                          </>
+                        )}
                       </div>
 
                       {/* Stepper & MOQ Indicator */}

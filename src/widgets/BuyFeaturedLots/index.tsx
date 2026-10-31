@@ -1011,11 +1011,17 @@ export default function BuyFeaturedLots() {
               </div>
               <div>
                 <div className="text-slate-500 font-medium">Total MSRP</div>
-                <div suppressHydrationWarning className="text-sm font-extrabold text-slate-500 line-through">{formatPrice(selectedLotForManifest.msrp)}</div>
+                <div suppressHydrationWarning className={`text-sm font-extrabold ${selectedLotForManifest.open_for_offers || !selectedLotForManifest.price ? 'text-slate-700' : 'text-slate-500 line-through'}`}>
+                  {formatPrice(selectedLotForManifest.msrp)}
+                </div>
               </div>
               <div>
                 <div className="text-emerald-700 font-medium">Lot Wholesale Price</div>
-                <div suppressHydrationWarning className="text-sm font-extrabold text-[#0a5c48]">{formatPrice(selectedLotForManifest.price)}</div>
+                <div suppressHydrationWarning className="text-sm font-extrabold text-[#0a5c48]">
+                  {selectedLotForManifest.open_for_offers || !selectedLotForManifest.price
+                    ? 'Open for Offers'
+                    : formatPrice(selectedLotForManifest.price)}
+                </div>
               </div>
             </div>
 
