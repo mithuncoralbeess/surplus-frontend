@@ -733,8 +733,8 @@ export const catalogService = {
    * Connect to GET /api/lots/ to fetch wholesale lot batch items.
    * If no lot data is returned from the API, returns an empty array.
    */
-  async getLots(params?: { category?: string; search?: string; vendor_id?: string; limit?: number; page?: number }): Promise<LotItem[]> {
-    const isDefaultQuery = (!params?.category || params.category === 'All' || params.category === 'View All') && !params?.search && !params?.vendor_id && !params?.limit && !params?.page;
+  async getLots(params?: { category?: string; search?: string; vendor_id?: string; collection?: string; limit?: number; page?: number }): Promise<LotItem[]> {
+    const isDefaultQuery = (!params?.category || params.category === 'All' || params.category === 'View All') && !params?.search && !params?.vendor_id && (!params?.collection || params.collection === 'all') && !params?.limit && !params?.page;
 
     if (isDefaultQuery && allLotsCache && (Date.now() - lastLotsFetchTime < CACHE_TTL_MS)) {
       return allLotsCache;
@@ -757,6 +757,9 @@ export const catalogService = {
       }
       if (params?.vendor_id) {
         queryParts.push(`vendor_id=${encodeURIComponent(params.vendor_id)}`);
+      }
+      if (params?.collection && params.collection !== 'all') {
+        queryParts.push(`collection=${encodeURIComponent(params.collection)}`);
       }
       if (params?.page) {
         queryParts.push(`page=${encodeURIComponent(params.page)}`);

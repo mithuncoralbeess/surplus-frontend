@@ -1,17 +1,23 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Package, SearchX } from 'lucide-react';
 import { motion } from '../../lib/motion';
 import LotCard from '../../components/LotCard';
 import { catalogService, LotItem } from '../../services/catalogService';
 import { useLanguage } from '../../context/LanguageContext';
 
-const getCachedLots = (): LotItem[] => {
+const TABS = ['All', 'New Arrivals', 'Featured Deals'] as const;
+
+const getCachedTabLots = (tab: string): LotItem[] => {
   if (typeof window !== 'undefined') {
     try {
-      const saved = sessionStorage.getItem('surplus_pallet_deals_lots');
-      if (saved) return JSON.parse(saved);
+      sessionStorage.removeItem('surplus_pallet_deals_lots');
+      const saved = sessionStorage.getItem(`surplus_pallet_deals_v2_${tab}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch {}
   }
   return [];
@@ -23,63 +29,116 @@ interface PalletDealsProps {
 
 const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [] }) => {
   const { t } = useLanguage();
-  const TABS = [t('common.viewAll', 'View All'), 'Electronics', 'Apparel', 'Home Goods'];
-  const [activeTab, setActiveTab] = useState('View All');
+  const [activeTab, setActiveTab] = useState<string>('All');
   const [lots, setLots] = useState<LotItem[]>(initialLots);
   const [loading, setLoading] = useState<boolean>(initialLots.length === 0);
+  const cacheRef = useRef<Record<string, LotItem[]>>(
+    initialLots.length > 0 ? { All: initialLots } : {}
+  );
 
   useEffect(() => {
     let isMounted = true;
+    const cacheKey = activeTab;
 
-    // Check sessionStorage cache on client mount
-    if (activeTab === 'View All' && lots.length === 0) {
-      const cached = getCachedLots();
-      if (cached.length > 0) {
+    // 1. Check in-memory cache first for instant tab switching
+    if (cacheRef.current[cacheKey] && cacheRef.current[cacheKey].length > 0) {
+      const cached = cacheRef.current[cacheKey];
+      if (lots !== cached) {
         React.startTransition(() => {
           setLots(cached);
           setLoading(false);
         });
-        return;
+      } else if (loading) {
+        setLoading(false);
       }
-    } else if (activeTab === 'View All' && lots.length > 0) {
-      if (loading) setLoading(false);
+      return;
+    }
+
+    // 2. Check sessionStorage cache
+    const localCached = getCachedTabLots(activeTab);
+    if (localCached.length > 0) {
+      cacheRef.current[cacheKey] = localCached;
+      React.startTransition(() => {
+        setLots(localCached);
+        setLoading(false);
+      });
       return;
     }
 
     setLoading(true);
 
-    const timer = setTimeout(() => {
-      const categoryQuery = (activeTab === 'View All' || activeTab === t('common.viewAll', 'View All')) ? 'View All' : activeTab;
-      catalogService.getLots({ category: categoryQuery, limit: 8 })
-        .then((data) => {
-          if (isMounted) {
-            React.startTransition(() => {
-              setLots(data);
-              setLoading(false);
+    const collectionParam =
+      activeTab === 'New Arrivals'
+        ? 'new_arrivals'
+        : activeTab === 'Featured Deals'
+        ? 'featured'
+        : 'all';
+
+    catalogService
+      .getLots({ collection: collectionParam, limit: 12 })
+      .then((data) => {
+        if (!isMounted) return;
+        let list = Array.isArray(data) ? [...data] : [];
+
+        if (activeTab === 'New Arrivals') {
+          const explicitNew = list.filter((item) => item.isNewArrival || item.is_new_arrival);
+          if (explicitNew.length > 0) {
+            list = explicitNew;
+          } else {
+            list.sort((a, b) => {
+              const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+              const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+              if (dateB !== dateA) return dateB - dateA;
+              return Number(b.id || 0) - Number(a.id || 0);
             });
-            if (typeof window !== 'undefined' && data.length > 0 && (activeTab === 'View All' || activeTab === t('common.viewAll', 'View All'))) {
-              setTimeout(() => {
-                try {
-                  sessionStorage.setItem('surplus_pallet_deals_lots', JSON.stringify(data));
-                } catch {}
-              }, 0);
-            }
           }
-        })
-        .catch((err) => {
-          console.warn('[PalletDeals] API fetch error:', err);
-          if (isMounted) {
-            setLots([]);
-            setLoading(false);
+        } else if (activeTab === 'Featured Deals') {
+          const explicitFeatured = list.filter((item) => item.isFeatured || item.is_featured);
+          if (explicitFeatured.length > 0) {
+            list = explicitFeatured;
+          } else {
+            list.sort((a, b) => {
+              const msrpA = Number(a.msrp || 0);
+              const msrpB = Number(b.msrp || 0);
+              const priceA = Number(a.price || 0);
+              const priceB = Number(b.price || 0);
+              const discA = msrpA > priceA && priceA > 0 ? (msrpA - priceA) / msrpA : 0;
+              const discB = msrpB > priceB && priceB > 0 ? (msrpB - priceB) / msrpB : 0;
+              if (discB !== discA) return discB - discA;
+              return msrpB - msrpA;
+            });
           }
+        }
+
+        const displayLots = list.slice(0, 6);
+        if (displayLots.length > 0) {
+          cacheRef.current[cacheKey] = displayLots;
+          if (typeof window !== 'undefined') {
+            setTimeout(() => {
+              try {
+                sessionStorage.setItem(`surplus_pallet_deals_v2_${activeTab}`, JSON.stringify(displayLots));
+              } catch {}
+            }, 0);
+          }
+        }
+
+        React.startTransition(() => {
+          setLots(displayLots);
+          setLoading(false);
         });
-    }, 120);
+      })
+      .catch((err) => {
+        console.warn('[PalletDeals] API fetch error:', err);
+        if (isMounted) {
+          setLots([]);
+          setLoading(false);
+        }
+      });
 
     return () => {
       isMounted = false;
-      clearTimeout(timer);
     };
-  }, [activeTab, t, initialLots.length]);
+  }, [activeTab]);
 
   return (
     <section className="w-full bg-[#fdfcf9] py-20 border-b border-gray-100">
