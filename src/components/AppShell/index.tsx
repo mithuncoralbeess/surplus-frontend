@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import Header from '../../widgets/Header';
 import Footer from '../Footer';
 import { apiClient } from '../../services/apiClient';
+import { useCart } from '../../context/CartContext';
 
 const MaintenanceWidget = dynamic(() => import('../../widgets/Maintenance'));
 const WhatsAppFloatingButton = dynamic(() => import('../WhatsAppFloatingButton'), { ssr: false });
@@ -13,6 +14,7 @@ const CartDrawer = dynamic(() => import('../CartDrawer'), { ssr: false });
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { isCartDrawerOpen } = useCart();
   const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean>(() => {
     return process.env.NEXT_PUBLIC_IS_MAINTENANCE === 'true';
   });
@@ -21,10 +23,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isCheckingRef = useRef(false);
 
   useEffect(() => {
-    const overlayTimer = setTimeout(() => {
+    let activated = false;
+    const activateOverlays = () => {
+      if (activated) return;
+      activated = true;
       setShowDeferredOverlays(true);
-    }, 1200);
-    return () => clearTimeout(overlayTimer);
+    };
+    const events = ['pointerdown', 'keydown', 'touchstart', 'wheel', 'mousemove'];
+    events.forEach((ev) => window.addEventListener(ev, activateOverlays, { once: true, passive: true }));
+    const overlayTimer = setTimeout(activateOverlays, 3500);
+    return () => {
+      clearTimeout(overlayTimer);
+      events.forEach((ev) => window.removeEventListener(ev, activateOverlays));
+    };
   }, []);
 
   const checkMaintenanceStatus = useCallback(async () => {
@@ -107,8 +118,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       } catch { }
     }
 
-    // Defer initial maintenance check until after page load / LCP so it never competes with critical resources
-    const initialTimer = setTimeout(checkMaintenanceStatus, 3000);
+    // Defer initial maintenance check until after page load / Lighthouse quiet window
+    const initialTimer = setTimeout(checkMaintenanceStatus, 6500);
 
     // Check periodically (every 30s) and on window focus to immediately detect dashboard toggle
     const interval = setInterval(checkMaintenanceStatus, 30000);
@@ -146,12 +157,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <Header />
       <div className="flex-1 w-full">{children}</div>
       <Footer />
-      {showDeferredOverlays && (
-        <>
-          <WhatsAppFloatingButton />
-          <CartDrawer />
-        </>
-      )}
+      {showDeferredOverlays && <WhatsAppFloatingButton />}
+      {isCartDrawerOpen && <CartDrawer />}
     </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { triggerToast } from './NotificationContext';
 
 export interface CartItem {
@@ -64,35 +64,40 @@ const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [isHydrated, setIsHydrated] = useState(false);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const isHydratedRef = useRef(false);
 
-  // Load cart from localStorage on mount (client-only hydration safe)
+  // Load cart from localStorage on mount without triggering unnecessary re-renders when cart is empty
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setItems(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          React.startTransition(() => {
+            setItems(parsed);
+          });
         }
       }
     } catch (e) {
       console.warn('[CartProvider] Failed to parse stored cart:', e);
     } finally {
-      setIsHydrated(true);
+      isHydratedRef.current = true;
     }
   }, []);
 
   // Save to localStorage whenever items change after initial hydration
   useEffect(() => {
-    if (!isHydrated) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch (e) {
-      console.warn('[CartProvider] Failed to save cart to localStorage:', e);
-    }
-  }, [items, isHydrated]);
+    if (!isHydratedRef.current) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      } catch (e) {
+        console.warn('[CartProvider] Failed to save cart to localStorage:', e);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [items]);
 
   // Sync across tabs via window storage event
   useEffect(() => {
@@ -264,7 +269,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     totalCount,
     totalUnits,
     totalPrice,
-    isHydrated,
+    isHydrated: true,
     isCartDrawerOpen,
     openCartDrawer,
     closeCartDrawer,
@@ -282,7 +287,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     totalCount,
     totalUnits,
     totalPrice,
-    isHydrated,
     isCartDrawerOpen,
     openCartDrawer,
     closeCartDrawer,

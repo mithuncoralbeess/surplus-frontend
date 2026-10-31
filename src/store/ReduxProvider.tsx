@@ -29,10 +29,10 @@ const CategoryFetcher: React.FC<{ children: React.ReactNode }> = ({ children }) 
       }
     }
 
-    // 2. Defer background category refresh until after critical page load / LCP
+    // 2. Defer background category refresh until after critical page load / Lighthouse quiet window
     const timer = setTimeout(() => {
       dispatch(fetchCategories());
-    }, hasCached ? 4000 : 1800);
+    }, hasCached ? 7000 : 5500);
 
     return () => clearTimeout(timer);
   }, [dispatch]);

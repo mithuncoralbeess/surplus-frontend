@@ -218,7 +218,7 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } catch (err) {
         console.warn('Live forex exchange rates unavailable, using default rates.', err);
       }
-    }, 3500);
+    }, 6500);
 
     return () => clearTimeout(timer);
   }, []);

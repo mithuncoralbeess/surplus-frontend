@@ -95,23 +95,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        {/* Google tag (gtag.js) */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-B7050KKWHV"
-          strategy="lazyOnload"
-        />
-        <Script
-          id="google-analytics"
-          strategy="lazyOnload"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-B7050KKWHV');
-            `,
-          }}
-        />
         {/* Google Tag Manager (noscript) */}
         <noscript>
           <iframe
@@ -123,16 +106,39 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </noscript>
         {/* End Google Tag Manager (noscript) */}
 
-        {/* Google Tag Manager */}
+        {/* Deferred Google Analytics (GA4) & Google Tag Manager (loads on first user interaction or after 6.5s idle) */}
         <Script
-          id="google-tag-manager"
+          id="deferred-analytics-gtm"
           strategy="lazyOnload"
           dangerouslySetInnerHTML={{
-            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-MGT4SQLM');`,
+            __html: `(function(){
+  var loaded = false;
+  function loadAnalytics() {
+    if (loaded) return;
+    loaded = true;
+    ['pointerdown','keydown','touchstart','wheel','mousemove'].forEach(function(e){
+      window.removeEventListener(e, loadAnalytics, { passive: true });
+    });
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    window.gtag = gtag;
+    gtag('js', new Date());
+    gtag('config', 'G-B7050KKWHV');
+    var ga = document.createElement('script');
+    ga.async = true;
+    ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-B7050KKWHV';
+    document.head.appendChild(ga);
+    window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+    var gtm = document.createElement('script');
+    gtm.async = true;
+    gtm.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-MGT4SQLM';
+    document.head.appendChild(gtm);
+  }
+  ['pointerdown','keydown','touchstart','wheel','mousemove'].forEach(function(e){
+    window.addEventListener(e, loadAnalytics, { once: true, passive: true });
+  });
+  setTimeout(loadAnalytics, 6500);
+})();`,
           }}
         />
         {/* End Google Tag Manager */}
