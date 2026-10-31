@@ -51,10 +51,11 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
     const handleGlobalFormSubmit = (e: Event) => {
       const target = e.target as HTMLElement | null;
 
-      // If the form is inside an overlay modal with its own scrolling or explicitly opted out, skip
+      // If the form is inside an overlay modal, footer, or explicitly opted out, skip
       if (
         document.body.classList.contains('modal-open') ||
         (target && (
+          target.closest('footer') ||
           target.hasAttribute('data-lenis-prevent') ||
           target.closest('[data-lenis-prevent]') ||
           target.hasAttribute('data-no-scroll-top') ||

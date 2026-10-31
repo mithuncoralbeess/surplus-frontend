@@ -107,9 +107,11 @@ function purgeLegacyStorageCaches(): void {
 }
 
 if (typeof window !== 'undefined') {
-  try {
-    purgeLegacyStorageCaches();
-  } catch {}
+  setTimeout(() => {
+    try {
+      purgeLegacyStorageCaches();
+    } catch {}
+  }, 2000);
 }
 
 // Endpoints that qualify for client-side localStorage persistence
@@ -153,23 +155,25 @@ function readStorageCache<T = any>(cacheKey: string): CacheEntry<T> | null {
  */
 function writeStorageCache<T = any>(cacheKey: string, entry: CacheEntry<T>): void {
   if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(`${STORAGE_PREFIX}${cacheKey}`, JSON.stringify(entry));
-  } catch (err: any) {
-    // Quota exceeded: clean oldest cache items
+  setTimeout(() => {
     try {
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith(STORAGE_PREFIX)) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.slice(0, 5).forEach((k) => localStorage.removeItem(k));
+      localStorage.setItem(`${STORAGE_PREFIX}${cacheKey}`, JSON.stringify(entry));
     } catch {
-      // Ignore storage errors
+      // Quota exceeded: clean oldest cache items
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(STORAGE_PREFIX)) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.slice(0, 5).forEach((k) => localStorage.removeItem(k));
+      } catch {
+        // Ignore storage errors
+      }
     }
-  }
+  }, 0);
 }
 
 /**

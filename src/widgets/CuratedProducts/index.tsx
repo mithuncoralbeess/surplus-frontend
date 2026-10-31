@@ -43,8 +43,15 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
 
     // Check in-memory cache first for instant tab switching (0ms delay)
     if (cacheRef.current[cacheKey] && cacheRef.current[cacheKey].length > 0) {
-      setProducts(cacheRef.current[cacheKey]);
-      setLoading(false);
+      const cached = cacheRef.current[cacheKey];
+      if (products !== cached) {
+        React.startTransition(() => {
+          setProducts(cached);
+          setLoading(false);
+        });
+      } else if (loading) {
+        setLoading(false);
+      }
       return;
     }
 
@@ -52,8 +59,10 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
     const localCached = getCachedTabProducts(activeTab);
     if (localCached.length > 0) {
       cacheRef.current[cacheKey] = localCached;
-      setProducts(localCached);
-      setLoading(false);
+      React.startTransition(() => {
+        setProducts(localCached);
+        setLoading(false);
+      });
       return;
     }
 
@@ -87,17 +96,21 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
           if (curatedList.length > 0) {
             cacheRef.current[cacheKey] = curatedList;
             if (typeof window !== 'undefined') {
-              try {
-                sessionStorage.setItem(`surplus_curated_v2_${activeTab}`, JSON.stringify(curatedList));
-              } catch {}
+              setTimeout(() => {
+                try {
+                  sessionStorage.setItem(`surplus_curated_v2_${activeTab}`, JSON.stringify(curatedList));
+                } catch {}
+              }, 0);
             }
           } else if (typeof window !== 'undefined') {
             try {
               sessionStorage.removeItem(`surplus_curated_v2_${activeTab}`);
             } catch {}
           }
-          setProducts(curatedList);
-          setLoading(false);
+          React.startTransition(() => {
+            setProducts(curatedList);
+            setLoading(false);
+          });
         }
       })
       .catch((err) => {

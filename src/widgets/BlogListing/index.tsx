@@ -4,9 +4,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, Variants } from '../../lib/motion';
-import { Search, Clock, ArrowRight, Sparkles, Tag, ChevronRight, BookOpen, ChevronDown, Loader2 } from 'lucide-react';
+import { Search, Clock, ArrowRight, Sparkles, Tag, ChevronRight, BookOpen, ChevronDown, Loader2, CheckCircle2 } from 'lucide-react';
 import { BlogPost } from '../../data/blogData';
 import { getBlogs, getBlogsPage } from '../../services/blogService';
+import { useNotifications } from '../../context/NotificationContext';
 
 interface BlogListingProps {
   initialPosts?: BlogPost[];
@@ -32,6 +33,7 @@ const itemVariants: Variants = {
 const BATCH_SIZE = 9;
 
 export default function BlogListing({ initialPosts }: BlogListingProps) {
+  const { showToast } = useNotifications();
   const [posts, setPosts] = useState<BlogPost[]>(initialPosts || []);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,6 +42,56 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
   const [totalCount, setTotalCount] = useState(52);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(5);
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  const handleBlogNewsletterSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newsletterEmail.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      showToast({
+        title: "Invalid Email",
+        message: "Please enter a valid business email address.",
+        type: "warning",
+      });
+      return;
+    }
+    if (isSubscribing) return;
+    setIsSubscribing(true);
+    try {
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmed, source: "Blog Newsletter" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success !== false) {
+        setIsSubscribed(true);
+        setNewsletterEmail("");
+        showToast({
+          title: data?.already_subscribed ? "Already Subscribed" : "Subscribed!",
+          message: data?.message || "You have been subscribed to Surplus Market insights!",
+          type: "success",
+        });
+        setTimeout(() => setIsSubscribed(false), 5000);
+      } else {
+        showToast({
+          title: "Subscription Error",
+          message: data?.message || "Unable to subscribe right now. Please try again.",
+          type: "error",
+        });
+      }
+    } catch {
+      showToast({
+        title: "Subscription Error",
+        message: "Network error while subscribing. Please try again.",
+        type: "error",
+      });
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
 
   useEffect(() => {
     if (initialPosts && initialPosts.length > 0) {
@@ -383,18 +435,39 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
               Get expert market insights, wholesale liquidation pricing intelligence, and secondary supply chain reports delivered to your inbox bi-weekly.
             </p>
 
-            <form onSubmit={e => e.preventDefault()} className="flex flex-col sm:flex-row items-center gap-3 max-w-lg mx-auto">
+            <form
+              onSubmit={handleBlogNewsletterSubscribe}
+              data-no-scroll-top="true"
+              className="flex flex-col sm:flex-row items-center gap-3 max-w-lg mx-auto"
+            >
               <input 
                 type="email" 
+                value={newsletterEmail}
+                onChange={e => setNewsletterEmail(e.target.value)}
                 placeholder="Enter your business email" 
-                className="w-full bg-white/10 border border-white/20 rounded-full px-6 py-3.5 text-sm text-white placeholder-white/50 focus:outline-none focus:border-white transition-colors"
+                aria-label="Enter your business email"
+                disabled={isSubscribing}
+                className="w-full bg-white/10 border border-white/20 rounded-full px-6 py-3.5 text-sm text-white placeholder-white/50 focus:outline-none focus:border-white transition-colors disabled:opacity-60"
                 required
               />
               <button 
                 type="submit" 
-                className="w-full sm:w-auto bg-[#0a5c48] hover:bg-[#084838] text-white px-8 py-3.5 rounded-full font-bold text-sm transition-all whitespace-nowrap shadow-md"
+                disabled={isSubscribing}
+                className="w-full sm:w-auto bg-[#0a5c48] hover:bg-[#084838] text-white px-8 py-3.5 rounded-full font-bold text-sm transition-all whitespace-nowrap shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
               >
-                Subscribe Free
+                {isSubscribing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Subscribing...</span>
+                  </>
+                ) : isSubscribed ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                    <span>Subscribed!</span>
+                  </>
+                ) : (
+                  <span>Subscribe Free</span>
+                )}
               </button>
             </form>
           </div>

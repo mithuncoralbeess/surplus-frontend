@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useNotifications } from '../../context/NotificationContext';
 
 const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -28,17 +29,61 @@ const FooterLink = ({ href, children }: { href: string; children: React.ReactNod
 
 const Footer = () => {
   const { t } = useLanguage();
+  const { showToast } = useNotifications();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !email.includes('@')) return;
-    setSubscribed(true);
-    setTimeout(() => {
-      setEmail('');
-      setSubscribed(false);
-    }, 4000);
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      showToast({
+        title: 'Invalid Email',
+        message: 'Please enter a valid email address to subscribe.',
+        type: 'warning',
+      });
+      return;
+    }
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmedEmail, source: 'Footer Newsletter' }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data?.success !== false) {
+        setSubscribed(true);
+        setEmail('');
+        showToast({
+          title: data?.already_subscribed ? 'Already Subscribed' : 'Subscribed!',
+          message: data?.message || 'Thank you for subscribing to the Surplus Market newsletter!',
+          type: 'success',
+        });
+        setTimeout(() => {
+          setSubscribed(false);
+        }, 5000);
+      } else {
+        showToast({
+          title: 'Subscription Error',
+          message: data?.message || 'Unable to subscribe right now. Please try again.',
+          type: 'error',
+        });
+      }
+    } catch {
+      showToast({
+        title: 'Subscription Error',
+        message: 'Network error while subscribing. Please try again.',
+        type: 'error',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -56,7 +101,11 @@ const Footer = () => {
             </p>
           </div>
           
-          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <form
+            onSubmit={handleSubscribe}
+            data-no-scroll-top="true"
+            className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto"
+          >
             <input 
               type="email" 
               value={email}
@@ -64,13 +113,20 @@ const Footer = () => {
               placeholder={t('footer.emailPlaceholder', 'Enter your email')} 
               aria-label={t('footer.emailPlaceholder', 'Enter your email')}
               required
-              className="w-full sm:w-[300px] bg-white/5 border border-white/10 rounded-full px-6 py-3.5 text-white placeholder-gray-400 focus:outline-none focus:border-[#185545] transition-colors"
+              disabled={isSubmitting}
+              className="w-full sm:w-[300px] bg-white/5 border border-white/10 rounded-full px-6 py-3.5 text-white placeholder-gray-400 focus:outline-none focus:border-[#185545] transition-colors disabled:opacity-60"
             />
             <button 
               type="submit"
-              className="w-full sm:w-auto bg-[#185545] hover:bg-[#124235] text-white px-8 py-3.5 rounded-full font-bold text-[15px] transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer shadow-md"
+              disabled={isSubmitting}
+              className="w-full sm:w-auto bg-[#185545] hover:bg-[#124235] text-white px-8 py-3.5 rounded-full font-bold text-[15px] transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer shadow-md disabled:opacity-70"
             >
-              {subscribed ? (
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4.5 h-4.5 animate-spin text-emerald-300" />
+                  <span>Subscribing...</span>
+                </>
+              ) : subscribed ? (
                 <>
                   <CheckCircle2 className="w-4.5 h-4.5 text-emerald-400" />
                   <span>Subscribed!</span>

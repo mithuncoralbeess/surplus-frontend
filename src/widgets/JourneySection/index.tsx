@@ -1,5 +1,3 @@
-"use client";
-
 import React from 'react';
 import Link from 'next/link';
 import {
@@ -7,7 +5,6 @@ import {
   Plus, Camera, Sparkles, Shield, Globe, DollarSign,
   ArrowRight, Package
 } from 'lucide-react';
-import { motion } from '../../lib/motion';
 
 const BUYER_STEPS = [
   {
@@ -81,13 +78,7 @@ const JourneySection = () => {
       <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
 
         {/* Header */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-3xl mb-12"
-        >
+        <div className="max-w-3xl mb-12">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
             <span className="text-[11px] font-bold text-primary tracking-widest uppercase">
@@ -101,17 +92,13 @@ const JourneySection = () => {
           <p className="text-gray-600 text-[17px] leading-relaxed">
             Whether you're sourcing verified surplus or recovering value from excess stock - every step is guided and intelligent.
           </p>
-        </motion.div>
+        </div>
 
         {/* Two Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
           {/* BUYER JOURNEY */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          <div
             className="rounded-[2.5rem] p-5 md:p-6 flex flex-col relative overflow-hidden border border-[#9ecfb5]"
             style={{ backgroundImage: 'linear-gradient(135deg, #ecfdf5 0%, #fff 55%, #d1fae5 100%)' }}
           >
@@ -159,14 +146,10 @@ const JourneySection = () => {
                 Start Buying <ArrowRight className="w-4.5 h-4.5" />
               </Link>
             </div>
-          </motion.div>
+          </div>
 
           {/* SELLER JOURNEY */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+          <div
             className="rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-6 flex flex-col relative overflow-hidden border border-[#d6efe3]"
             style={{ backgroundImage: 'linear-gradient(135deg, #ecfdf5 0%, #fff 55%, #d1fae5 100%)' }}
           >
@@ -214,7 +197,7 @@ const JourneySection = () => {
                 Start Selling <ArrowRight className="w-4.5 h-4.5" />
               </Link>
             </div>
-          </motion.div>
+          </div>
 
         </div>
       </div>

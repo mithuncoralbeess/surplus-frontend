@@ -35,40 +35,49 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [] }) => {
     if (activeTab === 'View All' && lots.length === 0) {
       const cached = getCachedLots();
       if (cached.length > 0) {
-        setLots(cached);
-        setLoading(false);
+        React.startTransition(() => {
+          setLots(cached);
+          setLoading(false);
+        });
         return;
       }
     } else if (activeTab === 'View All' && lots.length > 0) {
-      setLoading(false);
+      if (loading) setLoading(false);
       return;
     }
 
     setLoading(true);
 
-    const categoryQuery = (activeTab === 'View All' || activeTab === t('common.viewAll', 'View All')) ? 'View All' : activeTab;
-    catalogService.getLots({ category: categoryQuery, limit: 8 })
-      .then((data) => {
-        if (isMounted) {
-          setLots(data);
-          if (typeof window !== 'undefined' && (activeTab === 'View All' || activeTab === t('common.viewAll', 'View All'))) {
-            try {
-              sessionStorage.setItem('surplus_pallet_deals_lots', JSON.stringify(data));
-            } catch {}
+    const timer = setTimeout(() => {
+      const categoryQuery = (activeTab === 'View All' || activeTab === t('common.viewAll', 'View All')) ? 'View All' : activeTab;
+      catalogService.getLots({ category: categoryQuery, limit: 8 })
+        .then((data) => {
+          if (isMounted) {
+            React.startTransition(() => {
+              setLots(data);
+              setLoading(false);
+            });
+            if (typeof window !== 'undefined' && data.length > 0 && (activeTab === 'View All' || activeTab === t('common.viewAll', 'View All'))) {
+              setTimeout(() => {
+                try {
+                  sessionStorage.setItem('surplus_pallet_deals_lots', JSON.stringify(data));
+                } catch {}
+              }, 0);
+            }
           }
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        console.warn('[PalletDeals] API fetch error:', err);
-        if (isMounted) {
-          setLots([]);
-          setLoading(false);
-        }
-      });
+        })
+        .catch((err) => {
+          console.warn('[PalletDeals] API fetch error:', err);
+          if (isMounted) {
+            setLots([]);
+            setLoading(false);
+          }
+        });
+    }, 120);
 
     return () => {
       isMounted = false;
+      clearTimeout(timer);
     };
   }, [activeTab, t, initialLots.length]);
 

@@ -16,8 +16,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [isMaintenanceMode, setIsMaintenanceMode] = useState<boolean>(() => {
     return process.env.NEXT_PUBLIC_IS_MAINTENANCE === 'true';
   });
+  const [showDeferredOverlays, setShowDeferredOverlays] = useState(false);
 
   const isCheckingRef = useRef(false);
+
+  useEffect(() => {
+    const overlayTimer = setTimeout(() => {
+      setShowDeferredOverlays(true);
+    }, 1200);
+    return () => clearTimeout(overlayTimer);
+  }, []);
 
   const checkMaintenanceStatus = useCallback(async () => {
     // If environment flag explicitly forces maintenance, honor it immediately
@@ -138,8 +146,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <Header />
       <div className="flex-1 w-full">{children}</div>
       <Footer />
-      <WhatsAppFloatingButton />
-      <CartDrawer />
+      {showDeferredOverlays && (
+        <>
+          <WhatsAppFloatingButton />
+          <CartDrawer />
+        </>
+      )}
     </>
   );
 }

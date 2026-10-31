@@ -184,31 +184,13 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_EXCHANGE_RATES);
   const [isLiveRates, setIsLiveRates] = useState<boolean>(false);
 
-  // Enforce USD globally on mount & fetch live forex rates
+  // Enforce USD globally on mount & fetch live forex rates without triggering immediate full-tree re-renders
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('surplus_currency', 'USD');
-    }
-
-    const savedRegion = typeof window !== 'undefined' ? localStorage.getItem('surplus_region') : null;
-    if (savedRegion) {
-      setSelectedRegionState(savedRegion);
-      setIsAutoDetected(false);
-    } else {
-      const fallback = detectRegionFromBrowserTimezone();
-      setSelectedRegionState(fallback.region);
-      setDetectedCountryCode(fallback.countryCode);
-      setIsAutoDetected(true);
-    }
-
-    // Fetch live rates relative to USD from open forex API (cached for 6 hours, deferred after LCP)
     const RATE_TS_KEY = 'surplus_live_exchange_rates_ts';
     const lastFetched = typeof window !== 'undefined' ? Number(localStorage.getItem(RATE_TS_KEY) || 0) : 0;
     const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 
     if (lastFetched > 0 && Date.now() - lastFetched < SIX_HOURS_MS) {
-      setExchangeRates({ ...globalExchangeRates });
-      setIsLiveRates(true);
       return;
     }
 
@@ -224,11 +206,13 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 localStorage.setItem(RATE_TS_KEY, String(Date.now()));
               } catch {}
             }
-            setExchangeRates(prev => ({
-              ...prev,
-              ...data.rates
-            }));
-            setIsLiveRates(true);
+            React.startTransition(() => {
+              setExchangeRates(prev => ({
+                ...prev,
+                ...data.rates
+              }));
+              setIsLiveRates(true);
+            });
           }
         }
       } catch (err) {

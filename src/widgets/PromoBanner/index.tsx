@@ -1,19 +1,12 @@
-"use client";
-
 import React from 'react';
 import Link from 'next/link';
 import { Flame, ArrowRight } from 'lucide-react';
-import { motion } from '../../lib/motion';
 
 const PromoBanner = () => {
   return (
     <section className="w-full py-12 bg-white">
       <div className="container mx-auto max-w-7xl">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        <div
           className="w-full rounded-[2rem] p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-8 bg-gradient-to-r from-[#ffb861] to-[#ffaa41]"
         >
 
@@ -59,7 +52,7 @@ const PromoBanner = () => {
             </Link>
           </div>
 
-        </motion.div>
+        </div>
       </div>
     </section>
   );
