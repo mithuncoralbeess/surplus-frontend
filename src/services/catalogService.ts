@@ -647,14 +647,18 @@ export const catalogService = {
       if (params?.vendor_id) {
         queryParts.push(`vendor_id=${encodeURIComponent(params.vendor_id)}`);
       }
-      if (params?.collection) {
+      const isNewArrivalsByApprovedDate =
+        params?.collection &&
+        ['new_arrivals', 'new-arrivals', 'new_arrival', 'new'].includes(params.collection.toLowerCase());
+
+      if (params?.collection && !isNewArrivalsByApprovedDate) {
         queryParts.push(`collection=${encodeURIComponent(params.collection)}`);
       }
       if (params?.page) {
         queryParts.push(`page=${encodeURIComponent(params.page)}`);
       }
       // Sensible default limit of 24 for catalog queries (prevents slow 5,000 item downloads)
-      const limit = params?.limit ?? 24;
+      const limit = isNewArrivalsByApprovedDate ? Math.max(params?.limit ?? 24, 48) : (params?.limit ?? 24);
       queryParts.push(`limit=${encodeURIComponent(limit)}`);
 
       if (queryParts.length > 0) {
@@ -686,7 +690,18 @@ export const catalogService = {
         return true;
       });
 
-      const mappedList = productsOnly.map(mapApiProductToProductItem);
+      let mappedList = productsOnly.map(mapApiProductToProductItem);
+
+      if (isNewArrivalsByApprovedDate) {
+        mappedList = [...mappedList].sort((a, b) => {
+          const tA = a.dateApproved ? new Date(a.dateApproved).getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+          const tB = b.dateApproved ? new Date(b.dateApproved).getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+          return (isNaN(tB) ? 0 : tB) - (isNaN(tA) ? 0 : tA);
+        });
+        if (params?.limit) {
+          mappedList = mappedList.slice(0, params.limit);
+        }
+      }
 
       // Index every product into productCache for instant lookup
       mappedList.forEach((p) => {

@@ -57,7 +57,7 @@ async function getHomepageInitialData(): Promise<{
 }> {
   try {
     const [prodRes, lotRes] = await Promise.allSettled([
-      fetchWithFailover("/api/products/?collection=new_arrivals&limit=8", {
+      fetchWithFailover("/api/products/?limit=32", {
         next: { revalidate: 120 },
         timeoutMs: 3000,
         maxRetries: 1,
@@ -77,8 +77,13 @@ async function getHomepageInitialData(): Promise<{
         : prodJson?.products || prodJson?.results || prodJson?.data || [];
       initialProducts = rawProducts
         .filter((item: any) => item.type !== "lot" && !item.is_lot)
-        .slice(0, 8)
-        .map(mapApiProductToProductItem);
+        .map(mapApiProductToProductItem)
+        .sort((a: ProductItem, b: ProductItem) => {
+          const tA = a.dateApproved ? new Date(a.dateApproved).getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+          const tB = b.dateApproved ? new Date(b.dateApproved).getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+          return (isNaN(tB) ? 0 : tB) - (isNaN(tA) ? 0 : tA);
+        })
+        .slice(0, 8);
     }
 
     let initialLots: LotItem[] = [];

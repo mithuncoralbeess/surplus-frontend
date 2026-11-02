@@ -15,7 +15,8 @@ const getCachedTabProducts = (tab: string): ProductItem[] => {
     try {
       sessionStorage.removeItem(`surplus_curated_${tab}`);
       sessionStorage.removeItem(`surplus_curated_v2_${tab}`);
-      const saved = sessionStorage.getItem(`surplus_curated_v3_${tab}`);
+      sessionStorage.removeItem(`surplus_curated_v3_${tab}`);
+      const saved = sessionStorage.getItem(`surplus_curated_v4_${tab}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -97,13 +98,13 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
             if (typeof window !== 'undefined') {
               setTimeout(() => {
                 try {
-                  sessionStorage.setItem(`surplus_curated_v3_${activeTab}`, JSON.stringify(curatedList));
+                  sessionStorage.setItem(`surplus_curated_v4_${activeTab}`, JSON.stringify(curatedList));
                 } catch {}
               }, 0);
             }
           } else if (typeof window !== 'undefined') {
             try {
-              sessionStorage.removeItem(`surplus_curated_v3_${activeTab}`);
+              sessionStorage.removeItem(`surplus_curated_v4_${activeTab}`);
             } catch {}
           }
           React.startTransition(() => {
