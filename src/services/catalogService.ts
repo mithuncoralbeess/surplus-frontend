@@ -50,6 +50,7 @@ export interface ProductItem {
   views_count?: number;
   type?: 'single' | 'lot';
   description?: string;
+  dateApproved?: string;
   createdAt?: string;
   updatedAt?: string;
   displayOrder?: number;
@@ -366,6 +367,7 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
     views_count: typeof item.views_count === 'number' ? item.views_count : undefined,
     type: 'single',
     description: item.description || item.product_name || '',
+    dateApproved: item.date_approved || item.dateApproved || item.created_at || '',
     createdAt: item.created_at || '',
     updatedAt: item.updated_at || '',
     displayOrder: item.display_order || 0,

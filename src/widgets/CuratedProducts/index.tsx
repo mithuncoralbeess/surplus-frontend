@@ -8,13 +8,14 @@ import ProductCard from '../../components/ProductCard';
 import { catalogService, ProductItem } from '../../services/catalogService';
 import { useLanguage } from '../../context/LanguageContext';
 
-const TABS = ['Best Selling', 'New Arrivals', 'Featured Deals'];
+const TABS = ['New Arrivals', 'Featured Deals'];
 
 const getCachedTabProducts = (tab: string): ProductItem[] => {
   if (typeof window !== 'undefined') {
     try {
       sessionStorage.removeItem(`surplus_curated_${tab}`);
-      const saved = sessionStorage.getItem(`surplus_curated_v2_${tab}`);
+      sessionStorage.removeItem(`surplus_curated_v2_${tab}`);
+      const saved = sessionStorage.getItem(`surplus_curated_v3_${tab}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -30,11 +31,11 @@ interface CuratedProductsProps {
 
 const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] }) => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState('Best Selling');
+  const [activeTab, setActiveTab] = useState('New Arrivals');
   const [products, setProducts] = useState<ProductItem[]>(initialProducts);
   const [loading, setLoading] = useState<boolean>(initialProducts.length === 0);
   const cacheRef = useRef<Record<string, ProductItem[]>>(
-    initialProducts.length > 0 ? { 'Best Selling': initialProducts } : {}
+    initialProducts.length > 0 ? { 'New Arrivals': initialProducts } : {}
   );
 
   useEffect(() => {
@@ -68,10 +69,8 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
 
     setLoading(true);
 
-    const collectionParam = 
-      activeTab === 'Best Selling' ? 'best_selling' :
-      activeTab === 'New Arrivals' ? 'new_arrivals' :
-      'featured';
+    const collectionParam =
+      activeTab === 'New Arrivals' ? 'new_arrivals' : 'featured';
 
     catalogService.getProducts({ collection: collectionParam, limit: 12 })
       .then((data) => {
@@ -79,13 +78,13 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
           // Filter out lot items (display single products only)
           let singleProducts = data.filter((item) => item.type !== 'lot');
 
-          // Strict curation filtering based on selected tab flag
-          if (activeTab === 'Best Selling') {
-            const best = singleProducts.filter(item => item.isBestSelling);
-            if (best.length > 0) singleProducts = best;
-          } else if (activeTab === 'New Arrivals') {
-            const newArr = singleProducts.filter(item => item.isNewArrival);
-            if (newArr.length > 0) singleProducts = newArr;
+          if (activeTab === 'New Arrivals') {
+            // Sort New Arrivals strictly by approved date descending (fallback to createdAt)
+            singleProducts = [...singleProducts].sort((a, b) => {
+              const tA = a.dateApproved ? new Date(a.dateApproved).getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+              const tB = b.dateApproved ? new Date(b.dateApproved).getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+              return (isNaN(tB) ? 0 : tB) - (isNaN(tA) ? 0 : tA);
+            });
           } else if (activeTab === 'Featured Deals') {
             const feat = singleProducts.filter(item => item.isFeatured);
             if (feat.length > 0) singleProducts = feat;
@@ -98,13 +97,13 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
             if (typeof window !== 'undefined') {
               setTimeout(() => {
                 try {
-                  sessionStorage.setItem(`surplus_curated_v2_${activeTab}`, JSON.stringify(curatedList));
+                  sessionStorage.setItem(`surplus_curated_v3_${activeTab}`, JSON.stringify(curatedList));
                 } catch {}
               }, 0);
             }
           } else if (typeof window !== 'undefined') {
             try {
-              sessionStorage.removeItem(`surplus_curated_v2_${activeTab}`);
+              sessionStorage.removeItem(`surplus_curated_v3_${activeTab}`);
             } catch {}
           }
           React.startTransition(() => {

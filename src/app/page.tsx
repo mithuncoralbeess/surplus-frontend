@@ -57,7 +57,7 @@ async function getHomepageInitialData(): Promise<{
 }> {
   try {
     const [prodRes, lotRes] = await Promise.allSettled([
-      fetchWithFailover("/api/products/?collection=best_selling&limit=8", {
+      fetchWithFailover("/api/products/?collection=new_arrivals&limit=8", {
         next: { revalidate: 120 },
         timeoutMs: 3000,
         maxRetries: 1,
