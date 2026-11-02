@@ -49,36 +49,29 @@ export const metadata: Metadata = {
   },
 };
 
-const BACKEND_BASE = (
-  process.env.BACKEND_API_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://dev.surplusmarket.com"
-).replace(/\/$/, "");
+import { fetchWithFailover } from "../lib/loadBalancer";
 
 async function getHomepageInitialData(): Promise<{
   initialProducts: ProductItem[];
   initialLots: LotItem[];
 }> {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-
     const [prodRes, lotRes] = await Promise.allSettled([
-      fetch(`${BACKEND_BASE}/api/products/?collection=best_selling&limit=8`, {
+      fetchWithFailover("/api/products/?collection=best_selling&limit=8", {
         next: { revalidate: 120 },
-        signal: controller.signal,
+        timeoutMs: 3000,
+        maxRetries: 1,
       }),
-      fetch(`${BACKEND_BASE}/api/lots/?limit=6`, {
+      fetchWithFailover("/api/lots/?limit=6", {
         next: { revalidate: 120 },
-        signal: controller.signal,
+        timeoutMs: 3000,
+        maxRetries: 1,
       }),
     ]);
 
-    clearTimeout(timeoutId);
-
     let initialProducts: ProductItem[] = [];
-    if (prodRes.status === "fulfilled" && prodRes.value.ok) {
-      const prodJson = await prodRes.value.json();
+    if (prodRes.status === "fulfilled" && prodRes.value.response.ok) {
+      const prodJson = await prodRes.value.response.json();
       const rawProducts = Array.isArray(prodJson)
         ? prodJson
         : prodJson?.products || prodJson?.results || prodJson?.data || [];
@@ -89,8 +82,8 @@ async function getHomepageInitialData(): Promise<{
     }
 
     let initialLots: LotItem[] = [];
-    if (lotRes.status === "fulfilled" && lotRes.value.ok) {
-      const lotJson = await lotRes.value.json();
+    if (lotRes.status === "fulfilled" && lotRes.value.response.ok) {
+      const lotJson = await lotRes.value.response.json();
       const rawLots = Array.isArray(lotJson)
         ? lotJson
         : lotJson?.lots || lotJson?.results || lotJson?.data || [];

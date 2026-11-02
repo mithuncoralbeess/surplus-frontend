@@ -4,11 +4,13 @@
  * offline persistence, URL resolution, and request sanitization.
  */
 
+import { loadBalancer, fetchWithFailover, UpstreamNodeHealth } from '../lib/loadBalancer';
+
 /**
  * Resolves request URL.
  * In browser: strictly uses relative path ('/api/...') so all requests proxy through Next.js
  * reverse proxy without exposing the backend domain.
- * On server: resolves to internal backend target.
+ * On server: resolves to the best healthy upstream backend node from the load balancer pool.
  */
 function resolveRequestUrl(endpoint: string): string {
   if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
@@ -17,17 +19,7 @@ function resolveRequestUrl(endpoint: string): string {
   if (typeof window !== 'undefined') {
     return endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   }
-  const serverTarget = (
-    process.env.BACKEND_API_URL ||
-    process.env.BACKEND_APT_URL ||
-    process.env.INTERNAL_BACKEND_URL ||
-    process.env.API_BASE_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    ''
-  ).replace(/\/$/, '');
-
+  const serverTarget = loadBalancer.getPrimaryNodeUrl();
   return `${serverTarget}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
 }
 
@@ -41,6 +33,8 @@ export interface ApiResponse<T = any> {
   message?: string;
   status?: number;
   fromCache?: boolean;
+  staleFailover?: boolean;
+  upstreamNode?: string;
 }
 
 export interface RequestOptions extends RequestInit {
@@ -247,7 +241,7 @@ function autoInvalidateOnMutation(endpoint: string): void {
 }
 
 /**
- * Core HTTP Request Execution
+ * Core HTTP Request Execution with Multi-Node Load Balancing & Automatic Failover
  */
 async function executeNetworkFetch<T = any>(
   url: string,
@@ -256,17 +250,15 @@ async function executeNetworkFetch<T = any>(
   silent: boolean,
   endpoint: string
 ): Promise<ApiResponse<T>> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  const fetchConfig: RequestInit = {
-    ...config,
-    signal: config.signal || controller.signal,
-  };
-
   try {
-    const response = await fetch(url, fetchConfig);
-    clearTimeout(timeoutId);
+    const isRelativeEndpoint = !endpoint.startsWith('http://') && !endpoint.startsWith('https://');
+    const targetForFailover = typeof window === 'undefined' && isRelativeEndpoint ? endpoint : url;
+
+    const { response, nodeUrl } = await fetchWithFailover(targetForFailover, {
+      ...config,
+      timeoutMs: timeout,
+      maxRetries: 2,
+    });
 
     const text = await response.text();
     let json: any = {};
@@ -309,6 +301,7 @@ async function executeNetworkFetch<T = any>(
         success: false,
         status: response.status,
         message: errorMsg,
+        upstreamNode: nodeUrl,
       };
     }
 
@@ -321,9 +314,9 @@ async function executeNetworkFetch<T = any>(
       count: typeof json === 'object' && json !== null ? json.count : undefined,
       current_page: typeof json === 'object' && json !== null ? json.current_page : undefined,
       message: json.message,
+      upstreamNode: nodeUrl,
     };
   } catch (error: any) {
-    clearTimeout(timeoutId);
     if (!silent) {
       console.warn(`[API Client Notice] ${endpoint}:`, error?.message || error);
     }
@@ -484,6 +477,18 @@ export async function apiClient<T = any>(
   try {
     const response = await fetchPromise;
 
+    // Stale-if-Error Failover: if all upstream nodes failed on a GET request, serve last known good cached response
+    if (!response.success && isGetRequest) {
+      const fallbackEntry = memoryCache.get(cacheKey) || (allowPersistence ? readStorageCache<T>(cacheKey) : null);
+      if (fallbackEntry && fallbackEntry.response?.data !== undefined) {
+        return {
+          ...fallbackEntry.response,
+          fromCache: true,
+          staleFailover: true,
+        };
+      }
+    }
+
     // Cache successful GET responses (skip caching empty catalog lists so newly activated items appear immediately)
     if (shouldCache && response.success && response.data !== undefined) {
       const resData: any = response.data;
@@ -531,6 +536,10 @@ apiClient.invalidate = (pattern?: string | RegExp): void => {
 
 apiClient.getCacheSize = (): { memory: number } => {
   return { memory: memoryCache.size };
+};
+
+apiClient.getHealthStatus = (): UpstreamNodeHealth[] => {
+  return loadBalancer.getNodes();
 };
 
 export default apiClient;
