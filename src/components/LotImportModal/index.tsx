@@ -658,8 +658,8 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       };
     }
 
-    const publicPrice = !isNaN(ask) && ask > 0 ? (ask * 1.10).toFixed(2) : '';
-    const publicMarkup = !isNaN(ask) && ask > 0 ? (ask * 0.10).toFixed(2) : '';
+    const publicPrice = !isNaN(ask) && ask > 0 ? ask.toFixed(2) : '';
+    const publicMarkup = '';
 
     if (isNaN(retail) || retail <= 0) {
       return {
@@ -2479,28 +2479,6 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                     </div>
                   )}
 
-                  {/* Public Listing Charge (+10%) Notice */}
-                  <div className="flex items-start gap-2.5 p-3.5 bg-blue-50/80 border border-blue-200/80 rounded-xl text-blue-900 text-xs sm:text-sm">
-                    <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                    <div className="space-y-0.5">
-                      <span className="font-bold text-blue-950 block">
-                        +10% charge added when listing to public
-                      </span>
-                      <span className="text-blue-700 text-xs leading-relaxed block">
-                        {formData.openForOffers ? (
-                          <>This lot is open for offers. A standard +10% marketplace charge will be added to the final agreed offer price for public buyers.</>
-                        ) : pricingAnalysis.hasAsk ? (
-                          <>
-                            Your surplus payout price is <strong>{pricingAnalysis.currSymbol} {parseFloat(formData.askPrice).toFixed(2)}</strong>.
-                            When published to public buyers, it will be listed at <strong>{pricingAnalysis.currSymbol} {pricingAnalysis.publicPrice}</strong> (+10% charge added to public buyers).
-                          </>
-                        ) : (
-                          <>A +10% charge is automatically added to your surplus price when the listing is published to public buyers.</>
-                        )}
-                      </span>
-                    </div>
-                  </div>
-
                   {/* Excluded Export Countries */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Excluded Export Countries (Optional)</label>
@@ -2779,8 +2757,8 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                         </div>
                         {!formData.openForOffers && pricingAnalysis.hasAsk && (
                           <div className="flex justify-between items-center text-[11px] text-emerald-800 pt-1.5 border-t border-emerald-200/80 font-semibold">
-                            <span>Liquidation Discount: {pricingAnalysis.discountPercent}% OFF MSRP</span>
-                            <span>Price: {pricingAnalysis.currSymbol} {pricingAnalysis.publicPrice}</span>
+                            <span>Liquidation Discount:</span>
+                            <span>{pricingAnalysis.discountPercent}% OFF MSRP</span>
                           </div>
                         )}
                         {!formData.openForOffers && (
