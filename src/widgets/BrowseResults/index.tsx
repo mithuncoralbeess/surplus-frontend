@@ -13,7 +13,6 @@ import {
   AiSearchResponse 
 } from '../../lib/aiSearchEngine';
 import { slugify } from '../../lib/slugs';
-import WhatsAppAlertBanner from '../../components/WhatsAppAlertBanner';
 import ProductCard from '../../components/ProductCard';
 import LotCard from '../../components/LotCard';
 import BrowseSourcingDesk from '../BrowseSourcingDesk';
@@ -128,11 +127,6 @@ const BrowseResults = () => {
               </button>
             ))}
           </div>
-        </div>
-
-        {/* WhatsApp Real-Time Drops Banner (Bottom CTA) */}
-        <div className="mt-10">
-          <WhatsAppAlertBanner />
         </div>
       </section>
     );
@@ -314,11 +308,6 @@ const BrowseResults = () => {
             />
           </div>
         )}
-
-        {/* WhatsApp Liquidation Alert Banner (Bottom of the results) */}
-        <div className="mt-12 sm:mt-16">
-          <WhatsAppAlertBanner />
-        </div>
       </div>
     </section>
   );

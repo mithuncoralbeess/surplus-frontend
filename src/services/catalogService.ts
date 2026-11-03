@@ -242,7 +242,7 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
   const rawCurrency = (item.currency || 'USD').toUpperCase().trim();
   const rawLiquidatingPrice = Number(item.liquidating_price || item.liquidation_price || item.liquidatingPrice || 0);
   const rawMsrpPrice = Number(item.msrp || item.originalPrice || item.previous_price || 0);
-  const rawPrice = Number(item.price || item.current_price || (rawLiquidatingPrice ? Number((rawLiquidatingPrice * 1.10).toFixed(2)) : 0));
+  const rawPrice = Number(item.price || item.current_price || (rawLiquidatingPrice ? Number(rawLiquidatingPrice.toFixed(2)) : 0));
   
   // Convert from backend country currency (QAR, AED, SAR, etc.) to USD
   const price = convertToUsd(rawPrice, rawCurrency);
@@ -399,7 +399,7 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     item.price ||
     item.total_price ||
     item.priceUsd ||
-    (rawLiquidationPrice ? Number((rawLiquidationPrice * 1.10).toFixed(2)) : 0)
+    (rawLiquidationPrice ? Number(rawLiquidationPrice.toFixed(2)) : 0)
   );
 
   // Convert raw lot prices to USD

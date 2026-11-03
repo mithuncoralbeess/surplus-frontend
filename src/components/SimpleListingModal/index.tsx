@@ -529,8 +529,8 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
   const pricingAnalysis = useMemo(() => {
     const liq = parseFloat(formData.liquidatingPrice);
     const msrp = parseFloat(formData.msrp);
-    const publicPrice = !isNaN(liq) && liq > 0 ? (liq * 1.10).toFixed(2) : '';
-    const publicMarkup = !isNaN(liq) && liq > 0 ? (liq * 0.10).toFixed(2) : '';
+    const publicPrice = !isNaN(liq) && liq > 0 ? liq.toFixed(2) : '';
+    const publicMarkup = '0.00';
 
     if (isNaN(msrp) || msrp <= 0) {
       return {
@@ -1340,22 +1340,14 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Price</span>
-                        <p className="text-xl font-extrabold text-blue-700">
-                          {formData.currency.substring(0, 3)} {pricingAnalysis.publicPrice || (parseFloat(formData.liquidatingPrice || '0') * 1.10).toFixed(2)}
+                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Public Price</span>
+                        <p className="text-xl font-extrabold text-[#0a5c48]">
+                          {formData.currency.substring(0, 3)} {pricingAnalysis.publicPrice || parseFloat(formData.liquidatingPrice || '0').toFixed(2)}
                         </p>
-                        <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-800 text-[11px] font-semibold rounded-md">
-                          +10% charge added
+                        <span className="inline-block mt-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-semibold rounded-md">
+                          Direct Price (0% markup)
                         </span>
                       </div>
-                    </div>
-
-                    {/* Notice */}
-                    <div className="flex items-center gap-2 p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl text-blue-900 text-xs font-medium">
-                      <Info className="w-4 h-4 text-blue-600 shrink-0" />
-                      <span>
-                        <strong>Public Listing Notice:</strong> A +10% charge is added when listing to the public. You will receive your agreed surplus price of <strong>{formData.currency.substring(0, 3)} {parseFloat(formData.liquidatingPrice || '0').toFixed(2)}</strong> per unit.
-                      </span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
@@ -1943,27 +1935,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                         </div>
                       )}
 
-                      {/* Public Listing Charge (+10%) Notice */}
-                      <div className="md:col-span-2">
-                        <div className="flex items-start gap-2.5 p-3.5 bg-blue-50/80 border border-blue-200/80 rounded-xl text-blue-900 text-xs md:text-sm">
-                          <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                          <div className="space-y-0.5">
-                            <span className="font-bold text-blue-950 block">
-                              +10% charge added when listing to public
-                            </span>
-                            <span className="text-blue-700 text-xs leading-relaxed block">
-                              {pricingAnalysis.hasLiq ? (
-                                <>
-                                  Your surplus payout price is <strong>{formData.currency?.split(' ')[0] || 'USD'} {parseFloat(formData.liquidatingPrice).toFixed(2)}</strong>.
-                                  When published to public buyers, it will be listed at <strong>{formData.currency?.split(' ')[0] || 'USD'} {pricingAnalysis.publicPrice}</strong> (+10% charge added to public buyers).
-                                </>
-                              ) : (
-                                <>A +10% charge is automatically added to your surplus price when the listing is published to public buyers.</>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+
 
                       <div className="md:col-span-2">
                         <label className={labelClass}>Excluded Export Countries (Optional)</label>

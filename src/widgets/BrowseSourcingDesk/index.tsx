@@ -14,7 +14,6 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { inquiryService } from '../../services/inquiryService';
-import WhatsAppSubscriptionModal from '../../components/WhatsAppSubscriptionModal';
 
 export interface BrowseSourcingDeskProps {
   searchQuery?: string;
@@ -50,7 +49,6 @@ export default function BrowseSourcingDesk({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
-  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   // Sync sourcingItem whenever the search query prop changes
   useEffect(() => {
@@ -75,11 +73,6 @@ export default function BrowseSourcingDesk({
     );
     window.open(`https://wa.me/${rawNumber}?text=${message}`, '_blank');
   };
-
-  const handleStockAlertClick = () => {
-    setIsAlertModalOpen(true);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
@@ -207,25 +200,6 @@ Search Query Context: ${searchQuery || 'Direct Form'}
                     <span className="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">
                       WhatsApp Sourcing Desk
                     </span>
-                  </button>
-
-                  {/* Create Stock Watch Alert */}
-                  <button
-                    type="button"
-                    onClick={handleStockAlertClick}
-                    className="w-full bg-white border border-gray-200/90 hover:border-amber-400 hover:bg-amber-50/20 hover:shadow-xs rounded-2xl p-4 flex items-center gap-3.5 transition-all text-left cursor-pointer group"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-500 shrink-0 group-hover:scale-105 transition-transform">
-                      <Bell className="w-4 h-4 text-amber-500" />
-                    </div>
-                    <div>
-                      <span className="text-sm font-bold text-gray-900 block group-hover:text-amber-800 transition-colors">
-                        Create Stock Watch Alert
-                      </span>
-                      <span className="text-xs text-gray-400 block mt-0.5 font-normal">
-                        Get notified when added to inventory
-                      </span>
-                    </div>
                   </button>
                 </div>
               </div>
@@ -453,13 +427,6 @@ Search Query Context: ${searchQuery || 'Direct Form'}
 
         </div>
       </div>
-
-      {/* WhatsApp Stock Watch Alert Modal */}
-      <WhatsAppSubscriptionModal
-        isOpen={isAlertModalOpen}
-        onClose={() => setIsAlertModalOpen(false)}
-        defaultCategory={currentDisplayQuery || 'Industrial Hardware & Tools'}
-      />
     </>
   );
 }
