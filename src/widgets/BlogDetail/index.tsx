@@ -174,6 +174,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
               fill
               sizes="(max-width: 1280px) 100vw, 1200px"
               priority
+              unoptimized
               itemProp="image"
               className="object-cover"
               onError={() => setImageError(true)}
