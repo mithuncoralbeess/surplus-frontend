@@ -237,6 +237,10 @@ const nextConfig: NextConfig = {
           source: '/api/auth/register/:path*',
           destination: `${backendTarget}/api/auth/register/:path*`,
         },
+        {
+          source: '/media/:path*',
+          destination: `${backendTarget}/media/:path*`,
+        },
       ],
       fallback: [
         {

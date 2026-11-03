@@ -1,7 +1,6 @@
 import { BlogPost } from '../data/blogData';
 import { apiClient } from './apiClient';
 
-
 export interface ApiBlogPost {
   id?: string | number;
   slug: string;
@@ -108,7 +107,6 @@ export function stripFaqFromContent(content: string): string {
   const standaloneFaqRegex = /\bFAQ[s]?\b/i;
   const standaloneMatch = content.search(standaloneFaqRegex);
   if (standaloneMatch !== -1 && standaloneMatch > 30) {
-    // Find preceding tag start if any
     const lastTagStart = content.lastIndexOf('<', standaloneMatch);
     const cutIndex = (lastTagStart !== -1 && lastTagStart > 30) ? lastTagStart : standaloneMatch;
     return content.substring(0, cutIndex).trim();
@@ -124,29 +122,50 @@ export function stripFaqFromContent(content: string): string {
   return content;
 }
 
+function getBackendBaseUrl(): string {
+  return (
+    process.env.BACKEND_API_URL ||
+    process.env.BACKEND_APT_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    process.env.INTERNAL_BACKEND_URL ||
+    process.env.API_BASE_URL ||
+    'https://dev.surplusmarket.com'
+  ).replace(/\/$/, '');
+}
+
+export function resolveMediaUrl(url?: string): string {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  const base = getBackendBaseUrl();
+  const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return `${base}${path}`;
+}
+
 export function fixContentImageUrls(content: string): string {
   if (!content) return '';
-  // Normalize any backend host prefix to relative /media/ path without injecting static fallbacks
-  return content.replace(/src=["'](?:https?:\/\/[^\/]+)?\/media\/([^"']+)["']/gi, 'src="/media/$1"');
+  const base = getBackendBaseUrl();
+  return content.replace(/src=["'](?:https?:\/\/[^\/]+)?\/media\/([^"']+)["']/gi, `src="${base}/media/$1"`);
 }
 
 export function mapApiBlogToBlogPost(apiPost: ApiBlogPost): BlogPost {
   const authorName = apiPost.author?.name || apiPost.author_name || 'Surplus Market Team';
   const authorRole = apiPost.author?.role || apiPost.author_role || 'Supply Chain Specialist';
-  const authorAvatar = apiPost.author?.avatar || apiPost.author_avatar || '';
+  const authorAvatar = resolveMediaUrl(apiPost.author?.avatar || apiPost.author_avatar || '');
 
-  let coverImage =
+  const rawCoverImage =
+    (apiPost as any).absolute_image_url ||
     apiPost.coverImage ||
     apiPost.cover_image ||
     apiPost.image ||
     apiPost.image_url ||
     apiPost.featured_image_url ||
     apiPost.featured_image ||
-    (apiPost as any).absolute_image_url ||
     '';
-  if (coverImage && coverImage.includes('/media/')) {
-    coverImage = coverImage.substring(coverImage.indexOf('/media/'));
-  }
+  const coverImage = resolveMediaUrl(rawCoverImage);
 
   let tagsArray: string[] = [];
   if (Array.isArray(apiPost.tags)) {

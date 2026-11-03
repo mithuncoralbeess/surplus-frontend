@@ -32,6 +32,7 @@ interface BlogDetailProps {
 export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps) {
   const [copied, setCopied] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [imageError, setImageError] = useState(false);
 
   const related = (relatedPosts || []).filter(p => p.id !== post.id && p.slug !== post.slug).slice(0, 3);
 
@@ -165,8 +166,8 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
         </header>
 
         {/* Hero Cover Image (only when available from API) */}
-        {post.coverImage && (
-          <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg mb-8 sm:mb-12 border border-gray-200 h-[220px] sm:h-[360px] md:h-[460px]">
+        {post.coverImage && !imageError && (
+          <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg mb-8 sm:mb-12 border border-gray-200 h-[220px] sm:h-[360px] md:h-[460px] bg-gray-100">
             <Image 
               src={post.coverImage} 
               alt={post.title} 
@@ -175,6 +176,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
               priority
               itemProp="image"
               className="object-cover"
+              onError={() => setImageError(true)}
             />
           </div>
         )}
