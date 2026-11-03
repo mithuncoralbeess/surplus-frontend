@@ -66,14 +66,11 @@ const CommonBanner: React.FC<CommonBannerProps> = ({
           </motion.div>
         )}
         
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        <h1 
           className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mb-3 sm:mb-4 leading-tight ${align === 'center' ? 'max-w-4xl mx-auto' : 'max-w-4xl'}`}
         >
-          {title}
-        </motion.h1>
+          {title || "Surplus Market"}
+        </h1>
         
         {subtitle && (
           <motion.p 

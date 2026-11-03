@@ -85,25 +85,25 @@ const BuyMegamenu = () => {
 
   const dynamicFormats = [
     {
-      title: t('megamenu.latestArrivals', 'Latest Arrivals'),
-      badge: t('megamenu.fresh', 'Fresh'),
-      desc: t('megamenu.latestArrivalsDesc', 'Fresh verified inventory added this week'),
-      icon: Sparkles,
-      href: '/buy',
-    },
-    {
-      title: t('megamenu.verifiedDeals', 'Verified Deals'),
-      badge: t('megamenu.hotDeals', 'Hot Deals'),
-      desc: t('megamenu.verifiedDealsDesc', 'Discounted liquidation inventory ready to ship'),
-      icon: Tag,
-      href: '/buy',
+      title: t('megamenu.products', 'Surplus Products'),
+      badge: t('megamenu.singleItems', 'Single Items'),
+      desc: t('megamenu.productsDesc', 'Verified individual surplus products & equipment at liquidation prices'),
+      icon: Box,
+      href: '/buy/product',
     },
     {
       title: t('megamenu.wholesaleLots', 'Wholesale Lots & Pallets'),
-      badge: '> 10 SKUs',
-      desc: t('megamenu.wholesaleLotsDesc', 'Full container & pallet batch manifests'),
+      badge: t('megamenu.bulkLots', 'Bulk Lots'),
+      desc: t('megamenu.wholesaleLotsDesc', 'Full container manifests, pallet batches, and wholesale lots'),
       icon: Package,
-      href: '/buy',
+      href: '/buy/lot',
+    },
+    {
+      title: t('megamenu.verifiedDeals', 'Deals & New Arrivals'),
+      badge: t('megamenu.hotDeals', 'Hot Deals'),
+      desc: t('megamenu.verifiedDealsDesc', 'Discounted liquidation inventory and freshly approved stock'),
+      icon: Sparkles,
+      href: '/browse',
     },
   ];
 
@@ -113,9 +113,9 @@ const BuyMegamenu = () => {
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
     >
-      {/* Trigger: Clickable Link to /buy */}
+      {/* Trigger: Clickable Link to /browse */}
       <Link 
-        href="/buy"
+        href="/browse"
         onClick={() => setIsOpen(false)}
         className={`flex items-center font-medium lg:text-[14px] xl:text-[15.5px] 2xl:text-[16px] transition-all py-1 px-1.5 xl:px-2.5 header-nav-link whitespace-nowrap ${
           isBuyActive || isOpen 
@@ -143,17 +143,46 @@ const BuyMegamenu = () => {
                 </h3>
               </div>
               <div className="flex items-center gap-2">
-                <Link href="/shop-by-category" className="text-sm font-bold text-primary hover:text-primary-dark flex items-center transition-colors pb-1">
+                <Link 
+                  href="/shop-by-category" 
+                  onClick={() => setIsOpen(false)}
+                  className="text-sm font-bold text-primary hover:text-primary-dark flex items-center transition-colors pb-1"
+                >
                   {t('megamenu.allCategories', 'All Categories')} <ArrowRight className="w-4 h-4 ml-1 rtl:ml-0 rtl:mr-1 rtl:rotate-180" />
                 </Link>
               </div>
+            </div>
+
+            {/* Direct Quick-Access Links to Product & Lot pages */}
+            <div className="flex items-center gap-2 mb-4">
+              <Link
+                href="/buy/product"
+                onClick={() => setIsOpen(false)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary/10 hover:bg-primary text-primary hover:text-white text-xs font-bold transition-all shadow-xs"
+              >
+                <Box className="w-3.5 h-3.5" />
+                <span>{t('megamenu.products', 'Surplus Products')}</span>
+              </Link>
+              <Link
+                href="/buy/lot"
+                onClick={() => setIsOpen(false)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-100/70 hover:bg-[#0f7a61] text-[#0f7a61] hover:text-white text-xs font-bold transition-all shadow-xs"
+              >
+                <Package className="w-3.5 h-3.5" />
+                <span>{t('megamenu.wholesaleLots', 'Wholesale Lots & Pallets')}</span>
+              </Link>
             </div>
 
             <div className="grid grid-cols-4 gap-4">
               {displayCategories.map((cat) => {
                 const Icon = cat.icon;
                 return (
-                  <Link href={`/shop-by-category/${cat.slug}`} key={cat.id} className="flex flex-col items-center justify-center py-4 px-2 border border-gray-200 rounded-2xl hover:border-primary/40 hover:bg-primary-light/20 hover:-translate-y-0.5 hover:shadow-md transition-all group/card">
+                  <Link 
+                    href={`/shop-by-category/${cat.slug}`} 
+                    key={cat.id} 
+                    onClick={() => setIsOpen(false)}
+                    className="flex flex-col items-center justify-center py-4 px-2 border border-gray-200 rounded-2xl hover:border-primary/40 hover:bg-primary-light/20 hover:-translate-y-0.5 hover:shadow-md transition-all group/card"
+                  >
                     <div className="w-10 h-10 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center mb-2 text-primary group-hover/card:scale-110 group-hover/card:bg-primary group-hover/card:text-white transition-all duration-300">
                       <Icon className="w-5 h-5" strokeWidth={1.5} />
                     </div>
@@ -186,7 +215,12 @@ const BuyMegamenu = () => {
                 {dynamicFormats.map((format, idx) => {
                   const Icon = format.icon;
                   return (
-                    <Link href={format.href || "/buy"} key={idx} className="flex items-start gap-5 group/format p-3 -ml-3 rtl:-ml-0 rtl:-mr-3 rounded-2xl hover:bg-white/60 transition-colors">
+                    <Link 
+                      href={format.href || "/browse"} 
+                      key={idx} 
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-start gap-5 group/format p-3 -ml-3 rtl:-ml-0 rtl:-mr-3 rounded-2xl hover:bg-white/60 transition-colors"
+                    >
                       <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-primary shadow-sm border border-gray-50 group-hover/format:scale-110 group-hover/format:shadow-md transition-all duration-300">
                         <Icon className="w-5 h-5" strokeWidth={1.5} />
                       </div>
@@ -211,11 +245,26 @@ const BuyMegamenu = () => {
 
             {/* Footer Area */}
             <div className="mt-auto pt-6 border-t border-primary/10 flex justify-between items-center relative z-10">
-              <Link href="/buy" className="text-xs font-bold text-primary hover:text-primary-dark flex items-center transition-colors">
-                Liquidation Buy Hub <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              <Link 
+                href="/buy/product" 
+                onClick={() => setIsOpen(false)}
+                className="text-xs font-bold text-primary hover:text-primary-dark flex items-center transition-colors"
+              >
+                Products Catalog <ArrowRight className="w-3.5 h-3.5 ml-1 rtl:rotate-180" />
               </Link>
-              <Link href="/browse" className="text-xs font-semibold text-gray-500 hover:text-primary flex items-center transition-colors">
-                Browse catalog <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              <Link 
+                href="/buy/lot" 
+                onClick={() => setIsOpen(false)}
+                className="text-xs font-bold text-primary hover:text-primary-dark flex items-center transition-colors"
+              >
+                Wholesale Lots <ArrowRight className="w-3.5 h-3.5 ml-1 rtl:rotate-180" />
+              </Link>
+              <Link 
+                href="/browse" 
+                onClick={() => setIsOpen(false)}
+                className="text-xs font-semibold text-gray-500 hover:text-primary flex items-center transition-colors"
+              >
+                Browse All <ArrowRight className="w-3.5 h-3.5 ml-1 rtl:rotate-180" />
               </Link>
             </div>
             

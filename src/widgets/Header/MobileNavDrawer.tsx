@@ -29,6 +29,7 @@ import {
   Disc,
   PenTool,
   Box,
+  Package,
   Sparkles,
   type LucideIcon
 } from 'lucide-react';
@@ -247,22 +248,44 @@ export default function MobileNavDrawer({
               </button>
 
               {isBuyExpanded && (
-                <div className="px-3 pb-3 pt-1 border-t border-gray-100 space-y-1 bg-white">
+                <div className="px-3 pb-3 pt-1 border-t border-gray-100 space-y-1.5 bg-white">
                   <Link
-                    href="/buy"
+                    href="/buy/product"
                     onClick={onClose}
                     className="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-[#0f7a61] bg-[#e6f7ef]/50 hover:bg-[#e6f7ef] transition-colors"
                   >
-                    <span className="flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-[#0f7a61]" />
-                      {t('megamenu.allLiquidation', 'All Liquidation')}
+                    <span className="flex items-center gap-2">
+                      <Box className="w-3.5 h-3.5 text-[#0f7a61]" />
+                      <span>{t('megamenu.products', 'Surplus Products')}</span>
+                    </span>
+                    <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+                  </Link>
+                  <Link
+                    href="/buy/lot"
+                    onClick={onClose}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-[#0f7a61] bg-[#e6f7ef]/50 hover:bg-[#e6f7ef] transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Package className="w-3.5 h-3.5 text-[#0f7a61]" />
+                      <span>{t('megamenu.wholesaleLots', 'Wholesale Lots & Pallets')}</span>
+                    </span>
+                    <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+                  </Link>
+                  <Link
+                    href="/browse"
+                    onClick={onClose}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-gray-700 hover:text-[#0f7a61] hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="w-3.5 h-3.5 text-gray-400" />
+                      <span>{t('megamenu.allLiquidation', 'All Liquidation Deals')}</span>
                     </span>
                     <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                   </Link>
                   <Link
                     href="/shop-by-category"
                     onClick={onClose}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-gray-700 hover:text-[#0f7a61] hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:text-[#0f7a61] hover:bg-gray-50 transition-colors"
                   >
                     <span>{t('megamenu.allCategories', 'Browse All Categories')}</span>
                     <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />

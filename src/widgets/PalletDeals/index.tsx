@@ -221,7 +221,7 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [] }) => {
             <div className="col-span-full py-24 flex flex-col items-center justify-center text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
               <SearchX className="w-16 h-16 text-gray-300 mb-4" />
               <h3 className="text-xl font-bold text-gray-900 mb-2">No lots available</h3>
-              <p className="text-gray-500 text-sm max-w-sm">No wholesale lot data was returned from the API (/api/lots/). Please check back later or try another tab.</p>
+              <p className="text-gray-500 text-sm max-w-sm">No wholesale lots are currently available for this category. Please check back later or try another tab.</p>
             </div>
           )}
         </motion.div>

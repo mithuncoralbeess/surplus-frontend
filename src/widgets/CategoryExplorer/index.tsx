@@ -105,9 +105,9 @@ export default function CategoryExplorer() {
         {/* Header Row */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
           <div className="max-w-3xl">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
               {t('megamenu.shopByCategory', 'Explore All Categories')}
-            </h1>
+            </h2>
             <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
               Browse through our complete catalog of {totalCategories > 0 ? totalCategories : 'all'} categories, curated collections, and specialized subcategories.
             </p>

@@ -23,7 +23,6 @@ import {
   ExternalLink, 
   ShoppingBag, 
   RotateCw,
-  Server,
   SlidersHorizontal,
   Filter,
   Flame,
@@ -36,7 +35,11 @@ import ProductCard from '../../components/ProductCard';
 import LotCard from '../../components/LotCard';
 import { createLotUrl } from '../../lib/slugs';
 
-export default function BuyFeaturedLots() {
+export interface BuyFeaturedLotsProps {
+  defaultMode?: 'lot' | 'product';
+}
+
+export default function BuyFeaturedLots({ defaultMode = 'product' }: BuyFeaturedLotsProps = {}) {
   const searchParams = useSearchParams();
   const { formatPrice } = useCurrency();
   const { categories: reduxCategories } = useAppSelector((state) => state.categories);
@@ -46,7 +49,7 @@ export default function BuyFeaturedLots() {
     setMounted(true);
   }, []);
 
-  const [purchaseMode, setPurchaseMode] = useState<'lot' | 'product'>('product');
+  const [purchaseMode, setPurchaseMode] = useState<'lot' | 'product'>(defaultMode);
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
   const [searchFilter, setSearchFilter] = useState<string>('');
   const [debouncedSearch, setDebouncedSearch] = useState<string>('');
@@ -374,58 +377,16 @@ export default function BuyFeaturedLots() {
                 <Sparkles className="w-3.5 h-3.5 text-[#14b875]" />
                 <span>DYNAMIC SOURCING CATALOG</span>
               </div>
-
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200">
-                <Server className="w-3.5 h-3.5 text-emerald-600" />
-                <span>API: /api/{purchaseMode === 'lot' ? 'lots/' : 'products/'}</span>
-              </div>
             </div>
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Verified Wholesale Inventory & Lots
+              {purchaseMode === 'lot' ? 'Verified Wholesale Lots & Pallets' : 'Verified Surplus Products'}
             </h2>
             <p className="text-slate-600 text-sm sm:text-base mt-2 max-w-2xl">
-              Live dynamic inventory fetched directly from the Surplus Market API. Browse manifested bulk lots or source single wholesale SKUs using verified MOQ.
+              {purchaseMode === 'lot'
+                ? 'Browse manifested bulk lots, pallet batches, and container load manifests pre-inspected for dispatch.'
+                : 'Browse verified individual surplus products, industrial machinery, and commercial overstock inventory.'}
             </p>
-          </div>
-
-          {/* Mode Switcher: Lots vs Products */}
-          <div className="flex items-center gap-2 p-1.5 bg-slate-200/70 rounded-full border border-slate-300/70 shadow-xs shrink-0 self-start md:self-auto">
-            <button
-              type="button"
-              onClick={() => setPurchaseMode('lot')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                purchaseMode === 'lot'
-                  ? 'bg-[#0a5c48] text-white shadow-md'
-                  : 'text-slate-700 hover:text-slate-950 hover:bg-white/60'
-              }`}
-            >
-              <Package className="w-4 h-4" />
-              <span>Manifested Lots</span>
-              <span suppressHydrationWarning className={`text-[10px] px-2 py-0.5 rounded-full font-bold ml-1 ${
-                purchaseMode === 'lot' ? 'bg-white/20 text-white' : 'bg-slate-300 text-slate-700'
-              }`}>
-                {loading && purchaseMode === 'lot' ? '...' : sortedLots.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setPurchaseMode('product')}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                purchaseMode === 'product'
-                  ? 'bg-[#0a5c48] text-white shadow-md'
-                  : 'text-slate-700 hover:text-slate-950 hover:bg-white/60'
-              }`}
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>Wholesale Products</span>
-              <span suppressHydrationWarning className={`text-[10px] px-2 py-0.5 rounded-full font-bold ml-1 ${
-                purchaseMode === 'product' ? 'bg-white/20 text-white' : 'bg-slate-300 text-slate-700'
-              }`}>
-                {loading && purchaseMode === 'product' ? '...' : sortedProducts.length}
-              </span>
-            </button>
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 import { apiClient, ApiResponse } from './apiClient';
 import { slugify } from '../lib/slugs';
-import { convertToUsd } from '../context/CurrencyContext';
+import { convertToUsd } from '../lib/currency';
 
 export interface ProductItem {
   id: string | number;

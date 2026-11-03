@@ -108,9 +108,9 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
               <span className="inline-flex items-center gap-1.5 bg-[#e6f7ef] text-[#0f7a61] text-xs font-bold px-3 py-1 rounded-full mb-2 border border-[#0f7a61]/20">
                 <Sparkles className="w-3.5 h-3.5" /> Certified Inventory
               </span>
-              <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight capitalize">
+              <h2 className="text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight capitalize">
                 {categoryTitle}
-              </h1>
+              </h2>
             </div>
 
             {/* Search Bar Input */}
@@ -219,7 +219,7 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
                 <SearchX className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <h3 className="text-lg font-bold text-gray-900 mb-1">No products available</h3>
                 <p className="text-gray-500 text-sm mb-4">
-                  No product data was returned from the API (/api/products/) for this section.
+                  No products are currently available matching your selected filters.
                 </p>
                 <button
                   onClick={() => {

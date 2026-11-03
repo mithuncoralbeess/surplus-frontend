@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getBlogs } from '../services/blogService';
 import { catalogService } from '../services/catalogService';
-import { createLotUrl } from '../lib/slugs';
+import { createLotUrl, createProductUrl } from '../lib/slugs';
 
 export const revalidate = 3600; // Revalidate every 1 hour
 
@@ -17,19 +17,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/buy`,
+      url: `${baseUrl}/browse`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/buy/product`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/buy/lot`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/sell`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/browse`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
@@ -207,7 +213,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.warn('[sitemap] Failed to fetch dynamic blogs for sitemap:', error);
   }
 
-  // 3. Dynamic Wholesale Lots
+  // 3. Dynamic Wholesale Lots & Products
   let lotRoutes: MetadataRoute.Sitemap = [];
   try {
     const lots = await catalogService.getLots({ limit: 100 });
@@ -223,6 +229,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   } catch (error) {
     console.warn('[sitemap] Failed to fetch dynamic lots for sitemap:', error);
+  }
+
+  let productRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const products = await catalogService.getProducts({ limit: 150 });
+    if (Array.isArray(products) && products.length > 0) {
+      productRoutes = products
+        .filter((p) => Boolean(p && p.id))
+        .map((p) => ({
+          url: `${baseUrl}${createProductUrl(p.category, p.title || p.sku || p.id, p.id)}`,
+          lastModified: p.createdAt ? new Date(p.createdAt) : new Date(),
+          changeFrequency: 'daily' as const,
+          priority: 0.8,
+        }));
+    }
+  } catch (error) {
+    console.warn('[sitemap] Failed to fetch dynamic products for sitemap:', error);
   }
 
   // 4. Popular Category Slugs
@@ -247,7 +270,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Combine all routes, deduplicating URLs
-  const allRoutes = [...staticRoutes, ...categoryRoutes, ...blogRoutes, ...lotRoutes];
+  const allRoutes = [...staticRoutes, ...categoryRoutes, ...blogRoutes, ...lotRoutes, ...productRoutes];
   const seenUrls = new Set<string>();
 
   return allRoutes.filter((item) => {

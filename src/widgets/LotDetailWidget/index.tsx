@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { catalogService, LotItem } from '../../services/catalogService';
+import { slugify } from '../../lib/slugs';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useCart } from '../../context/CartContext';
 import { ProductJsonLd, BreadcrumbJsonLd } from '../../components/StructuredData';
@@ -170,10 +171,10 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
               The lot you requested (ID: {lotId}) is unavailable or may have been removed.
             </p>
             <button
-              onClick={() => router.push('/buy')}
+              onClick={() => router.push('/buy/lot')}
               className="px-6 py-3 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer"
             >
-              Back to Buy
+              Back to Lots
             </button>
           </div>
         </div>
@@ -287,12 +288,14 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
           <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
             <Link href="/" className="hover:text-gray-900 transition-colors shrink-0">Home</Link>
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
-            <Link href="/buy" className="hover:text-gray-900 transition-colors shrink-0">Buy</Link>
+            <Link href="/browse" className="hover:text-gray-900 transition-colors shrink-0">Buy</Link>
+            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
+            <Link href="/buy/lot" className="hover:text-gray-900 transition-colors shrink-0">Lot</Link>
             {category && (
               <>
                 <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
                 <Link 
-                  href={`/buy?category=${encodeURIComponent(category)}`}
+                  href={`/shop-by-category/${slugify(category)}`}
                   className="hover:text-[#0f7a61] transition-colors shrink-0 font-medium"
                 >
                   {category}
@@ -315,14 +318,15 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
           brand={brandsList[0] || 'Surplus Market'}
           condition={condition}
           availability="InStock"
-          url={`/buy/lot/${lotId}`}
+          url={`/buy/lot/${slugify(title || lotId)}`}
         />
         <BreadcrumbJsonLd
           items={[
             { name: 'Home', url: '/' },
-            { name: 'Buy Surplus', url: '/buy' },
-            ...(category ? [{ name: category, url: `/buy?category=${encodeURIComponent(category)}` }] : []),
-            { name: title, url: `/buy/lot/${lotId}` },
+            { name: 'Buy', url: '/browse' },
+            { name: 'Lot', url: '/buy/lot' },
+            ...(category ? [{ name: category, url: `/shop-by-category/${slugify(category)}` }] : []),
+            { name: title, url: `/buy/lot/${slugify(title || lotId)}` },
           ]}
         />
 

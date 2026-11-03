@@ -23,7 +23,7 @@ export function createProductUrl(
   if (!prodSlug && fallbackId) {
     prodSlug = slugify(fallbackId);
   }
-  return `/buy/${catSlug}/${prodSlug || 'item'}`;
+  return `/buy/product/${catSlug}/${prodSlug || 'item'}`;
 }
 
 export function createLotUrl(

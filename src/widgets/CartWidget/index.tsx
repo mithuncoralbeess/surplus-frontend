@@ -424,7 +424,7 @@ export default function CartWidget() {
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="/buy"
+              href="/browse"
               className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-full transition-colors"
             >
               <span>Explore Wholesale Lots</span>

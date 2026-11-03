@@ -1,8 +1,8 @@
 import React from 'react';
 import { Metadata } from 'next';
-import ProductDetailWidget from '../../../../widgets/ProductDetailWidget';
-import { getPageMetadata } from '../../../../services/pageSeoService';
-import { catalogService } from '../../../../services/catalogService';
+import ProductDetailWidget from '../../../../../widgets/ProductDetailWidget';
+import { getPageMetadata } from '../../../../../services/pageSeoService';
+import { catalogService } from '../../../../../services/catalogService';
 
 interface PageProps {
   params: Promise<{
@@ -24,6 +24,9 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const fallbackMetadata: Metadata = {
     title: `${readableTitle} | ${readableCategory} Wholesale on Surplus Market`,
     description: `Source ${readableTitle} in ${readableCategory} at liquidation wholesale prices. Escrow protection, itemized manifest inspection, and direct dispatch.`,
+    alternates: {
+      canonical: `https://surplusmarket.com/buy/product/${category}/${product}`,
+    },
   };
 
   try {
@@ -36,6 +39,9 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
         description: fetchedProduct.description 
           ? fetchedProduct.description.slice(0, 160) 
           : `Source ${prodTitle} in ${prodCat} at liquidation wholesale prices. Escrow protection, itemized manifest inspection, and direct dispatch.`,
+        alternates: {
+          canonical: `https://surplusmarket.com/buy/product/${category}/${product}`,
+        },
         openGraph: {
           title: `${prodTitle} | ${prodCat} Wholesale on Surplus Market`,
           description: fetchedProduct.description 
@@ -53,7 +59,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   return getPageMetadata(`product-${product}`, fallbackMetadata);
 }
 
-export default async function ProductCategoryDetailPage(props: PageProps) {
+export default async function ProductDetailPage(props: PageProps) {
   const { category, product } = await props.params;
   const productIdentifier = decodeURIComponent(product || '');
   const categoryIdentifier = decodeURIComponent(category || '');
@@ -64,3 +70,4 @@ export default async function ProductCategoryDetailPage(props: PageProps) {
     </main>
   );
 }
+

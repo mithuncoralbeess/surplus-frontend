@@ -1,5 +1,5 @@
 import { SURPLUS_INVENTORY, SurplusItem } from '../data/surplusInventory';
-import { convertToUsd } from '../context/CurrencyContext';
+import { convertToUsd } from './currency';
 
 export interface ParsedAiIntent {
   rawQuery: string;
