@@ -42,52 +42,110 @@ export interface ApiBlogsResponse {
   [key: string]: any;
 }
 
+/**
+ * Finds the starting index of an explicit FAQ section heading in the content.
+ * Matches <h1-6>, <p>, or <div> tags whose inner text is strictly FAQ / FAQs / Frequently Asked Questions.
+ * Returns -1 if no FAQ section header is present.
+ */
+export function findFaqHeaderIndex(content: string): number {
+  if (!content) return -1;
+
+  const headingRegex = /<(h[1-6]|p|div)[^>]*>([\s\S]*?)<\/\1>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = headingRegex.exec(content)) !== null) {
+    const innerText = match[2]
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/gi, ' ')
+      .trim();
+
+    // Must be exclusively FAQ / FAQs / Frequently Asked Questions (not part of an article sentence)
+    if (/^(?:FAQ|FAQs|FAQ’s|FAQ's|Frequently Asked Questions)[\s.:?!]*$/i.test(innerText)) {
+      return match.index;
+    }
+  }
+
+  return -1;
+}
+
 export function extractFaqsFromContent(content: string): Array<{ question: string; answer: string }> {
   if (!content) return [];
 
+  const headerIndex = findFaqHeaderIndex(content);
+  if (headerIndex === -1) {
+    // If there is no explicit FAQ section header, do not treat random numbered points as FAQs
+    return [];
+  }
+
+  const faqSection = content.substring(headerIndex);
   const faqs: Array<{ question: string; answer: string }> = [];
 
-  // Find FAQ section or start from first numbered item
-  let faqSection = content;
-  const faqHeaderMatch = content.match(/(?:(?:<h[1-6][^>]*>|<p[^>]*>(?:\s*<(?:strong|b)[^>]*>)?|<div[^>]*>)\s*(?:FAQ[s]?|Frequently Asked Questions)[\s\S]*|1[\.\)]\s*[^<\n\r]+[?\:][\s\S]*)/i);
-  if (faqHeaderMatch && faqHeaderMatch[0]) {
-    faqSection = faqHeaderMatch[0];
-  }
-
-  // Match numbered questions: "1. What is...", "2. Where can...", etc.
-  const itemRegex = /(?:<p[^>]*>)?\s*(?:<(?:strong|b)[^>]*>)?\s*(\d+[\.\)]\s*[^<\n\r\?]+[?\:]?)\s*(?:<\/(?:strong|b)>)?\s*(?:<br\s*\/?>)?\s*([\s\S]*?)(?=(?:<p[^>]*>)?\s*(?:<(?:strong|b)[^>]*>)?\s*\d+[\.\)]|(?:<h[1-6]|$))/gi;
-
-  let match;
-  while ((match = itemRegex.exec(faqSection)) !== null) {
-    let rawQ = match[1] || '';
-    let rawA = match[2] || '';
-
-    let q = rawQ.replace(/<[^>]*>/g, '').trim();
-    let a = rawA.replace(/<[^>]*>/g, '').trim();
-
-    a = a.replace(/^(?:<br\s*\/?>|\s)+/gi, '').trim();
-
-    if (q && a && a.length > 3) {
-      faqs.push({
-        question: q,
-        answer: a,
-      });
-    }
-  }
-
-  // Fallback for H3/H4 questions if numbered format was not used
-  if (faqs.length === 0) {
-    const headingQuestionRegex = /(?:<h[3-6][^>]*>|<p[^>]*>\s*<(?:strong|b)[^>]*>)([^<]+[?\:])(?:<\/h[3-6]>|<\/(?:strong|b)>\s*<\/p>)\s*(?:<p[^>]*>([\s\S]*?)<\/p>)/gi;
-    while ((match = headingQuestionRegex.exec(faqSection)) !== null) {
-      let q = match[1].replace(/<[^>]*>/g, '').trim();
-      let a = match[2].replace(/<[^>]*>/g, '').trim();
-      if (q && a && a.length > 3) {
-        faqs.push({
-          question: q,
-          answer: a,
-        });
+  // Structure A: List items under FAQ header (<ol><li>...</li> or <ul><li>...</li>)
+  const listItems = faqSection.match(/<li[^>]*>([\s\S]*?)<\/li>/gi);
+  if (listItems && listItems.length > 0) {
+    for (const item of listItems) {
+      const clean = item.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim();
+      const qMatch = clean.match(/^([\s\S]*?\?)\s*([\s\S]*)$/);
+      if (qMatch) {
+        faqs.push({ question: qMatch[1].trim(), answer: qMatch[2].trim() });
+      } else {
+        const colonMatch = clean.match(/^(\d+[\.\)]\s*[^:\n]+[:])\s*([\s\S]*)$/);
+        if (colonMatch) {
+          faqs.push({ question: colonMatch[1].trim(), answer: colonMatch[2].trim() });
+        }
       }
     }
+    if (faqs.length > 0) return faqs;
+  }
+
+  // Structure B: Paragraphs & headings under FAQ section
+  const blocks = faqSection.match(/<(p|h[3-6])[^>]*>([\s\S]*?)<\/\1>/gi) || [];
+  let currentQ = '';
+  let currentA: string[] = [];
+
+  for (const block of blocks) {
+    const cleanText = block.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim();
+    if (!cleanText) continue;
+
+    // Check if the block has a bold question inside: e.g. <p><strong>1. Question?</strong>Answer...</p>
+    const boldMatch = block.match(/<(?:strong|b)[^>]*>([\s\S]*?)<\/(?:strong|b)>/i);
+    let inlineQ = '';
+    let inlineA = '';
+
+    if (boldMatch) {
+      const qCandidate = boldMatch[1].replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim();
+      if ((/^\d+[\.\)]/.test(qCandidate) && (qCandidate.includes('?') || qCandidate.endsWith(':'))) || /^[^\n\r]+[?:]$/.test(qCandidate)) {
+        inlineQ = qCandidate;
+        const afterStrong = block.substring(boldMatch.index! + boldMatch[0].length).replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim();
+        if (afterStrong) {
+          inlineA = afterStrong;
+        }
+      }
+    }
+
+    if (inlineQ) {
+      if (currentQ && currentA.length > 0) {
+        faqs.push({ question: currentQ, answer: currentA.join(' ') });
+      }
+      currentQ = inlineQ;
+      currentA = inlineA ? [inlineA] : [];
+    } else {
+      // Standalone question block
+      const isStandaloneQ = ((/^(?:\d+[\.\)]\s*)?[^?\n\r]+[?:]$/i.test(cleanText) || (/^\d+[\.\)]/.test(cleanText) && cleanText.includes('?')))) && cleanText.length < 250;
+      if (isStandaloneQ) {
+        if (currentQ && currentA.length > 0) {
+          faqs.push({ question: currentQ, answer: currentA.join(' ') });
+        }
+        currentQ = cleanText;
+        currentA = [];
+      } else if (currentQ) {
+        currentA.push(cleanText);
+      }
+    }
+  }
+
+  if (currentQ && currentA.length > 0) {
+    faqs.push({ question: currentQ, answer: currentA.join(' ') });
   }
 
   return faqs;
@@ -96,27 +154,9 @@ export function extractFaqsFromContent(content: string): Array<{ question: strin
 export function stripFaqFromContent(content: string): string {
   if (!content) return '';
 
-  // 1. Strip from FAQ or Frequently Asked Questions header tag
-  const faqHeadingRegex = /(?:<h[1-6][^>]*>|<p[^>]*>(?:\s*<(?:strong|b)[^>]*>)?|<div[^>]*>)\s*(?:FAQ[s]?|Frequently Asked Questions)/i;
-  const headingMatch = content.search(faqHeadingRegex);
-  if (headingMatch !== -1 && headingMatch > 30) {
-    return content.substring(0, headingMatch).trim();
-  }
-
-  // 2. Strip from standalone FAQ text (e.g. <h2>FAQ</h2> or FAQ on its own line)
-  const standaloneFaqRegex = /\bFAQ[s]?\b/i;
-  const standaloneMatch = content.search(standaloneFaqRegex);
-  if (standaloneMatch !== -1 && standaloneMatch > 30) {
-    const lastTagStart = content.lastIndexOf('<', standaloneMatch);
-    const cutIndex = (lastTagStart !== -1 && lastTagStart > 30) ? lastTagStart : standaloneMatch;
-    return content.substring(0, cutIndex).trim();
-  }
-
-  // 3. Fallback: Strip from first numbered question like "1. What is..."
-  const firstQuestionRegex = /(?:<p[^>]*>)?\s*(?:<(?:strong|b)[^>]*>)?\s*1[\.\)]\s*[^<\n\r]+[?\:]/i;
-  const questionMatch = content.search(firstQuestionRegex);
-  if (questionMatch !== -1 && questionMatch > 30) {
-    return content.substring(0, questionMatch).trim();
+  const index = findFaqHeaderIndex(content);
+  if (index !== -1 && index > 30) {
+    return content.substring(0, index).trim();
   }
 
   return content;

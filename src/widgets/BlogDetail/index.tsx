@@ -206,7 +206,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
           itemProp="articleBody"
           suppressHydrationWarning
           className="max-w-none text-gray-800 mb-16 space-y-6
-            [&_h1]:hidden
+            [&_h1]:text-[28px] [&_h1]:font-bold [&_h1]:text-gray-900 [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:leading-snug [&>h1:first-child]:hidden
             [&_h2]:text-[25px] [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:leading-snug
             [&_h3]:text-[25px] [&_h3]:font-bold [&_h3]:text-gray-900 [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:leading-snug
             [&_h4]:text-[25px] [&_h4]:font-bold [&_h4]:text-gray-900 [&_h4]:mt-6 [&_h4]:mb-3 [&_h4]:leading-snug
