@@ -8,13 +8,14 @@ import LotCard from '../../components/LotCard';
 import { catalogService, LotItem } from '../../services/catalogService';
 import { useLanguage } from '../../context/LanguageContext';
 
-const TABS = ['All', 'New Arrivals', 'Featured Deals'] as const;
+const TABS = ['New Arrivals', 'Best Deals'] as const;
 
 const getCachedTabLots = (tab: string): LotItem[] => {
   if (typeof window !== 'undefined') {
     try {
       sessionStorage.removeItem('surplus_pallet_deals_lots');
-      const saved = sessionStorage.getItem(`surplus_pallet_deals_v2_${tab}`);
+      sessionStorage.removeItem('surplus_pallet_deals_v2_All');
+      const saved = sessionStorage.getItem(`surplus_pallet_deals_v3_${tab}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -30,11 +31,11 @@ interface PalletDealsProps {
 
 const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [] }) => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<string>('All');
+  const [activeTab, setActiveTab] = useState<string>('New Arrivals');
   const [lots, setLots] = useState<LotItem[]>(initialLots);
   const [loading, setLoading] = useState<boolean>(initialLots.length === 0);
   const cacheRef = useRef<Record<string, LotItem[]>>(
-    initialLots.length > 0 ? { All: initialLots } : {}
+    initialLots.length > 0 ? { 'New Arrivals': initialLots } : {}
   );
 
   useEffect(() => {
@@ -71,7 +72,7 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [] }) => {
     const collectionParam =
       activeTab === 'New Arrivals'
         ? 'new_arrivals'
-        : activeTab === 'Featured Deals'
+        : activeTab === 'Best Deals'
         ? 'featured'
         : 'all';
 
@@ -93,22 +94,20 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [] }) => {
               return Number(b.id || 0) - Number(a.id || 0);
             });
           }
-        } else if (activeTab === 'Featured Deals') {
+        } else if (activeTab === 'Best Deals') {
           const explicitFeatured = list.filter((item) => item.isFeatured || item.is_featured);
-          if (explicitFeatured.length > 0) {
-            list = explicitFeatured;
-          } else {
-            list.sort((a, b) => {
-              const msrpA = Number(a.msrp || 0);
-              const msrpB = Number(b.msrp || 0);
-              const priceA = Number(a.price || 0);
-              const priceB = Number(b.price || 0);
-              const discA = msrpA > priceA && priceA > 0 ? (msrpA - priceA) / msrpA : 0;
-              const discB = msrpB > priceB && priceB > 0 ? (msrpB - priceB) / msrpB : 0;
-              if (discB !== discA) return discB - discA;
-              return msrpB - msrpA;
-            });
-          }
+          const baseList = explicitFeatured.length > 0 ? explicitFeatured : list;
+          baseList.sort((a, b) => {
+            const msrpA = Number(a.msrp || 0);
+            const msrpB = Number(b.msrp || 0);
+            const priceA = Number(a.price || 0);
+            const priceB = Number(b.price || 0);
+            const discA = msrpA > priceA && priceA > 0 ? (msrpA - priceA) / msrpA : 0;
+            const discB = msrpB > priceB && priceB > 0 ? (msrpB - priceB) / msrpB : 0;
+            if (discB !== discA) return discB - discA;
+            return msrpB - msrpA;
+          });
+          list = baseList;
         }
 
         const displayLots = list.slice(0, 6);
@@ -117,7 +116,7 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [] }) => {
           if (typeof window !== 'undefined') {
             setTimeout(() => {
               try {
-                sessionStorage.setItem(`surplus_pallet_deals_v2_${activeTab}`, JSON.stringify(displayLots));
+                sessionStorage.setItem(`surplus_pallet_deals_v3_${activeTab}`, JSON.stringify(displayLots));
               } catch {}
             }, 0);
           }
@@ -180,7 +179,7 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [] }) => {
                       : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
                   `}
                 >
-                  {tab}
+                  {tab === 'Best Deals' ? t('palletDeals.bestDeals', 'Best Deals') : tab === 'New Arrivals' ? t('palletDeals.newArrivals', 'New Arrivals') : tab}
                 </button>
               ))}
             </div>

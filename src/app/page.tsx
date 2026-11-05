@@ -95,7 +95,15 @@ async function getHomepageInitialData(): Promise<{
       const rawLots = Array.isArray(lotJson)
         ? lotJson
         : lotJson?.lots || lotJson?.results || lotJson?.data || [];
-      initialLots = rawLots.slice(0, 6).map(mapApiLotToLotItem);
+      initialLots = rawLots
+        .map(mapApiLotToLotItem)
+        .sort((a: LotItem, b: LotItem) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          if (dateB !== dateA) return dateB - dateA;
+          return Number(b.id || 0) - Number(a.id || 0);
+        })
+        .slice(0, 6);
     }
 
     return { initialProducts, initialLots };
