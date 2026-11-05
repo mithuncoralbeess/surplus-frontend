@@ -21,6 +21,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [showDeferredOverlays, setShowDeferredOverlays] = useState(false);
 
   const isCheckingRef = useRef(false);
+  const lastMaintenanceCheckRef = useRef<number>(0);
 
   useEffect(() => {
     let activated = false;
@@ -109,6 +110,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const safeCheckMaintenanceStatus = useCallback((force = false) => {
+    const now = Date.now();
+    // Throttle maintenance checks to at most once every 5 minutes (300,000 ms) unless forced
+    if (!force && now - lastMaintenanceCheckRef.current < 300000) {
+      return;
+    }
+    lastMaintenanceCheckRef.current = now;
+    checkMaintenanceStatus();
+  }, [checkMaintenanceStatus]);
+
   useEffect(() => {
     // Clean up any stale legacy cached maintenance response
     if (typeof window !== 'undefined') {
@@ -119,19 +130,31 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     // Defer initial maintenance check until after page load / Lighthouse quiet window
-    const initialTimer = setTimeout(checkMaintenanceStatus, 6500);
+    const initialTimer = setTimeout(() => safeCheckMaintenanceStatus(true), 6500);
 
-    // Check periodically (every 30s) and on window focus to immediately detect dashboard toggle
-    const interval = setInterval(checkMaintenanceStatus, 30000);
-    const handleFocus = () => checkMaintenanceStatus();
+    // Check on window focus only if at least 5 minutes have elapsed, and avoid checking if tab is hidden
+    const handleFocus = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        safeCheckMaintenanceStatus(false);
+      }
+    };
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('visibilitychange', handleFocus);
+
+    // Periodic heartbeat check relaxed from 30s to 10 minutes (600,000 ms)
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        safeCheckMaintenanceStatus(true);
+      }
+    }, 600000);
 
     return () => {
       clearTimeout(initialTimer);
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('visibilitychange', handleFocus);
     };
-  }, [checkMaintenanceStatus]);
+  }, [safeCheckMaintenanceStatus]);
 
   // If directly visiting /maintenance route, show the full-screen maintenance design
   if (pathname === '/maintenance') {

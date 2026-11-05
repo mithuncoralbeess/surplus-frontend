@@ -104,21 +104,37 @@ function SessionWatcher() {
       }
     };
 
-    // Verify on mount / when authenticated
-    verifyAccountStatus();
+    const lastVerifyRef = { current: 0 };
 
-    // Verify on tab focus / visibility change
+    const safeVerifyAccountStatus = (force = false) => {
+      const now = Date.now();
+      // Throttle account verification to at most once every 5 minutes (300,000 ms) unless forced
+      if (!force && now - lastVerifyRef.current < 300000) {
+        return;
+      }
+      lastVerifyRef.current = now;
+      verifyAccountStatus();
+    };
+
+    // Verify on mount / when authenticated
+    safeVerifyAccountStatus(true);
+
+    // Verify on tab focus / visibility change (throttled to 5 minutes)
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        verifyAccountStatus();
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        safeVerifyAccountStatus(false);
       }
     };
 
     window.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleVisibilityChange);
 
-    // Periodic heartbeat check every 45 seconds
-    const interval = setInterval(verifyAccountStatus, 45000);
+    // Relax periodic heartbeat from 45 seconds to 10 minutes (600,000 ms)
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        safeVerifyAccountStatus(true);
+      }
+    }, 600000);
 
     return () => {
       window.removeEventListener('visibilitychange', handleVisibilityChange);

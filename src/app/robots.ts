@@ -17,6 +17,27 @@ export default function robots(): MetadataRoute.Robots {
           '/maintenance/',
         ],
       },
+      // Block known aggressive AI scrapers and heavy bot crawlers
+      {
+        userAgent: [
+          'Bytespider',
+          'CCBot',
+          'GPTBot',
+          'ChatGPT-User',
+          'ClaudeBot',
+          'Claude-Web',
+          'anthropic-ai',
+          'Amazonbot',
+          'AhrefsBot',
+          'SemrushBot',
+          'DotBot',
+          'MJ12bot',
+          'PetalBot',
+          'DataForSeoBot',
+          'Scrapy',
+        ],
+        disallow: '/',
+      },
       {
         userAgent: 'Googlebot',
         allow: '/',
