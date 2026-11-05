@@ -627,7 +627,7 @@ const lotCache = new Map<string, LotItem>();
 let allLotsCache: LotItem[] | null = null;
 let lastLotsFetchTime = 0;
 
-const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes cache TTL
+const CACHE_TTL_MS = 0; // 0ms TTL ensures instant reflection of backend status changes (active/inactive, approved/declined)
 const queryProductsCache = new Map<string, { data: ProductItem[]; timestamp: number }>();
 const queryLotsCache = new Map<string, { data: LotItem[]; timestamp: number }>();
 
@@ -680,7 +680,7 @@ export const catalogService = {
         endpoint += `?${queryParts.join('&')}`;
       }
 
-      const response = await apiClient(endpoint, { silent: true });
+      const response = await apiClient(endpoint, { silent: true, cacheTtl: false });
       if (!response.success || !response.data) {
         return isDefaultQuery ? (allProductsCache || []) : [];
       }
@@ -803,7 +803,7 @@ export const catalogService = {
         endpoint += `?${queryParts.join('&')}`;
       }
 
-      const response = await apiClient(endpoint, { silent: true });
+      const response = await apiClient(endpoint, { silent: true, cacheTtl: false });
       if (!response.success || !response.data) {
         return isDefaultQuery ? (allLotsCache || []) : [];
       }
@@ -913,16 +913,18 @@ export const catalogService = {
       if (s) productCache.set(s, p);
     };
 
-    // 1. Instant Cache Lookup (0ms latency if already loaded)
-    if (productCache.has(key)) return productCache.get(key)!;
-    if (productCache.has(keyLower)) return productCache.get(keyLower)!;
-    if (targetSlug && productCache.has(targetSlug)) return productCache.get(targetSlug)!;
+    // 1. Instant Cache Lookup (only when in-memory cache TTL > 0)
+    if (CACHE_TTL_MS > 0) {
+      if (productCache.has(key)) return productCache.get(key)!;
+      if (productCache.has(keyLower)) return productCache.get(keyLower)!;
+      if (targetSlug && productCache.has(targetSlug)) return productCache.get(targetSlug)!;
 
-    if (allProductsCache && allProductsCache.length > 0) {
-      const match = allProductsCache.find(matchesProduct);
-      if (match) {
-        cacheProduct(match);
-        return match;
+      if (allProductsCache && allProductsCache.length > 0) {
+        const match = allProductsCache.find(matchesProduct);
+        if (match) {
+          cacheProduct(match);
+          return match;
+        }
       }
     }
 
@@ -1019,26 +1021,28 @@ export const catalogService = {
     const keyLower = key.toLowerCase().trim();
     const targetSlug = slugify(key);
 
-    // 1. Instant Cache Lookup (0ms latency if already loaded)
-    if (lotCache.has(key)) {
-      return lotCache.get(key)!;
-    }
-    if (targetSlug && lotCache.has(targetSlug)) {
-      return lotCache.get(targetSlug)!;
-    }
-    if (allLotsCache) {
-      const match = allLotsCache.find(
-        (l) =>
-          String(l.id) === key ||
-          String(l.lot_number || '').toLowerCase() === keyLower ||
-          (targetSlug && slugify(l.title) === targetSlug) ||
-          l.title.toLowerCase().trim() === keyLower ||
-          encodeURIComponent(l.title) === key
-      );
-      if (match) {
-        lotCache.set(key, match);
-        if (targetSlug) lotCache.set(targetSlug, match);
-        return match;
+    // 1. Instant Cache Lookup (only when in-memory cache TTL > 0)
+    if (CACHE_TTL_MS > 0) {
+      if (lotCache.has(key)) {
+        return lotCache.get(key)!;
+      }
+      if (targetSlug && lotCache.has(targetSlug)) {
+        return lotCache.get(targetSlug)!;
+      }
+      if (allLotsCache) {
+        const match = allLotsCache.find(
+          (l) =>
+            String(l.id) === key ||
+            String(l.lot_number || '').toLowerCase() === keyLower ||
+            (targetSlug && slugify(l.title) === targetSlug) ||
+            l.title.toLowerCase().trim() === keyLower ||
+            encodeURIComponent(l.title) === key
+        );
+        if (match) {
+          lotCache.set(key, match);
+          if (targetSlug) lotCache.set(targetSlug, match);
+          return match;
+        }
       }
     }
 
@@ -1046,8 +1050,8 @@ export const catalogService = {
       const isNumericId = /^\d+$/.test(key);
       const isLotNum = /^lot-?\d+/i.test(key);
       const [singleRes, listRes] = await Promise.allSettled([
-        (isNumericId || isLotNum) ? apiClient(`/api/lots/${id}/`, { silent: true }) : Promise.resolve(null),
-        allLotsCache ? Promise.resolve(null) : this.getLots()
+        (isNumericId || isLotNum) ? apiClient(`/api/lots/${id}/`, { silent: true, cacheTtl: false }) : Promise.resolve(null),
+        this.getLots()
       ]);
 
       if (singleRes.status === 'fulfilled' && singleRes.value && singleRes.value.success) {

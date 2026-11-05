@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, SearchX } from 'lucide-react';
+import Link from 'next/link';
+import { Package, SearchX, ArrowRight } from 'lucide-react';
 import { motion } from '../../lib/motion';
 import LotCard from '../../components/LotCard';
 import { catalogService, LotItem } from '../../services/catalogService';
@@ -224,6 +225,23 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [] }) => {
               <p className="text-gray-500 text-sm max-w-sm">No wholesale lots are currently available for this category. Please check back later or try another tab.</p>
             </div>
           )}
+        </motion.div>
+
+        {/* View All Action */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mt-12 flex justify-center"
+        >
+          <Link
+            href="/buy/lot"
+            className="inline-flex items-center gap-2 px-8 py-3.5 bg-primary hover:bg-primary-dark text-white rounded-full font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
+          >
+            <span>{t('palletDeals.viewAll', 'View All')}</span>
+            <ArrowRight className="w-4 h-4 rtl:rotate-180 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+          </Link>
         </motion.div>
 
       </div>

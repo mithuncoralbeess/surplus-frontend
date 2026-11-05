@@ -81,8 +81,8 @@ const inFlightRequests = new Map<string, Promise<ApiResponse<any>>>();
 const DEFAULT_CACHE_TTL_MS = 3 * 60 * 1000;
 
 // LocalStorage Persistent Cache Key Prefix
-const STORAGE_PREFIX = 'surplus_api_cache_v5:';
-const LEGACY_STORAGE_PREFIXES = ['surplus_api_cache_v1:', 'surplus_api_cache_v2:', 'surplus_api_cache_v3:', 'surplus_api_cache_v4:'];
+const STORAGE_PREFIX = 'surplus_api_cache_v6:';
+const LEGACY_STORAGE_PREFIXES = ['surplus_api_cache_v1:', 'surplus_api_cache_v2:', 'surplus_api_cache_v3:', 'surplus_api_cache_v4:', 'surplus_api_cache_v5:'];
 
 function purgeLegacyStorageCaches(): void {
   if (typeof window === 'undefined') return;
@@ -105,13 +105,11 @@ if (typeof window !== 'undefined') {
     try {
       purgeLegacyStorageCaches();
     } catch {}
-  }, 2000);
+  }, 1000);
 }
 
-// Endpoints that qualify for client-side localStorage persistence
+// Endpoints that qualify for client-side localStorage persistence (products and lots removed for real-time reactivity)
 const PERSISTENT_ENDPOINTS = [
-  '/api/products/',
-  '/api/lots/',
   '/api/categories/',
   '/categories/',
   '/api/seo/',
@@ -366,11 +364,12 @@ export async function apiClient<T = any>(
     },
   };
 
-  // Determine whether to cache this request
-  const shouldCache = isGetRequest && cacheTtl !== false;
+  // Product and Lot listings must reflect immediate backend status changes (active/inactive, approved/declined)
+  const isRealTimeCatalogEndpoint = endpoint.includes('/api/products/') || endpoint.includes('/api/lots/');
+  const shouldCache = isGetRequest && cacheTtl !== false && (!isRealTimeCatalogEndpoint || cacheTtl !== undefined);
   const ttlMs = typeof cacheTtl === 'number' ? cacheTtl : DEFAULT_CACHE_TTL_MS;
   const cacheKey = `${method}:${url}`;
-  const allowPersistence = persistCache ?? shouldPersistEndpoint(endpoint);
+  const allowPersistence = !isRealTimeCatalogEndpoint && (persistCache ?? shouldPersistEndpoint(endpoint));
 
   // 1. Check Memory and Persistent Storage Cache if applicable
   if (shouldCache && !revalidate) {

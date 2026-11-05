@@ -216,7 +216,7 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
           className="mt-12 flex justify-center"
         >
           <Link
-            href="/browse"
+            href="/buy/product"
             className="inline-flex items-center gap-2 px-8 py-3.5 bg-primary hover:bg-primary-dark text-white rounded-full font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
           >
             <span>{t('curated.viewAll', 'View All Inventory')}</span>

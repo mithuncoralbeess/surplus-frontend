@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import HomeBanner from "../widgets/HomeBanner";
 import CuratedProducts from "../widgets/CuratedProducts";
 import {
@@ -9,14 +9,15 @@ import {
   LotItem,
 } from "../services/catalogService";
 
-const PromoBanner = dynamic(() => import("../widgets/PromoBanner"));
-const PalletDeals = dynamic(() => import("../widgets/PalletDeals"));
-const JourneySection = dynamic(() => import("../widgets/JourneySection"));
-const Testimonials = dynamic(() => import("../widgets/Testimonials"));
-const FAQ = dynamic(() => import("../widgets/FAQ"));
-const SellerPromoBanner = dynamic(() => import("../widgets/SellerPromoBanner"));
+const PromoBanner = nextDynamic(() => import("../widgets/PromoBanner"));
+const PalletDeals = nextDynamic(() => import("../widgets/PalletDeals"));
+const JourneySection = nextDynamic(() => import("../widgets/JourneySection"));
+const Testimonials = nextDynamic(() => import("../widgets/Testimonials"));
+const FAQ = nextDynamic(() => import("../widgets/FAQ"));
+const SellerPromoBanner = nextDynamic(() => import("../widgets/SellerPromoBanner"));
 
-export const revalidate = 120;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "Surplus Market - B2B Liquidation Marketplace | Circular Commerce",
@@ -58,12 +59,14 @@ async function getHomepageInitialData(): Promise<{
   try {
     const [prodRes, lotRes] = await Promise.allSettled([
       fetchWithFailover("/api/products/?limit=32", {
-        next: { revalidate: 120 },
+        cache: "no-store",
+        next: { revalidate: 0 },
         timeoutMs: 3000,
         maxRetries: 1,
       }),
       fetchWithFailover("/api/lots/?limit=6", {
-        next: { revalidate: 120 },
+        cache: "no-store",
+        next: { revalidate: 0 },
         timeoutMs: 3000,
         maxRetries: 1,
       }),
