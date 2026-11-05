@@ -997,6 +997,9 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
                   offer={relProduct.offer}
                   currency={relProduct.currency}
                   location={relProduct.inventory_location || relProduct.location}
+                  country={(relProduct as any).inventory_country || (relProduct as any).country}
+                  inventory_country={(relProduct as any).inventory_country || (relProduct as any).country}
+                  inventory_location={(relProduct as any).inventory_location || relProduct.location}
                   isCertified={relProduct.isCertified}
                   isNew={relProduct.isNew}
                 />

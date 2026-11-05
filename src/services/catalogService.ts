@@ -232,9 +232,18 @@ export function detectCountryFromLocation(text?: string): string {
   if (/\bchina\b|\bbeijing\b|\bshanghai\b|\bshenzhen\b/i.test(lower)) {
     return 'China';
   }
+  if (/\bcanada\b/i.test(lower)) return 'Canada';
   if (/\bkuwait\b/i.test(lower)) return 'Kuwait';
   if (/\boman\b|\bmuscat\b/i.test(lower)) return 'Oman';
   if (/\bbahrain\b|\bmanama\b/i.test(lower)) return 'Bahrain';
+
+  if (text.includes(',')) {
+    const parts = text.split(',').map(p => p.trim()).filter(Boolean);
+    const lastPart = parts[parts.length - 1];
+    if (lastPart && !/\d{3,}/.test(lastPart) && lastPart.length < 35) {
+      return lastPart;
+    }
+  }
   return '';
 }
 
@@ -272,16 +281,22 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
   const brandName = extractStringValue(item.brand_name || item.brand || item.manufacturer, '');
   const conditionName = extractStringValue(item.condition || item.stock_condition, 'Brand New Surplus');
   
-  const inventoryCountry = extractStringValue(item.inventory_country || item.country, '');
-  const inventoryCity = extractStringValue(item.inventory_city || item.city, '');
+  const rawCountry = extractStringValue(item.inventory_country || item.country, '');
   const rawLocation = extractStringValue(item.inventory_location || item.location, '');
-  let resolvedLocation = rawLocation;
-  if (!resolvedLocation && inventoryCity && inventoryCountry) {
+  const rawLoc = rawLocation;
+  const inventoryCountry = rawCountry || detectCountryFromLocation(rawLocation) || '';
+  const inventoryCity = extractStringValue(item.inventory_city || item.city, '');
+  let resolvedLocation = '';
+  if (inventoryCity && inventoryCountry) {
     resolvedLocation = `${inventoryCity}, ${inventoryCountry}`;
-  } else if (!resolvedLocation && (inventoryCity || inventoryCountry)) {
-    resolvedLocation = inventoryCity || inventoryCountry;
+  } else if (inventoryCountry) {
+    resolvedLocation = inventoryCountry;
+  } else if (inventoryCity) {
+    resolvedLocation = inventoryCity;
+  } else {
+    resolvedLocation = rawLocation || 'Dubai, UAE';
   }
-  const locationName = resolvedLocation || 'Dubai, UAE';
+  const locationName = inventoryCountry || resolvedLocation || 'Dubai, UAE';
 
   const rawOffer = item.offer !== undefined && item.offer !== null && String(item.offer).trim() !== '' ? String(item.offer).trim() : undefined;
   const discountTarget = liquidatingPrice > 0 ? liquidatingPrice : price;
@@ -349,8 +364,8 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
     isBestSelling: Boolean(item.is_best_selling),
     isNewArrival: Boolean(item.is_new_arrival),
     offer: offerTag,
-    location: locationName,
-    inventory_location: locationName,
+    location: inventoryCountry || locationName,
+    inventory_location: rawLoc || locationName,
     inventory_country: inventoryCountry,
     inventory_city: inventoryCity,
     country: inventoryCountry,
@@ -547,8 +562,8 @@ export function mapApiLotToLotItem(raw: any, index: number): LotItem {
     liquidating_price: isOpenForOffers ? 0 : (liquidationPrice || price),
     ask_price_surplus_payout: isOpenForOffers ? 0 : (liquidationPrice || price),
     offer: isOpenForOffers ? 'Open for Offers' : lotOfferTag,
-    location: locationName,
-    inventory_location: locationName,
+    location: inventoryCountry || locationName,
+    inventory_location: rawLoc || locationName,
     inventory_country: inventoryCountry,
     inventory_city: inventoryCity,
     country: inventoryCountry,

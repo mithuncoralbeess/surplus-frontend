@@ -1,4 +1,4 @@
-import { BlogPost } from '../data/blogData';
+import { BlogPost, BlogSeoData } from '../data/blogData';
 import { apiClient } from './apiClient';
 
 export interface ApiBlogPost {
@@ -32,6 +32,7 @@ export interface ApiBlogPost {
   key_takeaways?: string[];
   keyTakeaways?: string[];
   faqs?: Array<{ question: string; answer: string }>;
+  seo?: BlogSeoData;
 }
 
 export interface ApiBlogsResponse {
@@ -252,6 +253,7 @@ export function mapApiBlogToBlogPost(apiPost: ApiBlogPost): BlogPost {
     tags: tagsArray,
     keyTakeaways: apiPost.keyTakeaways || apiPost.key_takeaways || [],
     faqs: parsedFaqs,
+    seo: apiPost.seo || (apiPost as any).seo_data || undefined,
   };
 }
 

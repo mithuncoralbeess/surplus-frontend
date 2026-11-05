@@ -289,6 +289,9 @@ const BrowseResults = () => {
                     originalPrice={item.retailPrice}
                     offer={item.discountPercent >= 10 ? `${item.discountPercent}% DROP` : undefined}
                     location={item.location}
+                    country={(item as any).country || (item as any).inventory_country}
+                    inventory_country={(item as any).inventory_country || (item as any).country}
+                    inventory_location={(item as any).inventory_location || item.location}
                     currency="USD"
                     isCertified={item.isCertified}
                     isNew={Boolean(item.condition?.toLowerCase().includes('new'))}

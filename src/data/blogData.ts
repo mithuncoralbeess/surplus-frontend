@@ -3,6 +3,25 @@ export interface BlogFAQ {
   answer: string;
 }
 
+export interface BlogSeoData {
+  focus_keyphrase?: string;
+  meta_title?: string;
+  meta_description?: string;
+  meta_keywords?: string;
+  canonical_url?: string;
+  robots_index?: 'index' | 'noindex' | string;
+  robots_follow?: 'follow' | 'nofollow' | string;
+  robots_advanced?: string;
+  og_title?: string;
+  og_description?: string;
+  og_image?: string;
+  twitter_title?: string;
+  twitter_description?: string;
+  twitter_image?: string;
+  schema_type?: string;
+  structured_data?: string;
+}
+
 export interface BlogPost {
   id: string;
   slug: string;
@@ -22,6 +41,7 @@ export interface BlogPost {
   tags: string[];
   keyTakeaways: string[];
   faqs?: BlogFAQ[];
+  seo?: BlogSeoData;
 }
 
 export const BLOG_CATEGORIES = [

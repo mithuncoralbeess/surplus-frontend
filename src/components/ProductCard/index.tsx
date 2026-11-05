@@ -30,6 +30,7 @@ export interface ProductCardProps {
   inventory_country?: string;
   city?: string;
   country?: string;
+  [key: string]: any;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -56,6 +57,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   inventory_country,
   city,
   country,
+  ...rest
 }) => {
   const { formatPrice, convertToUsd } = useCurrency();
   const { addToCart, isInCart } = useCart();
@@ -159,32 +161,62 @@ const ProductCard: React.FC<ProductCardProps> = ({
     );
   }
 
-  const rawLocation = (
-    location ||
-    inventory_location ||
-    inventoryLocation ||
-    ''
-  ).trim();
-
-  const cityStr = (inventory_city || city || '').trim();
-  const countryStr = (inventory_country || country || '').trim();
-
-  let resolvedLocation = rawLocation;
-  if (!resolvedLocation) {
-    if (cityStr && countryStr) {
-      if (cityStr.toLowerCase() === countryStr.toLowerCase()) {
-        resolvedLocation = countryStr;
-      } else if (cityStr.toLowerCase().includes(countryStr.toLowerCase())) {
-        resolvedLocation = cityStr;
-      } else {
-        resolvedLocation = `${cityStr}, ${countryStr}`;
-      }
-    } else if (cityStr || countryStr) {
-      resolvedLocation = cityStr || countryStr;
+  const detectCountryFromText = (text: string): string => {
+    if (!text) return '';
+    const lower = text.toLowerCase();
+    if (/\bindia\b|\bmaharashtra\b|\bmumbai\b|\bvasai\b|\bdelhi\b|\bbangalore\b|\bbengaluru\b|\bchennai\b|\bkolkata\b|\bhyderabad\b|\bpune\b|\bahmedabad\b|\bgujarat\b|\bkerala\b/i.test(lower)) {
+      return 'India';
     }
-  }
+    if (/\bunited arab emirates\b|\buae\b|\bdubai\b|\babu dhabi\b|\bsharjah\b|\bajman\b/i.test(lower)) {
+      return 'United Arab Emirates';
+    }
+    if (/\bsaudi arabia\b|\bksa\b|\briyadh\b|\bjeddah\b|\bdammam\b|\bmecca\b|\bmedina\b/i.test(lower)) {
+      return 'Saudi Arabia';
+    }
+    if (/\bqatar\b|\bdoha\b/i.test(lower)) {
+      return 'Qatar';
+    }
+    if (/\bunited states\b|\busa\b|\bcalifornia\b|\btexas\b|\bnew york\b|\bflorida\b/i.test(lower)) {
+      return 'United States';
+    }
+    if (/\bunited kingdom\b|\buk\b|\blondon\b/i.test(lower)) {
+      return 'United Kingdom';
+    }
+    if (/\bgermany\b|\bberlin\b|\bmunich\b/i.test(lower)) {
+      return 'Germany';
+    }
+    if (/\bchina\b|\bbeijing\b|\bshanghai\b|\bshenzhen\b/i.test(lower)) {
+      return 'China';
+    }
+    if (/\bcanada\b/i.test(lower)) return 'Canada';
+    if (/\bkuwait\b/i.test(lower)) return 'Kuwait';
+    if (/\boman\b|\bmuscat\b/i.test(lower)) return 'Oman';
+    if (/\bbahrain\b|\bmanama\b/i.test(lower)) return 'Bahrain';
 
-  const displayLocation = resolvedLocation || 'Dubai, UAE';
+    if (text.includes(',')) {
+      const parts = text.split(',').map(p => p.trim()).filter(Boolean);
+      const lastPart = parts[parts.length - 1];
+      if (lastPart && !/\d{3,}/.test(lastPart) && lastPart.length < 35) {
+        return lastPart;
+      }
+    }
+    return '';
+  };
+
+  const cleanStr = (val: any) => {
+    if (!val || typeof val !== 'string') return '';
+    const trimmed = val.trim();
+    if (trimmed.toLowerCase() === 'undefined' || trimmed.toLowerCase() === 'null') return '';
+    return trimmed;
+  };
+
+  const explicitCountry = cleanStr(inventory_country) || cleanStr(country) || cleanStr(rest?.inventory_country) || cleanStr(rest?.country);
+  const rawLocation = cleanStr(inventory_location) || cleanStr(inventoryLocation) || cleanStr(location) || cleanStr(rest?.inventory_location) || cleanStr(rest?.location);
+  const cityStr = cleanStr(inventory_city) || cleanStr(city) || cleanStr(rest?.inventory_city) || cleanStr(rest?.city);
+
+  // Always prioritize explicit inventory country over raw warehouse location string
+  const detectedCountry = detectCountryFromText(rawLocation) || detectCountryFromText(cityStr);
+  const displayLocation = explicitCountry || detectedCountry || rawLocation || 'Dubai, UAE';
 
   const categoryText = typeof category === 'object' && category !== null
     ? (category as any).name || (category as any).title || (category as any).slug || 'General'
@@ -261,12 +293,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </h3>
         </Link>
 
-        {/* Inventory Location - Available in (Below Title) */}
+        {/* Inventory Country - Available in (Below Title) */}
         {displayLocation && (
           <div className="flex items-center gap-1.5 text-[11px] xl:text-[12px] text-gray-500 mb-3 font-medium">
             <MapPin className="w-3.5 h-3.5 text-[#0f7a61] shrink-0" />
             <span className="text-gray-500">Available in</span>
-            <span className="font-bold text-gray-800 truncate" title={displayLocation}>
+            <span className="font-bold text-gray-800 truncate" title={rawLocation || displayLocation}>
               {displayLocation}
             </span>
           </div>
