@@ -3194,9 +3194,8 @@ export default function UserProfileWidget() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => {
-          if (!isAuthMandatory) {
-            setIsAuthModalOpen(false);
-          }
+          setIsAuthModalOpen(false);
+          setIsAuthMandatory(false);
         }}
         onSuccess={() => {
           setIsAuthModalOpen(false);

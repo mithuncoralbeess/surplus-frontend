@@ -2329,9 +2329,8 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => {
-          if (!isAuthMandatory) {
-            setShowAuthModal(false);
-          }
+          setShowAuthModal(false);
+          setIsAuthMandatory(false);
         }}
         onSuccess={() => {
           setShowAuthModal(false);

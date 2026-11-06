@@ -500,16 +500,14 @@ export default function AuthModal({
     setCategories([]);
   };
 
-  const isLocked = step === 3 || isMandatory;
-
   if (!mounted || !isOpen) return null;
 
   return createPortal(
     <div data-lenis-prevent className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
-        onClick={isLocked ? undefined : onClose}
-        className={`fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity ${isLocked ? 'cursor-not-allowed' : ''}`}
+        onClick={onClose}
+        className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
       />
 
       {/* Modal Container */}
@@ -528,11 +526,13 @@ export default function AuthModal({
                   </p>
                 )}
               </div>
-              {!isLocked && (
-                <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-                  <X className="w-5 h-5" />
-                </button>
-              )}
+              <button
+                onClick={onClose}
+                aria-label="Close"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             {/* Content */}

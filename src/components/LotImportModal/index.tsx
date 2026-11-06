@@ -3002,9 +3002,8 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => {
-          if (!isAuthMandatory) {
-            setShowAuthModal(false);
-          }
+          setShowAuthModal(false);
+          setIsAuthMandatory(false);
         }}
         onSuccess={() => {
           setShowAuthModal(false);

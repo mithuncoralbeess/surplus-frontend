@@ -179,10 +179,9 @@ export default function InventoryListingOptions() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => {
-          if (!isAuthMandatory) {
-            setIsAuthModalOpen(false);
-            setPendingListingType(null);
-          }
+          setIsAuthModalOpen(false);
+          setIsAuthMandatory(false);
+          setPendingListingType(null);
         }}
         onSuccess={() => {
           setIsAuthModalOpen(false);
