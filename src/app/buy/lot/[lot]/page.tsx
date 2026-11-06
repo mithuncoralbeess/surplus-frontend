@@ -17,7 +17,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
   const fallbackMetadata: Metadata = {
     title: `${readableTitle} | Verified Wholesale Lot on Surplus Market`,
-    description: `Inspect manifested liquidation batch ${readableTitle}. Detailed line-item manifest, escrow protection hold, and LTL/FTL logistics dispatch.`,
+    description: `Inspect manifested liquidation batch ${readableTitle}. Detailed line-item manifest, buyer protection hold, and LTL/FTL logistics dispatch.`,
     alternates: {
       canonical: `https://surplusmarket.com/buy/lot/${lot}`,
     },
@@ -31,7 +31,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
         title: `${lotTitle} | Verified Wholesale Lot on Surplus Market`,
         description: fetchedLot.description
           ? fetchedLot.description.slice(0, 160)
-          : `Inspect manifested liquidation batch ${lotTitle}. Detailed line-item manifest, escrow protection hold, and LTL/FTL logistics dispatch.`,
+          : `Inspect manifested liquidation batch ${lotTitle}. Detailed line-item manifest, buyer protection hold, and LTL/FTL logistics dispatch.`,
         alternates: {
           canonical: `https://surplusmarket.com/buy/lot/${lot}`,
         },

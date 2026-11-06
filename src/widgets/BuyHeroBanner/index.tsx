@@ -76,7 +76,7 @@ export default function BuyHeroBanner({
           </h1>
 
           <p className="text-emerald-100/80 text-sm sm:text-base font-normal leading-relaxed">
-            Acquire manifested bulk lots, factory-sealed overstock, and commercial returns directly with 100% manifest verification and escrow protection.
+            Acquire manifested bulk lots, factory-sealed overstock, and commercial returns directly with 100% manifest verification and buyer payment protection.
           </p>
         </div>
 
@@ -113,7 +113,7 @@ export default function BuyHeroBanner({
           <span className="text-white/20 hidden sm:inline">•</span>
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-[#14b875]" />
-            <span>72-Hour Escrow Inspection</span>
+            <span>72-Hour Inspection Hold</span>
           </div>
           <span className="text-white/20 hidden sm:inline">•</span>
           <div className="flex items-center gap-1.5">

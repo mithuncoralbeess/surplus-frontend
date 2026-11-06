@@ -682,8 +682,8 @@ export default function CartWidget() {
             <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs flex items-center gap-3">
               <DollarSign className="w-5 h-5 text-[#0f7a61] shrink-0" />
               <div>
-                <h4 className="text-xs font-bold text-gray-900">Escrow Protected</h4>
-                <p className="text-[11px] text-gray-500">Funds released only after inspection</p>
+                <h4 className="text-xs font-bold text-gray-900">Secure Payments</h4>
+                <p className="text-[11px] text-gray-500">Protected B2B transaction processing</p>
               </div>
             </div>
           </div>

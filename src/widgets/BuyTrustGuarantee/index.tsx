@@ -22,12 +22,12 @@ const TRUST_PILLARS = [
   {
     icon: FileCheck,
     title: "100% Itemized Manifest Accuracy",
-    desc: "Every pallet lot includes an audited manifest with UPCs, part numbers, and retail MSRP benchmarks. If delivery variance exceeds 2%, our escrow covers the credit discrepancy immediately."
+    desc: "Every pallet lot includes an audited manifest with UPCs, part numbers, and retail MSRP benchmarks. If delivery variance exceeds 2%, our Buyer Protection Charter covers the credit discrepancy immediately."
   },
   {
     icon: Lock,
-    title: "72-Hour Escrow Inspection Hold",
-    desc: "Your funds are securely held in third-party escrow. Payment is only released to the liquidating enterprise after your warehouse inspects and signs off on the delivered shipment."
+    title: "72-Hour Inspection & Payment Hold",
+    desc: "Your funds are securely protected. Payment is only released to the liquidating enterprise after your warehouse inspects and signs off on the delivered shipment."
   },
   {
     icon: ShieldCheck,
@@ -51,8 +51,8 @@ const LIQUIDATION_FAQS = [
     a: "Yes. For truckloads and high-value equipment lots exceeding $15,000, buyers may schedule an on-site physical inspection at the designated logistics facility in Jebel Ali, Doha, or Riyadh. Alternatively, our certified inspection team can provide a live video walk-through."
   },
   {
-    q: "How does the escrow payment protection work?",
-    a: "When you purchase or win a lot, your funds are deposited into an enterprise escrow account. The seller is notified to dispatch freight. You have a 72-hour window from arrival to verify the shipment against the manifest before funds are settled."
+    q: "How does the buyer payment protection work?",
+    a: "When you purchase or win a lot, your funds are securely deposited into a protected account. The seller is notified to dispatch freight. You have a 72-hour window from arrival to verify the shipment against the manifest before funds are settled."
   },
   {
     q: "Can Surplus Market handle international customs and freight export?",

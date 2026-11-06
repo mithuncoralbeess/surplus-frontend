@@ -447,7 +447,7 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
                 </div>
                 <div className="p-2 sm:p-3 bg-gray-50/80 rounded-xl sm:rounded-2xl border border-gray-100 flex flex-col items-center">
                   <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-[#0f7a61] mb-1" />
-                  <span className="text-[10px] sm:text-xs font-bold text-gray-800">Escrow Security</span>
+                  <span className="text-[10px] sm:text-xs font-bold text-gray-800">Payment Security</span>
                   <span className="text-[9px] sm:text-[10px] text-gray-400">Protected funds</span>
                 </div>
               </div>
@@ -644,7 +644,7 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
                 </div>
                 <div className="flex items-center gap-2 text-gray-700 font-medium">
                   <Check className="w-4 h-4 text-[#0f7a61] shrink-0" />
-                  <span>Escrow Guarantee</span>
+                  <span>Buyer Protection</span>
                 </div>
               </div>
 
@@ -940,7 +940,7 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
                   </p>
                   <ul className="space-y-2 text-xs sm:text-sm list-disc pl-5 text-gray-600">
                     <li><strong>Freight Dispatch:</strong> Orders dispatch within 48 to 72 hours following buyer inspection approval.</li>
-                    <li><strong>Escrow Guarantee:</strong> Buyer funds are held safely in escrow until the freight bill of lading and manifest verification are completed.</li>
+                    <li><strong>Payment Protection:</strong> Buyer payments are securely processed and protected until freight verification and dispatch are completed.</li>
                     <li><strong>International Shipping:</strong> Export customs clearance documents and certificates of origin can be requested upon quote submission.</li>
                   </ul>
                 </div>

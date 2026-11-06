@@ -137,7 +137,7 @@ const HomeBanner = () => {
 
             {/* High-conversion Subtitle */}
             <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl font-normal">
-              {t('hero.subtitle', 'Direct access to verified global overstock, factory excess, enterprise IT, and MRO equipment. Unlock up to 75% savings with certified lot inspection, guaranteed escrow settlement, and 48-hour dispatch.')}
+              {t('hero.subtitle', 'Direct access to verified global overstock, factory excess, enterprise IT, and MRO equipment. Unlock up to 75% savings with certified lot inspection, guaranteed payment protection, and 48-hour dispatch.')}
             </p>
 
             {/* ========================================================================= */}
@@ -486,9 +486,9 @@ const HomeBanner = () => {
                   3
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-white">Escrow-Secured Transactions</h4>
+                  <h4 className="text-sm font-semibold text-white">Secure Protected Transactions</h4>
                   <p className="text-xs text-gray-400 leading-relaxed mt-0.5">
-                    Buyer funds are held securely in third-party escrow until shipment arrival and inspection approval.
+                    Buyer payments are protected with bank-grade security and verified shipment tracking.
                   </p>
                 </div>
               </div>

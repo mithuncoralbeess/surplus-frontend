@@ -35,7 +35,7 @@ const FAQ_CATEGORIES = [
   "Buying & Bidding",
   "Selling & Listing",
   "Shipping & Freight",
-  "Payments & Escrow",
+  "Payments & Security",
   "Verification & Compliance"
 ];
 
@@ -45,7 +45,7 @@ const FULL_FAQ_ITEMS: FAQItem[] = [
     id: "g1",
     category: "General & Registration",
     question: "What is Surplus Market and how does it work?",
-    answer: "Surplus Market is a B2B marketplace for trading excess, overstock, and liquidation inventory across the GCC and India. Sellers list bulk lots with verified manifests, and buyers place direct offers or bids with full escrow protection."
+    answer: "Surplus Market is a B2B marketplace for trading excess, overstock, and liquidation inventory across the GCC and India. Sellers list bulk lots with verified manifests, and buyers place direct offers or bids with full payment protection."
   },
   {
     id: "g2",
@@ -77,7 +77,7 @@ const FULL_FAQ_ITEMS: FAQItem[] = [
     id: "b3",
     category: "Buying & Bidding",
     question: "What protection is provided if received items do not match the manifest?",
-    answer: "Every order is protected by Surplus Buyer Protection. If discrepancies in condition or quantity are reported within 48 hours of receipt, funds remain secured in escrow pending resolution."
+    answer: "Every order is protected by Surplus Buyer Protection. If discrepancies in condition or quantity are reported within 48 hours of receipt, funds remain secured pending resolution."
   },
 
   // Selling & Listing
@@ -120,16 +120,16 @@ const FULL_FAQ_ITEMS: FAQItem[] = [
     answer: "Yes. All shipments dispatched via integrated Surplus Logistics partners include full invoice value transit insurance automatically."
   },
 
-  // Payments & Escrow
+  // Payments & Security
   {
     id: "p1",
-    category: "Payments & Escrow",
-    question: "How does the Escrow Payment system protect transactions?",
-    answer: "Buyer payment is safely held in escrow until delivery is confirmed. Once the buyer inspects and approves the order, funds are released to the seller within 24-48 hours."
+    category: "Payments & Security",
+    question: "How does the Secure Payment system protect transactions?",
+    answer: "Buyer payment is safely held until delivery is confirmed. Once the buyer inspects and approves the order, funds are released to the seller within 24-48 hours."
   },
   {
     id: "p2",
-    category: "Payments & Escrow",
+    category: "Payments & Security",
     question: "What payment methods are supported for bulk orders?",
     answer: "We support corporate wire transfers (SWIFT/IBAN), verified credit cards, letter of credit (LC) for container-load deals, and local bank transfers."
   },
@@ -195,7 +195,7 @@ export default function FAQPageWidget() {
               <Search className="w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input 
                 type="text"
-                placeholder="Search questions by keyword (e.g. escrow, shipping, RMA, verification)..."
+                placeholder="Search questions by keyword (e.g. payment, shipping, RMA, verification)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-13 pr-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-medium text-gray-900 focus:outline-none focus:border-[#0a5c48] focus:bg-white transition-all shadow-inner"

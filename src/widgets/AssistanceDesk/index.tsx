@@ -872,7 +872,7 @@ export default function AssistanceDesk() {
               Prefer to speak directly with an enterprise specialist?
             </h3>
             <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed">
-              Contact our GCC procurement desk directly for urgent tenders, multi-container liquidations, or contract escrow support.
+              Contact our GCC procurement desk directly for urgent tenders, multi-container liquidations, or contract settlement support.
             </p>
           </div>
 

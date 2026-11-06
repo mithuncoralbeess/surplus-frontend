@@ -10,8 +10,8 @@ const STEPS = [
   },
   {
     number: "02",
-    title: "Escrow-Protected Trade",
-    description: "Verified institutional buyers place bids. Buyer funds remain securely held in escrow until goods are physically delivered and inspected."
+    title: "Secure Protected Trade",
+    description: "Verified institutional buyers place bids. Buyer funds remain securely protected until goods are physically delivered and inspected."
   },
   {
     number: "03",

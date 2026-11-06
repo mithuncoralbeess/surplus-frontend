@@ -23,7 +23,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 
   const fallbackMetadata: Metadata = {
     title: `${readableTitle} | ${readableCategory} Wholesale on Surplus Market`,
-    description: `Source ${readableTitle} in ${readableCategory} at liquidation wholesale prices. Escrow protection, itemized manifest inspection, and direct dispatch.`,
+    description: `Source ${readableTitle} in ${readableCategory} at liquidation wholesale prices. Buyer protection, itemized manifest inspection, and direct dispatch.`,
     alternates: {
       canonical: `https://surplusmarket.com/buy/product/${category}/${product}`,
     },
@@ -38,7 +38,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
         title: `${prodTitle} | ${prodCat} Wholesale on Surplus Market`,
         description: fetchedProduct.description 
           ? fetchedProduct.description.slice(0, 160) 
-          : `Source ${prodTitle} in ${prodCat} at liquidation wholesale prices. Escrow protection, itemized manifest inspection, and direct dispatch.`,
+          : `Source ${prodTitle} in ${prodCat} at liquidation wholesale prices. Buyer protection, itemized manifest inspection, and direct dispatch.`,
         alternates: {
           canonical: `https://surplusmarket.com/buy/product/${category}/${product}`,
         },

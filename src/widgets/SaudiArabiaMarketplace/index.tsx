@@ -104,7 +104,7 @@ const GET_STARTED_STEPS = [
   {
     step: "04",
     title: "Complete the Sale",
-    desc: "Finalize payment terms, arrange delivery or local pickup, and release escrow funds.",
+    desc: "Finalize payment terms, arrange delivery or local pickup, and receive secure payout.",
     icon: CheckCircle
   }
 ];

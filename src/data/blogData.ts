@@ -232,7 +232,7 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
       },
       {
         question: "What protection is available if received items do not match manifest conditions?",
-        answer: "Every purchase is protected by Surplus Buyer Protection. Discrepancies reported within 48 hours of receipt trigger hold-escrow review."
+        answer: "Every purchase is protected by Surplus Buyer Protection. Discrepancies reported within 48 hours of receipt trigger immediate verification review and payment protection."
       }
     ],
     content: `
@@ -271,7 +271,7 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
       },
       {
         question: "How does the automated vendor payout process work?",
-        answer: "Payouts are released directly to vendor bank accounts via escrow within 24-48 hours after buyer delivery confirmation."
+        answer: "Payouts are released directly to vendor bank accounts within 24-48 hours after buyer delivery confirmation."
       },
       {
         question: "Are there bulk API integrations for existing enterprise ERP systems?",
