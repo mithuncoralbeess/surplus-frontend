@@ -786,6 +786,19 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  const downloadSampleFilledManifest = () => {
+    try {
+      const link = document.createElement('a');
+      link.href = encodeURI('/Surplus market Mock Data.xlsx');
+      link.download = 'Surplus market Mock Data.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch {
+      window.open(encodeURI('/Surplus market Mock Data.xlsx'), '_blank');
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
@@ -1663,8 +1676,12 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
                 </a>
                 <span className="text-gray-300 hidden sm:inline">•</span>
                 <a 
-                  href={encodeURI('/Sample_Lot_Submission_Example.xlsx')}
-                  download="Sample_Lot_Submission_Example.xlsx"
+                  href={encodeURI('/Surplus market Mock Data.xlsx')}
+                  download="Surplus market Mock Data.xlsx"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    downloadSampleFilledManifest();
+                  }}
                   className="flex items-center text-sm font-semibold text-[#0a5c48] hover:underline cursor-pointer"
                 >
                   <FileSpreadsheet className="w-4 h-4 mr-1.5" />
