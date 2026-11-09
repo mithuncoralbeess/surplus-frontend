@@ -113,9 +113,9 @@ const BuyMegamenu = () => {
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
     >
-      {/* Trigger: Clickable Link to /browse */}
+      {/* Trigger: Clickable Link to /buy */}
       <Link 
-        href="/browse"
+        href="/buy"
         onClick={() => setIsOpen(false)}
         className={`flex items-center font-medium lg:text-[14px] xl:text-[15.5px] 2xl:text-[16px] transition-all py-1 px-1.5 xl:px-2.5 header-nav-link whitespace-nowrap ${
           isBuyActive || isOpen 
@@ -144,7 +144,7 @@ const BuyMegamenu = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Link 
-                  href="/shop-by-category" 
+                  href="/buy" 
                   onClick={() => setIsOpen(false)}
                   className="text-sm font-bold text-primary hover:text-primary-dark flex items-center transition-colors pb-1"
                 >

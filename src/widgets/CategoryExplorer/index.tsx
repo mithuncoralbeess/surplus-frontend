@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
-  Search, ArrowRight, Filter,
+  Search, ArrowRight,
   Hammer, Zap, Wrench, PenTool, HardHat, Drill, Lamp, Disc, Laptop, Truck, Box, Cpu, Stethoscope, Layers, Sparkles
 } from 'lucide-react';
 import { useAppSelector } from '../../store';
@@ -48,8 +48,6 @@ const BG_COLORS = [
 export default function CategoryExplorer() {
   const { t, tCategory } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedJumpCategory, setSelectedJumpCategory] = useState<string>('all');
-  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Get categories strictly from Redux store (which auto-caches to localStorage)
   const { categories, loading } = useAppSelector((state) => state.categories);
@@ -63,15 +61,11 @@ export default function CategoryExplorer() {
     }, 0);
   }, [categories]);
 
-  // Filter categories and subcategories dynamically based on search query & selected jump pill
+  // Filter categories and subcategories dynamically based on search query
   const filteredCategories = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
 
     return categories.filter((cat) => {
-      if (selectedJumpCategory !== 'all' && String(cat.id) !== selectedJumpCategory && cat.slug !== selectedJumpCategory) {
-        return false;
-      }
-
       if (!q) return true;
 
       const catMatch = cat.name.toLowerCase().includes(q);
@@ -89,14 +83,7 @@ export default function CategoryExplorer() {
         displaySubs: filteredSubs.length > 0 ? filteredSubs : subs,
       };
     });
-  }, [categories, searchQuery, selectedJumpCategory]);
-
-  const handleJumpTo = (catId: string) => {
-    setSelectedJumpCategory(catId);
-    if (catId !== 'all' && cardRefs.current[catId]) {
-      cardRefs.current[catId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  };
+  }, [categories, searchQuery]);
 
   return (
     <section className="w-full bg-[#f8faf9] py-10 lg:py-16 min-h-screen">
@@ -136,44 +123,6 @@ export default function CategoryExplorer() {
           </div>
         </div>
 
-        {/* Jump To Navigation Bar */}
-        {categories.length > 0 && (
-          <div className="flex items-center gap-2.5 overflow-x-auto pb-4 mb-10 scrollbar-none">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1 shrink-0 pr-2 rtl:pr-0 rtl:pl-2">
-              <Filter className="w-3.5 h-3.5 text-gray-400" /> JUMP TO:
-            </span>
-
-            <button
-              onClick={() => handleJumpTo('all')}
-              className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${selectedJumpCategory === 'all'
-                ? 'bg-[#0f7a61] text-white shadow-sm'
-                : 'bg-white text-gray-700 border border-gray-200/80 hover:bg-gray-100/80'
-                }`}
-            >
-              {t('megamenu.allCategories', 'All Categories')}
-            </button>
-
-            {categories.map((cat) => {
-              const catId = String(cat.id);
-              const isActive = selectedJumpCategory === catId || selectedJumpCategory === cat.slug;
-              const Icon = getCategoryIcon(cat.name);
-
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => handleJumpTo(catId)}
-                  className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 border ${isActive
-                    ? 'bg-[#0f7a61] text-white border-[#0f7a61] shadow-sm'
-                    : 'bg-white text-gray-700 border-gray-200/80 hover:border-[#0f7a61]/40 hover:bg-[#e6f7ef]/40 hover:text-[#0f7a61]'
-                    }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {tCategory(cat.name)}
-                </button>
-              );
-            })}
-          </div>
-        )}
 
         {/* 4-Column Grid of Category Cards */}
         {loading && categories.length === 0 ? (
@@ -210,7 +159,6 @@ export default function CategoryExplorer() {
               return (
                 <div
                   key={cat.id}
-                  ref={(el) => { cardRefs.current[catId] = el; }}
                   className="bg-white rounded-3xl p-6 border border-gray-200/80 shadow-[0_2px_15px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:border-[#0f7a61]/30 transition-all duration-300 flex flex-col justify-between group"
                 >
                   <div>
@@ -275,7 +223,6 @@ export default function CategoryExplorer() {
             <button
               onClick={() => {
                 setSearchQuery('');
-                setSelectedJumpCategory('all');
               }}
               className="bg-[#0f7a61] text-white font-bold text-xs px-6 py-2.5 rounded-full hover:bg-[#0c6651] transition-colors"
             >

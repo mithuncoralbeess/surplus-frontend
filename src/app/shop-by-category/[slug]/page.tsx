@@ -45,7 +45,7 @@ export default async function CategoryPage(props: PageProps) {
       <BreadcrumbJsonLd
         items={[
           { name: 'Home', url: '/' },
-          { name: 'Shop by Category', url: '/shop-by-category' },
+          { name: 'Buy', url: '/buy' },
           { name: readableTitle, url: `/shop-by-category/${slug}` },
         ]}
       />
@@ -54,7 +54,7 @@ export default async function CategoryPage(props: PageProps) {
         subtitle={`Source verified surplus and liquidation inventory in ${readableTitle}.`}
         breadcrumbs={[
           { label: 'Home', href: '/' },
-          { label: 'Shop by Category', href: '/shop-by-category' },
+          { label: 'Buy', href: '/buy' },
           { label: readableTitle }
         ]}
       />

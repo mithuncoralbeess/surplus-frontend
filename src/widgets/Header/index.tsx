@@ -92,7 +92,7 @@ const Header = () => {
           <div className="flex lg:hidden items-center gap-1.5 sm:gap-2 header-mobile-actions">
             {/* Quick Buy Pill (Visible on sm+: >= 576px) */}
             <Link 
-              href="/browse" 
+              href="/buy" 
               className="hidden sm:inline-flex text-xs font-bold text-[#0f7a61] bg-[#e6f7ef] hover:bg-[#d0f0e4] px-2.5 py-1.5 rounded-full transition-colors items-center gap-1 shadow-2xs"
             >
               {t('nav.buy', 'Buy')}

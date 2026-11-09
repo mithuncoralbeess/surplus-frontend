@@ -283,7 +283,7 @@ export default function MobileNavDrawer({
                     <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                   </Link>
                   <Link
-                    href="/shop-by-category"
+                    href="/buy"
                     onClick={onClose}
                     className="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:text-[#0f7a61] hover:bg-gray-50 transition-colors"
                   >

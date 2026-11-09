@@ -97,7 +97,7 @@ export default function CategoryDetailWidget({ categorySlug }: CategoryDetailWid
         {/* Navigation Breadcrumb & Title */}
         <div className="mb-8">
           <Link
-            href="/shop-by-category"
+            href="/buy"
             className="inline-flex items-center text-xs font-bold text-[#0f7a61] hover:underline mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-1" /> Back to All Categories

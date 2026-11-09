@@ -46,7 +46,7 @@ export async function getStaticRoutes(baseUrl: string = getBaseUrl()): Promise<S
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/shop-by-category`,
+      url: `${baseUrl}/buy`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
