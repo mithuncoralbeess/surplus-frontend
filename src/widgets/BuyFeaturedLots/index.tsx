@@ -22,7 +22,6 @@ import {
   Eye, 
   ExternalLink, 
   ShoppingBag, 
-  RotateCw,
   SlidersHorizontal,
   Filter,
   Flame,
@@ -58,7 +57,6 @@ export default function BuyFeaturedLots({ defaultMode = 'product' }: BuyFeatured
   const [lots, setLots] = useState<LotItem[]>([]);
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
   // Interactive UI State
   const [selectedLotForManifest, setSelectedLotForManifest] = useState<LotItem | null>(null);
@@ -201,7 +199,7 @@ export default function BuyFeaturedLots({ defaultMode = 'product' }: BuyFeatured
 
   useEffect(() => {
     fetchData();
-  }, [fetchData, refreshTrigger]);
+  }, [fetchData]);
 
   // Filter & Sort Dynamic Products
   const sortedProducts = useMemo(() => {
@@ -439,16 +437,6 @@ export default function BuyFeaturedLots({ defaultMode = 'product' }: BuyFeatured
               <span suppressHydrationWarning className="text-xs text-slate-500 font-medium whitespace-nowrap">
                 Found <strong suppressHydrationWarning className="text-slate-900">{purchaseMode === 'lot' ? sortedLots.length : sortedProducts.length}</strong> items
               </span>
-
-              {/* Refresh button */}
-              <button
-                type="button"
-                onClick={() => setRefreshTrigger((prev) => prev + 1)}
-                className="p-2 rounded-full border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-                title="Refresh"
-              >
-                <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#0a5c48]' : ''}`} />
-              </button>
 
               {/* Filter Button */}
               <button
