@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../../services/pageSeoService';
 import TextileWasteFashion from '../../../widgets/TextileWasteFashion';
@@ -16,12 +16,12 @@ const fallbackMetadata: Metadata = {
     'surplus textile marketplace'
   ],
   alternates: {
-    canonical: 'https://surplusmarket.com/sustainability-data/textile-waste-fashion-industry-92-million-tons',
+    canonical: 'https://www.surplusmarket.com/sustainability-data/textile-waste-fashion-industry-92-million-tons',
   },
   openGraph: {
     title: 'The Fashion Industry Generates 92 Million Tons of Textile Waste Annually',
     description: 'Explore the global scale of textile waste, environmental costs of fast fashion, and the surge in circular re-commerce.',
-    url: 'https://surplusmarket.com/sustainability-data/textile-waste-fashion-industry-92-million-tons',
+    url: 'https://www.surplusmarket.com/sustainability-data/textile-waste-fashion-industry-92-million-tons',
     siteName: 'Surplus Market',
     type: 'article',
   },

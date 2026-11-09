@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Metadata } from 'next';
 import LotDetailWidget from '../../../../widgets/LotDetailWidget';
 import { getPageMetadata } from '../../../../services/pageSeoService';
@@ -19,7 +19,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     title: `${readableTitle} | Verified Wholesale Lot on Surplus Market`,
     description: `Inspect manifested liquidation batch ${readableTitle}. Detailed line-item manifest, buyer protection hold, and LTL/FTL logistics dispatch.`,
     alternates: {
-      canonical: `https://surplusmarket.com/buy/lot/${lot}`,
+      canonical: `https://www.surplusmarket.com/buy/lot/${lot}`,
     },
   };
 
@@ -33,7 +33,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
           ? fetchedLot.description.slice(0, 160)
           : `Inspect manifested liquidation batch ${lotTitle}. Detailed line-item manifest, buyer protection hold, and LTL/FTL logistics dispatch.`,
         alternates: {
-          canonical: `https://surplusmarket.com/buy/lot/${lot}`,
+          canonical: `https://www.surplusmarket.com/buy/lot/${lot}`,
         },
         openGraph: {
           title: `${lotTitle} | Verified Wholesale Lot on Surplus Market`,

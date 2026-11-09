@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../../services/pageSeoService';
 import GccLocalSourcing from '../../../widgets/GccLocalSourcing';
@@ -16,12 +16,12 @@ const fallbackMetadata: Metadata = {
     'regional B2B liquidation'
   ],
   alternates: {
-    canonical: 'https://surplusmarket.com/sustainability-data/gcc-business-sourcing-surplus-locally',
+    canonical: 'https://www.surplusmarket.com/sustainability-data/gcc-business-sourcing-surplus-locally',
   },
   openGraph: {
     title: 'How GCC Businesses Source Surplus & Overstock Locally to Reduce Emissions',
     description: 'Discover why Gulf businesses are shifting from long-haul imports to local surplus sourcing to minimize shipping emissions and customs delays.',
-    url: 'https://surplusmarket.com/sustainability-data/gcc-business-sourcing-surplus-locally',
+    url: 'https://www.surplusmarket.com/sustainability-data/gcc-business-sourcing-surplus-locally',
     siteName: 'Surplus Market',
     type: 'article',
   },

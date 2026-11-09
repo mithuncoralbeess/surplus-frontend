@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import PrivacyPolicyWidget from '../../widgets/PrivacyPolicy';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
@@ -8,7 +8,7 @@ const fallbackMetadata = {
   title: "Privacy Policy | Surplus Market",
   description: "Learn how Surplus Market collects, uses, protects, and handles your personal information when using our website and services.",
   alternates: {
-    canonical: "https://surplusmarket.com/privacy",
+    canonical: "https://www.surplusmarket.com/privacy",
   },
 };
 

@@ -21,7 +21,10 @@ const inter = Inter({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://surplusmarket.com';
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.surplusmarket.com')
+  .trim()
+  .replace(/\/$/, '')
+  .replace(/^https?:\/\/surplusmarket\.com/i, 'https://www.surplusmarket.com');
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -45,7 +48,7 @@ export const metadata: Metadata = {
   creator: "Surplus Market",
   publisher: "Surplus Market",
   alternates: {
-    canonical: "/",
+    canonical: "https://www.surplusmarket.com",
   },
   icons: {
     icon: "/favicon.ico",

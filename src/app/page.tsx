@@ -24,12 +24,12 @@ export const metadata: Metadata = {
   description: "Connect with verified global buyers and sellers of surplus inventory to unlock savings, maximize revenue, and reduce industrial waste.",
   keywords: ["surplus inventory", "B2B liquidation marketplace", "excess stock", "overstock deals", "circular economy"],
   alternates: {
-    canonical: "/",
+    canonical: "https://www.surplusmarket.com",
   },
   openGraph: {
     title: "Surplus Market - B2B Liquidation Marketplace",
     description: "Buy and sell verified surplus inventory, wholesale lots, and excess stock globally.",
-    url: "https://surplusmarket.com",
+    url: "https://www.surplusmarket.com",
     siteName: "Surplus Market",
     locale: "en_US",
     type: "website",

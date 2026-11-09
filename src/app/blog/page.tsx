@@ -6,7 +6,10 @@ import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 export const dynamic = 'force-dynamic';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://surplusmarket.com';
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.surplusmarket.com')
+  .trim()
+  .replace(/\/$/, '')
+  .replace(/^https?:\/\/surplusmarket\.com/i, 'https://www.surplusmarket.com');
 
 export const metadata = {
   title: "Blog & Market Insights | Surplus Market",

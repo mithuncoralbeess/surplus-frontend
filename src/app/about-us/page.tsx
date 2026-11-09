@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import AboutHero from '../../widgets/AboutHero';
 import AboutHowWeOperate from '../../widgets/AboutHowWeOperate';
 import AboutOurStory from '../../widgets/AboutOurStory';
@@ -14,12 +14,12 @@ const fallbackMetadata = {
   description: "Rooted in Qatar, built for the world. Learn how Surplus Market transforms idle inventory into circular value for enterprises, SMEs, and the planet.",
   keywords: "About Surplus Market, B2B inventory liquidation Qatar, Circular commerce, Surplus stock marketplace, B2B trade Qatar",
   alternates: {
-    canonical: "https://surplusmarket.com/about-us",
+    canonical: "https://www.surplusmarket.com/about-us",
   },
   openGraph: {
     title: "About Us | Surplus Market",
     description: "Rooted in Qatar, built for the world. Learn how Surplus Market transforms idle inventory into circular value for enterprises, SMEs, and the planet.",
-    url: "https://surplusmarket.com/about-us",
+    url: "https://www.surplusmarket.com/about-us",
     siteName: "Surplus Market",
     locale: "en_US",
     type: "website",

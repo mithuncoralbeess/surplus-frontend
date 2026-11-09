@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Metadata } from 'next';
 import CommonBanner from "../../../widgets/CommonBanner";
 import CategoryDetailWidget from "../../../widgets/CategoryDetailWidget";
@@ -17,7 +17,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     title: `${readableTitle} Surplus Inventory & Overstock | Surplus Market`,
     description: `Browse certified surplus, overstock liquidation, and wholesale inventory in ${readableTitle}.`,
     alternates: {
-      canonical: `https://surplusmarket.com/shop-by-category/${slug}`,
+      canonical: `https://www.surplusmarket.com/shop-by-category/${slug}`,
     },
   };
 

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import IndiaMarketplaceWidget from '../../widgets/IndiaMarketplace';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
@@ -9,12 +9,12 @@ const fallbackMetadata = {
   description: "B2B surplus marketplace in India. Connect with verified buyers and sellers for discounted overstock, branded surplus, and bulk inventory.",
   keywords: "Excess inventory India, Surplus market India, Overstock liquidation India, Wholesale surplus India, Buy surplus online India, Sell excess stock India",
   alternates: {
-    canonical: "https://surplusmarket.com/india",
+    canonical: "https://www.surplusmarket.com/india",
   },
   openGraph: {
     title: "Buy & Sell Excess Inventory in India | Surplus Market",
     description: "B2B surplus marketplace in India. Connect with verified buyers and sellers for discounted overstock, branded surplus, and bulk inventory.",
-    url: "https://surplusmarket.com/india",
+    url: "https://www.surplusmarket.com/india",
     siteName: "Surplus Market",
     locale: "en_US",
     type: "website",

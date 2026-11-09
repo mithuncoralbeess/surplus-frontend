@@ -1,4 +1,4 @@
-import CategoryExplorer from "../../widgets/CategoryExplorer";
+﻿import CategoryExplorer from "../../widgets/CategoryExplorer";
 import CommonBanner from "../../widgets/CommonBanner";
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../services/pageSeoService';
@@ -8,7 +8,7 @@ const fallbackMetadata: Metadata = {
   title: "Shop Surplus Inventory by Category | Surplus Market",
   description: "Source verified surplus, overstock, and wholesale liquidation inventory globally across all product categories.",
   alternates: {
-    canonical: "https://surplusmarket.com/shop-by-category",
+    canonical: "https://www.surplusmarket.com/shop-by-category",
   },
 };
 

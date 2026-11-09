@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Metadata } from 'next';
 import CommonBanner from '../../widgets/CommonBanner';
 import InventoryListingOptions from '../../widgets/InventoryListingOptions';
@@ -12,7 +12,7 @@ const fallbackMetadata: Metadata = {
   title: "Sell Excess Inventory & Liquidate Stock | Surplus Market",
   description: "Sell your excess inventory, overstock lots, and equipment to verified global B2B buyers without hassle or public price erosion.",
   alternates: {
-    canonical: "https://surplusmarket.com/sell",
+    canonical: "https://www.surplusmarket.com/sell",
   },
 };
 

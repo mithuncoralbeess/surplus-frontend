@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../services/pageSeoService';
 import SustainabilityHero from '../../widgets/SustainabilityHero';
@@ -25,7 +25,7 @@ const fallbackMetadata: Metadata = {
     "inventory aging calculator",
   ],
   alternates: {
-    canonical: "https://surplusmarket.com/sustainability",
+    canonical: "https://www.surplusmarket.com/sustainability",
   },
 };
 

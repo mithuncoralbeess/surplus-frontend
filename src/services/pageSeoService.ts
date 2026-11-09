@@ -94,8 +94,59 @@ export async function fetchPageData(slug: string): Promise<PageResponseData | nu
 }
 
 /**
+ * Normalizes a canonical URL ensuring:
+ * 1. Always uses canonical domain 'https://www.surplusmarket.com' (with www.)
+ * 2. If canonical is blank or not provided, automatically constructs a self-referencing canonical from the page's own slug/path.
+ */
+export function resolveCanonicalUrl(
+  rawCanonical?: string,
+  pageSlugOrPath?: string
+): string {
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.surplusmarket.com')
+    .trim()
+    .replace(/\/$/, '')
+    .replace(/^https?:\/\/surplusmarket\.com/i, 'https://www.surplusmarket.com')
+    .replace(/^http:\/\/www\.surplusmarket\.com/i, 'https://www.surplusmarket.com');
+
+  let cleaned = (rawCanonical || '').trim();
+
+  // If blank or empty string, automatically construct self-referencing canonical URL
+  if (!cleaned) {
+    const path = (pageSlugOrPath || '').trim();
+    if (!path || path === '/' || path === 'home') {
+      return `${baseUrl}`;
+    }
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${baseUrl}${cleanPath}`;
+  }
+
+  // If relative path like '/about-us'
+  if (cleaned.startsWith('/')) {
+    return cleaned === '/' ? `${baseUrl}` : `${baseUrl}${cleaned}`;
+  }
+
+  // If slug without slash like 'about-us'
+  if (!cleaned.startsWith('http://') && !cleaned.startsWith('https://')) {
+    return `${baseUrl}/${cleaned}`;
+  }
+
+  // If absolute URL, ensure it uses https://www.surplusmarket.com
+  cleaned = cleaned.replace(/^http:\/\/surplusmarket\.com/i, 'https://www.surplusmarket.com');
+  cleaned = cleaned.replace(/^https:\/\/surplusmarket\.com/i, 'https://www.surplusmarket.com');
+  cleaned = cleaned.replace(/^http:\/\/www\.surplusmarket\.com/i, 'https://www.surplusmarket.com');
+
+  // Strip trailing slash unless root
+  if (cleaned.endsWith('/') && cleaned !== `${baseUrl}/` && cleaned !== 'https://www.surplusmarket.com/') {
+    cleaned = cleaned.slice(0, -1);
+  }
+
+  return cleaned;
+}
+
+/**
  * Generates Next.js Metadata object dynamically from API response,
  * with fallback metadata if API fails or metadata is missing.
+ * Automatically computes a self-referencing canonical tag with www if left blank.
  */
 export async function getPageMetadata(
   slug: string,
@@ -104,8 +155,24 @@ export async function getPageMetadata(
   const pageData = await fetchPageData(slug);
   const seo = pageData?.seo;
 
+  // Determine canonical URL:
+  // If seo.canonical_url is provided and non-empty, use it.
+  // Else if fallbackMetadata.alternates.canonical is provided and non-empty, use it.
+  // Else (if blank or omitted), automatically use the page's own URL based on its slug.
+  const rawCanonical = (seo?.canonical_url && seo.canonical_url.trim())
+    ? seo.canonical_url
+    : (fallbackMetadata.alternates?.canonical ? String(fallbackMetadata.alternates.canonical) : '');
+
+  const canonical = resolveCanonicalUrl(rawCanonical, slug);
+
   if (!seo && !pageData) {
-    return fallbackMetadata;
+    return {
+      ...fallbackMetadata,
+      alternates: {
+        ...(fallbackMetadata.alternates || {}),
+        canonical,
+      },
+    };
   }
 
   const title = seo?.meta_title || pageData?.title || fallbackMetadata.title;
@@ -123,8 +190,6 @@ export async function getPageMetadata(
   const isNoIndex = seo?.robots_index === 'noindex';
   const isNoFollow = seo?.robots_follow === 'nofollow';
 
-  const canonical = seo?.canonical_url || (fallbackMetadata.alternates?.canonical ? String(fallbackMetadata.alternates.canonical) : undefined);
-
   const ogTitle = seo?.og_title || (typeof title === 'string' ? title : undefined);
   const ogDesc = seo?.og_description || description;
   const ogImages = seo?.og_image ? [{ url: seo.og_image }] : undefined;
@@ -138,7 +203,10 @@ export async function getPageMetadata(
     title: title || fallbackMetadata.title,
     description: description || fallbackMetadata.description,
     keywords: keywords || fallbackMetadata.keywords,
-    alternates: canonical ? { canonical } : fallbackMetadata.alternates,
+    alternates: {
+      ...(fallbackMetadata.alternates || {}),
+      canonical,
+    },
     robots: {
       index: !isNoIndex,
       follow: !isNoFollow,

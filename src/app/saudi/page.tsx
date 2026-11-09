@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import SaudiArabiaMarketplaceWidget from '../../widgets/SaudiArabiaMarketplace';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
@@ -8,7 +8,7 @@ const fallbackMetadata = {
   title: "Buy & Sell Excess Inventory in Saudi Arabia | Surplus Market",
   description: "Connect with genuine buyers and sellers for excess inventory, overstock clearance, and bulk liquidation deals in Saudi Arabia.",
   alternates: {
-    canonical: "https://surplusmarket.com/saudi",
+    canonical: "https://www.surplusmarket.com/saudi",
   },
 };
 

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Metadata } from 'next';
 import ProductDetailWidget from '../../../../../widgets/ProductDetailWidget';
 import { getPageMetadata } from '../../../../../services/pageSeoService';
@@ -25,7 +25,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     title: `${readableTitle} | ${readableCategory} Wholesale on Surplus Market`,
     description: `Source ${readableTitle} in ${readableCategory} at liquidation wholesale prices. Buyer protection, itemized manifest inspection, and direct dispatch.`,
     alternates: {
-      canonical: `https://surplusmarket.com/buy/product/${category}/${product}`,
+      canonical: `https://www.surplusmarket.com/buy/product/${category}/${product}`,
     },
   };
 
@@ -40,7 +40,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
           ? fetchedProduct.description.slice(0, 160) 
           : `Source ${prodTitle} in ${prodCat} at liquidation wholesale prices. Buyer protection, itemized manifest inspection, and direct dispatch.`,
         alternates: {
-          canonical: `https://surplusmarket.com/buy/product/${category}/${product}`,
+          canonical: `https://www.surplusmarket.com/buy/product/${category}/${product}`,
         },
         openGraph: {
           title: `${prodTitle} | ${prodCat} Wholesale on Surplus Market`,

@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+﻿import React, { Suspense } from 'react';
 import { Metadata } from 'next';
 import BrowseSearchBanner from '../../widgets/BrowseSearchBanner';
 import BrowseResults from '../../widgets/BrowseResults';
@@ -9,12 +9,12 @@ export const metadata: Metadata = {
   title: "Browse Surplus Inventory & Wholesale Lots | Surplus Market",
   description: "Search and filter verified surplus inventory, wholesale lots, electronics, industrial tools, building materials, and overstock deals.",
   alternates: {
-    canonical: "https://surplusmarket.com/browse",
+    canonical: "https://www.surplusmarket.com/browse",
   },
   openGraph: {
     title: "Browse Surplus Inventory & Wholesale Lots | Surplus Market",
     description: "Search and filter verified surplus inventory, wholesale lots, electronics, industrial tools, building materials, and overstock deals.",
-    url: "https://surplusmarket.com/browse",
+    url: "https://www.surplusmarket.com/browse",
     siteName: "Surplus Market",
     locale: "en_US",
     type: "website",

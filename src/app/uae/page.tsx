@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import UaeMarketplaceWidget from '../../widgets/UaeMarketplace';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
@@ -9,12 +9,12 @@ const fallbackMetadata = {
   description: "Connect with verified buyers and sellers for excess inventory, liquidation deals, and export-grade surplus stock in UAE.",
   keywords: "Excess inventory UAE, Surplus market UAE, Liquidation UAE, Export surplus UAE, Buy surplus UAE, Sell excess stock UAE",
   alternates: {
-    canonical: "https://surplusmarket.com/uae",
+    canonical: "https://www.surplusmarket.com/uae",
   },
   openGraph: {
     title: "Buy & Sell Excess Inventory in UAE | Surplus Market",
     description: "Connect with verified buyers and sellers for excess inventory, liquidation deals, and export-grade surplus stock in UAE.",
-    url: "https://surplusmarket.com/uae",
+    url: "https://www.surplusmarket.com/uae",
     siteName: "Surplus Market",
     locale: "en_US",
     type: "website",

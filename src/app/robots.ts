@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
+import { getBaseUrl } from '../lib/sitemapData';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://surplusmarket.com').replace(/\/$/, '');
+  const baseUrl = getBaseUrl();
 
   return {
     rules: [
@@ -63,6 +64,10 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: [
+      `${baseUrl}/sitemap.xml`,
+      `${baseUrl}/sitemap-blogs.xml`,
+      `${baseUrl}/sitemap-products.xml`,
+    ],
   };
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Metadata } from 'next';
 import AssistanceDesk from '../../widgets/AssistanceDesk';
 import { getPageMetadata } from '../../services/pageSeoService';
@@ -16,12 +16,12 @@ const fallbackMetadata: Metadata = {
     "order tracking help",
   ],
   alternates: {
-    canonical: "https://surplusmarket.com/assistance",
+    canonical: "https://www.surplusmarket.com/assistance",
   },
   openGraph: {
     title: "Assistance Desk & Sourcing Support | Surplus Market",
     description: "Request custom product sourcing, report platform issues, suggest new marketplace features, or receive dedicated order help.",
-    url: "https://surplusmarket.com/assistance",
+    url: "https://www.surplusmarket.com/assistance",
     siteName: "Surplus Market",
     locale: "en_US",
     type: "website",

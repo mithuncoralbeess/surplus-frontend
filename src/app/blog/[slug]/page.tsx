@@ -1,6 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { getBlogs, getBlogBySlug } from '../../../services/blogService';
+import { resolveCanonicalUrl } from '../../../services/pageSeoService';
 import BlogDetail from '../../../widgets/BlogDetail';
 import { Metadata } from 'next';
 
@@ -28,7 +29,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://surplusmarket.com';
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.surplusmarket.com')
+    .trim()
+    .replace(/\/$/, '')
+    .replace(/^https?:\/\/surplusmarket\.com/i, 'https://www.surplusmarket.com');
   const seo = post.seo || {};
 
   // SEO Title, description, keywords, canonical
@@ -38,7 +42,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     : `${metaTitle} | Surplus Market Insights`;
   const metaDescription = seo.meta_description || post.excerpt;
   const metaKeywords = seo.meta_keywords || (post.tags ? post.tags.join(', ') : 'Surplus Market, Liquidation, B2B Inventory, Supply Chain');
-  const canonicalUrl = seo.canonical_url || `${siteUrl}/blog/${post.slug}`;
+  const canonicalUrl = resolveCanonicalUrl(seo.canonical_url, `blog/${post.slug}`);
 
   // Robots directives
   const isIndex = seo.robots_index !== 'noindex';
@@ -111,8 +115,11 @@ export default async function BlogDetailPage({ params }: PageProps) {
   const allPosts = await getBlogs();
   const relatedPosts = allPosts.filter(p => p.id !== post.id && p.slug !== post.slug).slice(0, 3);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://surplusmarket.com';
-  const canonicalUrl = `${siteUrl}/blog/${post.slug}`;
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.surplusmarket.com')
+    .trim()
+    .replace(/\/$/, '')
+    .replace(/^https?:\/\/surplusmarket\.com/i, 'https://www.surplusmarket.com');
+  const canonicalUrl = resolveCanonicalUrl(post.seo?.canonical_url, `blog/${post.slug}`);
 
   // JSON-LD Article / BlogPosting Schema
   const schemaType = post.seo?.schema_type || 'BlogPosting';

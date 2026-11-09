@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import CommonBanner from '../../widgets/CommonBanner';
 import ContactForm from '../../widgets/ContactForm';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
@@ -9,7 +9,7 @@ const fallbackMetadata = {
   title: "Contact Us | Surplus Marketplace",
   description: "Get in touch with our surplus inventory experts for buyer support, vendor onboarding, freight logistics, or general enquiries.",
   alternates: {
-    canonical: "https://surplusmarket.com/contact",
+    canonical: "https://www.surplusmarket.com/contact",
   },
 };
 

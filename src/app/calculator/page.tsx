@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import InventoryCalculatorWidget from '../../widgets/InventoryCalculator';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
@@ -9,12 +9,12 @@ const fallbackMetadata = {
   description: "Estimate how much value your surplus stock is losing to depreciation and storage over time - so you know when to liquidate.",
   keywords: "Inventory ageing calculator, Inventory depreciation tool, Holding cost calculator, Warehouse storage cost, Liquidate surplus stock",
   alternates: {
-    canonical: "https://surplusmarket.com/calculator",
+    canonical: "https://www.surplusmarket.com/calculator",
   },
   openGraph: {
     title: "Inventory Ageing Calculator | Surplus Market",
     description: "Estimate how much value your surplus stock is losing to depreciation and storage over time - so you know when to liquidate.",
-    url: "https://surplusmarket.com/calculator",
+    url: "https://www.surplusmarket.com/calculator",
     siteName: "Surplus Market",
     locale: "en_US",
     type: "website",

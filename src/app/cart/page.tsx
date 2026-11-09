@@ -5,6 +5,9 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'RFQ Enquiry Basket | Surplus Marketplace',
   description: 'Review your selected wholesale surplus lots, customize target pricing and quantities, and request formal commercial proforma bids.',
+  alternates: {
+    canonical: 'https://www.surplusmarket.com/cart',
+  },
   robots: {
     index: false,
     follow: false,

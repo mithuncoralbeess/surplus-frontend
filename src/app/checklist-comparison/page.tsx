@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import ChecklistComparisonWidget from '../../widgets/ChecklistComparison';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
@@ -8,7 +8,7 @@ const fallbackMetadata = {
   title: "Checklist & Comparison Guides | Surplus Market",
   description: "Detailed checklists and easy-to-understand comparison guides to help you evaluate and simplify your buying and selling process.",
   alternates: {
-    canonical: "https://surplusmarket.com/checklist-comparison",
+    canonical: "https://www.surplusmarket.com/checklist-comparison",
   },
 };
 

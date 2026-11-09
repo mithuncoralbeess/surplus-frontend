@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../../services/pageSeoService';
 import HiddenEconomySurplus from '../../../widgets/HiddenEconomySurplus';
@@ -17,12 +17,12 @@ const fallbackMetadata: Metadata = {
     'sustainable surplus management'
   ],
   alternates: {
-    canonical: 'https://surplusmarket.com/sustainability-data/hidden-economy-surplus-strategic-asset',
+    canonical: 'https://www.surplusmarket.com/sustainability-data/hidden-economy-surplus-strategic-asset',
   },
   openGraph: {
     title: 'The $257 Billion "Hidden Economy": Why Surplus is the New Strategic Asset',
     description: 'Why re-commerce is redefining enterprise value, liquidity, and supply chain resilience in 2026.',
-    url: 'https://surplusmarket.com/sustainability-data/hidden-economy-surplus-strategic-asset',
+    url: 'https://www.surplusmarket.com/sustainability-data/hidden-economy-surplus-strategic-asset',
     siteName: 'Surplus Market',
     type: 'article',
   },

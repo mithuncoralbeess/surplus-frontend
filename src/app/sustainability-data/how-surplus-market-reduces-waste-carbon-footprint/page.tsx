@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../../services/pageSeoService';
 import SurplusWasteCarbonFootprint from '../../../widgets/SurplusWasteCarbonFootprint';
@@ -16,12 +16,12 @@ const fallbackMetadata: Metadata = {
     'eco-friendly business solutions'
   ],
   alternates: {
-    canonical: 'https://surplusmarket.com/sustainability-data/how-surplus-market-reduces-waste-carbon-footprint',
+    canonical: 'https://www.surplusmarket.com/sustainability-data/how-surplus-market-reduces-waste-carbon-footprint',
   },
   openGraph: {
     title: 'How Surplus Market Reduces Waste and Carbon Footprint',
     description: 'Learn how recirculating surplus goods reduces manufacturing strain, avoids landfill accumulation, and lowers supply chain emissions.',
-    url: 'https://surplusmarket.com/sustainability-data/how-surplus-market-reduces-waste-carbon-footprint',
+    url: 'https://www.surplusmarket.com/sustainability-data/how-surplus-market-reduces-waste-carbon-footprint',
     siteName: 'Surplus Market',
     type: 'article',
   },

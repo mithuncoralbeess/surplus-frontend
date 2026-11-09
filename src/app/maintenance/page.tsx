@@ -4,6 +4,9 @@ import MaintenanceWidget from "../../widgets/Maintenance";
 export const metadata: Metadata = {
   title: "Under Maintenance | Surplus Market",
   description: "Surplus Market is currently undergoing scheduled infrastructure enhancements and optimizations.",
+  alternates: {
+    canonical: "https://www.surplusmarket.com/maintenance",
+  },
   robots: {
     index: false,
     follow: false,

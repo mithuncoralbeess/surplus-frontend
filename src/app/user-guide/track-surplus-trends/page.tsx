@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../../services/pageSeoService';
 import TrackSurplusTrends from '../../../widgets/TrackSurplusTrends';
@@ -15,12 +15,12 @@ const fallbackMetadata: Metadata = {
     'surplus inventory demand'
   ],
   alternates: {
-    canonical: 'https://surplusmarket.com/user-guide/track-surplus-trends',
+    canonical: 'https://www.surplusmarket.com/user-guide/track-surplus-trends',
   },
   openGraph: {
     title: 'How to Track Surplus Trends & Surplus Deals on SurplusMarket',
     description: 'Learn how procurement managers evaluate upcoming surplus opportunities, track market movements, and analyze high-demand categories.',
-    url: 'https://surplusmarket.com/user-guide/track-surplus-trends',
+    url: 'https://www.surplusmarket.com/user-guide/track-surplus-trends',
     siteName: 'Surplus Market',
     type: 'article',
   },

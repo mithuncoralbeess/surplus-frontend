@@ -1,6 +1,9 @@
 import React from 'react';
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://surplusmarket.com').replace(/\/$/, '');
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.surplusmarket.com')
+  .trim()
+  .replace(/\/$/, '')
+  .replace(/^https?:\/\/surplusmarket\.com/i, 'https://www.surplusmarket.com');
 
 /**
  * Organization & WebSite JSON-LD Schema (Google Knowledge Graph & Sitelinks Searchbox)
