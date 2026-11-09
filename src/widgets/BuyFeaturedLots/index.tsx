@@ -437,21 +437,15 @@ export default function BuyFeaturedLots({ defaultMode = 'product' }: BuyFeatured
 
             <div className="flex items-center gap-3">
               <span suppressHydrationWarning className="text-xs text-slate-500 font-medium whitespace-nowrap">
-                {loading ? (
-                  <span>Loading from API...</span>
-                ) : (
-                  <span>
-                    Found <strong suppressHydrationWarning className="text-slate-900">{purchaseMode === 'lot' ? sortedLots.length : sortedProducts.length}</strong> items
-                  </span>
-                )}
+                Found <strong suppressHydrationWarning className="text-slate-900">{purchaseMode === 'lot' ? sortedLots.length : sortedProducts.length}</strong> items
               </span>
 
-              {/* Refresh from API button */}
+              {/* Refresh button */}
               <button
                 type="button"
                 onClick={() => setRefreshTrigger((prev) => prev + 1)}
                 className="p-2 rounded-full border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-                title="Refresh API Data"
+                title="Refresh"
               >
                 <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#0a5c48]' : ''}`} />
               </button>
@@ -858,7 +852,7 @@ export default function BuyFeaturedLots({ defaultMode = 'product' }: BuyFeatured
                 <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-slate-800 mb-1">No products found</h3>
                 <p className="text-xs text-slate-500 mb-6">
-                  No products matched the current category or search criteria from the API.
+                  No products matched the current category or search criteria.
                 </p>
                 <button
                   onClick={handleResetFilters}
@@ -902,7 +896,7 @@ export default function BuyFeaturedLots({ defaultMode = 'product' }: BuyFeatured
                 <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-slate-800 mb-1">No liquidation lots available</h3>
                 <p className="text-xs text-slate-500 mb-6">
-                  There are currently no active lots returned from the live API. Check back soon or browse single wholesale products.
+                  There are currently no active lots matching this criteria. Check back soon or browse single wholesale products.
                 </p>
                 <div className="flex items-center justify-center gap-3 flex-wrap">
                   <button
