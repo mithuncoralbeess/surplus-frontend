@@ -16,8 +16,7 @@ const Testimonials = nextDynamic(() => import("../widgets/Testimonials"));
 const FAQ = nextDynamic(() => import("../widgets/FAQ"));
 const SellerPromoBanner = nextDynamic(() => import("../widgets/SellerPromoBanner"));
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Surplus Market - B2B Liquidation Marketplace | Circular Commerce",
@@ -59,16 +58,14 @@ async function getHomepageInitialData(): Promise<{
   try {
     const [prodRes, lotRes] = await Promise.allSettled([
       fetchWithFailover("/api/products/?limit=32", {
-        cache: "no-store",
-        next: { revalidate: 0 },
-        timeoutMs: 3000,
-        maxRetries: 1,
+        next: { revalidate: 60 },
+        timeoutMs: 1500,
+        maxRetries: 0,
       }),
       fetchWithFailover("/api/lots/?limit=6", {
-        cache: "no-store",
-        next: { revalidate: 0 },
-        timeoutMs: 3000,
-        maxRetries: 1,
+        next: { revalidate: 60 },
+        timeoutMs: 1500,
+        maxRetries: 0,
       }),
     ]);
 

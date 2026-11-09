@@ -257,6 +257,11 @@ export function mapApiBlogToBlogPost(apiPost: ApiBlogPost): BlogPost {
   };
 }
 
+const singleBlogCache = new Map<string, { post: BlogPost; timestamp: number }>();
+const pendingBlogFetches = new Map<string, Promise<BlogPost | null>>();
+let cachedAllBlogs: { posts: BlogPost[]; timestamp: number } | null = null;
+const BLOG_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export interface BlogsPageResponse {
   posts: BlogPost[];
   totalPages: number;
@@ -270,9 +275,9 @@ export interface BlogsPageResponse {
 export async function getBlogsPage(page: number = 1): Promise<BlogsPageResponse> {
   try {
     const res = await apiClient<any>(`/api/blogs/?page=${page}`, {
-      cacheTtl: false,
-      revalidate: true,
-      persistCache: false,
+      cacheTtl: BLOG_CACHE_TTL_MS,
+      staleWhileRevalidate: true,
+      persistCache: true,
       silent: true,
     });
 
@@ -298,8 +303,14 @@ export async function getBlogsPage(page: number = 1): Promise<BlogsPageResponse>
       rawPosts = rawObj.results;
     }
 
+    const mappedPosts = rawPosts.map(mapApiBlogToBlogPost);
+    // Index into single blog cache for instant individual article resolution
+    mappedPosts.forEach((p) => {
+      if (p.slug) singleBlogCache.set(p.slug, { post: p, timestamp: Date.now() });
+    });
+
     return {
-      posts: rawPosts.map(mapApiBlogToBlogPost),
+      posts: mappedPosts,
       totalPages,
       totalCount: totalCount || (totalPages * 12),
       currentPage,
@@ -313,9 +324,13 @@ export async function getBlogsPage(page: number = 1): Promise<BlogsPageResponse>
 /**
  * Fetch all blogs from API across all paginated pages.
  * Real-time dynamic fetch - automatically fetches across all paginated pages
- * to ensure all published blogs (52+) from the backend API are retrieved.
+ * with 5-minute memory caching to ensure fast 0ms navigation.
  */
 export async function getBlogs(): Promise<BlogPost[]> {
+  if (cachedAllBlogs && (Date.now() - cachedAllBlogs.timestamp < BLOG_CACHE_TTL_MS) && cachedAllBlogs.posts.length > 0) {
+    return cachedAllBlogs.posts;
+  }
+
   try {
     const firstPage = await getBlogsPage(1);
     const allPosts: BlogPost[] = [...firstPage.posts];
@@ -332,7 +347,7 @@ export async function getBlogs(): Promise<BlogPost[]> {
     }
 
     if (allPosts.length === 0) {
-      return [];
+      return cachedAllBlogs?.posts || [];
     }
 
     // Deduplicate by slug or id
@@ -346,40 +361,65 @@ export async function getBlogs(): Promise<BlogPost[]> {
       }
     }
 
+    cachedAllBlogs = { posts: uniquePosts, timestamp: Date.now() };
     return uniquePosts;
   } catch (error) {
     console.warn('[Blog API] Network error fetching blogs:', error);
-    return [];
+    return cachedAllBlogs?.posts || [];
   }
 }
 
 /**
  * Fetch a single blog by slug from API: GET /api/blogs/<slug>/
- * Real-time dynamic fetch - uses backend API data only (no static/fallback mock data).
+ * Features instant memory cache lookup & in-flight deduplication.
  */
 export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
-  try {
-    const res = await apiClient(`/api/blogs/${slug}/`, {
-      cacheTtl: false,
-      revalidate: true,
-      persistCache: false,
-      silent: true,
-    });
+  if (!slug) return null;
+  const cleanSlug = slug.trim().toLowerCase();
 
-    if (!res.success || !res.data) {
-      return null;
-    }
-
-    const json = res.data;
-    const rawPost: ApiBlogPost = json.blog || json.data || json;
-
-    if (!rawPost || !rawPost.title) {
-      return null;
-    }
-
-    return mapApiBlogToBlogPost(rawPost);
-  } catch (error) {
-    console.warn(`[Blog API] Network error fetching blog detail for '${slug}':`, error);
-    return null;
+  const cached = singleBlogCache.get(cleanSlug);
+  if (cached && (Date.now() - cached.timestamp < BLOG_CACHE_TTL_MS)) {
+    return cached.post;
   }
+
+  if (pendingBlogFetches.has(cleanSlug)) {
+    return pendingBlogFetches.get(cleanSlug)!;
+  }
+
+  const fetchPromise = (async (): Promise<BlogPost | null> => {
+    try {
+      const res = await apiClient(`/api/blogs/${encodeURIComponent(cleanSlug)}/`, {
+        cacheTtl: BLOG_CACHE_TTL_MS,
+        staleWhileRevalidate: true,
+        persistCache: true,
+        silent: true,
+      });
+
+      if (!res.success || !res.data) {
+        return null;
+      }
+
+      const json = res.data;
+      const rawPost: ApiBlogPost = json.blog || json.data || json;
+
+      if (!rawPost || !rawPost.title) {
+        return null;
+      }
+
+      const mapped = mapApiBlogToBlogPost(rawPost);
+      singleBlogCache.set(cleanSlug, { post: mapped, timestamp: Date.now() });
+      if (mapped.slug && mapped.slug !== cleanSlug) {
+        singleBlogCache.set(mapped.slug.toLowerCase(), { post: mapped, timestamp: Date.now() });
+      }
+      return mapped;
+    } catch (error) {
+      console.warn(`[Blog API] Network error fetching blog detail for '${slug}':`, error);
+      return null;
+    }
+  })().finally(() => {
+    pendingBlogFetches.delete(cleanSlug);
+  });
+
+  pendingBlogFetches.set(cleanSlug, fetchPromise);
+  return fetchPromise;
 }

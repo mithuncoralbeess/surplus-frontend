@@ -627,9 +627,11 @@ const lotCache = new Map<string, LotItem>();
 let allLotsCache: LotItem[] | null = null;
 let lastLotsFetchTime = 0;
 
-const CACHE_TTL_MS = 0; // 0ms TTL ensures instant reflection of backend status changes (active/inactive, approved/declined)
+const CACHE_TTL_MS = 60_000; // 60s in-memory TTL prevents redundant backend roundtrips and delivers 0ms instant page transitions
 const queryProductsCache = new Map<string, { data: ProductItem[]; timestamp: number }>();
 const queryLotsCache = new Map<string, { data: LotItem[]; timestamp: number }>();
+const pendingProductFetches = new Map<string, Promise<ProductItem | null>>();
+const pendingLotFetches = new Map<string, Promise<LotItem | null>>();
 
 export const catalogService = {
   /**
@@ -680,7 +682,7 @@ export const catalogService = {
         endpoint += `?${queryParts.join('&')}`;
       }
 
-      const response = await apiClient(endpoint, { silent: true, cacheTtl: false });
+      const response = await apiClient(endpoint, { silent: true, cacheTtl: CACHE_TTL_MS, staleWhileRevalidate: true });
       if (!response.success || !response.data) {
         return isDefaultQuery ? (allProductsCache || []) : [];
       }
@@ -803,7 +805,7 @@ export const catalogService = {
         endpoint += `?${queryParts.join('&')}`;
       }
 
-      const response = await apiClient(endpoint, { silent: true, cacheTtl: false });
+      const response = await apiClient(endpoint, { silent: true, cacheTtl: CACHE_TTL_MS, staleWhileRevalidate: true });
       if (!response.success || !response.data) {
         return isDefaultQuery ? (allLotsCache || []) : [];
       }
@@ -928,87 +930,98 @@ export const catalogService = {
       }
     }
 
-    // 2. Multi-tier parallel API execution
-    try {
-      const searchPromises: Promise<ProductItem | null>[] = [];
-
-      // A) Category-scoped fetch if categoryHint is present
-      const cleanCat = categoryHint && categoryHint !== 'All' && categoryHint !== 'all' && categoryHint !== 'general' && categoryHint !== 'item'
-        ? categoryHint.trim()
-        : '';
-      if (cleanCat) {
-        searchPromises.push(
-          this.getProducts({ category: cleanCat, limit: 1000 })
-            .then(catList => catList.find(matchesProduct) || null)
-            .catch(() => null)
-        );
-      }
-
-      // B) Full catalog fetch (loads and caches all products with limit=1000)
-      if (!allProductsCache || allProductsCache.length === 0) {
-        searchPromises.push(
-          this.getProducts({ limit: 1000 })
-            .then(fullList => fullList.find(matchesProduct) || null)
-            .catch(() => null)
-        );
-      }
-
-      // C) Targeted keyword searches if key contains tokens or hyphens
-      const tokens = key.split(/[-_\s]+/).filter(Boolean);
-      // If slug has model/part number at the end (e.g. '40206-01gx3')
-      if (tokens.length >= 2) {
-        const lastPart = tokens.slice(-2).join('-');
-        searchPartsLoop:
-        searchPromises.push(
-          apiClient(`/api/products/?search=${encodeURIComponent(lastPart)}`, { silent: true })
-            .then(res => {
-              if (res.success && res.data) {
-                const raw = Array.isArray(res.data) ? res.data : (res.data.products || res.data.results || []);
-                const mapped = raw.map(mapApiProductToProductItem);
-                return mapped.find(matchesProduct) || null;
-              }
-              return null;
-            })
-            .catch(() => null)
-        );
-      }
-      // Also try brand / first token
-      if (tokens.length >= 1 && tokens[0].length >= 3) {
-        searchPromises.push(
-          apiClient(`/api/products/?search=${encodeURIComponent(tokens[0])}`, { silent: true })
-            .then(res => {
-              if (res.success && res.data) {
-                const raw = Array.isArray(res.data) ? res.data : (res.data.products || res.data.results || []);
-                const mapped = raw.map(mapApiProductToProductItem);
-                return mapped.find(matchesProduct) || null;
-              }
-              return null;
-            })
-            .catch(() => null)
-        );
-      }
-
-      const settled = await Promise.allSettled(searchPromises);
-      for (const r of settled) {
-        if (r.status === 'fulfilled' && r.value) {
-          cacheProduct(r.value);
-          return r.value;
-        }
-      }
-
-      // Final check in allProductsCache (in case another parallel query finished)
-      if (allProductsCache && allProductsCache.length > 0) {
-        const fallbackMatch = allProductsCache.find(matchesProduct);
-        if (fallbackMatch) {
-          cacheProduct(fallbackMatch);
-          return fallbackMatch;
-        }
-      }
-    } catch (err) {
-      console.warn(`[catalogService] Error fetching product ${id}:`, err);
+    // 2. Multi-tier parallel API execution with in-flight deduplication
+    const inFlightKey = `${key}:${categoryHint || ''}`;
+    if (pendingProductFetches.has(inFlightKey)) {
+      return pendingProductFetches.get(inFlightKey)!;
     }
 
-    return null;
+    const fetchPromise = (async (): Promise<ProductItem | null> => {
+      try {
+        const searchPromises: Promise<ProductItem | null>[] = [];
+
+        // A) Category-scoped fetch if categoryHint is present
+        const cleanCat = categoryHint && categoryHint !== 'All' && categoryHint !== 'all' && categoryHint !== 'general' && categoryHint !== 'item'
+          ? categoryHint.trim()
+          : '';
+        if (cleanCat) {
+          searchPromises.push(
+            this.getProducts({ category: cleanCat, limit: 1000 })
+              .then(catList => catList.find(matchesProduct) || null)
+              .catch(() => null)
+          );
+        }
+
+        // B) Full catalog fetch (loads and caches all products with limit=1000)
+        if (!allProductsCache || allProductsCache.length === 0) {
+          searchPromises.push(
+            this.getProducts({ limit: 1000 })
+              .then(fullList => fullList.find(matchesProduct) || null)
+              .catch(() => null)
+          );
+        }
+
+        // C) Targeted keyword searches if key contains tokens or hyphens
+        const tokens = key.split(/[-_\s]+/).filter(Boolean);
+        // If slug has model/part number at the end (e.g. '40206-01gx3')
+        if (tokens.length >= 2) {
+          const lastPart = tokens.slice(-2).join('-');
+          searchPromises.push(
+            apiClient(`/api/products/?search=${encodeURIComponent(lastPart)}`, { silent: true, cacheTtl: CACHE_TTL_MS, staleWhileRevalidate: true })
+              .then(res => {
+                if (res.success && res.data) {
+                  const raw = Array.isArray(res.data) ? res.data : (res.data.products || res.data.results || []);
+                  const mapped = raw.map(mapApiProductToProductItem);
+                  return mapped.find(matchesProduct) || null;
+                }
+                return null;
+              })
+              .catch(() => null)
+          );
+        }
+        // Also try brand / first token
+        if (tokens.length >= 1 && tokens[0].length >= 3) {
+          searchPromises.push(
+            apiClient(`/api/products/?search=${encodeURIComponent(tokens[0])}`, { silent: true, cacheTtl: CACHE_TTL_MS, staleWhileRevalidate: true })
+              .then(res => {
+                if (res.success && res.data) {
+                  const raw = Array.isArray(res.data) ? res.data : (res.data.products || res.data.results || []);
+                  const mapped = raw.map(mapApiProductToProductItem);
+                  return mapped.find(matchesProduct) || null;
+                }
+                return null;
+              })
+              .catch(() => null)
+          );
+        }
+
+        const settled = await Promise.allSettled(searchPromises);
+        for (const r of settled) {
+          if (r.status === 'fulfilled' && r.value) {
+            cacheProduct(r.value);
+            return r.value;
+          }
+        }
+
+        // Final check in allProductsCache (in case another parallel query finished)
+        if (allProductsCache && allProductsCache.length > 0) {
+          const fallbackMatch = allProductsCache.find(matchesProduct);
+          if (fallbackMatch) {
+            cacheProduct(fallbackMatch);
+            return fallbackMatch;
+          }
+        }
+      } catch (err) {
+        console.warn(`[catalogService] Error fetching product ${id}:`, err);
+      }
+
+      return null;
+    })().finally(() => {
+      pendingProductFetches.delete(inFlightKey);
+    });
+
+    pendingProductFetches.set(inFlightKey, fetchPromise);
+    return fetchPromise;
   },
 
   /**
@@ -1046,45 +1059,56 @@ export const catalogService = {
       }
     }
 
-    try {
-      const isNumericId = /^\d+$/.test(key);
-      const isLotNum = /^lot-?\d+/i.test(key);
-      const [singleRes, listRes] = await Promise.allSettled([
-        (isNumericId || isLotNum) ? apiClient(`/api/lots/${id}/`, { silent: true, cacheTtl: false }) : Promise.resolve(null),
-        this.getLots()
-      ]);
-
-      if (singleRes.status === 'fulfilled' && singleRes.value && singleRes.value.success) {
-        const payload = singleRes.value.data?.lot || singleRes.value.data?.data || singleRes.value.data;
-        if (payload) {
-          const mapped = mapApiLotToLotItem(payload, 0);
-          lotCache.set(key, mapped);
-          if (mapped.lot_number) lotCache.set(String(mapped.lot_number), mapped);
-          if (targetSlug) lotCache.set(targetSlug, mapped);
-          return mapped;
-        }
-      }
-
-      const list = listRes.status === 'fulfilled' && Array.isArray(listRes.value) ? listRes.value : (allLotsCache || []);
-      const match = list.find(
-        (l) =>
-          String(l.id).toLowerCase() === keyLower ||
-          String(l.lot_number || '').toLowerCase() === keyLower ||
-          (targetSlug && slugify(l.title) === targetSlug) ||
-          l.title.toLowerCase().trim() === keyLower ||
-          encodeURIComponent(l.title) === key
-      );
-      if (match) {
-        lotCache.set(key, match);
-        if (targetSlug) lotCache.set(targetSlug, match);
-        return match;
-      }
-      
-    } catch (err) {
-      console.warn(`[catalogService] Error fetching lot ${id}:`, err);
+    const inFlightLotKey = key;
+    if (pendingLotFetches.has(inFlightLotKey)) {
+      return pendingLotFetches.get(inFlightLotKey)!;
     }
 
-    return null;
+    const fetchPromise = (async (): Promise<LotItem | null> => {
+      try {
+        const isNumericId = /^\d+$/.test(key);
+        const isLotNum = /^lot-?\d+/i.test(key);
+        const [singleRes, listRes] = await Promise.allSettled([
+          (isNumericId || isLotNum) ? apiClient(`/api/lots/${id}/`, { silent: true, cacheTtl: CACHE_TTL_MS, staleWhileRevalidate: true }) : Promise.resolve(null),
+          this.getLots()
+        ]);
+
+        if (singleRes.status === 'fulfilled' && singleRes.value && singleRes.value.success) {
+          const payload = singleRes.value.data?.lot || singleRes.value.data?.data || singleRes.value.data;
+          if (payload) {
+            const mapped = mapApiLotToLotItem(payload, 0);
+            lotCache.set(key, mapped);
+            if (mapped.lot_number) lotCache.set(String(mapped.lot_number), mapped);
+            if (targetSlug) lotCache.set(targetSlug, mapped);
+            return mapped;
+          }
+        }
+
+        const list = listRes.status === 'fulfilled' && Array.isArray(listRes.value) ? listRes.value : (allLotsCache || []);
+        const match = list.find(
+          (l) =>
+            String(l.id).toLowerCase() === keyLower ||
+            String(l.lot_number || '').toLowerCase() === keyLower ||
+            (targetSlug && slugify(l.title) === targetSlug) ||
+            l.title.toLowerCase().trim() === keyLower ||
+            encodeURIComponent(l.title) === key
+        );
+        if (match) {
+          lotCache.set(key, match);
+          if (targetSlug) lotCache.set(targetSlug, match);
+          return match;
+        }
+      } catch (err) {
+        console.warn(`[catalogService] Error fetching lot ${id}:`, err);
+      }
+
+      return null;
+    })().finally(() => {
+      pendingLotFetches.delete(inFlightLotKey);
+    });
+
+    pendingLotFetches.set(inFlightLotKey, fetchPromise);
+    return fetchPromise;
   },
 
   async submitLotRequest(payload: LotRequestPayload): Promise<ApiResponse> {

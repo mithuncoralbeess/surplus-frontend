@@ -1,11 +1,11 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { getBlogs, getBlogBySlug } from '../../../services/blogService';
+import { getBlogs, getBlogsPage, getBlogBySlug } from '../../../services/blogService';
 import { resolveCanonicalUrl } from '../../../services/pageSeoService';
 import BlogDetail from '../../../widgets/BlogDetail';
 import { Metadata } from 'next';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -111,8 +111,8 @@ export default async function BlogDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // Fetch API blogs for related articles
-  const allPosts = await getBlogs();
+  // Fetch recent articles for related stories (page 1 is cached & fast)
+  const { posts: allPosts } = await getBlogsPage(1);
   const relatedPosts = allPosts.filter(p => p.id !== post.id && p.slug !== post.slug).slice(0, 3);
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.surplusmarket.com')

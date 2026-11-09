@@ -4,7 +4,7 @@ import BlogListing from '../../widgets/BlogListing';
 import { getBlogs } from '../../services/blogService';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.surplusmarket.com')
   .trim()

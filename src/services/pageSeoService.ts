@@ -53,29 +53,49 @@ export interface PageApiResponse {
 }
 
 const seoCache = new Map<string, { data: PageResponseData | null; expiresAt: number }>();
-const SEO_CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+const SEO_CACHE_TTL = 15 * 60 * 1000; // 15 minutes cache
+const SEO_NEGATIVE_CACHE_TTL = 10 * 60 * 1000; // 10 minutes cache for 404/missing pages
 
 /**
  * Fetches page details & SEO metadata from backend API for a given slug.
  * Endpoint: GET /api/pages/{slug}/
  */
 export async function fetchPageData(slug: string): Promise<PageResponseData | null> {
+  if (!slug) return null;
+
+  // Products, lots, and category dynamic paths are handled by their own entities;
+  // backend /api/pages/ is strictly for CMS static pages (about-us, privacy, terms, contact, etc.)
+  if (
+    slug.startsWith('product-') ||
+    slug.startsWith('lot-') ||
+    slug.startsWith('category-') ||
+    slug.startsWith('buy/product') ||
+    slug.startsWith('buy/lot') ||
+    slug.startsWith('shop-by-category')
+  ) {
+    return null;
+  }
+
   const cached = seoCache.get(slug);
   if (cached && Date.now() < cached.expiresAt) {
     return cached.data;
   }
 
   try {
-    const url = `${getBackendUrl()}/api/pages/${slug}/`;
+    const backendUrl = getBackendUrl();
+    if (!backendUrl) return null;
+
+    const url = `${backendUrl}/api/pages/${slug}/`;
     const res = await fetch(url, {
-      next: { revalidate: 300 }, // Cache with 5-minute background revalidation
+      next: { revalidate: 3600 }, // Cache with 1-hour background revalidation
+      signal: AbortSignal.timeout(1500), // Strict 1.5s timeout prevents blocking page renders
       headers: {
         'Accept': 'application/json',
       },
     });
 
     if (!res.ok) {
-      seoCache.set(slug, { data: null, expiresAt: Date.now() + 60000 });
+      seoCache.set(slug, { data: null, expiresAt: Date.now() + SEO_NEGATIVE_CACHE_TTL });
       return null;
     }
 
@@ -85,10 +105,10 @@ export async function fetchPageData(slug: string): Promise<PageResponseData | nu
       return data.page;
     }
 
-    seoCache.set(slug, { data: null, expiresAt: Date.now() + 60000 });
+    seoCache.set(slug, { data: null, expiresAt: Date.now() + SEO_NEGATIVE_CACHE_TTL });
     return null;
-  } catch (error) {
-    console.warn(`[SEO API] Could not fetch dynamic SEO for '${slug}':`, error);
+  } catch {
+    seoCache.set(slug, { data: null, expiresAt: Date.now() + SEO_NEGATIVE_CACHE_TTL });
     return null;
   }
 }

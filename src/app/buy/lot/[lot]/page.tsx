@@ -4,6 +4,8 @@ import LotDetailWidget from '../../../../widgets/LotDetailWidget';
 import { getPageMetadata } from '../../../../services/pageSeoService';
 import { catalogService } from '../../../../services/catalogService';
 
+export const revalidate = 60;
+
 interface PageProps {
   params: Promise<{
     lot: string;
@@ -21,13 +23,25 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     alternates: {
       canonical: `https://www.surplusmarket.com/buy/lot/${lot}`,
     },
+    openGraph: {
+      title: `${readableTitle} | Verified Wholesale Lot on Surplus Market`,
+      description: `Inspect manifested liquidation batch ${readableTitle}.`,
+      url: `https://www.surplusmarket.com/buy/lot/${lot}`,
+      siteName: 'Surplus Market',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${readableTitle} | Verified Wholesale Lot on Surplus Market`,
+      description: `Inspect manifested liquidation batch ${readableTitle}.`,
+    },
   };
 
   try {
     const fetchedLot = await catalogService.getLotById(lot);
     if (fetchedLot) {
       const lotTitle = fetchedLot.title || readableTitle;
-      const customFallback: Metadata = {
+      return {
         title: `${lotTitle} | Verified Wholesale Lot on Surplus Market`,
         description: fetchedLot.description
           ? fetchedLot.description.slice(0, 160)
@@ -40,16 +54,24 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
           description: fetchedLot.description
             ? fetchedLot.description.slice(0, 160)
             : `Inspect manifested liquidation batch ${lotTitle}.`,
+          url: `https://www.surplusmarket.com/buy/lot/${lot}`,
+          siteName: 'Surplus Market',
+          type: 'website',
+          images: fetchedLot.image ? [{ url: fetchedLot.image }] : [],
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title: `${lotTitle} | Verified Wholesale Lot on Surplus Market`,
+          description: fetchedLot.description ? fetchedLot.description.slice(0, 160) : undefined,
           images: fetchedLot.image ? [fetchedLot.image] : [],
         },
       };
-      return getPageMetadata(`lot-${lot}`, customFallback);
     }
   } catch (e) {
     // Silently fall back to standard metadata
   }
 
-  return getPageMetadata(`lot-${lot}`, fallbackMetadata);
+  return fallbackMetadata;
 }
 
 export default async function LotDetailPage(props: PageProps) {

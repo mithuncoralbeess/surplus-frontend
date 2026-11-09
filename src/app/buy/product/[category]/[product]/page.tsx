@@ -4,6 +4,8 @@ import ProductDetailWidget from '../../../../../widgets/ProductDetailWidget';
 import { getPageMetadata } from '../../../../../services/pageSeoService';
 import { catalogService } from '../../../../../services/catalogService';
 
+export const revalidate = 60;
+
 interface PageProps {
   params: Promise<{
     category: string;
@@ -27,6 +29,18 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     alternates: {
       canonical: `https://www.surplusmarket.com/buy/product/${category}/${product}`,
     },
+    openGraph: {
+      title: `${readableTitle} | ${readableCategory} Wholesale on Surplus Market`,
+      description: `Source ${readableTitle} in ${readableCategory} at liquidation wholesale prices.`,
+      url: `https://www.surplusmarket.com/buy/product/${category}/${product}`,
+      siteName: 'Surplus Market',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${readableTitle} | ${readableCategory} Wholesale on Surplus Market`,
+      description: `Source ${readableTitle} in ${readableCategory} at liquidation wholesale prices.`,
+    },
   };
 
   try {
@@ -34,7 +48,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     if (fetchedProduct) {
       const prodTitle = fetchedProduct.title || readableTitle;
       const prodCat = fetchedProduct.category || readableCategory;
-      const customFallback: Metadata = {
+      return {
         title: `${prodTitle} | ${prodCat} Wholesale on Surplus Market`,
         description: fetchedProduct.description 
           ? fetchedProduct.description.slice(0, 160) 
@@ -47,16 +61,24 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
           description: fetchedProduct.description 
             ? fetchedProduct.description.slice(0, 160) 
             : `Source ${prodTitle} in ${prodCat} at liquidation wholesale prices.`,
+          url: `https://www.surplusmarket.com/buy/product/${category}/${product}`,
+          siteName: 'Surplus Market',
+          type: 'website',
+          images: fetchedProduct.image ? [{ url: fetchedProduct.image }] : [],
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title: `${prodTitle} | ${prodCat} Wholesale on Surplus Market`,
+          description: fetchedProduct.description ? fetchedProduct.description.slice(0, 160) : undefined,
           images: fetchedProduct.image ? [fetchedProduct.image] : [],
         },
       };
-      return getPageMetadata(`product-${product}`, customFallback);
     }
   } catch (e) {
     // Silently fall back to standard metadata
   }
 
-  return getPageMetadata(`product-${product}`, fallbackMetadata);
+  return fallbackMetadata;
 }
 
 export default async function ProductDetailPage(props: PageProps) {
