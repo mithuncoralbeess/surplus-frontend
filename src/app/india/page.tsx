@@ -1,19 +1,21 @@
-﻿import React from 'react';
+import React from 'react';
 import IndiaMarketplaceWidget from '../../widgets/IndiaMarketplace';
-import { BreadcrumbJsonLd } from '../../components/StructuredData';
-
+import { INDIA_FAQS } from '../../widgets/IndiaMarketplace/indiaData';
+import { BreadcrumbJsonLd, FaqJsonLd } from '../../components/StructuredData';
 import { getPageMetadata } from '../../services/pageSeoService';
 
+export const revalidate = 3600;
+
 const fallbackMetadata = {
-  title: "Buy & Sell Excess Inventory in India | Surplus Market",
-  description: "B2B surplus marketplace in India. Connect with verified buyers and sellers for discounted overstock, branded surplus, and bulk inventory.",
-  keywords: "Excess inventory India, Surplus market India, Overstock liquidation India, Wholesale surplus India, Buy surplus online India, Sell excess stock India",
+  title: "Buy & Sell Surplus Inventory in India with Surplus Market",
+  description: "Surplus India is a growing opportunity for businesses to unlock value from unused stock and slow-moving goods. Buy and sell surplus goods online in a secure B2B environment.",
+  keywords: "Surplus inventory India, Surplus Market India, Buy surplus India, Sell excess stock India, Overstock liquidation India, B2B surplus wholesale India",
   alternates: {
     canonical: "https://www.surplusmarket.com/india",
   },
   openGraph: {
-    title: "Buy & Sell Excess Inventory in India | Surplus Market",
-    description: "B2B surplus marketplace in India. Connect with verified buyers and sellers for discounted overstock, branded surplus, and bulk inventory.",
+    title: "Buy & Sell Surplus Inventory in India with Surplus Market",
+    description: "Surplus India is a growing opportunity for businesses to unlock value from unused stock and slow-moving goods. Buy and sell surplus goods online in a secure B2B environment.",
     url: "https://www.surplusmarket.com/india",
     siteName: "Surplus Market",
     locale: "en_US",
@@ -27,12 +29,18 @@ export async function generateMetadata() {
 
 export default function IndiaRegionalPage() {
   return (
-    <main className="min-h-screen bg-gray-50/50">
+    <main className="min-h-screen bg-[#f8fafc]">
       <BreadcrumbJsonLd
         items={[
           { name: 'Home', url: '/' },
           { name: 'India Marketplace', url: '/india' },
         ]}
+      />
+      <FaqJsonLd
+        faqs={INDIA_FAQS.map((faq) => ({
+          question: faq.q,
+          answer: faq.a,
+        }))}
       />
       <IndiaMarketplaceWidget />
     </main>

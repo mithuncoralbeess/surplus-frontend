@@ -1,14 +1,25 @@
-﻿import React from 'react';
+import React from 'react';
 import SaudiArabiaMarketplaceWidget from '../../widgets/SaudiArabiaMarketplace';
-import { BreadcrumbJsonLd } from '../../components/StructuredData';
-
+import { SAUDI_FAQS } from '../../widgets/SaudiArabiaMarketplace/saudiData';
+import { BreadcrumbJsonLd, FaqJsonLd } from '../../components/StructuredData';
 import { getPageMetadata } from '../../services/pageSeoService';
 
+export const revalidate = 3600;
+
 const fallbackMetadata = {
-  title: "Buy & Sell Excess Inventory in Saudi Arabia | Surplus Market",
-  description: "Connect with genuine buyers and sellers for excess inventory, overstock clearance, and bulk liquidation deals in Saudi Arabia.",
+  title: "Buy & Sell Excess Inventory in Saudi Arabia with Surplus Market",
+  description: "Managing unsold goods and unused stock can be challenging for businesses in Saudi Arabia. Surplus Market connects sellers with genuine buyers who are looking for discounted, ready-to-purchase items.",
+  keywords: "Excess inventory Saudi Arabia, Surplus market KSA, Overstock liquidation Riyadh, Wholesale surplus Jeddah, Buy surplus Saudi Arabia, Sell stock KSA, inventory liquidators Saudi Arabia",
   alternates: {
     canonical: "https://www.surplusmarket.com/saudi",
+  },
+  openGraph: {
+    title: "Buy & Sell Excess Inventory in Saudi Arabia with Surplus Market",
+    description: "Managing unsold goods and unused stock can be challenging for businesses in Saudi Arabia. Surplus Market connects sellers with genuine buyers who are looking for discounted, ready-to-purchase items.",
+    url: "https://www.surplusmarket.com/saudi",
+    siteName: "Surplus Market",
+    locale: "en_US",
+    type: "website",
   },
 };
 
@@ -18,12 +29,18 @@ export async function generateMetadata() {
 
 export default function SaudiPage() {
   return (
-    <main className="min-h-screen bg-gray-50/50">
+    <main className="min-h-screen bg-[#f8fafc]">
       <BreadcrumbJsonLd
         items={[
           { name: 'Home', url: '/' },
           { name: 'Saudi Arabia Marketplace', url: '/saudi' },
         ]}
+      />
+      <FaqJsonLd
+        faqs={SAUDI_FAQS.map((faq) => ({
+          question: faq.q,
+          answer: faq.a,
+        }))}
       />
       <SaudiArabiaMarketplaceWidget />
     </main>
