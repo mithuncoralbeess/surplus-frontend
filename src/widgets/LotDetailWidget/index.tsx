@@ -24,16 +24,17 @@ const VirtualWarehouseExplorer = dynamic(() => import('../../components/VirtualW
 
 interface LotDetailWidgetProps {
   lotId: string;
+  initialLot?: LotItem | null;
 }
 
-export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
+export default function LotDetailWidget({ lotId, initialLot }: LotDetailWidgetProps) {
   const router = useRouter();
   const { formatPrice } = useCurrency();
   const { addToCart, openCartDrawer, isInCart } = useCart();
 
-  const [lot, setLot] = useState<LotItem | null>(null);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [lot, setLot] = useState<LotItem | null>(initialLot || null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(initialLot?.image || null);
+  const [loading, setLoading] = useState<boolean>(!initialLot);
 
   const inCart = Boolean(
     (lot && (
@@ -51,22 +52,31 @@ export default function LotDetailWidget({ lotId }: LotDetailWidgetProps) {
   useEffect(() => {
     if (!lotId) return;
     let isMounted = true;
-    setLoading(true);
 
-    catalogService.getLotById(lotId)
-      .then((data) => {
-        if (isMounted) {
-          setLot(data);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        console.warn('[LotDetailWidget] Error loading lot:', err);
-        if (isMounted) {
-          setLot(null);
-          setLoading(false);
-        }
-      });
+    // Check if initialLot satisfies this lotId
+    const hasValidInitial = lot && (
+      String(lot.id) === lotId ||
+      slugify(lot.title) === slugify(lotId) ||
+      String(lot.lot_number || '').toLowerCase() === lotId.toLowerCase()
+    );
+
+    if (!hasValidInitial) {
+      setLoading(true);
+      catalogService.getLotById(lotId)
+        .then((data) => {
+          if (isMounted) {
+            setLot(data);
+            setLoading(false);
+          }
+        })
+        .catch((err) => {
+          console.warn('[LotDetailWidget] Error loading lot:', err);
+          if (isMounted) {
+            setLot(null);
+            setLoading(false);
+          }
+        });
+    }
 
     return () => {
       isMounted = false;

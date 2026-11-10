@@ -24,17 +24,18 @@ const VirtualWarehouseExplorer = dynamic(() => import('../../components/VirtualW
 interface ProductDetailWidgetProps {
   productId: string;
   category?: string;
+  initialProduct?: ProductItem | null;
 }
 
-export default function ProductDetailWidget({ productId, category }: ProductDetailWidgetProps) {
+export default function ProductDetailWidget({ productId, category, initialProduct }: ProductDetailWidgetProps) {
   const router = useRouter();
   const { formatPrice, convertToUsd } = useCurrency();
   const { addToCart, openCartDrawer, isInCart } = useCart();
 
-  const [product, setProduct] = useState<ProductItem | null>(null);
+  const [product, setProduct] = useState<ProductItem | null>(initialProduct || null);
   const [relatedProducts, setRelatedProducts] = useState<ProductItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [activeImage, setActiveImage] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(!initialProduct);
+  const [activeImage, setActiveImage] = useState<string>(initialProduct?.image || '');
   const [activeTab, setActiveTab] = useState<'overview' | 'specs' | 'shipping'>('overview');
 
   const inCart = Boolean(
@@ -48,36 +49,46 @@ export default function ProductDetailWidget({ productId, category }: ProductDeta
   );
 
   // Quantity State (minimum MOQ 20)
-  const [quantity, setQuantity] = useState<number>(20);
+  const [quantity, setQuantity] = useState<number>(Math.max(20, Number(initialProduct?.moq || 20)));
   const [isRfqSent, setIsRfqSent] = useState<boolean>(false);
 
   useEffect(() => {
     if (!productId) return;
     let isMounted = true;
-    setLoading(true);
 
-    catalogService.getProductById(productId, category)
-      .then((data) => {
-        if (isMounted) {
-          setProduct(data);
-          if (data?.image) {
-            setActiveImage(data.image);
+    // Check if initialProduct already satisfies this productId
+    const hasValidInitial = product && (
+      String(product.id) === productId ||
+      slugify(product.title) === slugify(productId) ||
+      String(product.product_id || '').toLowerCase() === productId.toLowerCase() ||
+      String(product.sku || '').toLowerCase() === productId.toLowerCase()
+    );
+
+    if (!hasValidInitial) {
+      setLoading(true);
+      catalogService.getProductById(productId, category)
+        .then((data) => {
+          if (isMounted) {
+            setProduct(data);
+            if (data?.image) {
+              setActiveImage(data.image);
+            }
+            const minMoq = Math.max(20, Number(data?.moq || 20));
+            setQuantity(minMoq);
+            setLoading(false);
           }
-          const minMoq = Math.max(20, Number(data?.moq || 20));
-          setQuantity(minMoq);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        console.warn('[ProductDetailWidget] Error loading product:', err);
-        if (isMounted) {
-          setProduct(null);
-          setLoading(false);
-        }
-      });
+        })
+        .catch((err) => {
+          console.warn('[ProductDetailWidget] Error loading product:', err);
+          if (isMounted) {
+            setProduct(null);
+            setLoading(false);
+          }
+        });
+    }
 
     // Fetch related products (prefer same category if available)
-    const relCat = category || '';
+    const relCat = category || product?.category || '';
     catalogService.getProducts(relCat ? { category: relCat, limit: 12 } : { limit: 12 })
       .then((list) => {
         if (isMounted) {

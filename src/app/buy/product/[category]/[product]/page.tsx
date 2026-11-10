@@ -1,5 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import ProductDetailWidget from '../../../../../widgets/ProductDetailWidget';
 import { getPageMetadata } from '../../../../../services/pageSeoService';
 import { catalogService } from '../../../../../services/catalogService';
@@ -86,9 +87,21 @@ export default async function ProductDetailPage(props: PageProps) {
   const productIdentifier = decodeURIComponent(product || '');
   const categoryIdentifier = decodeURIComponent(category || '');
 
+  // Server-side fetch: guarantees complete HTML in initial render for Googlebot
+  const initialProduct = await catalogService.getProductById(productIdentifier, categoryIdentifier);
+
+  // Permanently unavailable or invalid products return HTTP 404 (eliminates Soft 404s)
+  if (!initialProduct) {
+    notFound();
+  }
+
   return (
     <main className="min-h-screen bg-[#fdfcf9] flex flex-col w-full">
-      <ProductDetailWidget productId={productIdentifier} category={categoryIdentifier} />
+      <ProductDetailWidget 
+        productId={productIdentifier} 
+        category={categoryIdentifier} 
+        initialProduct={initialProduct}
+      />
     </main>
   );
 }

@@ -127,7 +127,7 @@ const BuyMegamenu = () => {
       </Link>
 
       {/* Dropdown Container */}
-      <div className={`absolute top-full left-0 w-full transition-all duration-300 ease-out z-50 ${isOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-4'}`}>
+      <div className={`absolute top-full left-0 w-full transition-all duration-300 ease-out z-50 whitespace-normal megamenu-dropdown ${isOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-4'}`}>
         <div className="w-full bg-white shadow-2xl border-t border-gray-100">
           <div className="container mx-auto flex flex-col lg:flex-row">
           
@@ -199,19 +199,21 @@ const BuyMegamenu = () => {
           </div>
 
           {/* Right Panel: Special Formats */}
-          <div className="w-full lg:w-[440px] bg-[#f4fbf9] py-6 px-10 relative overflow-hidden flex flex-col border-l rtl:border-l-0 rtl:border-r border-gray-100 megamenu-right-panel">
-            {/* Background Icon Decoration */}
-            <PlayCircle className="absolute -top-10 -right-10 rtl:-right-auto rtl:-left-10 w-48 h-48 text-white/40 pointer-events-none" strokeWidth={1} />
+          <div className="w-full lg:w-[420px] bg-[#f4fbf9] py-6 px-6 sm:px-7 relative flex flex-col border-l rtl:border-l-0 rtl:border-r border-gray-100 megamenu-right-panel shrink-0">
+            {/* Background Icon Decoration with scoped overflow clipping */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <PlayCircle className="absolute -top-10 -right-10 rtl:-right-auto rtl:-left-10 w-48 h-48 text-emerald-900/5 pointer-events-none" strokeWidth={1} />
+            </div>
             
             <div className="relative z-10">
               <p className="text-[11px] font-bold text-primary tracking-widest uppercase mb-1">
                 {t('megamenu.specialFormats', 'Special Formats')}
               </p>
-              <h3 className="text-xl font-extrabold text-gray-900 tracking-tight mb-6">
+              <h3 className="text-xl font-extrabold text-gray-900 tracking-tight mb-5">
                 {t('megamenu.howYouWantToBuy', 'How You Want to Buy')}
               </h3>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {dynamicFormats.map((format, idx) => {
                   const Icon = format.icon;
                   return (
@@ -219,21 +221,21 @@ const BuyMegamenu = () => {
                       href={format.href || "/browse"} 
                       key={idx} 
                       onClick={() => setIsOpen(false)}
-                      className="flex items-start gap-5 group/format p-3 -ml-3 rtl:-ml-0 rtl:-mr-3 rounded-2xl hover:bg-white/60 transition-colors"
+                      className="flex items-start gap-3.5 group/format p-3 rounded-2xl hover:bg-white/80 transition-all border border-transparent hover:border-emerald-100 hover:shadow-xs cursor-pointer"
                     >
-                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 text-primary shadow-sm border border-gray-50 group-hover/format:scale-110 group-hover/format:shadow-md transition-all duration-300">
-                        <Icon className="w-5 h-5" strokeWidth={1.5} />
+                      <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center shrink-0 text-primary shadow-xs border border-gray-100 group-hover/format:scale-105 group-hover/format:bg-[#0f7a61] group-hover/format:text-white transition-all duration-200">
+                        <Icon className="w-5 h-5" strokeWidth={1.75} />
                       </div>
-                      <div className="flex-1 pt-0.5">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm font-bold text-gray-900 group-hover/format:text-primary transition-colors">
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="text-sm font-bold text-gray-900 group-hover/format:text-primary transition-colors truncate">
                             {format.title}
                           </span>
-                          <span className="text-[10px] font-bold text-primary bg-primary-light-hover px-2 py-0.5 rounded-full">
+                          <span className="text-[10px] font-bold text-primary bg-primary-light-hover px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
                             {format.badge}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-600 leading-relaxed">
+                        <p className="text-xs text-gray-600 leading-relaxed whitespace-normal break-words">
                           {format.desc}
                         </p>
                       </div>
@@ -242,32 +244,6 @@ const BuyMegamenu = () => {
                 })}
               </div>
             </div>
-
-            {/* Footer Area */}
-            <div className="mt-auto pt-6 border-t border-primary/10 flex justify-between items-center relative z-10">
-              <Link 
-                href="/buy/product" 
-                onClick={() => setIsOpen(false)}
-                className="text-xs font-bold text-primary hover:text-primary-dark flex items-center transition-colors"
-              >
-                Products Catalog <ArrowRight className="w-3.5 h-3.5 ml-1 rtl:rotate-180" />
-              </Link>
-              <Link 
-                href="/buy/lot" 
-                onClick={() => setIsOpen(false)}
-                className="text-xs font-bold text-primary hover:text-primary-dark flex items-center transition-colors"
-              >
-                Wholesale Lots <ArrowRight className="w-3.5 h-3.5 ml-1 rtl:rotate-180" />
-              </Link>
-              <Link 
-                href="/browse" 
-                onClick={() => setIsOpen(false)}
-                className="text-xs font-semibold text-gray-500 hover:text-primary flex items-center transition-colors"
-              >
-                Browse All <ArrowRight className="w-3.5 h-3.5 ml-1 rtl:rotate-180" />
-              </Link>
-            </div>
-            
           </div>
         </div>
         </div>

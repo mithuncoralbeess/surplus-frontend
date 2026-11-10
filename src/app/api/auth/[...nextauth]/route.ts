@@ -291,7 +291,25 @@ export async function GET(req: NextRequest, context: any) {
     return proxyAuthToBackend(req, nextauth);
   }
 
-  return (handler as any)(req, context);
+  const resolvedContext = {
+    ...context,
+    params: resolvedParams,
+  };
+
+  try {
+    const res = await (handler as any)(req, resolvedContext);
+    if (action === 'session') {
+      if (!res || res.status >= 500) {
+        return NextResponse.json({}, { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+    }
+    return res;
+  } catch (err) {
+    if (action === 'session') {
+      return NextResponse.json({}, { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    throw err;
+  }
 }
 
 export async function POST(req: NextRequest, context: any) {
@@ -303,5 +321,10 @@ export async function POST(req: NextRequest, context: any) {
     return proxyAuthToBackend(req, nextauth);
   }
 
-  return (handler as any)(req, context);
+  const resolvedContext = {
+    ...context,
+    params: resolvedParams,
+  };
+
+  return (handler as any)(req, resolvedContext);
 }

@@ -1,5 +1,4 @@
 import CategoryExplorer from "../../widgets/CategoryExplorer";
-import CommonBanner from "../../widgets/CommonBanner";
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../services/pageSeoService';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
@@ -37,14 +36,6 @@ export default function BuyPage() {
         items={[
           { name: 'Home', url: '/' },
           { name: 'Buy', url: '/buy' },
-        ]}
-      />
-      <CommonBanner 
-        title="Buy"
-        subtitle="Source verified surplus, overstock, and wholesale liquidation inventory globally."
-        breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Buy' }
         ]}
       />
       <CategoryExplorer />

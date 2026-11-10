@@ -1,5 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import LotDetailWidget from '../../../../widgets/LotDetailWidget';
 import { getPageMetadata } from '../../../../services/pageSeoService';
 import { catalogService } from '../../../../services/catalogService';
@@ -78,9 +79,17 @@ export default async function LotDetailPage(props: PageProps) {
   const { lot } = await props.params;
   const lotIdentifier = decodeURIComponent(lot || '');
 
+  // Server-side fetch: ensures complete HTML in initial render for Googlebot
+  const initialLot = await catalogService.getLotById(lotIdentifier);
+
+  // Permanently unavailable or invalid lots return HTTP 404 (prevents Soft 404s)
+  if (!initialLot) {
+    notFound();
+  }
+
   return (
     <main className="min-h-screen bg-[#fcfbf7] flex flex-col w-full">
-      <LotDetailWidget lotId={lotIdentifier} />
+      <LotDetailWidget lotId={lotIdentifier} initialLot={initialLot} />
     </main>
   );
 }

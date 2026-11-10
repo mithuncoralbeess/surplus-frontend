@@ -8,7 +8,16 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        allow: [
+          '/',
+          '/api/products/',
+          '/api/products/*',
+          '/api/lots/',
+          '/api/lots/*',
+          '/api/categories/',
+          '/api/categories/*',
+          '/api/auth/session',
+        ],
         disallow: [
           '/api/',
           '/profile/',
@@ -41,7 +50,16 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'Googlebot',
-        allow: '/',
+        allow: [
+          '/',
+          '/api/products/',
+          '/api/products/*',
+          '/api/lots/',
+          '/api/lots/*',
+          '/api/categories/',
+          '/api/categories/*',
+          '/api/auth/session',
+        ],
         disallow: [
           '/api/',
           '/profile/',
@@ -53,7 +71,16 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'Bingbot',
-        allow: '/',
+        allow: [
+          '/',
+          '/api/products/',
+          '/api/products/*',
+          '/api/lots/',
+          '/api/lots/*',
+          '/api/categories/',
+          '/api/categories/*',
+          '/api/auth/session',
+        ],
         disallow: [
           '/api/',
           '/profile/',
