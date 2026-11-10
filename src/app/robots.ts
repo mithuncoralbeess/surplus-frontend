@@ -93,6 +93,7 @@ export default function robots(): MetadataRoute.Robots {
     ],
     sitemap: [
       `${baseUrl}/sitemap.xml`,
+      `${baseUrl}/sitemap-pages.xml`,
       `${baseUrl}/sitemap-blogs.xml`,
       `${baseUrl}/sitemap-products.xml`,
     ],

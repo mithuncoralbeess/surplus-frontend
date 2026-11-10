@@ -56,13 +56,15 @@ const BG_COLORS = [
   'bg-cyan-50 text-cyan-700 border-cyan-200/80',
 ];
 
-const POPULAR_SEARCH_TAGS = [
-  'Building Materials',
-  'Electricals',
-  'Power tools',
-  'PPE',
-  'Consumer Electronics',
-  'Automotive',
+const TOP_SEO_CATEGORIES = [
+  { name: 'Electricals & Lighting', slug: 'electricals' },
+  { name: 'Industrial Machinery', slug: 'industrial-machinery-pumps' },
+  { name: 'Power Tools & Equipment', slug: 'power-tools' },
+  { name: 'Hand Tools & Hardware', slug: 'hand-tools' },
+  { name: 'PPE & Safety Gear', slug: 'ppe' },
+  { name: 'Building Materials', slug: 'building-materials' },
+  { name: 'Consumer Electronics', slug: 'consumer-electronics' },
+  { name: 'Automotive', slug: 'automotive' },
 ];
 
 export default function CategoryExplorer() {
@@ -108,7 +110,7 @@ export default function CategoryExplorer() {
   return (
     <div className="w-full flex flex-col">
       {/* 1. HERO SOURCING BANNER */}
-      <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#051c14] via-[#082d20] to-[#0c402e] text-white py-8 sm:py-10 md:py-12 border-b border-emerald-900/40">
+      <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#051c14] via-[#082d20] to-[#0c402e] text-white py-10 sm:py-14 lg:py-16 border-b border-emerald-900/40">
         {/* Background Decorative Ambient Gradients & Subtle Grid */}
         <div
           className="absolute inset-0 opacity-[0.035] pointer-events-none"
@@ -122,126 +124,101 @@ export default function CategoryExplorer() {
 
         <div className="container mx-auto px-4 lg:px-8 max-w-7xl relative z-10">
           
-          {/* Breadcrumbs */}
-          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-emerald-200/80 mb-4">
-            <Link href="/" className="hover:text-white transition-colors cursor-pointer flex items-center gap-1">
-              <span>Home</span>
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-            <span className="text-white font-semibold">Buy</span>
-          </nav>
+          {/* Top Row: Breadcrumbs & Live Liquidation Status Pill */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-emerald-200/80">
+              <Link href="/" className="hover:text-white transition-colors cursor-pointer flex items-center gap-1">
+                <span>Home</span>
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+              <span className="text-white font-semibold">Buy</span>
+            </nav>
 
-          {/* Title & Concise Subtitle */}
-          <div className="max-w-2xl mb-6">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-2">
-              Buy Surplus &amp; Wholesale Inventory
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-xs border border-white/15 text-emerald-300 text-[11px] font-bold uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-[#14b875] animate-pulse" />
+              <span>Verified B2B Liquidation &amp; Excess Inventory</span>
+            </div>
+          </div>
+
+          {/* Main Title & Descriptive SEO Copy */}
+          <div className="max-w-3xl mb-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-extrabold tracking-tight text-white mb-3.5 leading-[1.2]">
+              Buy Surplus Inventory, Wholesale Lots &amp; Liquidation Pallets
             </h1>
-            <p className="text-emerald-100/80 text-xs sm:text-sm font-normal leading-relaxed">
-              Source verified enterprise excess stock, industrial machinery, and wholesale liquidation inventory across {totalCategories > 0 ? totalCategories : 'all'} categories.
+            <p className="text-emerald-100/90 text-xs sm:text-sm md:text-base leading-relaxed">
+              Source verified enterprise excess stock, industrial machinery, and manifested wholesale liquidation inventory across {totalCategories > 0 ? totalCategories : 'all'} categories at <span className="text-emerald-300 font-semibold">60%–85% below retail MSRP</span>. Every listing features 100% manifest transparency, buyer escrow protection, and regional freight dispatch across the UAE, Saudi Arabia, Qatar, and global markets.
             </p>
           </div>
 
-          {/* Streamlined Category & Inventory Search Bar */}
-          <div className="bg-white p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20 max-w-3xl">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 flex items-center">
-                <Search className="w-5 h-5 text-gray-400 absolute left-3.5 rtl:left-auto rtl:right-3.5 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search across categories or subcategories (e.g. Electricals, Fasteners, Tools)..."
-                  className="w-full pl-11 rtl:pl-4 rtl:pr-11 pr-10 rtl:pr-4 py-2.5 sm:py-3 bg-transparent text-sm sm:text-base text-gray-900 placeholder-gray-400 focus:outline-none"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 rtl:right-auto rtl:left-3 text-gray-400 hover:text-gray-600 p-1 rounded-full cursor-pointer"
-                    aria-label="Clear search"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="hidden sm:inline-flex bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
-                >
-                  Clear
-                </button>
-              )}
+          {/* SEO Primary Action Buttons */}
+          <div className="flex flex-wrap items-center gap-3 mb-8">
+            <Link
+              href="/buy/lot"
+              className="px-5 py-2.5 bg-[#14b875] hover:bg-[#119e64] text-[#051c14] font-extrabold text-xs sm:text-sm rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer"
+            >
+              <Boxes className="w-4 h-4" />
+              <span>Explore Wholesale Lots &amp; Pallets</span>
+            </Link>
+            <Link
+              href="/buy/product"
+              className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Package className="w-4 h-4" />
+              <span>Browse Individual Surplus</span>
+            </Link>
+            <Link
+              href="/contact?type=sourcing"
+              className="px-4 py-2.5 text-emerald-200 hover:text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <span>Custom Lot Sourcing Desk</span>
+              <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+            </Link>
+          </div>
+
+          {/* Key Value & SEO Metric Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-7">
+            <div className="bg-white/[0.06] backdrop-blur-xs border border-white/10 rounded-2xl p-3.5 sm:p-4 hover:bg-white/[0.09] transition-colors">
+              <div className="text-xl sm:text-2xl font-black text-emerald-300 mb-0.5">60%–85%</div>
+              <div className="text-xs font-bold text-white mb-0.5">Below Retail MSRP</div>
+              <div className="text-[11px] text-emerald-200/70 leading-snug">Direct B2B excess liquidation pricing</div>
+            </div>
+
+            <div className="bg-white/[0.06] backdrop-blur-xs border border-white/10 rounded-2xl p-3.5 sm:p-4 hover:bg-white/[0.09] transition-colors">
+              <div className="text-xl sm:text-2xl font-black text-emerald-300 mb-0.5">100%</div>
+              <div className="text-xs font-bold text-white mb-0.5">Manifest Verified</div>
+              <div className="text-[11px] text-emerald-200/70 leading-snug">Audited UPCs, counts &amp; serial numbers</div>
+            </div>
+
+            <div className="bg-white/[0.06] backdrop-blur-xs border border-white/10 rounded-2xl p-3.5 sm:p-4 hover:bg-white/[0.09] transition-colors">
+              <div className="text-xl sm:text-2xl font-black text-emerald-300 mb-0.5">72-Hour</div>
+              <div className="text-xs font-bold text-white mb-0.5">Inspection Hold</div>
+              <div className="text-[11px] text-emerald-200/70 leading-snug">Buyer funds protected until arrival</div>
+            </div>
+
+            <div className="bg-white/[0.06] backdrop-blur-xs border border-white/10 rounded-2xl p-3.5 sm:p-4 hover:bg-white/[0.09] transition-colors">
+              <div className="text-xl sm:text-2xl font-black text-emerald-300 mb-0.5">Turnkey</div>
+              <div className="text-xs font-bold text-white mb-0.5">GCC &amp; Global Freight</div>
+              <div className="text-[11px] text-emerald-200/70 leading-snug">Direct LTL, FTL &amp; export dispatch</div>
             </div>
           </div>
 
-          {/* Quick Popular Category Tag Pills */}
-          <div className="flex flex-wrap items-center gap-2 mt-4 max-w-3xl text-xs">
-            <span className="text-emerald-200/70 font-semibold mr-1">Popular categories:</span>
-            {POPULAR_SEARCH_TAGS.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => setSearchQuery(tag)}
-                className={`px-3 py-1 rounded-full border transition-all cursor-pointer font-medium ${
-                  searchQuery.toLowerCase() === tag.toLowerCase()
-                    ? 'bg-emerald-400 text-emerald-950 border-emerald-400 font-bold shadow-xs'
-                    : 'bg-white/10 hover:bg-white/20 text-emerald-100 border-white/15'
-                }`}
+          {/* SEO Crawl Links: Popular Categories */}
+          <div className="pt-5 border-t border-white/10 flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-emerald-200/80 font-bold mr-1 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
+              Popular Categories:
+            </span>
+            {TOP_SEO_CATEGORIES.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/shop-by-category/${cat.slug}`}
+                className="px-3 py-1 rounded-full bg-white/10 hover:bg-emerald-400/20 text-emerald-100 hover:text-white border border-white/15 hover:border-emerald-300/40 transition-all font-medium cursor-pointer"
               >
-                {tag}
-              </button>
+                {cat.name}
+              </Link>
             ))}
           </div>
 
-        </div>
-      </section>
-
-      {/* 2. BUYER ASSURANCE TRUST STRIP */}
-      <section className="w-full bg-white border-b border-gray-200/80 shadow-2xs">
-        <div className="container mx-auto px-4 lg:px-8 max-w-7xl py-5">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
-            <div className="flex items-center gap-3 py-2 md:py-0 md:px-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#0f7a61] flex items-center justify-center shrink-0 border border-emerald-100">
-                <FileSpreadsheet className="w-4.5 h-4.5" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-gray-900">100% Manifest Verified</div>
-                <div className="text-[11px] text-gray-500">Audited UPCs & serial numbers</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 py-2 md:py-0 md:px-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#0f7a61] flex items-center justify-center shrink-0 border border-emerald-100">
-                <Lock className="w-4.5 h-4.5" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-gray-900">Inspection Protection</div>
-                <div className="text-[11px] text-gray-500">72-hour review before fund release</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 py-2 md:py-0 md:px-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#0f7a61] flex items-center justify-center shrink-0 border border-emerald-100">
-                <Truck className="w-4.5 h-4.5" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-gray-900">Turnkey Freight & LTL</div>
-                <div className="text-[11px] text-gray-500">Liftgate, dock, and export dispatch</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 py-2 md:py-0 md:px-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#0f7a61] flex items-center justify-center shrink-0 border border-emerald-100">
-                <ShieldCheck className="w-4.5 h-4.5" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-gray-900">Direct Enterprise Sourcing</div>
-                <div className="text-[11px] text-gray-500">Tier-1 distributors & liquidators</div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -250,7 +227,7 @@ export default function CategoryExplorer() {
         <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
 
           {/* Section Header */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-5 border-b border-gray-200/80">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-5 border-b border-gray-200/80">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="text-[11px] font-bold text-[#0f7a61] uppercase tracking-widest bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
@@ -266,17 +243,30 @@ export default function CategoryExplorer() {
               </h2>
             </div>
 
-            <div className="flex items-center gap-3 text-xs text-gray-500 font-medium">
-              <span>Showing <strong>{filteredCategories.length}</strong> categories</span>
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="text-xs font-bold text-[#0f7a61] hover:underline cursor-pointer"
-                >
-                  Reset filter
-                </button>
-              )}
+            <div className="flex items-center gap-3">
+              <div className="relative w-full sm:w-64">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 rtl:left-auto rtl:right-3 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Filter categories..."
+                  className="w-full pl-9 rtl:pl-4 rtl:pr-9 pr-8 rtl:pr-4 py-2 bg-white text-xs sm:text-sm text-gray-900 placeholder-gray-400 rounded-xl border border-gray-200 focus:outline-none focus:border-[#0f7a61] shadow-2xs transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rtl:right-auto rtl:left-2.5 text-gray-400 hover:text-gray-600 p-0.5 rounded-full cursor-pointer"
+                    aria-label="Clear filter"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <span className="text-xs text-gray-500 font-medium whitespace-nowrap hidden sm:inline">
+                <strong>{filteredCategories.length}</strong> categories
+              </span>
             </div>
           </div>
 
