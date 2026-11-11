@@ -1,10 +1,10 @@
-﻿import React from 'react';
+import React from 'react';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../../services/pageSeoService';
 import SurplusWasteCarbonFootprint from '../../../widgets/SurplusWasteCarbonFootprint';
 
 const fallbackMetadata: Metadata = {
-  title: 'How Surplus Market Reduces Waste and Carbon Footprint | Surplus Market',
+  title: 'How Surplus Market Reduces Waste and Carbon Footprint',
   description: 'Discover how Surplus Market facilitates excess inventory exchange to prevent brand-new items from being discarded, reduce manufacturing demand, and decrease carbon emissions.',
   keywords: [
     'surplus market waste reduction',

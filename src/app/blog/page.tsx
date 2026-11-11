@@ -12,7 +12,7 @@ const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.surplusmarket.
   .replace(/^https?:\/\/surplusmarket\.com/i, 'https://www.surplusmarket.com');
 
 export const metadata = {
-  title: "Blog & Market Insights | Surplus Market",
+  title: "Blog & Market Insights",
   description: "Explore enterprise inventory liquidation trends, circular economy insights, ESG strategies, and GCC trade intelligence.",
   keywords: "Surplus Market Blog, Inventory Liquidation, B2B Supply Chain, ESG Reporting, GCC Wholesale, Liquidation Insights",
   alternates: {
@@ -23,7 +23,7 @@ export const metadata = {
     follow: true,
   },
   openGraph: {
-    title: "Blog & Market Insights | Surplus Market",
+    title: "Blog & Market Insights",
     description: "Explore enterprise inventory liquidation trends, circular economy insights, ESG strategies, and GCC trade intelligence.",
     url: `${siteUrl}/blog`,
     siteName: "Surplus Market",
@@ -32,7 +32,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Blog & Market Insights | Surplus Market",
+    title: "Blog & Market Insights",
     description: "Explore enterprise inventory liquidation trends, circular economy insights, ESG strategies, and GCC trade intelligence.",
   },
 };

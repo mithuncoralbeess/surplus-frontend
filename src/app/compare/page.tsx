@@ -1,18 +1,18 @@
-﻿import React from 'react';
+import React from 'react';
 import ChecklistComparisonWidget from '../../widgets/ChecklistComparison';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
 const fallbackMetadata = {
-  title: "Checklist & Comparison Guides | Surplus Market",
+  title: "Checklist & Comparison Guides",
   description: "Detailed checklists and easy-to-understand comparison guides to evaluate branded vs non-branded surplus, auction vs fixed price, and LTL/FTL shipping.",
   keywords: "Branded vs non branded surplus, Inventory comparison guide, Surplus buying checklist, Overstock liquidation comparison",
   alternates: {
     canonical: "https://www.surplusmarket.com/compare",
   },
   openGraph: {
-    title: "Checklist & Comparison Guides | Surplus Market",
+    title: "Checklist & Comparison Guides",
     description: "Detailed checklists and easy-to-understand comparison guides to evaluate branded vs non-branded surplus, auction vs fixed price, and LTL/FTL shipping.",
     url: "https://www.surplusmarket.com/compare",
     siteName: "Surplus Market",

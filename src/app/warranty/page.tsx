@@ -1,17 +1,17 @@
-﻿import React from 'react';
+import React from 'react';
 import WarrantyPolicyWidget from '../../widgets/WarrantyPolicy';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
 const fallbackMetadata = {
-  title: "Service & Warranty Policy | Surplus Market",
+  title: "Service & Warranty Policy",
   description: "Learn about Surplus Market's 12-month standard warranty, extended warranty coverage, repair & replacement terms, and warranty claim channels.",
   alternates: {
     canonical: "https://www.surplusmarket.com/warranty",
   },
   openGraph: {
-    title: "Service & Warranty Policy | Surplus Market",
+    title: "Service & Warranty Policy",
     description: "Learn about Surplus Market's 12-month standard warranty, extended warranty coverage, repair & replacement terms, and warranty claim channels.",
     url: "https://www.surplusmarket.com/warranty",
     siteName: "Surplus Market",

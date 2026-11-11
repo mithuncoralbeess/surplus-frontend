@@ -16,13 +16,13 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const readableTitle = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   
   return {
-    title: `${readableTitle} Surplus Inventory & Overstock | Surplus Market`,
+    title: `${readableTitle} Surplus Inventory & Overstock`,
     description: `Browse certified surplus, overstock liquidation, and wholesale inventory in ${readableTitle}.`,
     alternates: {
       canonical: `https://www.surplusmarket.com/shop-by-category/${slug}`,
     },
     openGraph: {
-      title: `${readableTitle} Surplus Inventory & Overstock | Surplus Market`,
+      title: `${readableTitle} Surplus Inventory & Overstock`,
       description: `Browse certified surplus, overstock liquidation, and wholesale inventory in ${readableTitle}.`,
       url: `https://www.surplusmarket.com/shop-by-category/${slug}`,
       siteName: 'Surplus Market',
@@ -30,7 +30,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${readableTitle} Surplus Inventory & Overstock | Surplus Market`,
+      title: `${readableTitle} Surplus Inventory & Overstock`,
       description: `Browse certified surplus, overstock liquidation, and wholesale inventory in ${readableTitle}.`,
     },
   };

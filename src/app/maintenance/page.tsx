@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import MaintenanceWidget from "../../widgets/Maintenance";
 
 export const metadata: Metadata = {
-  title: "Under Maintenance | Surplus Market",
+  title: "Under Maintenance",
   description: "Surplus Market is currently undergoing scheduled infrastructure enhancements and optimizations.",
   alternates: {
     canonical: "https://www.surplusmarket.com/maintenance",

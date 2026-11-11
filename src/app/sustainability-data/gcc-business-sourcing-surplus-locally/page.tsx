@@ -1,10 +1,10 @@
-﻿import React from 'react';
+import React from 'react';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../../services/pageSeoService';
 import GccLocalSourcing from '../../../widgets/GccLocalSourcing';
 
 const fallbackMetadata: Metadata = {
-  title: 'How GCC Businesses Source Surplus & Overstock Locally to Reduce Emissions | Surplus Market',
+  title: 'How GCC Businesses Source Surplus & Overstock Locally to Reduce Emissions',
   description: 'Learn how GCC businesses are rethinking global surplus imports and sourcing regionally across the UAE, Saudi Arabia, and Qatar to cut carbon emissions, eliminate overseas freight delays, and optimize cash flow.',
   keywords: [
     'GCC local surplus sourcing',

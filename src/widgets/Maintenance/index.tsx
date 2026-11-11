@@ -27,7 +27,7 @@ export default function MaintenanceWidget() {
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      document.title = "Under Maintenance | Surplus Market";
+      document.title = "Under Maintenance";
     }
   }, []);
 

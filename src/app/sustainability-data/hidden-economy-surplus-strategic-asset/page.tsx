@@ -1,10 +1,10 @@
-﻿import React from 'react';
+import React from 'react';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../../services/pageSeoService';
 import HiddenEconomySurplus from '../../../widgets/HiddenEconomySurplus';
 
 const fallbackMetadata: Metadata = {
-  title: 'The $257 Billion "Hidden Economy": Why Surplus is the New Strategic Asset | Surplus Market',
+  title: 'The $257 Billion "Hidden Economy": Why Surplus is the New Strategic Asset',
   description: 'Explore the $257B re-commerce surge, industrial B2B surplus marketplaces, trust-as-a-service certification, and how enterprises transform excess inventory into cash flow.',
   keywords: [
     'hidden economy surplus',

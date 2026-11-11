@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import UserProfileWidget from '../../widgets/UserProfile';
 
 export const metadata: Metadata = {
-  title: 'My Profile & Business Account | Surplus Market',
+  title: 'My Profile & Business Account',
   description: 'Manage your verified business profile, active RFQs, quotes, saved deals, and surplus inventory listings on Surplus Market.',
   alternates: {
     canonical: 'https://www.surplusmarket.com/profile',

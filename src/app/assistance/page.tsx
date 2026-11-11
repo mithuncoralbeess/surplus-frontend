@@ -1,11 +1,11 @@
-﻿import React from 'react';
+import React from 'react';
 import { Metadata } from 'next';
 import AssistanceDesk from '../../widgets/AssistanceDesk';
 import { getPageMetadata } from '../../services/pageSeoService';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 const fallbackMetadata: Metadata = {
-  title: "Assistance Desk & Sourcing Support | Surplus Market",
+  title: "Assistance Desk & Sourcing Support",
   description: "Request custom product sourcing, report platform issues, suggest new marketplace features, or receive dedicated order help from Surplus Market operations.",
   keywords: [
     "product sourcing desk",
@@ -19,7 +19,7 @@ const fallbackMetadata: Metadata = {
     canonical: "https://www.surplusmarket.com/assistance",
   },
   openGraph: {
-    title: "Assistance Desk & Sourcing Support | Surplus Market",
+    title: "Assistance Desk & Sourcing Support",
     description: "Request custom product sourcing, report platform issues, suggest new marketplace features, or receive dedicated order help.",
     url: "https://www.surplusmarket.com/assistance",
     siteName: "Surplus Market",

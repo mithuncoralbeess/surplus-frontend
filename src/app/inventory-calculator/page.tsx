@@ -1,11 +1,11 @@
-﻿import React from 'react';
+import React from 'react';
 import InventoryCalculatorWidget from '../../widgets/InventoryCalculator';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
 const fallbackMetadata = {
-  title: "Inventory Ageing Calculator | Surplus Market",
+  title: "Inventory Ageing Calculator",
   description: "Estimate how much value your surplus stock is losing to depreciation and storage over time - so you know when to liquidate.",
   alternates: {
     canonical: "https://www.surplusmarket.com/inventory-calculator",

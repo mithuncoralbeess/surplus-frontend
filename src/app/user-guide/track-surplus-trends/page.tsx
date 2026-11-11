@@ -1,10 +1,10 @@
-﻿import React from 'react';
+import React from 'react';
 import { Metadata } from 'next';
 import { getPageMetadata } from '../../../services/pageSeoService';
 import TrackSurplusTrends from '../../../widgets/TrackSurplusTrends';
 
 const fallbackMetadata: Metadata = {
-  title: 'How to Track Surplus Trends & Surplus Deals on SurplusMarket | Surplus Market',
+  title: 'How to Track Surplus Trends & Surplus Deals on SurplusMarket',
   description: 'Learn how procurement teams track surplus deals, analyze demand trends across high-movement categories, and leverage liquidation market intelligence.',
   keywords: [
     'track surplus trends',

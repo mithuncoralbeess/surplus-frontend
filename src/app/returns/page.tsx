@@ -1,11 +1,11 @@
-﻿import React from 'react';
+import React from 'react';
 import ReturnPolicyWidget from '../../widgets/ReturnPolicy';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
 const fallbackMetadata = {
-  title: "Return & Refund Policy | Surplus Market",
+  title: "Return & Refund Policy",
   description: "Learn about Surplus Market's return eligibility criteria, 30-day return window, RMA process, shipping guidelines, and refund processing.",
   alternates: {
     canonical: "https://www.surplusmarket.com/returns",

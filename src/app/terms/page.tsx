@@ -1,11 +1,11 @@
-﻿import React from 'react';
+import React from 'react';
 import TermsConditionsWidget from '../../widgets/TermsConditions';
 import { BreadcrumbJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
 const fallbackMetadata = {
-  title: "Terms & Conditions | Surplus Market",
+  title: "Terms & Conditions",
   description: "Read the terms and conditions governing prospective buyers and sellers, listing obligations, tax requirements, and user conduct on Surplus Market.",
   alternates: {
     canonical: "https://www.surplusmarket.com/terms",

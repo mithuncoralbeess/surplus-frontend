@@ -1,17 +1,17 @@
-﻿import React, { Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { Metadata } from 'next';
 import CommonBanner from '../../../widgets/CommonBanner';
 import BuyFeaturedLots from '../../../widgets/BuyFeaturedLots';
 import { BreadcrumbJsonLd } from '../../../components/StructuredData';
 
 export const metadata: Metadata = {
-  title: 'Wholesale Lots & Liquidation Pallets | Surplus Market',
+  title: 'Wholesale Lots & Liquidation Pallets',
   description: 'Source manifested bulk pallets, truckload inventory, and wholesale liquidation lots directly from tier-1 liquidators and distributors at liquidation prices.',
   alternates: {
     canonical: 'https://www.surplusmarket.com/buy/lot',
   },
   openGraph: {
-    title: 'Wholesale Lots & Liquidation Pallets | Surplus Market',
+    title: 'Wholesale Lots & Liquidation Pallets',
     description: 'Source manifested bulk pallets, truckload inventory, and wholesale liquidation lots directly from tier-1 liquidators and distributors at liquidation prices.',
     url: 'https://www.surplusmarket.com/buy/lot',
     siteName: 'Surplus Market',

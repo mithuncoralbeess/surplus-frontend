@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default: "Surplus Market | B2B Marketplace for Excess & Surplus Inventory",
-    template: "%s | Surplus Market",
+    template: "%s",
   },
   description: "Connect with verified global buyers and sellers of excess inventory, overstock equipment, wholesale liquidation lots, and industrial materials across GCC and globally.",
   keywords: [

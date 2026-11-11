@@ -4,7 +4,7 @@ import { Search, Home, ArrowLeft, Package, Sparkles, HelpCircle } from 'lucide-r
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '404 - Page Not Found | Surplus Market',
+  title: '404 - Page Not Found',
   description: 'The requested surplus inventory page or route could not be found on Surplus Market. Search our active marketplace or return to the homepage.',
 };
 

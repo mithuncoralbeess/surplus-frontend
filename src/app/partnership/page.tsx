@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import CommonBanner from '../../widgets/CommonBanner';
 import PartnershipValueProps from '../../widgets/PartnershipValueProps';
 import PartnershipForm from '../../widgets/PartnershipForm';
@@ -8,7 +8,7 @@ import { Metadata } from 'next';
 import { getPageMetadata } from '../../services/pageSeoService';
 
 const fallbackMetadata: Metadata = {
-  title: "Partner With Us | Surplus Market",
+  title: "Partner With Us",
   description: "Build a strategic partnership with Surplus Market to connect excess inventory, buyers, services, and commercial opportunities globally.",
   alternates: {
     canonical: "https://www.surplusmarket.com/partnership",

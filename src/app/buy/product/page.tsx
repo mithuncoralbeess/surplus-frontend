@@ -1,17 +1,17 @@
-﻿import React, { Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { Metadata } from 'next';
 import CommonBanner from '../../../widgets/CommonBanner';
 import BuyFeaturedLots from '../../../widgets/BuyFeaturedLots';
 import { BreadcrumbJsonLd } from '../../../components/StructuredData';
 
 export const metadata: Metadata = {
-  title: 'Surplus Products & Liquidation Inventory | Surplus Market',
+  title: 'Surplus Products & Liquidation Inventory',
   description: 'Browse verified surplus products, industrial machinery, consumer electronics, and liquidation inventory directly from enterprise sellers at wholesale prices.',
   alternates: {
     canonical: 'https://www.surplusmarket.com/buy/product',
   },
   openGraph: {
-    title: 'Surplus Products & Liquidation Inventory | Surplus Market',
+    title: 'Surplus Products & Liquidation Inventory',
     description: 'Browse verified surplus products, industrial machinery, consumer electronics, and liquidation inventory directly from enterprise sellers at wholesale prices.',
     url: 'https://www.surplusmarket.com/buy/product',
     siteName: 'Surplus Market',

@@ -6,13 +6,13 @@ import { BreadcrumbJsonLd } from '../../components/StructuredData';
 export const revalidate = 300;
 
 const fallbackMetadata: Metadata = {
-  title: "Buy Surplus Inventory & Wholesale Lots | Surplus Market",
+  title: "Buy Surplus Inventory & Wholesale Lots",
   description: "Source verified surplus, overstock, and wholesale liquidation inventory globally across all product categories.",
   alternates: {
     canonical: "https://www.surplusmarket.com/buy",
   },
   openGraph: {
-    title: "Buy Surplus Inventory & Wholesale Lots | Surplus Market",
+    title: "Buy Surplus Inventory & Wholesale Lots",
     description: "Source verified surplus, overstock, and wholesale liquidation inventory globally across all product categories.",
     url: "https://www.surplusmarket.com/buy",
     siteName: "Surplus Market",
@@ -20,7 +20,7 @@ const fallbackMetadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Buy Surplus Inventory & Wholesale Lots | Surplus Market",
+    title: "Buy Surplus Inventory & Wholesale Lots",
     description: "Source verified surplus, overstock, and wholesale liquidation inventory globally across all product categories.",
   },
 };

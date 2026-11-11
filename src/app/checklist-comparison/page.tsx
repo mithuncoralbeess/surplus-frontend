@@ -5,7 +5,7 @@ import { BreadcrumbJsonLd } from '../../components/StructuredData';
 import { getPageMetadata } from '../../services/pageSeoService';
 
 const fallbackMetadata = {
-  title: "Checklist & Comparison Guides | Surplus Market",
+  title: "Checklist & Comparison Guides",
   description: "Detailed checklists and easy-to-understand comparison guides to help you evaluate and simplify your buying and selling process.",
   alternates: {
     canonical: "https://www.surplusmarket.com/checklist-comparison",

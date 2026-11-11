@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!post) {
     return {
-      title: 'Article Not Found | Surplus Market',
+      title: 'Article Not Found',
       description: 'The requested surplus inventory article could not be found.',
     };
   }
@@ -37,9 +37,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   // SEO Title, description, keywords, canonical
   const metaTitle = seo.meta_title || post.title;
-  const fullTitle = metaTitle.toLowerCase().includes('surplus')
-    ? metaTitle
-    : `${metaTitle} | Surplus Market Insights`;
+  const fullTitle = metaTitle;
   const metaDescription = seo.meta_description || post.excerpt;
   const metaKeywords = seo.meta_keywords || (post.tags ? post.tags.join(', ') : 'Surplus Market, Liquidation, B2B Inventory, Supply Chain');
   const canonicalUrl = resolveCanonicalUrl(seo.canonical_url, `blog/${post.slug}`);

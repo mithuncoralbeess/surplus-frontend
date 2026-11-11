@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import AboutHero from '../../widgets/AboutHero';
 import AboutHowWeOperate from '../../widgets/AboutHowWeOperate';
 import AboutOurStory from '../../widgets/AboutOurStory';
@@ -17,7 +17,7 @@ const fallbackMetadata = {
     canonical: "https://www.surplusmarket.com/about-us",
   },
   openGraph: {
-    title: "About Us | Surplus Market",
+    title: "About Us",
     description: "Rooted in Qatar, built for the world. Learn how Surplus Market transforms idle inventory into circular value for enterprises, SMEs, and the planet.",
     url: "https://www.surplusmarket.com/about-us",
     siteName: "Surplus Market",
