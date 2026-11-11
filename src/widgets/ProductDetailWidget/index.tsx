@@ -61,7 +61,10 @@ export default function ProductDetailWidget({ productId, category, initialProduc
       String(product.id) === productId ||
       slugify(product.title) === slugify(productId) ||
       String(product.product_id || '').toLowerCase() === productId.toLowerCase() ||
-      String(product.sku || '').toLowerCase() === productId.toLowerCase()
+      String(product.sku || '').toLowerCase() === productId.toLowerCase() ||
+      (Boolean(product.seo?.slug) && product.seo!.slug!.toLowerCase() === productId.toLowerCase()) ||
+      (Boolean(product.seo?.h1) && slugify(product.seo!.h1) === slugify(productId)) ||
+      (Boolean(product.seo?.product_title) && slugify(product.seo!.product_title) === slugify(productId))
     );
 
     if (!hasValidInitial) {
@@ -163,12 +166,13 @@ export default function ProductDetailWidget({ productId, category, initialProduc
     const maxQty = product.quantity || product.estQty || 9999;
     const prodImage = activeImage || product.image || (product.images && product.images[0]) || '';
     const finalQty = Math.max(minQty, quantity);
+    const displayTitle = product.seo?.h1 || product.seo?.product_title || product.title;
 
     addToCart({
       id: String(product.id || product.product_id || product.sku || productId),
       productId: product.id,
       type: 'product',
-      title: product.title,
+      title: displayTitle,
       category: catName,
       quantity: finalQty,
       unitPrice: convertToUsd(unitPrice, currencyCode),
@@ -332,6 +336,10 @@ export default function ProductDetailWidget({ productId, category, initialProduc
     : 0;
   const displayDrop = formatDropString(product.offer) || (discountPercent > 0 ? `${discountPercent}% DROP` : null);
 
+  const displayTitle = product.seo?.h1 || product.seo?.product_title || product.title;
+  const displayDescription = product.seo?.product_description || product.description || product.seo?.short_description || '';
+  const canonicalUrl = product.seo?.url || `/buy/product/${encodeURIComponent(category || product.category || 'all')}/${encodeURIComponent(productId)}`;
+
   return (
     <main className="w-full min-h-screen bg-[#fcfbf7] pb-16 sm:pb-24 pt-4 sm:pt-6">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
@@ -356,14 +364,14 @@ export default function ProductDetailWidget({ productId, category, initialProduc
               </>
             )}
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
-            <span className="text-gray-900 font-bold truncate max-w-[180px] sm:max-w-[240px] md:max-w-xs lg:max-w-md">{product.title}</span>
+            <span className="text-gray-900 font-bold truncate max-w-[180px] sm:max-w-[240px] md:max-w-xs lg:max-w-md">{displayTitle}</span>
           </div>
         </div>
 
         {/* Structured Data: Product & BreadcrumbList */}
         <ProductJsonLd
-          name={product.title}
-          description={product.description || `Verified wholesale surplus lot: ${product.title}`}
+          name={displayTitle}
+          description={displayDescription || `Verified wholesale surplus lot: ${displayTitle}`}
           image={currentImage}
           price={unitPrice}
           priceCurrency={currencyCode}
@@ -371,7 +379,7 @@ export default function ProductDetailWidget({ productId, category, initialProduc
           brand={product.brand || 'Surplus Market'}
           condition={product.condition || 'New / Overstock'}
           availability="InStock"
-          url={`/buy/product/${encodeURIComponent(category || product.category || 'all')}/${encodeURIComponent(productId)}`}
+          url={canonicalUrl}
         />
         <BreadcrumbJsonLd
           items={[
@@ -379,7 +387,7 @@ export default function ProductDetailWidget({ productId, category, initialProduc
             { name: 'Buy', url: '/browse' },
             { name: 'Product', url: '/buy/product' },
             ...(product.category ? [{ name: product.category, url: `/shop-by-category/${slugify(product.category)}` }] : []),
-            { name: product.title, url: `/buy/product/${encodeURIComponent(category || product.category || 'all')}/${encodeURIComponent(productId)}` },
+            { name: displayTitle, url: canonicalUrl },
           ]}
         />
 
@@ -392,7 +400,7 @@ export default function ProductDetailWidget({ productId, category, initialProduc
               <div className="relative aspect-[4/3] w-full bg-gray-50 rounded-xl sm:rounded-2xl border border-gray-100 overflow-hidden shadow-xs group">
                 <Image
                   src={currentImage}
-                  alt={product.title}
+                  alt={displayTitle}
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -481,7 +489,7 @@ export default function ProductDetailWidget({ productId, category, initialProduc
                 </div>
 
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 leading-tight tracking-tight mb-2 sm:mb-3">
-                  {product.title}
+                  {displayTitle}
                 </h1>
 
                 {/* Subheader: Stock & Views Row (above), Location Row (below without Location: prefix - conditional on API data) */}
@@ -713,7 +721,7 @@ export default function ProductDetailWidget({ productId, category, initialProduc
                     <span>DESCRIPTION</span>
                   </div>
                   <p className="text-xs sm:text-sm md:text-base font-medium text-gray-800 leading-relaxed whitespace-pre-wrap">
-                    {product.description || `High-quality surplus ${product.category} stock available for immediate liquidation. Pre-inspected inventory stored in climate-controlled warehouse facilities.`}
+                    {displayDescription || `High-quality surplus ${product.category} stock available for immediate liquidation. Pre-inspected inventory stored in climate-controlled warehouse facilities.`}
                   </p>
                 </div>
 
@@ -799,7 +807,7 @@ export default function ProductDetailWidget({ productId, category, initialProduc
                       <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
                         PRODUCT NAME
                       </span>
-                      <span className="text-xs sm:text-sm md:text-base font-extrabold text-gray-900 leading-snug">{product.title}</span>
+                      <span className="text-xs sm:text-sm md:text-base font-extrabold text-gray-900 leading-snug">{displayTitle}</span>
                     </div>
 
                     {/* Brand Name */}

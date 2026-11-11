@@ -222,7 +222,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
     ? (category as any).name || (category as any).title || (category as any).slug || 'General'
     : String(category || 'General');
 
-  const productLink = createProductUrl(categoryText, title || sku || id, sku || id);
+  const cardTitle = (rest as any)?.seo?.h1 || (rest as any)?.seo?.product_title || title;
+  const productLink = (rest as any)?.seo?.url || (rest as any)?.url || createProductUrl(categoryText, cardTitle || sku || id, sku || id);
 
   return (
     <div className="group relative flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full">
@@ -235,7 +236,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {image && !imageError ? (
           <Image
             src={image}
-            alt={title}
+            alt={cardTitle}
             fill
             priority={priority}
             sizes="(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 280px"
@@ -289,7 +290,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Title */}
         <Link href={productLink}>
           <h3 className="font-bold text-gray-900 text-[15px] leading-tight mb-2 line-clamp-2 cursor-pointer hover:text-[#0f7a61] transition-colors">
-            {title}
+            {cardTitle}
           </h3>
         </Link>
 

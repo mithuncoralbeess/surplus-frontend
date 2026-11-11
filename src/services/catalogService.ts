@@ -2,6 +2,17 @@ import { apiClient, ApiResponse } from './apiClient';
 import { slugify } from '../lib/slugs';
 import { convertToUsd } from '../lib/currency';
 
+export interface ProductSeo {
+  meta_title?: string;
+  meta_description?: string;
+  url?: string;
+  slug?: string;
+  h1?: string;
+  product_title?: string;
+  short_description?: string;
+  product_description?: string;
+}
+
 export interface ProductItem {
   id: string | number;
   product_id?: string;
@@ -54,6 +65,7 @@ export interface ProductItem {
   createdAt?: string;
   updatedAt?: string;
   displayOrder?: number;
+  seo?: ProductSeo;
 }
 
 export interface LotItem {
@@ -124,6 +136,7 @@ export interface LotItem {
   created_at?: string;
   created_at_formatted?: string;
   type?: 'lot';
+  seo?: ProductSeo;
 }
 
 export interface ProductRequestPayload {
@@ -334,6 +347,18 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
     offerTag = `${discountVal}% DROP`;
   }
 
+  const rawSeo = item.seo && typeof item.seo === 'object' ? item.seo : {};
+  const seoData: ProductSeo | undefined = (item.seo || item.meta_title || item.h1 || item.meta_description) ? {
+    meta_title: rawSeo.meta_title || item.meta_title,
+    meta_description: rawSeo.meta_description || item.meta_description,
+    url: rawSeo.url || item.url,
+    slug: rawSeo.slug || item.slug,
+    h1: rawSeo.h1 || item.h1,
+    product_title: rawSeo.product_title || item.product_title,
+    short_description: rawSeo.short_description || item.short_description,
+    product_description: rawSeo.product_description || item.product_description,
+  } : undefined;
+
   return {
     id: item.id || item.product_id || `PROD-${index + 1}`,
     product_id: item.product_id || item.sku || `PRO-${item.id || index + 1}`,
@@ -386,6 +411,7 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
     createdAt: item.created_at || '',
     updatedAt: item.updated_at || '',
     displayOrder: item.display_order || 0,
+    seo: seoData,
   };
 }
 
@@ -745,6 +771,21 @@ export const catalogService = {
           productCache.set(s, p);
         }
         productCache.set(p.title.toLowerCase().trim(), p);
+        if (p.seo?.slug) {
+          productCache.set(p.seo.slug.toLowerCase().trim(), p);
+          const sSlug = slugify(p.seo.slug);
+          if (sSlug) productCache.set(sSlug, p);
+        }
+        if (p.seo?.h1) {
+          productCache.set(p.seo.h1.toLowerCase().trim(), p);
+          const sH1 = slugify(p.seo.h1);
+          if (sH1) productCache.set(sH1, p);
+        }
+        if (p.seo?.product_title) {
+          productCache.set(p.seo.product_title.toLowerCase().trim(), p);
+          const sPt = slugify(p.seo.product_title);
+          if (sPt) productCache.set(sPt, p);
+        }
       });
 
       if (mappedList.length > 0) {
@@ -892,6 +933,23 @@ export const catalogService = {
       if (p.title.toLowerCase().trim() === keyLower) return true;
       // 6. Model number suffix in slug (e.g. key ends with model number)
       if (pModel && pModel.length >= 4 && (keyLower.endsWith(pModel) || (targetSlug && targetSlug.endsWith(slugify(pModel))))) return true;
+      // 7. SEO match (slug, h1, product_title, url)
+      if (p.seo?.slug) {
+        const seoSlugLower = p.seo.slug.toLowerCase().trim();
+        if (seoSlugLower === keyLower || (targetSlug && slugify(p.seo.slug) === targetSlug)) return true;
+      }
+      if (p.seo?.h1) {
+        const h1Lower = p.seo.h1.toLowerCase().trim();
+        if (h1Lower === keyLower || (targetSlug && slugify(p.seo.h1) === targetSlug)) return true;
+      }
+      if (p.seo?.product_title) {
+        const ptLower = p.seo.product_title.toLowerCase().trim();
+        if (ptLower === keyLower || (targetSlug && slugify(p.seo.product_title) === targetSlug)) return true;
+      }
+      if (p.seo?.url) {
+        const u = p.seo.url.toLowerCase().trim();
+        if (u.endsWith(`/${keyLower}`) || u.endsWith(`/${targetSlug}`) || u === keyLower) return true;
+      }
       return false;
     };
 
@@ -913,6 +971,21 @@ export const catalogService = {
       }
       const s = slugify(p.title);
       if (s) productCache.set(s, p);
+      if (p.seo?.slug) {
+        productCache.set(p.seo.slug.toLowerCase().trim(), p);
+        const sSlug = slugify(p.seo.slug);
+        if (sSlug) productCache.set(sSlug, p);
+      }
+      if (p.seo?.h1) {
+        productCache.set(p.seo.h1.toLowerCase().trim(), p);
+        const sH1 = slugify(p.seo.h1);
+        if (sH1) productCache.set(sH1, p);
+      }
+      if (p.seo?.product_title) {
+        productCache.set(p.seo.product_title.toLowerCase().trim(), p);
+        const sPt = slugify(p.seo.product_title);
+        if (sPt) productCache.set(sPt, p);
+      }
     };
 
     // 1. Instant Cache Lookup (only when in-memory cache TTL > 0)
@@ -961,7 +1034,21 @@ export const catalogService = {
           );
         }
 
-        // C) Targeted keyword searches if key contains tokens or hyphens
+        // C) Direct keyword search by key (matches product slug, SKU or code)
+        searchPromises.push(
+          apiClient(`/api/products/?search=${encodeURIComponent(key)}`, { silent: true, cacheTtl: CACHE_TTL_MS, staleWhileRevalidate: true })
+            .then(res => {
+              if (res.success && res.data) {
+                const raw = Array.isArray(res.data) ? res.data : (res.data.products || res.data.results || []);
+                const mapped = raw.map(mapApiProductToProductItem);
+                return mapped.find(matchesProduct) || null;
+              }
+              return null;
+            })
+            .catch(() => null)
+        );
+
+        // D) Targeted keyword searches if key contains tokens or hyphens
         const tokens = key.split(/[-_\s]+/).filter(Boolean);
         // If slug has model/part number at the end (e.g. '40206-01gx3')
         if (tokens.length >= 2) {

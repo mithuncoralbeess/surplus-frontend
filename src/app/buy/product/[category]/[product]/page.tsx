@@ -47,30 +47,37 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   try {
     const fetchedProduct = await catalogService.getProductById(productIdentifier, categoryIdentifier);
     if (fetchedProduct) {
-      const prodTitle = fetchedProduct.title || readableTitle;
+      const seo = fetchedProduct.seo;
+      const prodTitle = seo?.h1 || seo?.product_title || fetchedProduct.title || readableTitle;
       const prodCat = fetchedProduct.category || readableCategory;
-      return {
-        title: `${prodTitle} | ${prodCat} Wholesale on Surplus Market`,
-        description: fetchedProduct.description 
+      const metaTitle = seo?.meta_title || `${prodTitle} | ${prodCat} Wholesale on Surplus Market`;
+      const metaDescription = seo?.meta_description || seo?.short_description || (
+        fetchedProduct.description 
           ? fetchedProduct.description.slice(0, 160) 
-          : `Source ${prodTitle} in ${prodCat} at liquidation wholesale prices. Buyer protection, itemized manifest inspection, and direct dispatch.`,
+          : `Source ${prodTitle} in ${prodCat} at liquidation wholesale prices. Buyer protection, itemized manifest inspection, and direct dispatch.`
+      );
+      const canonicalPath = seo?.url
+        ? (seo.url.startsWith('http') ? seo.url : `https://www.surplusmarket.com${seo.url.startsWith('/') ? seo.url : `/${seo.url}`}`)
+        : `https://www.surplusmarket.com/buy/product/${category}/${product}`;
+
+      return {
+        title: metaTitle,
+        description: metaDescription,
         alternates: {
-          canonical: `https://www.surplusmarket.com/buy/product/${category}/${product}`,
+          canonical: canonicalPath,
         },
         openGraph: {
-          title: `${prodTitle} | ${prodCat} Wholesale on Surplus Market`,
-          description: fetchedProduct.description 
-            ? fetchedProduct.description.slice(0, 160) 
-            : `Source ${prodTitle} in ${prodCat} at liquidation wholesale prices.`,
-          url: `https://www.surplusmarket.com/buy/product/${category}/${product}`,
+          title: metaTitle,
+          description: metaDescription,
+          url: canonicalPath,
           siteName: 'Surplus Market',
           type: 'website',
           images: fetchedProduct.image ? [{ url: fetchedProduct.image }] : [],
         },
         twitter: {
           card: 'summary_large_image',
-          title: `${prodTitle} | ${prodCat} Wholesale on Surplus Market`,
-          description: fetchedProduct.description ? fetchedProduct.description.slice(0, 160) : undefined,
+          title: metaTitle,
+          description: metaDescription,
           images: fetchedProduct.image ? [fetchedProduct.image] : [],
         },
       };
