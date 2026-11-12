@@ -134,11 +134,7 @@ const JourneySection = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-auto pt-4">
-              <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-none mb-1">82 markets</div>
-                <div className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">AI-Ranked Verified Inventory</div>
-              </div>
+            <div className="flex justify-end mt-auto pt-4">
               <Link 
                 href="/browse"
                 className="w-full sm:w-auto justify-center bg-[#185545] hover:bg-[#0f3b2f] text-white px-6 sm:px-7 py-3 rounded-full font-bold text-sm sm:text-[15px] transition-colors flex items-center gap-2 shadow-md cursor-pointer"
@@ -185,11 +181,7 @@ const JourneySection = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-auto pt-4">
-              <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-none mb-1">$412M</div>
-                <div className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">Value Recovered For Sellers</div>
-              </div>
+            <div className="flex justify-end mt-auto pt-4">
               <Link 
                 href="/sell"
                 className="w-full sm:w-auto justify-center bg-[#185545] hover:bg-[#0f3b2f] text-white px-6 sm:px-7 py-3 rounded-full font-bold text-sm sm:text-[15px] transition-colors flex items-center gap-2 shadow-md cursor-pointer"

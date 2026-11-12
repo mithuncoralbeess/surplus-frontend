@@ -135,6 +135,16 @@ const listingFormSchema = z.object({
       return !isNaN(num) && num >= 1 && num <= 10000000;
     }, "Quantity must be between 1 and 10,000,000"),
 
+  moq: z.string()
+    .max(9, "MOQ exceeds allowable limit")
+    .refine(val => !val || /^[1-9]\d{0,7}$/.test(val), "Minimum Order Quantity must be a positive whole integer")
+    .refine(val => {
+      if (!val) return true;
+      const num = parseInt(val, 10);
+      return !isNaN(num) && num >= 1 && num <= 10000000;
+    }, "MOQ must be between 1 and 10,000,000")
+    .optional(),
+
   currency: z.string()
     .min(1, "Currency is required")
     .max(50, "Currency value too long")
@@ -376,7 +386,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
   const [formData, setFormData] = useState({
     productName: '', category: '-- Select Category --', subCategory: '', brandName: '', modelNo: '',
     country: '-- Select Country --', location: '', inventoryCity: '', year: '', dimensions: '', expiry: '',
-    quantity: '', currency: 'USD - US Dollar', liquidatingPrice: '', msrp: '', excludedCountries: [] as string[],
+    quantity: '', moq: '', currency: 'USD - US Dollar', liquidatingPrice: '', msrp: '', excludedCountries: [] as string[],
     description: '', reasonToSell: 'Surplus Inventory', warranty: 'No', hasWarranty: false, warrantyDocument: null as File | null,
     certificate: false, certificateDocument: null as File | null, imagesUploaded: false,
     images: [] as File[]
@@ -622,6 +632,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
           serializableData.brandName ||
           serializableData.modelNo ||
           serializableData.quantity ||
+          serializableData.moq ||
           serializableData.liquidatingPrice ||
           serializableData.msrp ||
           serializableData.description
@@ -684,7 +695,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
     setFormData({
       productName: '', category: '-- Select Category --', subCategory: '', brandName: '', modelNo: '',
       country: '-- Select Country --', location: '', inventoryCity: '', year: '', dimensions: '', expiry: '',
-      quantity: '', currency: 'USD - US Dollar', liquidatingPrice: '', msrp: '', excludedCountries: [],
+      quantity: '', moq: '', currency: 'USD - US Dollar', liquidatingPrice: '', msrp: '', excludedCountries: [],
       description: '', reasonToSell: 'Surplus Inventory', warranty: 'No', hasWarranty: false, warrantyDocument: null,
       certificate: false, certificateDocument: null, imagesUploaded: false,
       images: [] as File[]
@@ -704,6 +715,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
     formData.location ||
     (formData.country && formData.country !== '-- Select Country --') ||
     formData.quantity ||
+    formData.moq ||
     formData.liquidatingPrice ||
     formData.msrp ||
     formData.description
@@ -734,6 +746,15 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
           newErrors[err.path[0] as string] = err.message;
         }
       });
+    }
+
+    // Validate MOQ against available quantity
+    if (formData.moq && formData.quantity) {
+      const moqNum = parseInt(formData.moq, 10);
+      const qtyNum = parseInt(formData.quantity, 10);
+      if (!isNaN(moqNum) && !isNaN(qtyNum) && moqNum > qtyNum) {
+        newErrors.moq = `Minimum Order Quantity (${moqNum}) cannot exceed Available Quantity (${qtyNum})`;
+      }
     }
 
     // Additional strict check for pricing constraints
@@ -941,6 +962,13 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
 
       // Pricing & Quantity
       data.append('quantity', sanitizeInput(formData.quantity));
+      if (formData.moq && formData.moq.trim()) {
+        const sanitizedMoq = sanitizeInput(formData.moq.trim());
+        data.append('moq', sanitizedMoq);
+        data.append('min_order_quantity', sanitizedMoq);
+        data.append('minOrderQuantity', sanitizedMoq);
+        data.append('minimum_order_quantity', sanitizedMoq);
+      }
       data.append('currency', sanitizeInput(formData.currency.substring(0, 3)));
       data.append('liquidating_price', sanitizeInput(formData.liquidatingPrice));
       data.append('liquidation_price', sanitizeInput(formData.liquidatingPrice));
@@ -1317,11 +1345,17 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-xl">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-gray-50 rounded-xl">
                       <div>
                         <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Available Quantity</span>
                         <p className="text-xl font-extrabold text-gray-900">
                           {formData.quantity} <span className="text-sm font-normal text-gray-500">Units</span>
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Min. Order (MOQ)</span>
+                        <p className="text-xl font-extrabold text-gray-900">
+                          {formData.moq ? formData.moq : '1'} <span className="text-sm font-normal text-gray-500">Units</span>
                         </p>
                       </div>
                       <div>
@@ -1350,11 +1384,17 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm pt-2">
                       <div>
                         <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Total Liquidation Value</span>
                         <p className="font-bold text-gray-900 text-base">
                           {formData.currency.substring(0, 3)} {(parseFloat(formData.liquidatingPrice || '0') * parseFloat(formData.quantity || '0')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 text-xs uppercase font-bold block mb-1">Min. Order Commitment</span>
+                        <p className="font-bold text-[#0a5c48] text-base">
+                          {formData.currency.substring(0, 3)} {(parseFloat(formData.liquidatingPrice || '0') * parseFloat(formData.moq || '1')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div>
@@ -1853,6 +1893,23 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                         {renderError('quantity')}
                       </div>
 
+                      <div data-field="moq">
+                        <div className="flex items-center justify-between">
+                          <label className={labelClass}>Min. Order Quantity (MOQ)</label>
+                          <span className="text-[11px] text-gray-400 font-medium mb-1.5">Optional</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="1"
+                          max={formData.quantity ? formData.quantity : undefined}
+                          className={inputClass}
+                          placeholder="e.g. 10 (defaults to 1)"
+                          value={formData.moq}
+                          onChange={e => handleInputChange('moq', e.target.value)}
+                        />
+                        {renderError('moq')}
+                      </div>
+
                       <div data-field="currency">
                         <label className={labelClass}>Currency *</label>
                         <Select
@@ -1879,7 +1936,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                         {renderError('msrp')}
                       </div>
 
-                      <div data-field="liquidatingPrice">
+                      <div data-field="liquidatingPrice" className="md:col-span-2">
                         <label className={labelClass}>Liquidation Price (Per Unit) *</label>
                         <div className="relative flex items-center">
                           <input

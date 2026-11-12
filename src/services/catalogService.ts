@@ -150,6 +150,8 @@ export interface ProductRequestPayload {
   dimensions: string;
   expiry: string;
   quantity: string;
+  moq?: string | number;
+  min_order_quantity?: string | number;
   currency: string;
   liquidatingPrice: string;
   msrp?: string;
@@ -378,7 +380,7 @@ export function mapApiProductToProductItem(item: any, index: number): ProductIte
     previousPrice: previousPrice > 0 ? previousPrice : (msrpPrice > 0 ? msrpPrice : undefined),
     msrp: msrpPrice > 0 ? msrpPrice : undefined,
     currency: 'USD',
-    moq: Math.max(20, Number(item.moq || item.minimum_order_quantity || item.min_qty || 20)),
+    moq: Math.max(1, Number(item.moq ?? item.minimum_order_quantity ?? item.min_qty ?? 1)),
     estQty: Number(item.quantity || item.estQty || item.available_qty || item.stock || 100),
     quantity: Number(item.quantity || item.estQty || item.available_qty || item.stock || 100),
     image: primaryImage,

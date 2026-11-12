@@ -65,7 +65,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const [imageError, setImageError] = useState(false);
 
   const inCart = id ? isInCart(id) : false;
-  const effectiveMoq = Math.max(20, Number(moq || 20));
+  const effectiveMoq = Math.max(1, Number(moq || 1));
 
   const formatDropString = (raw?: string) => {
     if (!raw) return null;

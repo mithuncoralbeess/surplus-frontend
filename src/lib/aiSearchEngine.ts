@@ -747,7 +747,7 @@ export function mapBackendProductToAiItem(p: any): AiSearchResultItem {
     price: price,
     retailPrice: retailPrice,
     discountPercent: discountPercent,
-    moq: Math.max(20, Number(p.moq || p.minimum_order_quantity || 20)),
+    moq: Math.max(1, Number(p.moq || p.minimum_order_quantity || 1)),
     estQty: Number(p.quantity || p.estQty || p.available_qty || 1),
     location: resolvedLoc,
     country: resolvedCountry,
