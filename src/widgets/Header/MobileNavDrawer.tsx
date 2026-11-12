@@ -20,24 +20,16 @@ import {
   HelpCircle,
   Mail,
   FileQuestion,
-  Hammer,
-  Zap,
-  Wrench,
-  HardHat,
-  Drill,
-  Lamp,
-  Disc,
-  PenTool,
   Box,
   Package,
   Sparkles,
-  type LucideIcon
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useCart } from '../../context/CartContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { useAppSelector } from '../../store';
 import { performLogout } from '../../lib/authCleanup';
+import { getCategoryIconPath, DEFAULT_MEGAMENU_CATEGORIES } from '../../data/categoryIcons';
 
 interface MobileNavDrawerProps {
   isOpen: boolean;
@@ -45,33 +37,6 @@ interface MobileNavDrawerProps {
   session: any;
   openAuth: (mode: 'login' | 'register') => void;
 }
-
-const DEFAULT_CATEGORIES = [
-  { name: 'Building Materials', count: 227, icon: Hammer, slug: 'building-materials' },
-  { name: 'Electricals', count: 331, icon: Zap, slug: 'electricals' },
-  { name: 'Hand tools', count: 132, icon: Wrench, slug: 'hand-tools' },
-  { name: 'Chisels And Punches', count: 108, icon: PenTool, slug: 'chisels-and-punches' },
-  { name: 'PPE', count: 81, icon: HardHat, slug: 'ppe' },
-  { name: 'Power tools', count: 76, icon: Drill, slug: 'power-tools' },
-  { name: 'Decor', count: 76, icon: Lamp, slug: 'decor' },
-  { name: 'Abrasives', count: 30, icon: Disc, slug: 'abrasives' },
-];
-
-const ICON_MAP: Record<string, LucideIcon> = {
-  'building materials': Hammer,
-  'electricals': Zap,
-  'hand tools': Wrench,
-  'chisels and punches': PenTool,
-  'ppe': HardHat,
-  'power tools': Drill,
-  'decor': Lamp,
-  'abrasives': Disc,
-};
-
-const getCategoryIcon = (name: string) => {
-  const normalized = name.toLowerCase().trim();
-  return ICON_MAP[normalized] || Box;
-};
 
 export default function MobileNavDrawer({
   isOpen,
@@ -131,10 +96,10 @@ export default function MobileNavDrawer({
       count: (cat.subcategories?.length || cat.sub_categories?.length)
         ? `${cat.subcategories?.length || cat.sub_categories?.length} ${t('megamenu.subcategories', 'subcategories')}`
         : t('megamenu.itemsAvailable', 'Items available'),
-      icon: getCategoryIcon(cat.name),
+      icon: getCategoryIconPath(cat.slug || cat.name),
       slug: cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     }))
-    : DEFAULT_CATEGORIES.map((cat) => ({
+    : DEFAULT_MEGAMENU_CATEGORIES.map((cat) => ({
       id: cat.slug,
       name: cat.name,
       count: `${cat.count} ${t('megamenu.items', 'items')}`,
@@ -293,7 +258,6 @@ export default function MobileNavDrawer({
 
                   <div className="pt-2 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {displayCategories.slice(0, 6).map((cat) => {
-                      const Icon = cat.icon;
                       return (
                         <Link
                           key={cat.id}
@@ -301,8 +265,15 @@ export default function MobileNavDrawer({
                           onClick={onClose}
                           className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors text-left rtl:text-right"
                         >
-                          <div className="w-6 h-6 rounded-md bg-[#e6f7ef] text-[#0f7a61] flex items-center justify-center shrink-0">
-                            <Icon className="w-3.5 h-3.5" />
+                          <div className="w-6 h-6 rounded-md bg-[#e6f7ef] flex items-center justify-center shrink-0">
+                            <Image 
+                              src={cat.icon} 
+                              alt={cat.name} 
+                              width={16} 
+                              height={16} 
+                              className="w-4 h-4 object-contain" 
+                              unoptimized 
+                            />
                           </div>
                           <span className="text-[11px] font-semibold text-gray-800 truncate">
                             {tCategory(cat.name)}

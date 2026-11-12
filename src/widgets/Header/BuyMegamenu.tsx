@@ -2,54 +2,19 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
   ChevronDown, 
   ArrowRight,
-  Hammer, 
-  Zap, 
-  Wrench, 
-  PenTool, 
-  HardHat, 
-  Drill, 
-  Lamp, 
-  Disc,
   Sparkles,
-  Tag,
   Package,
   PlayCircle,
   Box,
-  type LucideIcon
 } from 'lucide-react';
 import { useAppSelector } from '../../store';
 import { useLanguage } from '../../context/LanguageContext';
-
-const DEFAULT_CATEGORIES = [
-  { name: 'Building Materials', count: 227, icon: Hammer },
-  { name: 'Electricals', count: 331, icon: Zap },
-  { name: 'Hand tools', count: 132, icon: Wrench },
-  { name: 'Chisels And Punches', count: 108, icon: PenTool },
-  { name: 'PPE', count: 81, icon: HardHat },
-  { name: 'Power tools', count: 76, icon: Drill },
-  { name: 'Decor', count: 76, icon: Lamp },
-  { name: 'Abrasives', count: 30, icon: Disc },
-];
-
-const ICON_MAP: Record<string, LucideIcon> = {
-  'building materials': Hammer,
-  'electricals': Zap,
-  'hand tools': Wrench,
-  'chisels and punches': PenTool,
-  'ppe': HardHat,
-  'power tools': Drill,
-  'decor': Lamp,
-  'abrasives': Disc,
-};
-
-const getCategoryIcon = (name: string) => {
-  const normalized = name.toLowerCase().trim();
-  return ICON_MAP[normalized] || Box;
-};
+import { getCategoryIconPath, DEFAULT_MEGAMENU_CATEGORIES } from '../../data/categoryIcons';
 
 const BuyMegamenu = () => {
   const pathname = usePathname();
@@ -67,20 +32,21 @@ const BuyMegamenu = () => {
   const isBuyActive = pathname === '/buy' || pathname.startsWith('/buy') || pathname === '/browse' || pathname.startsWith('/browse') || pathname === '/shop-by-category' || pathname.startsWith('/category');
 
   // Prepare display categories from Redux store or default fallback
+  // Note: Ignore backend images and always use the custom icons from /All Icons New/
   const displayCategories = categories && categories.length > 0
     ? categories.slice(0, 8).map((cat) => ({
         id: cat.id,
         name: cat.name,
         count: (cat.subcategories?.length || cat.sub_categories?.length) ? `${cat.subcategories?.length || cat.sub_categories?.length} ${t('megamenu.subcategories', 'subcategories')}` : t('megamenu.itemsAvailable', 'Items available'),
-        icon: getCategoryIcon(cat.name),
+        icon: getCategoryIconPath(cat.slug || cat.name),
         slug: cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       }))
-    : DEFAULT_CATEGORIES.map((cat) => ({
-        id: cat.name,
+    : DEFAULT_MEGAMENU_CATEGORIES.map((cat) => ({
+        id: cat.slug,
         name: cat.name,
         count: `${cat.count} ${t('megamenu.items', 'items')}`,
         icon: cat.icon,
-        slug: cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        slug: cat.slug,
       }));
 
   const dynamicFormats = [
@@ -175,7 +141,6 @@ const BuyMegamenu = () => {
 
             <div className="grid grid-cols-4 gap-4">
               {displayCategories.map((cat) => {
-                const Icon = cat.icon;
                 return (
                   <Link 
                     href={`/shop-by-category/${cat.slug}`} 
@@ -183,8 +148,15 @@ const BuyMegamenu = () => {
                     onClick={() => setIsOpen(false)}
                     className="flex flex-col items-center justify-center py-4 px-2 border border-gray-200 rounded-2xl hover:border-primary/40 hover:bg-primary-light/20 hover:-translate-y-0.5 hover:shadow-md transition-all group/card"
                   >
-                    <div className="w-10 h-10 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center mb-2 text-primary group-hover/card:scale-110 group-hover/card:bg-primary group-hover/card:text-white transition-all duration-300">
-                      <Icon className="w-5 h-5" strokeWidth={1.5} />
+                    <div className="w-10 h-10 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center mb-2 group-hover/card:scale-110 group-hover/card:bg-primary transition-all duration-300">
+                      <Image 
+                        src={cat.icon} 
+                        alt={cat.name} 
+                        width={24} 
+                        height={24} 
+                        className="w-6 h-6 object-contain transition-all duration-300 group-hover/card:brightness-0 group-hover/card:invert" 
+                        unoptimized
+                      />
                     </div>
                     <span className="text-xs font-bold text-gray-900 text-center w-full truncate px-1">
                       {tCategory(cat.name)}
