@@ -305,7 +305,7 @@ export default function LotDetailWidget({ lotId, initialLot }: LotDetailWidgetPr
               <>
                 <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
                 <Link 
-                  href={`/shop-by-category/${slugify(category)}`}
+                  href={`/buy/${slugify(category)}`}
                   className="hover:text-[#0f7a61] transition-colors shrink-0 font-medium"
                 >
                   {category}
@@ -335,7 +335,7 @@ export default function LotDetailWidget({ lotId, initialLot }: LotDetailWidgetPr
             { name: 'Home', url: '/' },
             { name: 'Buy', url: '/browse' },
             { name: 'Lot', url: '/buy/lot' },
-            ...(category ? [{ name: category, url: `/shop-by-category/${slugify(category)}` }] : []),
+            ...(category ? [{ name: category, url: `/buy/${slugify(category)}` }] : []),
             { name: title, url: `/buy/lot/${slugify(title || lotId)}` },
           ]}
         />

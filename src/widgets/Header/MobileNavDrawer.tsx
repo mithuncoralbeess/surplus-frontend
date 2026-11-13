@@ -261,7 +261,7 @@ export default function MobileNavDrawer({
                       return (
                         <Link
                           key={cat.id}
-                          href={`/shop-by-category/${cat.slug}`}
+                          href={`/buy/${cat.slug}`}
                           onClick={onClose}
                           className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors text-left rtl:text-right"
                         >

@@ -143,7 +143,7 @@ const BuyMegamenu = () => {
               {displayCategories.map((cat) => {
                 return (
                   <Link 
-                    href={`/shop-by-category/${cat.slug}`} 
+                    href={`/buy/${cat.slug}`} 
                     key={cat.id} 
                     onClick={() => setIsOpen(false)}
                     className="flex flex-col items-center justify-center py-4 px-2 border border-gray-200 rounded-2xl hover:border-primary/40 hover:bg-primary-light/20 hover:-translate-y-0.5 hover:shadow-md transition-all group/card"

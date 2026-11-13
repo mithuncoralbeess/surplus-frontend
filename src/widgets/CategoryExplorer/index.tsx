@@ -211,7 +211,7 @@ export default function CategoryExplorer() {
             {TOP_SEO_CATEGORIES.map((cat) => (
               <Link
                 key={cat.slug}
-                href={`/shop-by-category/${cat.slug}`}
+                href={`/buy/${cat.slug}`}
                 className="px-3 py-1 rounded-full bg-white/10 hover:bg-emerald-400/20 text-emerald-100 hover:text-white border border-white/15 hover:border-emerald-300/40 transition-all font-medium cursor-pointer"
               >
                 {cat.name}
@@ -299,7 +299,7 @@ export default function CategoryExplorer() {
                 const colorClass = BG_COLORS[idx % BG_COLORS.length];
                 const subs = cat.displaySubs || [];
                 const catSlug = cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-                const categoryUrl = `/shop-by-category/${catSlug}`;
+                const categoryUrl = `/buy/${catSlug}`;
 
                 return (
                   <div

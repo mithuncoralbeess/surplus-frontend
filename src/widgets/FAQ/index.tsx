@@ -20,7 +20,7 @@ export const FAQ_DATA = [
   },
   {
     question: "How is shipping and logistics handled?",
-    answer: "You can choose to handle logistics independently or leverage our integrated freight partners for discounted, fully-tracked LTL and FTL shipping across 82 global markets."
+    answer: "You can choose to handle logistics independently or leverage our integrated freight partners for discounted, fully-tracked LTL and FTL shipping across regional and global markets."
   },
   {
     question: "How long does it take for a listing to go live?",

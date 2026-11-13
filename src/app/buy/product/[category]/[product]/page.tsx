@@ -1,8 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import ProductDetailWidget from '../../../../../widgets/ProductDetailWidget';
-import { getPageMetadata } from '../../../../../services/pageSeoService';
 import { catalogService } from '../../../../../services/catalogService';
 
 export const revalidate = 60;
@@ -24,16 +23,18 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const decodedCategory = categoryIdentifier.replace(/-/g, ' ');
   const readableCategory = decodedCategory.replace(/\b\w/g, (c) => c.toUpperCase());
 
+  const fallbackCanonical = `https://www.surplusmarket.com/buy/product/${categoryIdentifier}/${productIdentifier}`;
+
   const fallbackMetadata: Metadata = {
     title: `${readableTitle} | ${readableCategory} Wholesale on Surplus Market`,
     description: `Source ${readableTitle} in ${readableCategory} at liquidation wholesale prices. Buyer protection, itemized manifest inspection, and direct dispatch.`,
     alternates: {
-      canonical: `https://www.surplusmarket.com/buy/product/${category}/${product}`,
+      canonical: fallbackCanonical,
     },
     openGraph: {
       title: `${readableTitle} | ${readableCategory} Wholesale on Surplus Market`,
       description: `Source ${readableTitle} in ${readableCategory} at liquidation wholesale prices.`,
-      url: `https://www.surplusmarket.com/buy/product/${category}/${product}`,
+      url: fallbackCanonical,
       siteName: 'Surplus Market',
       type: 'website',
     },
@@ -58,7 +59,7 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
       );
       const canonicalPath = seo?.url
         ? (seo.url.startsWith('http') ? seo.url : `https://www.surplusmarket.com${seo.url.startsWith('/') ? seo.url : `/${seo.url}`}`)
-        : `https://www.surplusmarket.com/buy/product/${category}/${product}`;
+        : fallbackCanonical;
 
       return {
         title: metaTitle,
@@ -102,6 +103,18 @@ export default async function ProductDetailPage(props: PageProps) {
     notFound();
   }
 
+  // Canonical URL Enforcement:
+  // If the user or crawler visits an old slug (e.g. before model number/brand was appended),
+  // permanently 308 redirect to the exact canonical URL to avoid duplicate indexing.
+  const canonicalUrl = initialProduct.seo?.url 
+    ? (initialProduct.seo.url.startsWith('/') ? initialProduct.seo.url : `/${initialProduct.seo.url}`)
+    : `/buy/product/${categoryIdentifier}/${productIdentifier}`;
+
+  const currentPath = `/buy/product/${categoryIdentifier}/${productIdentifier}`;
+  if (canonicalUrl && currentPath !== canonicalUrl) {
+    permanentRedirect(canonicalUrl);
+  }
+
   return (
     <main className="min-h-screen bg-[#fdfcf9] flex flex-col w-full">
       <ProductDetailWidget 
@@ -112,4 +125,3 @@ export default async function ProductDetailPage(props: PageProps) {
     </main>
   );
 }
-

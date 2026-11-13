@@ -69,8 +69,7 @@ export async function fetchPageData(slug: string): Promise<PageResponseData | nu
     slug.startsWith('product-') ||
     slug.startsWith('lot-') ||
     slug.startsWith('category-') ||
-    slug.startsWith('buy/product') ||
-    slug.startsWith('buy/lot') ||
+    slug.startsWith('buy/') ||
     slug.startsWith('shop-by-category')
   ) {
     return null;

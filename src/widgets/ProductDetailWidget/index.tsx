@@ -356,7 +356,7 @@ export default function ProductDetailWidget({ productId, category, initialProduc
               <>
                 <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />
                 <Link 
-                  href={`/shop-by-category/${slugify(product.category)}`}
+                  href={`/buy/${slugify(product.category)}`}
                   className="hover:text-[#0f7a61] transition-colors shrink-0 font-medium truncate max-w-[140px] sm:max-w-[200px]"
                 >
                   {product.category}
@@ -386,7 +386,7 @@ export default function ProductDetailWidget({ productId, category, initialProduc
             { name: 'Home', url: '/' },
             { name: 'Buy', url: '/browse' },
             { name: 'Product', url: '/buy/product' },
-            ...(product.category ? [{ name: product.category, url: `/shop-by-category/${slugify(product.category)}` }] : []),
+            ...(product.category ? [{ name: product.category, url: `/buy/${slugify(product.category)}` }] : []),
             { name: displayTitle, url: canonicalUrl },
           ]}
         />
@@ -992,7 +992,7 @@ export default function ProductDetailWidget({ productId, category, initialProduc
                 </p>
               </div>
               <Link 
-                href={`/shop-by-category/${slugify(product.category)}`}
+                href={`/buy/${slugify(product.category)}`}
                 className="text-xs sm:text-sm font-extrabold text-[#0f7a61] hover:text-[#0c6651] flex items-center gap-1"
               >
                 <span>View All In Category</span>

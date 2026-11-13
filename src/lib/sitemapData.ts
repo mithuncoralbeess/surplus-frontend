@@ -210,7 +210,7 @@ export async function getStaticRoutes(baseUrl: string = getBaseUrl()): Promise<S
 
   for (const slug of commonCategories) {
     routes.push({
-      url: `${baseUrl}/shop-by-category/${slug}`,
+      url: `${baseUrl}/buy/${slug}`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.7,
@@ -299,8 +299,12 @@ export async function getProductRoutes(baseUrl: string = getBaseUrl()): Promise<
       for (const p of products) {
         if (!p?.id) continue;
         const lastMod = p.createdAt ? new Date(p.createdAt) : new Date();
+        const rawProductUrl = p.seo?.url || (p as any)?.url;
+        const productUrl = rawProductUrl
+          ? (rawProductUrl.startsWith('/') ? rawProductUrl : `/${rawProductUrl}`)
+          : createProductUrl(p.category, p.title || p.sku || p.id, p.id);
         routes.push({
-          url: `${baseUrl}${createProductUrl(p.category, p.title || p.sku || p.id, p.id)}`,
+          url: `${baseUrl}${productUrl}`,
           lastModified: isNaN(lastMod.getTime()) ? new Date() : lastMod,
           changeFrequency: 'daily',
           priority: 0.8,

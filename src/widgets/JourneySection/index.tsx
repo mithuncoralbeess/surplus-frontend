@@ -10,7 +10,7 @@ const BUYER_STEPS = [
   {
     icon: <Search className="w-4 h-4 text-white" />,
     title: "Search inventory",
-    desc: "AI-ranked results across 82 markets and 14 currencies."
+    desc: "AI-ranked results across global markets and currencies."
   },
   {
     icon: <ShieldCheck className="w-4 h-4 text-white" />,
@@ -63,7 +63,7 @@ const SELLER_STEPS = [
   {
     icon: <Globe className="w-4 h-4 text-white" />,
     title: "Listing goes live",
-    desc: "Distributed to verified buyers across 82 markets."
+    desc: "Distributed to verified buyers across global markets."
   },
   {
     icon: <DollarSign className="w-4 h-4 text-white" />,

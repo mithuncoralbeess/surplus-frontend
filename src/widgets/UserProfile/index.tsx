@@ -2718,7 +2718,7 @@ export default function UserProfileWidget() {
                             </div>
                           </div>
                           <Link
-                            href={item.type === 'lot' ? createLotUrl(item.title || item.id, item.id) : createProductUrl(item.category, item.title || item.id, item.id)}
+                            href={item.type === 'lot' ? createLotUrl(item.title || item.id, item.id) : ((item as any)?.seo?.url || (item as any)?.url || createProductUrl(item.category, item.title || item.id, item.id, (item as any)?.seo?.url))}
                             className="btn btn-secondary !py-2 !px-3 !text-xs rounded-full flex items-center gap-1"
                           >
                             View Item <ExternalLink className="w-3 h-3" />
@@ -2780,7 +2780,7 @@ export default function UserProfileWidget() {
                             <span className="font-extrabold text-sm text-[#0f7a61]">{formatPrice(item.priceUsd)}</span>
                             <div className="flex items-center gap-2">
                               <Link 
-                                href={item.type === 'lot' ? createLotUrl(item.title || item.id, item.id) : createProductUrl(item.category, item.title || item.id, item.id)} 
+                                href={item.type === 'lot' ? createLotUrl(item.title || item.id, item.id) : ((item as any)?.seo?.url || (item as any)?.url || createProductUrl(item.category, item.title || item.id, item.id, (item as any)?.seo?.url))} 
                                 className="text-xs font-semibold text-[#0f7a61] hover:underline"
                               >
                                 View Deal

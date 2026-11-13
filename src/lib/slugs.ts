@@ -16,9 +16,14 @@ export function slugify(text: string | number | undefined | null): string {
 export function createProductUrl(
   category: string | undefined | null,
   titleOrSku: string | number | undefined | null,
-  fallbackId?: string | number | undefined | null
+  fallbackId?: string | number | undefined | null,
+  seoUrl?: string | null
 ): string {
-  const catSlug = slugify(category) || 'general';
+  if (seoUrl && typeof seoUrl === 'string' && seoUrl.trim()) {
+    const trimmed = seoUrl.trim();
+    return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  }
+  const catSlug = slugify(category) || 'products';
   let prodSlug = slugify(titleOrSku);
   if (!prodSlug && fallbackId) {
     prodSlug = slugify(fallbackId);
