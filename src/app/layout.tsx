@@ -26,6 +26,8 @@ const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.surplusmarket.
   .replace(/\/$/, '')
   .replace(/^https?:\/\/surplusmarket\.com/i, 'https://www.surplusmarket.com');
 
+const isDevSite = siteUrl.includes('dev.surplusmarket.com');
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
@@ -77,17 +79,28 @@ export const metadata: Metadata = {
     description: "Buy and sell verified surplus inventory, wholesale liquidation lots, and excess equipment globally.",
     images: ["/hero-warehouse.jpg"],
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
+  robots: isDevSite
+    ? {
+        index: false,
+        follow: false,
+        nocache: true,
+        googleBot: {
+          index: false,
+          follow: false,
+          noimageindex: true,
+        },
+      }
+    : {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          "max-video-preview": -1,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+        },
+      },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

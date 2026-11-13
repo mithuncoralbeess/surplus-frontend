@@ -23,6 +23,18 @@ const standardDisallow = [
 
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = getBaseUrl();
+  const isDev = baseUrl.includes('dev.surplusmarket.com') || (process.env.NEXT_PUBLIC_SITE_URL || '').includes('dev.surplusmarket.com');
+
+  if (isDev) {
+    return {
+      rules: [
+        {
+          userAgent: '*',
+          disallow: '/',
+        },
+      ],
+    };
+  }
 
   return {
     rules: [

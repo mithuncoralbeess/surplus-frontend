@@ -14,9 +14,12 @@ export interface SitemapEntry {
  */
 export function getBaseUrl(): string {
   let url = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.surplusmarket.com').trim().replace(/\/$/, '');
+  if (url.includes('dev.surplusmarket.com')) {
+    return 'https://dev.surplusmarket.com';
+  }
   if (url === 'https://surplusmarket.com' || url === 'http://surplusmarket.com') {
     url = 'https://www.surplusmarket.com';
-  } else if (url.includes('surplusmarket.com') && !url.includes('www.')) {
+  } else if (url.includes('surplusmarket.com') && !url.includes('www.') && !url.includes('dev.')) {
     url = url.replace('surplusmarket.com', 'www.surplusmarket.com');
   }
   return url;
