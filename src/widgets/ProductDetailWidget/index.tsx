@@ -337,7 +337,7 @@ export default function ProductDetailWidget({ productId, category, initialProduc
   const displayDrop = formatDropString(product.offer) || (discountPercent > 0 ? `${discountPercent}% DROP` : null);
 
   const displayTitle = product.seo?.h1 || product.seo?.product_title || product.title;
-  const displayDescription = product.seo?.product_description || product.description || product.seo?.short_description || '';
+  const displayDescription = product.description || product.seo?.product_description || product.seo?.short_description || '';
   const canonicalUrl = product.seo?.url || `/buy/product/${encodeURIComponent(category || product.category || 'all')}/${encodeURIComponent(productId)}`;
 
   return (
