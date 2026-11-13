@@ -1,6 +1,26 @@
 import type { MetadataRoute } from 'next';
 import { getBaseUrl } from '../lib/sitemapData';
 
+const standardAllow = [
+  '/',
+  '/api/products/',
+  '/api/products/*',
+  '/api/lots/',
+  '/api/lots/*',
+  '/api/categories/',
+  '/api/categories/*',
+  '/api/auth/session',
+];
+
+const standardDisallow = [
+  '/api/',
+  '/profile/',
+  '/cart/',
+  '/auth/',
+  '/admin/',
+  '/maintenance/',
+];
+
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = getBaseUrl();
 
@@ -8,26 +28,10 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: [
-          '/',
-          '/api/products/',
-          '/api/products/*',
-          '/api/lots/',
-          '/api/lots/*',
-          '/api/categories/',
-          '/api/categories/*',
-          '/api/auth/session',
-        ],
-        disallow: [
-          '/api/',
-          '/profile/',
-          '/cart/',
-          '/auth/',
-          '/admin/',
-          '/maintenance/',
-        ],
+        allow: standardAllow,
+        disallow: standardDisallow,
       },
-      // Block known aggressive AI scrapers and heavy bot crawlers
+      // Allowed AI crawlers, search bots, and SEO audit tools
       {
         userAgent: [
           'Bytespider',
@@ -46,49 +50,18 @@ export default function robots(): MetadataRoute.Robots {
           'DataForSeoBot',
           'Scrapy',
         ],
-        disallow: '/',
+        allow: standardAllow,
+        disallow: standardDisallow,
       },
       {
         userAgent: 'Googlebot',
-        allow: [
-          '/',
-          '/api/products/',
-          '/api/products/*',
-          '/api/lots/',
-          '/api/lots/*',
-          '/api/categories/',
-          '/api/categories/*',
-          '/api/auth/session',
-        ],
-        disallow: [
-          '/api/',
-          '/profile/',
-          '/cart/',
-          '/auth/',
-          '/admin/',
-          '/maintenance/',
-        ],
+        allow: standardAllow,
+        disallow: standardDisallow,
       },
       {
         userAgent: 'Bingbot',
-        allow: [
-          '/',
-          '/api/products/',
-          '/api/products/*',
-          '/api/lots/',
-          '/api/lots/*',
-          '/api/categories/',
-          '/api/categories/*',
-          '/api/auth/session',
-        ],
-        disallow: [
-          '/api/',
-          '/profile/',
-          '/cart/',
-          '/auth/',
-          '/admin/',
-          '/maintenance/',
-        ],
+        allow: standardAllow,
+        disallow: standardDisallow,
       },
     ],
     sitemap: [

@@ -14,7 +14,6 @@ import {
   BookOpen, 
   ChevronRight,
   User,
-  Calendar,
   Globe,
   Plus,
   Minus,
@@ -93,14 +92,17 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
           >
             <div className="flex items-center gap-3 text-xs font-bold text-[#0a5c48] uppercase tracking-wider mb-4">
               <span className="bg-[#e0f0e9] px-3 py-1 rounded-full" itemProp="articleSection">{post.category}</span>
-              <span>•</span>
-              <time className="text-gray-500 font-medium flex items-center gap-1" itemProp="datePublished" dateTime={post.publishedAt}>
-                <Calendar className="w-3.5 h-3.5" /> {post.publishedAt}
-              </time>
-              <span>•</span>
-              <span className="text-gray-500 font-medium flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" /> {post.readTime}
-              </span>
+              {post.publishedAt && (
+                <meta itemProp="datePublished" content={post.publishedAt} />
+              )}
+              {post.readTime && (
+                <>
+                  <span>•</span>
+                  <span className="text-gray-500 font-medium flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> {post.readTime.includes('min') ? post.readTime : `${post.readTime} min read`}
+                  </span>
+                </>
+              )}
             </div>
 
             <h1 

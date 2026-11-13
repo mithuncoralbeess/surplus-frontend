@@ -253,7 +253,7 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
                     )}
                     <div>
                       <span className="block text-sm font-bold text-gray-900">{featuredPost.author.name}</span>
-                      <span className="block text-xs text-gray-500">{featuredPost.publishedAt}</span>
+                      <span className="block text-xs text-gray-500">{featuredPost.author.role || 'Supply Chain Specialist'}</span>
                     </div>
                   </div>
 
@@ -353,10 +353,8 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
                     {/* Card Body */}
                     <div className="p-5 sm:p-6 pb-2">
                       <div className="flex items-center gap-2 text-xs text-gray-500 font-medium mb-2">
-                        <span>{post.publishedAt}</span>
-                        <span>•</span>
                         <span className="flex items-center gap-1 text-gray-500">
-                          <Clock className="w-3.5 h-3.5" /> {post.readTime}
+                          <Clock className="w-3.5 h-3.5" /> {post.readTime?.includes('min') ? post.readTime : `${post.readTime || '5'} min read`}
                         </span>
                       </div>
 
