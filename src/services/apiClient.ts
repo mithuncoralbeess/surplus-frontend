@@ -394,7 +394,14 @@ export async function apiClient<T = any>(
           (Array.isArray(cachedData.lots) && cachedData.lots.length === 0) ||
           (Array.isArray(cachedData.results) && cachedData.results.length === 0));
 
-      if (isEmptyCatalogCache) {
+      const isBlogDetailEndpoint = endpoint.includes('/api/blogs/') && !endpoint.includes('?page=');
+      const isEmptyBlogCache =
+        isBlogDetailEndpoint &&
+        cachedData &&
+        !cachedData.content &&
+        !cachedData.blog?.content;
+
+      if (isEmptyCatalogCache || isEmptyBlogCache) {
         memoryCache.delete(cacheKey);
         if (allowPersistence && typeof window !== 'undefined') {
           try {

@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
   ShoppingBag, Trash2, Plus, Minus, ArrowRight, ShieldCheck, 
   Send, CheckCircle2, ChevronRight, Package, AlertCircle, 
   Truck, Building2, User, Mail, Phone, Globe, FileText, Check,
-  RefreshCw, DollarSign, Download, Printer, Sparkles
+  RefreshCw, DollarSign, Download, Printer, Sparkles, MapPin, X, Lock, ChevronDown
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useCart, CartItem } from '../../context/CartContext';
@@ -16,6 +16,7 @@ import { inquiryService } from '../../services/inquiryService';
 import { authService } from '../../services/authService';
 import AuthModal from '../../components/AuthModal';
 import { scrollToTop } from '../../lib/scroll';
+import { getGlobalCountries, searchRealLocation, RealLocationSuggestion } from '../../services/locationService';
 
 
 
@@ -122,12 +123,76 @@ export default function CartWidget() {
   const [contactPerson, setContactPerson] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [country, setCountry] = useState('United Arab Emirates');
+  const [country, setCountry] = useState('');
   const [destinationPort, setDestinationPort] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
 
+  // Location Autocomplete State
+  const [locationSuggestions, setLocationSuggestions] = useState<RealLocationSuggestion[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const locationSearchRef = useRef<HTMLDivElement>(null);
+  const locationDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const globalCountries = useMemo(() => getGlobalCountries(), []);
+
   // Track if user has manually edited any fields so we don't overwrite manual inputs
   const editedFieldsRef = useRef<Set<string>>(new Set());
+
+  // Close location autocomplete dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (locationSearchRef.current && !locationSearchRef.current.contains(e.target as Node)) {
+        setShowLocationSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (locationDebounceTimer.current) clearTimeout(locationDebounceTimer.current);
+    };
+  }, []);
+
+  const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    editedFieldsRef.current.add('destinationPort');
+    setDestinationPort(val);
+
+    if (locationDebounceTimer.current) {
+      clearTimeout(locationDebounceTimer.current);
+    }
+
+    if (!val || val.trim().length < 2) {
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
+      setIsSearchingLocation(false);
+      return;
+    }
+
+    setIsSearchingLocation(true);
+    setShowLocationSuggestions(true);
+    locationDebounceTimer.current = setTimeout(async () => {
+      try {
+        const results = await searchRealLocation(val, country || undefined);
+        setLocationSuggestions(results);
+        setShowLocationSuggestions(true);
+      } catch (err) {
+        console.warn('Real location search error:', err);
+      } finally {
+        setIsSearchingLocation(false);
+      }
+    }, 250);
+  };
+
+  const handleSelectLocationSuggestion = (item: RealLocationSuggestion) => {
+    editedFieldsRef.current.add('destinationPort');
+    setDestinationPort(item.displayName);
+    if (!country && item.country) {
+      editedFieldsRef.current.add('country');
+      setCountry(item.country);
+    }
+    setShowLocationSuggestions(false);
+  };
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,18 +228,6 @@ export default function CartWidget() {
         if (ph) setPhone(ph);
       }
 
-      const loc = u.business_location || u.location || u.country || u.business_address || u.address || '';
-      if (loc || u.country) {
-        if (!editedFieldsRef.current.has('country')) {
-          const matchedCountry = u.country ? (matchCountry(u.country) || u.country) : matchCountry(loc);
-          if (matchedCountry) setCountry(matchedCountry);
-        }
-        if (!editedFieldsRef.current.has('destinationPort')) {
-          const city = u.business_location ? extractPortOrCity(u.business_location) : extractPortOrCity(loc);
-          if (city) setDestinationPort(city);
-        }
-      }
-
       // Proactively synchronize with real-time backend profile to fetch full details
       if (u.email) {
         authService.getProfile(u.email).then((res) => {
@@ -192,17 +245,6 @@ export default function CartWidget() {
               const ph = vData.phone || vData.mobile_number || vData.mobile || vData.phone_number;
               if (ph) setPhone(ph);
             }
-            const freshLoc = vData.business_location || vData.location || vData.country || vData.business_address || vData.address || '';
-            if (freshLoc || vData.country) {
-              if (!editedFieldsRef.current.has('country')) {
-                const matchedCountry = vData.country ? (matchCountry(vData.country) || vData.country) : matchCountry(freshLoc);
-                if (matchedCountry) setCountry(matchedCountry);
-              }
-              if (!editedFieldsRef.current.has('destinationPort')) {
-                const city = vData.business_location ? extractPortOrCity(vData.business_location) : extractPortOrCity(freshLoc);
-                if (city) setDestinationPort(city);
-              }
-            }
           }
         }).catch(() => {});
       }
@@ -213,8 +255,19 @@ export default function CartWidget() {
     e.preventDefault();
     if (items.length === 0) return;
 
-    if (!email || !contactPerson) {
+    if (!session?.user) {
+      setSubmitError('Please log in or register before submitting an RFQ.');
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    if (!contactPerson.trim() || !email.trim()) {
       setSubmitError('Please fill in your contact person name and email address.');
+      return;
+    }
+
+    if (!country.trim()) {
+      setSubmitError('Please select a destination country.');
       return;
     }
 
@@ -748,17 +801,20 @@ export default function CartWidget() {
                 </span>
               </div>
             ) : status !== 'loading' ? (
-              <div className="flex items-center justify-between p-3 mb-4 bg-amber-50/80 border border-amber-200/60 rounded-2xl text-xs">
-                <div className="flex items-center gap-2 text-amber-900">
-                  <User className="w-4 h-4 text-amber-700 shrink-0" />
-                  <span className="text-[11px] leading-tight text-amber-800 font-medium">
-                    Sign in to auto-fill your company and contact details
-                  </span>
+              <div className="flex items-center justify-between p-3.5 mb-4 bg-amber-50 border border-amber-200/80 rounded-2xl text-xs">
+                <div className="flex items-center gap-2.5 text-amber-900">
+                  <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                    <Lock className="w-4 h-4 text-amber-700" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-amber-900 leading-tight">Login Required to Submit RFQ</p>
+                    <p className="text-[11px] text-amber-700 leading-tight mt-0.5">Please sign in or register to send your RFQ enquiry.</p>
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsAuthModalOpen(true)}
-                  className="text-[11px] font-bold text-[#0f7a61] hover:underline cursor-pointer shrink-0 ml-2"
+                  className="text-xs font-bold text-white bg-[#0f7a61] hover:bg-[#0c6651] px-3.5 py-1.5 rounded-xl cursor-pointer shrink-0 transition-colors shadow-xs"
                 >
                   Sign In
                 </button>
@@ -854,47 +910,125 @@ export default function CartWidget() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Destination Country
+                    Destination Country *
                   </label>
-                  <select
-                    value={country}
-                    onChange={(e) => {
-                      editedFieldsRef.current.add('country');
-                      setCountry(e.target.value);
-                    }}
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-[#0f7a61]"
-                  >
-                    <option value="United Arab Emirates">United Arab Emirates</option>
-                    <option value="Saudi Arabia">Saudi Arabia</option>
-                    <option value="Qatar">Qatar</option>
-                    <option value="Kuwait">Kuwait</option>
-                    <option value="Oman">Oman</option>
-                    <option value="Bahrain">Bahrain</option>
-                    <option value="India">India</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="United States">United States</option>
-                    <option value="Other">Other Global Port</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      required
+                      value={country}
+                      onChange={(e) => {
+                        editedFieldsRef.current.add('country');
+                        setCountry(e.target.value);
+                      }}
+                      className={`w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:border-[#0f7a61] outline-none appearance-none pr-8 cursor-pointer ${
+                        !country ? 'text-gray-400 font-normal' : 'text-gray-900'
+                      }`}
+                    >
+                      <option value="" className="text-gray-400 font-normal">Select Destination Country</option>
+                      {country && !globalCountries.some(c => c.value === country || c.label === country) && (
+                        <option value={country} className="text-gray-900 font-semibold">{country}</option>
+                      )}
+                      {globalCountries.map((c) => (
+                        <option key={c.value} value={c.value} className="text-gray-900 font-semibold">
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
                 </div>
 
-                <div>
+                <div className={`relative ${showLocationSuggestions ? 'z-30' : ''}`} ref={locationSearchRef}>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Port / City
+                    Location
                   </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Jebel Ali / Dammam"
-                    value={destinationPort}
-                    onChange={(e) => {
-                      editedFieldsRef.current.add('destinationPort');
-                      setDestinationPort(e.target.value);
-                    }}
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-[#0f7a61]"
-                  />
+                  <div className="relative">
+                    <MapPin className="w-4 h-4 text-gray-400 absolute left-3 top-3 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder={country ? `Search location in ${country}...` : "e.g. Dubai, Jebel Ali, London..."}
+                      value={destinationPort}
+                      onChange={handleLocationInputChange}
+                      onFocus={() => {
+                        if (locationSuggestions.length > 0 || isSearchingLocation) {
+                          setShowLocationSuggestions(true);
+                        }
+                      }}
+                      className="w-full pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 focus:bg-white focus:border-[#0f7a61] outline-none"
+                    />
+                    {isSearchingLocation ? (
+                      <div className="w-3.5 h-3.5 border-2 border-[#0f7a61] border-t-transparent rounded-full animate-spin absolute right-3 top-3"></div>
+                    ) : destinationPort ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          editedFieldsRef.current.add('destinationPort');
+                          setDestinationPort('');
+                          setLocationSuggestions([]);
+                          setShowLocationSuggestions(false);
+                        }}
+                        className="text-gray-400 hover:text-gray-600 absolute right-2.5 top-2.5 p-0.5 cursor-pointer"
+                        title="Clear location"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {/* Real Location Autocomplete Floating Dropdown */}
+                  {showLocationSuggestions && (
+                    <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-56 overflow-y-auto">
+                      <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center justify-between">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-[#0f7a61]" />
+                          Location Suggestions
+                        </span>
+                        {country && (
+                          <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded text-[9px] truncate max-w-[120px]">
+                            {country}
+                          </span>
+                        )}
+                      </div>
+
+                      {isSearchingLocation && locationSuggestions.length === 0 ? (
+                        <div className="p-3 text-center text-xs text-gray-500 flex items-center justify-center gap-2">
+                          <div className="w-3.5 h-3.5 border-2 border-[#0f7a61] border-t-transparent rounded-full animate-spin"></div>
+                          <span>Searching locations...</span>
+                        </div>
+                      ) : locationSuggestions.length > 0 ? (
+                        locationSuggestions.map((item, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            className="w-full text-left px-3 py-2 hover:bg-emerald-50/70 border-b border-gray-50 last:border-b-0 flex items-start gap-2 transition-colors cursor-pointer group"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleSelectLocationSuggestion(item);
+                            }}
+                            onClick={() => handleSelectLocationSuggestion(item)}
+                          >
+                            <div className="w-5 h-5 rounded-full bg-emerald-100/70 group-hover:bg-[#0f7a61] flex items-center justify-center shrink-0 mt-0.5 transition-colors">
+                              <MapPin className="w-3 h-3 text-[#0f7a61] group-hover:text-white transition-colors" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold text-gray-900 group-hover:text-[#0f7a61] truncate">
+                                {item.shortName}
+                              </p>
+                              <p className="text-[10px] text-gray-500 truncate mt-0.5">
+                                {item.displayName}
+                              </p>
+                            </div>
+                          </button>
+                        ))
+                      ) : !isSearchingLocation && destinationPort.trim().length >= 2 ? (
+                        <div className="p-3 text-center text-[11px] text-gray-500">
+                          No matches found. You can keep &quot;{destinationPort}&quot; as custom location.
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               </div>
-
-
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
@@ -909,23 +1043,34 @@ export default function CartWidget() {
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3.5 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full font-bold text-xs uppercase tracking-wider transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Submitting RFQ...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    <span>Submit Consolidated RFQ</span>
-                  </>
-                )}
-              </button>
+              {!session?.user ? (
+                <button
+                  type="button"
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="w-full py-3.5 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full font-bold text-xs uppercase tracking-wider transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span>Log In to Submit RFQ</span>
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-3.5 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-full font-bold text-xs uppercase tracking-wider transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Submitting RFQ...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Submit Consolidated RFQ</span>
+                    </>
+                  )}
+                </button>
+              )}
 
               <p className="text-[10px] text-gray-400 text-center leading-tight">
                 By submitting, your enquiry is transmitted under Surplus Marketplace B2B Buyer Terms. Quotes are binding once accepted.

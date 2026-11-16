@@ -42,6 +42,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
 
   // Fix image URLs & strip raw FAQ text from main article HTML body
   const cleanContent = stripFaqFromContent(fixContentImageUrls(post.content || ''));
+  const articleContent = cleanContent || post.content || '';
 
   const toggleFaq = (idx: number) => {
     setOpenFaqIndex(openFaqIndex === idx ? null : idx);
@@ -204,25 +205,27 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
         )}
 
         {/* Main Body Article Content */}
-        <div 
-          itemProp="articleBody"
-          suppressHydrationWarning
-          className="max-w-none text-gray-800 mb-16 space-y-6
-            [&_h1]:text-[28px] [&_h1]:font-bold [&_h1]:text-gray-900 [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:leading-snug [&>h1:first-child]:hidden
-            [&_h2]:text-[25px] [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:leading-snug
-            [&_h3]:text-[25px] [&_h3]:font-bold [&_h3]:text-gray-900 [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:leading-snug
-            [&_h4]:text-[25px] [&_h4]:font-bold [&_h4]:text-gray-900 [&_h4]:mt-6 [&_h4]:mb-3 [&_h4]:leading-snug
-            [&_h5]:text-[25px] [&_h5]:font-bold [&_h5]:text-gray-900 [&_h5]:mt-4 [&_h5]:mb-2 [&_h5]:leading-snug
-            [&_h6]:text-[25px] [&_h6]:font-bold [&_h6]:text-gray-900 [&_h6]:mt-4 [&_h6]:mb-2 [&_h6]:leading-snug
-            [&_p]:text-[16px] [&_p]:text-gray-700 [&_p]:leading-relaxed [&_p]:mb-5
-            [&_a]:text-[16px] [&_a]:text-[#0a5c48] [&_a]:font-semibold [&_a]:underline [&_a]:hover:text-[#084838]
-            [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-6 [&_ul]:space-y-2
-            [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-6 [&_ol]:space-y-2
-            [&_li]:text-[16px] [&_li]:text-gray-700 [&_li]:leading-relaxed
-            [&_img]:w-full [&_img]:max-w-full [&_img]:h-auto [&_img]:min-h-[250px] [&_img]:object-cover [&_img]:rounded-2xl [&_img]:border [&_img]:border-gray-200 [&_img]:shadow-sm [&_img]:my-8 [&_img]:mx-auto [&_img]:block
-            [&_blockquote]:border-l-4 [&_blockquote]:border-[#0a5c48] [&_blockquote]:bg-[#e0f0e9]/40 [&_blockquote]:p-6 [&_blockquote]:rounded-r-2xl [&_blockquote]:my-6 [&_blockquote]:text-[16px] [&_blockquote]:text-gray-800 [&_blockquote]:font-medium [&_blockquote]:italic"
-          dangerouslySetInnerHTML={{ __html: cleanContent }}
-        />
+        {articleContent && (
+          <div 
+            itemProp="articleBody"
+            suppressHydrationWarning
+            className="max-w-none text-gray-800 mb-16 space-y-6
+              [&_h1]:text-[28px] [&_h1]:font-bold [&_h1]:text-gray-900 [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:leading-snug [&>h1:first-child]:hidden
+              [&_h2]:text-[25px] [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:leading-snug
+              [&_h3]:text-[25px] [&_h3]:font-bold [&_h3]:text-gray-900 [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:leading-snug
+              [&_h4]:text-[25px] [&_h4]:font-bold [&_h4]:text-gray-900 [&_h4]:mt-6 [&_h4]:mb-3 [&_h4]:leading-snug
+              [&_h5]:text-[25px] [&_h5]:font-bold [&_h5]:text-gray-900 [&_h5]:mt-4 [&_h5]:mb-2 [&_h5]:leading-snug
+              [&_h6]:text-[25px] [&_h6]:font-bold [&_h6]:text-gray-900 [&_h6]:mt-4 [&_h6]:mb-2 [&_h6]:leading-snug
+              [&_p]:text-[16px] [&_p]:text-gray-700 [&_p]:leading-relaxed [&_p]:mb-5
+              [&_a]:text-[16px] [&_a]:text-[#0a5c48] [&_a]:font-semibold [&_a]:underline [&_a]:hover:text-[#084838]
+              [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-6 [&_ul]:space-y-2
+              [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-6 [&_ol]:space-y-2
+              [&_li]:text-[16px] [&_li]:text-gray-700 [&_li]:leading-relaxed
+              [&_img]:w-full [&_img]:max-w-full [&_img]:h-auto [&_img]:min-h-[250px] [&_img]:object-cover [&_img]:rounded-2xl [&_img]:border [&_img]:border-gray-200 [&_img]:shadow-sm [&_img]:my-8 [&_img]:mx-auto [&_img]:block
+              [&_blockquote]:border-l-4 [&_blockquote]:border-[#0a5c48] [&_blockquote]:bg-[#e0f0e9]/40 [&_blockquote]:p-6 [&_blockquote]:rounded-r-2xl [&_blockquote]:my-6 [&_blockquote]:text-[16px] [&_blockquote]:text-gray-800 [&_blockquote]:font-medium [&_blockquote]:italic"
+            dangerouslySetInnerHTML={{ __html: articleContent }}
+          />
+        )}
 
         {/* Article Tags */}
         {post.tags && post.tags.length > 0 && (

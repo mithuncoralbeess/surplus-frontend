@@ -1,4 +1,4 @@
-import { BlogPost, BlogSeoData } from '../data/blogData';
+import { BlogPost, BlogSeoData, MOCK_BLOG_POSTS } from '../data/blogData';
 import { apiClient } from './apiClient';
 
 export interface ApiBlogPost {
@@ -157,7 +157,10 @@ export function stripFaqFromContent(content: string): string {
 
   const index = findFaqHeaderIndex(content);
   if (index !== -1 && index > 30) {
-    return content.substring(0, index).trim();
+    const stripped = content.substring(0, index).trim();
+    if (stripped.length > 100) {
+      return stripped;
+    }
   }
 
   return content;
@@ -215,7 +218,14 @@ export function mapApiBlogToBlogPost(apiPost: ApiBlogPost): BlogPost {
     tagsArray = (apiPost.tags as string).split(',').map((t) => t.trim()).filter(Boolean);
   }
 
-  let rawContent = apiPost.content || '';
+  let rawContent =
+    apiPost.content ||
+    (apiPost as any).body ||
+    (apiPost as any).article_content ||
+    (apiPost as any).blog_content ||
+    (apiPost as any).post_content ||
+    (apiPost as any).description ||
+    '';
   if (rawContent) {
     rawContent = fixContentImageUrls(rawContent);
   }
@@ -304,9 +314,11 @@ export async function getBlogsPage(page: number = 1): Promise<BlogsPageResponse>
     }
 
     const mappedPosts = rawPosts.map(mapApiBlogToBlogPost);
-    // Index into single blog cache for instant individual article resolution
+    // Index into single blog cache ONLY if full article content is present
     mappedPosts.forEach((p) => {
-      if (p.slug) singleBlogCache.set(p.slug, { post: p, timestamp: Date.now() });
+      if (p.slug && p.content && p.content.trim().length > 100) {
+        singleBlogCache.set(p.slug.toLowerCase().replace(/^\/+/, ''), { post: p, timestamp: Date.now() });
+      }
     });
 
     return {
@@ -375,10 +387,11 @@ export async function getBlogs(): Promise<BlogPost[]> {
  */
 export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
   if (!slug) return null;
-  const cleanSlug = slug.trim().toLowerCase();
+  const cleanSlug = slug.trim().toLowerCase().replace(/^\/+/, '');
 
+  // Only return from cache if post has actual content
   const cached = singleBlogCache.get(cleanSlug);
-  if (cached && (Date.now() - cached.timestamp < BLOG_CACHE_TTL_MS)) {
+  if (cached && cached.post?.content && cached.post.content.trim().length > 0 && (Date.now() - cached.timestamp < BLOG_CACHE_TTL_MS)) {
     return cached.post;
   }
 
@@ -390,31 +403,62 @@ export async function getBlogBySlug(slug: string): Promise<BlogPost | null> {
     try {
       const res = await apiClient(`/api/blogs/${encodeURIComponent(cleanSlug)}/`, {
         cacheTtl: BLOG_CACHE_TTL_MS,
-        staleWhileRevalidate: true,
-        persistCache: true,
+        staleWhileRevalidate: false,
+        persistCache: false,
+        revalidate: true,
         silent: true,
       });
 
       if (!res.success || !res.data) {
-        return null;
+        const mockFallback = MOCK_BLOG_POSTS.find(
+          (m) => m.slug.toLowerCase().replace(/^\/+/, '') === cleanSlug
+        );
+        return mockFallback || null;
       }
 
-      const json = res.data;
-      const rawPost: ApiBlogPost = json.blog || json.data || json;
+      const rawObj = res.raw || {};
+      const dataObj = res.data || {};
+      const rawPost: ApiBlogPost =
+        dataObj.blog ||
+        dataObj.data ||
+        rawObj.blog ||
+        rawObj.data ||
+        (dataObj.title ? dataObj : (rawObj.title ? rawObj : dataObj));
 
       if (!rawPost || !rawPost.title) {
-        return null;
+        const mockFallback = MOCK_BLOG_POSTS.find(
+          (m) => m.slug.toLowerCase().replace(/^\/+/, '') === cleanSlug
+        );
+        return mockFallback || null;
       }
 
       const mapped = mapApiBlogToBlogPost(rawPost);
-      singleBlogCache.set(cleanSlug, { post: mapped, timestamp: Date.now() });
-      if (mapped.slug && mapped.slug !== cleanSlug) {
-        singleBlogCache.set(mapped.slug.toLowerCase(), { post: mapped, timestamp: Date.now() });
+
+      // If mapped post still has no content, try MOCK_BLOG_POSTS fallback
+      if (!mapped.content || mapped.content.trim().length === 0) {
+        const mockFallback = MOCK_BLOG_POSTS.find(
+          (m) => m.slug.toLowerCase().replace(/^\/+/, '') === cleanSlug
+        );
+        if (mockFallback && mockFallback.content) {
+          mapped.content = mockFallback.content;
+          if (!mapped.faqs || mapped.faqs.length === 0) mapped.faqs = mockFallback.faqs;
+          if (!mapped.keyTakeaways || mapped.keyTakeaways.length === 0) mapped.keyTakeaways = mockFallback.keyTakeaways;
+        }
+      }
+
+      if (mapped.content && mapped.content.trim().length > 0) {
+        singleBlogCache.set(cleanSlug, { post: mapped, timestamp: Date.now() });
+        if (mapped.slug && mapped.slug.toLowerCase().replace(/^\/+/, '') !== cleanSlug) {
+          singleBlogCache.set(mapped.slug.toLowerCase().replace(/^\/+/, ''), { post: mapped, timestamp: Date.now() });
+        }
       }
       return mapped;
     } catch (error) {
       console.warn(`[Blog API] Network error fetching blog detail for '${slug}':`, error);
-      return null;
+      const mockFallback = MOCK_BLOG_POSTS.find(
+        (m) => m.slug.toLowerCase().replace(/^\/+/, '') === cleanSlug
+      );
+      return mockFallback || null;
     }
   })().finally(() => {
     pendingBlogFetches.delete(cleanSlug);
