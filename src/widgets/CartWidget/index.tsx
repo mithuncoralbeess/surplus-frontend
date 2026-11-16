@@ -266,6 +266,11 @@ export default function CartWidget() {
       return;
     }
 
+    if (!phone.trim()) {
+      setSubmitError('Please provide your phone / WhatsApp number with country code.');
+      return;
+    }
+
     if (!country.trim()) {
       setSubmitError('Please select a destination country.');
       return;
@@ -890,12 +895,13 @@ export default function CartWidget() {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Phone / WhatsApp (with Country Code)
+                  Phone / WhatsApp (with Country Code) *
                 </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
                   <input
                     type="tel"
+                    required
                     placeholder="+971 50 123 4567"
                     value={phone}
                     onChange={(e) => {
