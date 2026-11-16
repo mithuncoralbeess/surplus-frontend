@@ -119,7 +119,7 @@ const CartDrawer: React.FC = () => {
             >
               {items.map((item) => {
                 const itemTotal = item.unitPrice * item.quantity;
-                const itemMoq = item.type === 'product' ? Math.max(20, Number(item.moq || 20)) : (item.moq || 1);
+                const itemMoq = Math.max(1, Number(item.moq || 1));
                 const isAtMoq = item.quantity <= itemMoq;
                 const isAtMax = item.estQty ? item.quantity >= item.estQty : false;
 
