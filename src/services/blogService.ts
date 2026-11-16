@@ -19,8 +19,8 @@ export interface ApiBlogPost {
   created_at?: string;
   published_at?: string;
   publishedAt?: string;
-  read_time?: string;
-  readTime?: string;
+  read_time?: string | number;
+  readTime?: string | number;
   cover_image?: string;
   coverImage?: string;
   image?: string;
@@ -257,7 +257,14 @@ export function mapApiBlogToBlogPost(apiPost: ApiBlogPost): BlogPost {
       avatar: authorAvatar,
     },
     publishedAt: apiPost.publishedAt || apiPost.published_at || apiPost.created_at || 'Sept 2026',
-    readTime: apiPost.readTime || apiPost.read_time || '5 min read',
+    readTime:
+      typeof (apiPost.readTime ?? apiPost.read_time) === 'string'
+        ? (String(apiPost.readTime ?? apiPost.read_time).includes('min')
+            ? String(apiPost.readTime ?? apiPost.read_time)
+            : `${apiPost.readTime ?? apiPost.read_time} min read`)
+        : typeof (apiPost.readTime ?? apiPost.read_time) === 'number'
+        ? `${apiPost.readTime ?? apiPost.read_time} min read`
+        : '5 min read',
     coverImage: coverImage,
     featured: apiPost.featured || false,
     tags: tagsArray,

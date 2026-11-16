@@ -100,7 +100,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
                 <>
                   <span>•</span>
                   <span className="text-gray-500 font-medium flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" /> {post.readTime.includes('min') ? post.readTime : `${post.readTime} min read`}
+                    <Clock className="w-3.5 h-3.5" /> {String(post.readTime).includes('min') ? String(post.readTime) : `${post.readTime} min read`}
                   </span>
                 </>
               )}
