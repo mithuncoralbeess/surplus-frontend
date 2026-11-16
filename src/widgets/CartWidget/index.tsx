@@ -603,11 +603,6 @@ export default function CartWidget() {
 
                         {/* Metadata row */}
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 mb-3">
-                          {item.sku && (
-                            <span className="font-mono text-[11px] bg-gray-100 px-2 py-0.5 rounded">
-                              SKU: {item.sku}
-                            </span>
-                          )}
                           {item.location && (
                             <span className="text-gray-600 font-medium">
                               Location: {item.location}

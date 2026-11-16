@@ -492,16 +492,12 @@ export default function ProductDetailWidget({ productId, category, initialProduc
                   {displayTitle}
                 </h1>
 
-                {/* Subheader: Stock & Views Row (above), Location Row (below without Location: prefix - conditional on API data) */}
+                {/* Subheader: Stock Row (above), Location Row (below without Location: prefix - conditional on API data) */}
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-600 flex-wrap">
                     <span className="text-emerald-700 font-bold flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                       <span>In Stock ({product.quantity || product.estQty} Units)</span>
-                    </span>
-                    <span>•</span>
-                    <span className="text-gray-600 font-sans font-medium">
-                      {product.views_count || 0} Views
                     </span>
                   </div>
 
