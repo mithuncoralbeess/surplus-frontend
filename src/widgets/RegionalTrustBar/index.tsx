@@ -7,28 +7,24 @@ export default function RegionalTrustBar() {
   const TRUST_ITEMS = [
     {
       id: 'verified',
-      isNew: true,
       icon: ShieldCheck,
       title: 'Verified sellers',
       subtitle: 'Every listing is reviewed',
     },
     {
       id: 'inspected',
-      isNew: false,
       icon: FileText,
       title: 'Pre-inspected lots',
       subtitle: 'Pallets and container manifests',
     },
     {
       id: 'dispatch',
-      isNew: false,
       icon: Truck,
       title: 'Fast freight dispatch',
       subtitle: 'Ready to ship',
     },
     {
       id: 'private',
-      isNew: false,
       icon: Lock,
       title: 'Private by design',
       subtitle: 'Identities are never disclosed',
@@ -37,29 +33,19 @@ export default function RegionalTrustBar() {
 
   return (
     <div className="w-full bg-white rounded-2xl border border-gray-200/80 p-5 sm:p-6 shadow-xs">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-center">
         {TRUST_ITEMS.map((item) => (
-          <div key={item.id} className="flex flex-col">
-            {item.isNew ? (
-              <span className="inline-block bg-[#7c3aed] text-white text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full mb-1.5 w-fit">
-                NEW
-              </span>
-            ) : (
-              <div className="hidden lg:block h-[19px] mb-1.5" aria-hidden="true" />
-            )}
-
-            <div className="flex items-start gap-3">
-              <div className="text-[#0f7a61] shrink-0 mt-0.5">
-                <item.icon className="w-5 h-5" strokeWidth={2} />
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-900 text-sm sm:text-[15px] leading-tight">
-                  {item.title}
-                </h4>
-                <p className="text-xs text-slate-500 mt-0.5 leading-snug">
-                  {item.subtitle}
-                </p>
-              </div>
+          <div key={item.id} className="flex items-start gap-3">
+            <div className="text-[#0f7a61] shrink-0 mt-0.5">
+              <item.icon className="w-5 h-5" strokeWidth={2} />
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900 text-sm sm:text-[15px] leading-tight">
+                {item.title}
+              </h4>
+              <p className="text-xs text-slate-500 mt-0.5 leading-snug">
+                {item.subtitle}
+              </p>
             </div>
           </div>
         ))}
@@ -67,4 +53,3 @@ export default function RegionalTrustBar() {
     </div>
   );
 }
-

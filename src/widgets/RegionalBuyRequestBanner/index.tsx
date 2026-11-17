@@ -28,11 +28,8 @@ export default function RegionalBuyRequestBanner({
     <div className="w-full bg-[#081a36] text-white rounded-3xl p-6 sm:p-8 md:p-10 lg:p-12 shadow-md">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 lg:gap-8">
         
-        {/* Left Column: Badge, Title & Description */}
+        {/* Left Column: Title & Description */}
         <div className="max-w-2xl">
-          <span className="inline-block bg-[#7c3aed] text-white text-[10px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded-full mb-3">
-            NEW
-          </span>
           <h2 className="text-2xl sm:text-3xl md:text-[32px] font-black text-white tracking-tight leading-tight mb-3">
             Can&apos;t find what you need? Let sellers come to you.
           </h2>

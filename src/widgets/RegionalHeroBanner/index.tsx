@@ -126,9 +126,6 @@ Business Email: ${businessEmail.trim()}
           <div className="lg:col-span-5 w-full">
             <div id="quote-form" className="bg-white rounded-3xl p-6 sm:p-7 md:p-8 border border-gray-100 shadow-xl shadow-slate-200/60 relative scroll-mt-24">
               <div className="mb-4">
-                <span className="inline-block bg-[#7c3aed] text-white text-[10px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded-full mb-2">
-                  NEW
-                </span>
                 <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                   Request a quote
                 </h3>

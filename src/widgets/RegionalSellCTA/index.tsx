@@ -17,11 +17,8 @@ export default function RegionalSellCTA({
     <div className="w-full bg-[#eaf5f0] text-slate-900 rounded-3xl py-8 sm:py-10 md:py-12 lg:py-14 px-6 sm:px-8 md:px-10 lg:px-12 border border-emerald-200/50 shadow-xs my-2">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 lg:gap-8">
         
-        {/* Left Column: Badge, Title & Description */}
+        {/* Left Column: Title & Description */}
         <div className="max-w-2xl">
-          <span className="inline-block bg-[#7c3aed] text-white text-[10px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded-full mb-3">
-            NEW
-          </span>
           <h2 className="text-2xl sm:text-3xl md:text-[32px] font-black text-[#081a36] tracking-tight leading-tight mb-3">
             Sitting on excess stock in {countryFormatted}?
           </h2>

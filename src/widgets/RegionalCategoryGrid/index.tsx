@@ -66,12 +66,7 @@ export default function RegionalCategoryGrid() {
     <section className="w-full">
       {/* Section Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="inline-block bg-[#7c3aed] text-white text-[10px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded-full">
-            NEW
-          </span>
-        </div>
-        <span className="block text-xs font-black tracking-wider text-[#0f7a61] uppercase mb-1">
+        <span className="block text-xs font-black tracking-wider text-[#0f7a61] uppercase mb-1.5">
           SHOP BY CATEGORY
         </span>
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
