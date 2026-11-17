@@ -130,18 +130,18 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [],
   const content = (
     <>
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">
         <div>
           <span className="inline-block bg-[#e8f5f1] text-[#0f7a61] text-xs font-bold px-3 py-1 rounded-full mb-2">
             {t('curated.badge', 'Verified Surplus')}
           </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-black text-[#0f172a] tracking-tight">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[34px] font-black text-[#0f172a] tracking-tight">
             {t('curated.title', 'Top Liquidated Inventory Products')}
           </h2>
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center bg-[#f1f5f9] border border-slate-200/60 rounded-xl p-1 self-start md:self-auto">
+        <div className="flex items-center bg-[#f1f5f9] border border-slate-200/60 rounded-xl p-1 self-start sm:self-auto max-w-full overflow-x-auto no-scrollbar">
           {TABS.map((tab) => (
             <button
               key={tab}
@@ -160,7 +160,7 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [],
       </div>
 
       {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {loading ? (
           Array.from({ length: 8 }).map((_, idx) => (
             <ProductCard
@@ -193,10 +193,10 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [],
       </div>
 
       {/* View All Action */}
-      <div className="mt-12 sm:mt-14 flex justify-center">
+      <div className="mt-10 sm:mt-12 flex justify-center">
         <Link
           href="/buy/product"
-          className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-xl font-bold text-sm transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
+          className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-8 py-3.5 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-xl font-bold text-sm transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
         >
           <span>{t('curated.viewAll', 'View All Inventory')}</span>
           <ArrowRight className="w-4 h-4 rtl:rotate-180 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />

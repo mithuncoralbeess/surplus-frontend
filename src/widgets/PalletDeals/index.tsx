@@ -144,18 +144,18 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [], isRegional 
   const content = (
     <>
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-black text-[#0f172a] tracking-tight mb-2">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[34px] font-black text-[#0f172a] tracking-tight mb-2">
             {t('palletDeals.title', 'Full Lots & Pallet Deals')}
           </h2>
-          <p className="text-sm sm:text-base text-slate-500 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm md:text-base text-slate-500 max-w-2xl leading-relaxed">
             {t('palletDeals.subtitle', 'Verified bulk pallet batches and container manifests at wholesale clearance pricing. All lots are pre-inspected and ready for fast freight dispatch.')}
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center bg-[#f1f5f9] border border-slate-200/60 rounded-xl p-1 self-start md:self-auto shrink-0">
+        <div className="flex items-center bg-[#f1f5f9] border border-slate-200/60 rounded-xl p-1 self-start sm:self-auto shrink-0 max-w-full overflow-x-auto no-scrollbar">
           {TABS.map((tab) => (
             <button
               key={tab}
@@ -174,7 +174,7 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [], isRegional 
       </div>
 
       {/* Lots Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
         {loading ? (
           Array.from({ length: 6 }).map((_, idx) => (
             <LotCard
@@ -208,10 +208,10 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [], isRegional 
       </div>
 
       {/* View All Action */}
-      <div className="mt-12 sm:mt-14 flex justify-center">
+      <div className="mt-10 sm:mt-12 flex justify-center">
         <Link
           href="/buy/lot"
-          className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-xl font-bold text-sm transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
+          className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-8 py-3.5 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-xl font-bold text-sm transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
         >
           <span>{t('palletDeals.viewAll', 'View All Wholesale Lots')}</span>
           <ArrowRight className="w-4 h-4 rtl:rotate-180 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />

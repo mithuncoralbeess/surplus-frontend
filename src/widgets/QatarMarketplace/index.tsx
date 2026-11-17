@@ -59,7 +59,7 @@ export default function QatarMarketplaceWidget() {
       />
 
       {/* Main Content Sections */}
-      <div className="container mx-auto px-4 lg:px-8 max-w-7xl py-10 md:py-14 space-y-12">
+      <div className="container mx-auto px-3.5 sm:px-4 lg:px-8 max-w-7xl py-6 sm:py-10 md:py-14 space-y-8 sm:space-y-12">
 
         {/* Trust Features Bar */}
         <RegionalTrustBar />
@@ -83,11 +83,11 @@ export default function QatarMarketplaceWidget() {
         <RegionalDeadStockSection countryName="Qatar" countrySlug="qatar" />
 
         {/* Section 1: Why Choose Surplus Market to Buy & Sell Excess Inventory in Qatar? */}
-        <section className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-4">
+        <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-3.5 sm:mb-4">
             Why Choose Surplus Market to Buy &amp; Sell Excess Inventory in Qatar?
           </h2>
-          <div className="space-y-4 text-base sm:text-lg text-gray-600 leading-relaxed font-normal">
+          <div className="space-y-3 sm:space-y-4 text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed font-normal">
             <p>
               Surplus Market brings sellers and buyers together in a way that saves time and resources. By listing your stock with us, you instantly reach a network of surplus stock buyers in Qatar who are actively seeking products. This eliminates the need for multiple cold calls or complicated advertising.
             </p>
@@ -98,24 +98,24 @@ export default function QatarMarketplaceWidget() {
         </section>
 
         {/* Section 2: How Surplus Market Supports Inventory Liquidation in Qatar */}
-        <section className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-4">
+        <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-3.5 sm:mb-4">
             How Surplus Market Supports Inventory Liquidation in Qatar
           </h2>
-          <p className="text-sm sm:text-base text-gray-600 leading-relaxed mb-6">
+          <p className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed mb-4 sm:mb-6">
             Storage costs and expired contracts can make excess stock a burden. Surplus Market simplifies excess stock clearance in Qatar by offering:
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 mb-4 sm:mb-6">
             {QATAR_SUPPORT_POINTS.map((pt, idx) => (
               <div 
                 key={idx}
-                className="bg-gray-50/70 rounded-2xl p-5 border border-gray-100 hover:border-emerald-200 transition-all flex items-start gap-3.5 group"
+                className="bg-gray-50/70 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 hover:border-emerald-200 transition-all flex items-start gap-3.5 group"
               >
-                <div className="w-6 h-6 rounded-full bg-emerald-100 text-[#0f7a61] flex items-center justify-center shrink-0 mt-0.5">
-                  <CheckCircle2 className="w-4 h-4" />
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-100 text-[#0f7a61] flex items-center justify-center shrink-0 mt-0.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-                <p className="text-sm text-gray-800 font-medium leading-snug">
+                <p className="text-xs sm:text-sm text-gray-800 font-medium leading-snug">
                   {pt.text ? (
                     pt.text
                   ) : (
@@ -132,7 +132,7 @@ export default function QatarMarketplaceWidget() {
             ))}
           </div>
 
-          <div className="bg-[#f0f9f5] rounded-2xl p-5 border border-emerald-100 text-sm text-gray-700 leading-relaxed">
+          <div className="bg-[#f0f9f5] rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-emerald-100 text-xs sm:text-sm text-gray-700 leading-relaxed">
             We also provide tips and insights for both sellers looking for fast stock movement and buyers who want valuable deals. Our{' '}
             <Link href="/blog" className="text-[#0f7a61] font-bold hover:underline">
               Overstock Solutions
@@ -142,11 +142,11 @@ export default function QatarMarketplaceWidget() {
         </section>
 
         {/* Section 3: Who Can Buy & Sell on Our Surplus Marketplace in Qatar? */}
-        <section className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-3">
+        <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-2.5 sm:mb-3">
             Who Can Buy &amp; Sell on Our Surplus Marketplace in Qatar?
           </h2>
-          <div className="space-y-4 text-sm sm:text-base text-gray-600 leading-relaxed mb-6">
+          <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed mb-4 sm:mb-6">
             <p>
               Our platform is open to a wide range of industries. Buyers range from small businesses seeking discounted supplies to bulk purchasers interested in wholesale lots. Our surplus marketplace in Qatar makes it easy for both ends to meet and complete transactions with confidence.
             </p>
@@ -155,16 +155,16 @@ export default function QatarMarketplaceWidget() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
             {QATAR_PARTICIPANTS.map((participant, idx) => (
               <div 
                 key={idx}
-                className="bg-gray-50/70 rounded-2xl p-5 border border-gray-100 hover:border-emerald-200 transition-all flex items-start gap-3.5 group"
+                className="bg-gray-50/70 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 hover:border-emerald-200 transition-all flex items-start gap-3.5 group"
               >
-                <div className="w-6 h-6 rounded-full bg-emerald-100 text-[#0f7a61] flex items-center justify-center shrink-0 mt-0.5">
-                  <CheckCircle2 className="w-4 h-4" />
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-100 text-[#0f7a61] flex items-center justify-center shrink-0 mt-0.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-                <p className="text-sm text-gray-800 font-medium leading-snug">
+                <p className="text-xs sm:text-sm text-gray-800 font-medium leading-snug">
                   {participant}
                 </p>
               </div>
@@ -173,11 +173,11 @@ export default function QatarMarketplaceWidget() {
         </section>
 
         {/* Section 4: Benefits of Buying & Selling Overstock & Excess Stock in Qatar */}
-        <section className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-3">
+        <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-2.5 sm:mb-3">
             Benefits of Buying &amp; Selling Overstock &amp; Excess Stock in Qatar
           </h2>
-          <div className="space-y-4 text-sm sm:text-base text-gray-600 leading-relaxed mb-8">
+          <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed mb-6 sm:mb-8">
             <p>
               By choosing Surplus Market, you gain more than just a selling platform. You become part of a growing trading network built for reliability and opportunity. This makes it easier to sell excess inventory in Qatar while also giving buyers a dependable source for stock replenishment.
             </p>
@@ -186,19 +186,19 @@ export default function QatarMarketplaceWidget() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {QATAR_BENEFITS.map((benefit, idx) => {
               const IconComp = BENEFIT_ICONS[idx % BENEFIT_ICONS.length];
               return (
                 <div 
                   key={idx}
-                  className="bg-gray-50/70 border border-gray-100 hover:border-emerald-200 rounded-2xl p-6 transition-all hover:bg-white hover:shadow-md flex flex-col justify-between"
+                  className="bg-gray-50/70 border border-gray-100 hover:border-emerald-200 rounded-xl sm:rounded-2xl p-5 sm:p-6 transition-all hover:bg-white hover:shadow-md flex flex-col justify-between"
                 >
                   <div>
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center border border-emerald-200 bg-emerald-50 text-[#0f7a61] mb-4">
-                      <IconComp className="w-5 h-5" />
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center border border-emerald-200 bg-emerald-50 text-[#0f7a61] mb-3 sm:mb-4">
+                      <IconComp className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <h3 className="text-base font-bold text-gray-900 mb-1.5">
+                    <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1 sm:mb-1.5">
                       {benefit.title}
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
@@ -212,18 +212,18 @@ export default function QatarMarketplaceWidget() {
         </section>
 
         {/* Section 5: FAQ – Sale Excess Inventory in Qatar */}
-        <section className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-8">
+        <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-6 sm:mb-8">
             FAQ – Sale Excess Inventory in Qatar
           </h2>
 
-          <div className="space-y-3.5">
+          <div className="space-y-3 sm:space-y-3.5">
             {QATAR_FAQS.map((faq, idx) => {
               const isOpen = openFaq === idx;
               return (
                 <div 
                   key={idx}
-                  className={`border rounded-2xl overflow-hidden transition-all duration-200 ${
+                  className={`border rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-200 ${
                     isOpen 
                       ? 'border-[#0f7a61] bg-[#e6f7ef]/20 shadow-2xs' 
                       : 'border-gray-200/80 bg-gray-50/40 hover:border-gray-300'
@@ -232,13 +232,13 @@ export default function QatarMarketplaceWidget() {
                   <button
                     type="button"
                     onClick={() => toggleFaq(idx)}
-                    className="w-full flex items-center justify-between p-4 sm:p-5 text-left focus:outline-none cursor-pointer"
+                    className="w-full flex items-center justify-between p-3.5 sm:p-5 text-left focus:outline-none cursor-pointer"
                     aria-expanded={isOpen}
                   >
-                    <span className="text-sm sm:text-base font-bold text-gray-900 pr-4">
+                    <span className="text-xs sm:text-sm md:text-base font-bold text-gray-900 pr-3 sm:pr-4">
                       {faq.q}
                     </span>
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                    <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                       isOpen ? 'bg-[#0f7a61] text-white' : 'bg-gray-200/80 text-gray-600'
                     }`}>
                       {isOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
@@ -246,8 +246,8 @@ export default function QatarMarketplaceWidget() {
                   </button>
                   
                   {isOpen && (
-                    <div className="px-5 pb-5 pt-0 text-xs sm:text-sm text-gray-600 leading-relaxed border-t border-[#0f7a61]/10 mt-1">
-                      <p className="pt-3.5">{faq.a}</p>
+                    <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-0 text-xs sm:text-sm text-gray-600 leading-relaxed border-t border-[#0f7a61]/10 mt-1">
+                      <p className="pt-3 sm:pt-3.5">{faq.a}</p>
                     </div>
                   )}
                 </div>
@@ -257,7 +257,7 @@ export default function QatarMarketplaceWidget() {
         </section>
 
         {/* Concluding CTA Section */}
-        <section className="bg-gradient-to-br from-[#051c14] via-[#082d20] to-[#0c402e] text-white rounded-3xl p-8 sm:p-12 border border-emerald-900/40 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+        <section className="bg-gradient-to-br from-[#051c14] via-[#082d20] to-[#0c402e] text-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12 border border-emerald-900/40 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="max-w-2xl text-center md:text-left">
             <p className="text-base sm:text-lg lg:text-xl font-bold text-white leading-relaxed">
               Ready to turn your surplus stock into value?{' '}

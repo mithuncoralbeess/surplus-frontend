@@ -46,7 +46,7 @@ export default function UaeMarketplaceWidget() {
       />
 
       {/* Main Content Sections */}
-      <div className="container mx-auto px-4 lg:px-8 max-w-7xl py-10 md:py-14 space-y-12">
+      <div className="container mx-auto px-3.5 sm:px-4 lg:px-8 max-w-7xl py-6 sm:py-10 md:py-14 space-y-8 sm:space-y-12">
 
         {/* Trust Features Bar */}
         <RegionalTrustBar />
@@ -70,37 +70,37 @@ export default function UaeMarketplaceWidget() {
         <RegionalDeadStockSection countryName="UAE" countrySlug="uae" />
 
         {/* Section 1: Why Surplus Market for UAE? */}
-        <section className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-4">
+        <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-3.5 sm:mb-4">
             Why Surplus Market for UAE?
           </h2>
-          <p className="text-base sm:text-lg text-gray-600 leading-relaxed font-normal">
+          <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed font-normal">
             Surplus Market is purpose-built to meet the unique trade demands of the UAE. With strong connections to surplus warehouses in UAE, we bring together trusted sellers and serious buyers looking to scale efficiently. Businesses benefit from real-time access to excess inventory in UAE, whether it’s branded apparel, tools, electronics, or industrial items. Our platform removes the guesswork and makes it easy to liquidate excess inventory in UAE with confidence.
           </p>
         </section>
 
         {/* Section 2: Who Can Use the Surplus Market? */}
-        <section className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-3">
+        <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-2.5 sm:mb-3">
             Who Can Use the Surplus Market?
           </h2>
-          <p className="text-sm sm:text-base text-gray-600 leading-relaxed mb-4">
+          <p className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed mb-3 sm:mb-4">
             Searching for a surplus shop near me in UAE or looking to sell excess stock in UAE, Surplus Market makes it easy and efficient for all.
           </p>
-          <p className="text-sm sm:text-base font-bold text-gray-900 mb-6">
+          <p className="text-xs sm:text-sm md:text-base font-bold text-gray-900 mb-4 sm:mb-6">
             Our platform is designed for a wide range of users:
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
             {USER_TYPES.map((userType, idx) => (
               <div 
                 key={idx}
-                className="bg-gray-50/70 rounded-2xl p-5 border border-gray-100 hover:border-emerald-200 transition-all flex items-start gap-3.5 group"
+                className="bg-gray-50/70 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 hover:border-emerald-200 transition-all flex items-start gap-3.5 group"
               >
-                <div className="w-6 h-6 rounded-full bg-emerald-100 text-[#0f7a61] flex items-center justify-center shrink-0 mt-0.5">
-                  <CheckCircle2 className="w-4 h-4" />
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-100 text-[#0f7a61] flex items-center justify-center shrink-0 mt-0.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-                <p className="text-sm text-gray-800 font-medium leading-snug">
+                <p className="text-xs sm:text-sm text-gray-800 font-medium leading-snug">
                   {userType}
                 </p>
               </div>
@@ -109,27 +109,27 @@ export default function UaeMarketplaceWidget() {
         </section>
 
         {/* Section 3: Benefits of Buying Excess Inventory in UAE */}
-        <section className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-3">
+        <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-2.5 sm:mb-3">
             Benefits of Buying Excess Inventory in UAE
           </h2>
-          <p className="text-sm sm:text-base text-gray-600 leading-relaxed mb-8">
+          <p className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed mb-6 sm:mb-8">
             Buying from a surplus market isn&apos;t just cost-effective, but a strategic move enterprises can make. Stay competitive by sourcing from a trusted discount surplus warehouse ecosystem optimized for the UAE.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {UAE_BENEFITS.map((benefit, idx) => {
               const IconComp = BENEFIT_ICONS[idx % BENEFIT_ICONS.length];
               return (
                 <div 
                   key={idx}
-                  className="bg-gray-50/70 border border-gray-100 hover:border-emerald-200 rounded-2xl p-6 transition-all hover:bg-white hover:shadow-md flex flex-col justify-between"
+                  className="bg-gray-50/70 border border-gray-100 hover:border-emerald-200 rounded-xl sm:rounded-2xl p-5 sm:p-6 transition-all hover:bg-white hover:shadow-md flex flex-col justify-between"
                 >
                   <div>
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center border ${benefit.color} mb-4`}>
-                      <IconComp className="w-5 h-5" />
+                    <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center border ${benefit.color} mb-3 sm:mb-4`}>
+                      <IconComp className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <h3 className="text-base font-bold text-gray-900 mb-1.5">
+                    <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1 sm:mb-1.5">
                       {benefit.title}
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
@@ -143,18 +143,18 @@ export default function UaeMarketplaceWidget() {
         </section>
 
         {/* Section 4: FAQ – Excess Inventory Sale in UAE */}
-        <section className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-8">
+        <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-6 sm:mb-8">
             FAQ – Excess Inventory Sale in UAE
           </h2>
 
-          <div className="space-y-3.5">
+          <div className="space-y-3 sm:space-y-3.5">
             {UAE_FAQS.map((faq, idx) => {
               const isOpen = openFaq === idx;
               return (
                 <div 
                   key={idx}
-                  className={`border rounded-2xl overflow-hidden transition-all duration-200 ${
+                  className={`border rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-200 ${
                     isOpen 
                       ? 'border-[#0f7a61] bg-[#e6f7ef]/20 shadow-2xs' 
                       : 'border-gray-200/80 bg-gray-50/40 hover:border-gray-300'
@@ -163,22 +163,22 @@ export default function UaeMarketplaceWidget() {
                   <button
                     type="button"
                     onClick={() => toggleFaq(idx)}
-                    className="w-full flex items-center justify-between p-4 sm:p-5 text-left focus:outline-none cursor-pointer"
+                    className="w-full flex items-center justify-between p-3.5 sm:p-5 text-left focus:outline-none cursor-pointer"
                     aria-expanded={isOpen}
                   >
-                    <span className="text-sm sm:text-base font-bold text-gray-900 pr-4">
+                    <span className="text-xs sm:text-sm md:text-base font-bold text-gray-900 pr-3 sm:pr-4">
                       {faq.q}
                     </span>
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                    <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shrink-0 transition-colors ${
                       isOpen ? 'bg-[#0f7a61] text-white' : 'bg-gray-200/80 text-gray-600'
                     }`}>
-                      {isOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                      {isOpen ? <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
                     </div>
                   </button>
                   
                   {isOpen && (
-                    <div className="px-5 pb-5 pt-0 text-xs sm:text-sm text-gray-600 leading-relaxed border-t border-[#0f7a61]/10 mt-1">
-                      <p className="pt-3.5">{faq.a}</p>
+                    <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-0 text-xs sm:text-sm text-gray-600 leading-relaxed border-t border-[#0f7a61]/10 mt-1">
+                      <p className="pt-3 sm:pt-3.5">{faq.a}</p>
                     </div>
                   )}
                 </div>
@@ -188,7 +188,7 @@ export default function UaeMarketplaceWidget() {
         </section>
 
         {/* Concluding CTA Section */}
-        <section className="bg-gradient-to-br from-[#051c14] via-[#082d20] to-[#0c402e] text-white rounded-3xl p-8 sm:p-12 border border-emerald-900/40 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+        <section className="bg-gradient-to-br from-[#051c14] via-[#082d20] to-[#0c402e] text-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12 border border-emerald-900/40 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="max-w-2xl text-center md:text-left">
             <p className="text-base sm:text-lg lg:text-xl font-bold text-white leading-relaxed">
               Ready to buy or sell excess inventory in UAE? Join Surplus Market today for faster listings, verified sellers, and smarter surplus sourcing.

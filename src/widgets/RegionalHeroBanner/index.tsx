@@ -79,15 +79,15 @@ Business Email: ${businessEmail.trim()}
   };
 
   return (
-    <section className="relative w-full bg-[#f8fafc] text-slate-900 py-10 sm:py-14 md:py-16 border-b border-gray-200/60">
-      <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
+    <section className="relative w-full bg-[#f8fafc] text-slate-900 py-8 sm:py-12 md:py-16 border-b border-gray-200/60 overflow-hidden">
+      <div className="container mx-auto px-3.5 sm:px-4 lg:px-8 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
           {/* Left Column: Breadcrumb, H1 Title, Paragraph, Buttons */}
           <div className="lg:col-span-7 pt-1 sm:pt-2">
             
             {/* Breadcrumb: Home / Country */}
-            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-gray-400 font-medium mb-5">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-gray-400 font-medium mb-3 sm:mb-5">
               <Link href="/" className="hover:text-slate-900 transition-colors">
                 Home
               </Link>
@@ -96,26 +96,26 @@ Business Email: ${businessEmail.trim()}
             </nav>
 
             {/* H1 Title */}
-            <h1 className="text-3xl sm:text-4xl md:text-[44px] lg:text-[46px] font-black text-[#0f172a] tracking-tight leading-[1.15] mb-5">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[46px] font-black text-[#0f172a] tracking-tight leading-[1.2] sm:leading-[1.15] mb-4 sm:mb-5 break-words">
               {title}
             </h1>
 
             {/* Description */}
-            <div className="text-slate-600 text-sm sm:text-base md:text-[17px] leading-relaxed mb-8 space-y-4">
+            <div className="text-slate-600 text-sm sm:text-base md:text-[17px] leading-relaxed mb-6 sm:mb-8 space-y-3 sm:space-y-4">
               {description}
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-3.5">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-3.5 w-full sm:w-auto">
               <Link
                 href="/buy"
-                className="px-6 py-3.5 bg-[#0f7a61] hover:bg-[#0c6651] text-white font-bold text-sm sm:text-base rounded-xl transition-all shadow-sm hover:shadow cursor-pointer"
+                className="w-full sm:w-auto text-center px-6 py-3.5 bg-[#0f7a61] hover:bg-[#0c6651] text-white font-bold text-sm sm:text-base rounded-xl transition-all shadow-sm hover:shadow cursor-pointer"
               >
                 Buy Excess Inventory
               </Link>
               <Link
                 href="/sell"
-                className="px-6 py-3.5 bg-white hover:bg-gray-50 text-slate-800 border border-gray-300 font-bold text-sm sm:text-base rounded-xl transition-all shadow-xs hover:shadow-sm cursor-pointer"
+                className="w-full sm:w-auto text-center px-6 py-3.5 bg-white hover:bg-gray-50 text-slate-800 border border-gray-300 font-bold text-sm sm:text-base rounded-xl transition-all shadow-xs hover:shadow-sm cursor-pointer"
               >
                 Sell Excess Stock
               </Link>
@@ -124,9 +124,9 @@ Business Email: ${businessEmail.trim()}
 
           {/* Right Column: "Request a quote" Floating Form Card */}
           <div className="lg:col-span-5 w-full">
-            <div id="quote-form" className="bg-white rounded-3xl p-6 sm:p-7 md:p-8 border border-gray-100 shadow-xl shadow-slate-200/60 relative scroll-mt-24">
+            <div id="quote-form" className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-7 md:p-8 border border-gray-100 shadow-xl shadow-slate-200/60 relative scroll-mt-24">
               <div className="mb-4">
-                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-black text-slate-900 tracking-tight">
                   Request a quote
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mt-1">
@@ -149,7 +149,7 @@ Business Email: ${businessEmail.trim()}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
                       Quantity

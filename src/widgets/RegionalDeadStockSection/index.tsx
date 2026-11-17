@@ -51,14 +51,14 @@ export default function RegionalDeadStockSection({
   const displayDescription = description || defaults.description;
 
   return (
-    <section className="w-full bg-white rounded-3xl py-12 sm:py-16 md:py-20 px-8 sm:px-12 md:px-16 border border-gray-200/80 shadow-xs my-2">
-      <span className="block text-xs sm:text-[14px] font-black tracking-wider text-[#0f7a61] uppercase mb-3">
+    <section className="w-full bg-white rounded-2xl sm:rounded-3xl py-8 sm:py-14 md:py-18 px-5 sm:px-10 md:px-16 border border-gray-200/80 shadow-xs my-2">
+      <span className="block text-[11px] sm:text-xs md:text-[14px] font-black tracking-wider text-[#0f7a61] uppercase mb-2 sm:mb-3">
         {displayEyebrow}
       </span>
-      <h2 className="text-2xl sm:text-3xl lg:text-[36px] font-black text-[#0f172a] tracking-tight leading-[1.25] mb-5 max-w-5xl">
+      <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[36px] font-black text-[#0f172a] tracking-tight leading-[1.25] mb-3.5 sm:mb-5 max-w-5xl break-words">
         {displayTitle}
       </h2>
-      <p className="text-slate-600 text-base sm:text-lg md:text-[18px] leading-relaxed font-normal max-w-5xl">
+      <p className="text-sm sm:text-base md:text-lg lg:text-[18px] text-slate-600 leading-relaxed font-normal max-w-5xl">
         {displayDescription}
       </p>
     </section>

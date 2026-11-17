@@ -32,8 +32,8 @@ export default function RegionalTrustBar() {
   ];
 
   return (
-    <div className="w-full bg-white rounded-2xl border border-gray-200/80 p-5 sm:p-6 shadow-xs">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-center">
+    <div className="w-full bg-white rounded-2xl border border-gray-200/80 p-4 sm:p-5 md:p-6 shadow-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-start sm:items-center">
         {TRUST_ITEMS.map((item) => (
           <div key={item.id} className="flex items-start gap-3">
             <div className="text-[#0f7a61] shrink-0 mt-0.5">
