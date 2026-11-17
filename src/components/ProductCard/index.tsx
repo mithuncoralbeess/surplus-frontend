@@ -255,33 +255,32 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         )}
 
-        {/* Certified Badge */}
-        {isCertified && (
-          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full border border-gray-100 flex items-center gap-1 shadow-sm z-10">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#0f7a61]" />
-            <span className="text-[10px] font-bold text-[#0f7a61] tracking-wide uppercase">SM Certified</span>
+        {/* Drop Badge (Top Left as per modern standard) */}
+        {displayDrop && (
+          <div className="absolute top-3 left-3 bg-[#dc2626] text-white px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider shadow-xs flex items-center gap-1 z-10">
+            <span>{displayDrop}</span>
           </div>
         )}
 
-        {/* Drop Badge */}
-        {displayDrop && (
-          <div className="absolute top-3 right-3 bg-rose-600 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1 z-10">
-            <Tag className="w-3 h-3" />
-            <span>{displayDrop}</span>
+        {/* Certified Badge */}
+        {isCertified && (
+          <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full border border-gray-100 flex items-center gap-1 shadow-xs z-10">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#0f7a61]" />
+            <span className="text-[10px] font-bold text-[#0f7a61] tracking-wide uppercase">SM Certified</span>
           </div>
         )}
       </Link>
 
       {/* Content Container */}
-      <div className="py-3 px-4 flex flex-col flex-1">
+      <div className="p-4 sm:p-5 flex flex-col flex-1">
 
         {/* Category & New Badge */}
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] xl:text-[12px] font-semibold text-[#0f7a61] tracking-widest uppercase truncate pr-2">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs text-slate-500 font-medium truncate pr-2">
             {categoryText}
           </span>
           {isNew && (
-            <span className="bg-[#e7f5f1] text-[#0f7a61] px-2 py-0.5 rounded-full text-[10px] font-bold">
+            <span className="bg-[#e8f5f1] text-[#0f7a61] px-2 py-0.5 rounded-full text-[10px] font-bold">
               New
             </span>
           )}
@@ -289,65 +288,56 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Title */}
         <Link href={productLink}>
-          <h3 className="font-bold text-gray-900 text-[15px] leading-tight mb-2 line-clamp-2 cursor-pointer hover:text-[#0f7a61] transition-colors">
+          <h3 className="font-bold text-slate-900 text-sm sm:text-[15px] leading-snug mb-3 line-clamp-2 min-h-[42px] cursor-pointer hover:text-[#0f7a61] transition-colors">
             {cardTitle}
           </h3>
         </Link>
 
-        {/* Inventory Country - Available in (Below Title) */}
-        {displayLocation && (
-          <div className="flex items-center gap-1.5 text-[11px] xl:text-[12px] text-gray-500 mb-3 font-medium">
-            <MapPin className="w-3.5 h-3.5 text-[#0f7a61] shrink-0" />
-            <span className="text-gray-500">Available in</span>
-            <span className="font-bold text-gray-800 truncate" title={rawLocation || displayLocation}>
-              {displayLocation}
-            </span>
+        {/* Specs Grid: Available in, MOQ, Est. Qty */}
+        <div className="mt-auto space-y-1.5 text-xs text-slate-500 mb-4">
+          {displayLocation && (
+            <div className="flex items-center justify-between">
+              <span>Available in</span>
+              <span className="font-bold text-slate-900 truncate max-w-[140px] text-right" title={rawLocation || displayLocation}>
+                {displayLocation}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <span>MOQ</span>
+            <span suppressHydrationWarning className="font-bold text-slate-900">{effectiveMoq.toLocaleString('en-US')}</span>
           </div>
-        )}
-
-        {/* Specs Grid */}
-        <div className="mt-auto space-y-2 mb-4">
-          <div className="flex items-center justify-between text-[11px] xl:text-[13px]">
-            <span className="text-gray-900">MOQ</span>
-            <span suppressHydrationWarning className="font-bold text-black">{effectiveMoq.toLocaleString('en-US')}</span>
+          <div className="flex items-center justify-between">
+            <span>Est. Qty</span>
+            <span suppressHydrationWarning className="font-bold text-slate-900">{estQty.toLocaleString('en-US')}</span>
           </div>
-          <div className="h-px w-full bg-gray-100"></div>
-          <div className="flex items-center justify-between text-[11px] xl:text-[13px]">
-            <span className="text-gray-900">Est. Qty</span>
-            <span suppressHydrationWarning className="font-bold text-black">{estQty.toLocaleString('en-US')}</span>
-          </div>
-          <div className="h-px w-full bg-gray-100"></div>
         </div>
 
         {/* Price Row */}
-        <div className="mb-4">
-          <div className="flex items-baseline gap-2 flex-wrap mb-1">
-            <span suppressHydrationWarning className="text-[18px] xl:text-[22px] font-extrabold text-[#0f7a61] leading-none">
-              {formatPrice(price, currency)}
+        <div className="flex items-baseline flex-wrap gap-1.5 mb-4">
+          <span suppressHydrationWarning className="text-xl sm:text-2xl font-black text-[#0f172a] leading-none">
+            {formatPrice(price, currency)}
+          </span>
+          {originalPrice && originalPrice > price && (
+            <span suppressHydrationWarning className="text-xs sm:text-sm text-slate-400 line-through font-medium ml-1">
+              {formatPrice(originalPrice, currency)}
             </span>
-            {originalPrice && originalPrice > price && (
-              <span suppressHydrationWarning className="text-md text-gray-700 line-through font-medium">
-                {formatPrice(originalPrice, currency)}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="text-gray-500">Per unit</span>
-          </div>
+          )}
+          <span className="text-xs text-slate-500 ml-1">per unit</span>
         </div>
 
         {/* Actions */}
         <div className="grid grid-cols-2 gap-2 mt-auto">
           <Link
             href={productLink}
-            className="border border-gray-200 text-gray-700 font-bold py-2.5 px-0 text-xs w-full rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
+            className="border border-slate-300 bg-white text-slate-800 font-bold py-2.5 px-0 text-xs sm:text-sm w-full rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors"
           >
             View Details
           </Link>
           <button
             type="button"
             onClick={handleAddRfq}
-            className={`font-bold py-2.5 px-0 text-xs w-full rounded-full flex items-center justify-center gap-1 cursor-pointer transition-all ${
+            className={`font-bold py-2.5 px-0 text-xs sm:text-sm w-full rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all ${
               isRfqAdded
                 ? '!bg-emerald-700 text-white'
                 : inCart

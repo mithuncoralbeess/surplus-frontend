@@ -8,13 +8,11 @@ import {
   CheckCircle2, 
   Plus, 
   Minus, 
-  ShoppingBag,
-  Store,
-  TrendingUp,
-  ShieldCheck,
-  Tag,
-  Recycle,
-  Globe
+  TrendingUp, 
+  ShieldCheck, 
+  Tag, 
+  Recycle, 
+  Globe 
 } from 'lucide-react';
 import { 
   QATAR_SUPPORT_POINTS, 
@@ -22,6 +20,14 @@ import {
   QATAR_BENEFITS, 
   QATAR_FAQS 
 } from './qatarData';
+import RegionalHeroBanner from '../RegionalHeroBanner';
+import RegionalTrustBar from '../RegionalTrustBar';
+import RegionalCategoryGrid from '../RegionalCategoryGrid';
+import CuratedProducts from '../CuratedProducts';
+import RegionalBuyRequestBanner from '../RegionalBuyRequestBanner';
+import PalletDeals from '../PalletDeals';
+import RegionalSellCTA from '../RegionalSellCTA';
+import RegionalDeadStockSection from '../RegionalDeadStockSection';
 
 const BENEFIT_ICONS = [TrendingUp, ShieldCheck, Tag, Recycle, Globe];
 
@@ -36,65 +42,45 @@ export default function QatarMarketplaceWidget() {
     <div className="w-full flex flex-col items-center bg-[#f8fafc]">
       
       {/* Hero Header Section */}
-      <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#051c14] via-[#082d20] to-[#0c402e] text-white py-12 sm:py-16 md:py-20 border-b border-emerald-900/40">
-        <div
-          className="absolute inset-0 opacity-[0.035] pointer-events-none"
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, #ffffff 1px, transparent 0)`,
-            backgroundSize: '32px 32px'
-          }}
-        />
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-[#14b875]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 -left-20 w-80 h-80 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="container mx-auto px-4 lg:px-8 max-w-7xl relative z-10">
-          
-          {/* Breadcrumbs */}
-          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-emerald-200/80 mb-5">
-            <Link href="/" className="hover:text-white transition-colors cursor-pointer flex items-center gap-1">
-              <span>Home</span>
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-            <span className="text-white font-semibold">Qatar</span>
-          </nav>
-
-          {/* H1 Title & Intro Paragraphs */}
-          <div className="max-w-4xl">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-5 leading-[1.18]">
-              Buy &amp; Sell Excess Inventory in Qatar With Surplus Market
-            </h1>
-            <div className="space-y-4 text-emerald-100/90 text-sm sm:text-base md:text-lg leading-relaxed mb-8">
-              <p>
-                Managing unsold or unused stock can be challenging for businesses in Qatar. Surplus Market makes the process simple by connecting sellers with serious buyers in one trusted space. If you want to clear warehouse space, recover value from idle goods, or find affordable stock for your business, our platform is built to help you act quickly and efficiently.
-              </p>
-              <p>
-                Our marketplace allows businesses to showcase surplus goods to verified buyers, making the sale process straightforward and transparent. We support small batches to bulk inventory sales in Qatar, helping sellers to turn excess stock into cash, while enabling buyers to access high-quality products at competitive prices.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href="/buy"
-                className="px-6 py-3 bg-[#14b875] hover:bg-[#119e64] text-[#051c14] font-extrabold text-sm rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                <span>Buy Excess Inventory</span>
-              </Link>
-              <Link
-                href="/sell"
-                className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-sm rounded-xl transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <Store className="w-4 h-4" />
-                <span>Sell Excess Stock</span>
-              </Link>
-            </div>
-          </div>
-
-        </div>
-      </section>
+      <RegionalHeroBanner
+        countryName="Qatar"
+        countrySlug="qatar"
+        title="Buy & Sell Excess Inventory in Qatar With Surplus Market"
+        description={
+          <>
+            <p>
+              Managing unsold or unused stock can be challenging for businesses in Qatar. Surplus Market makes the process simple by connecting sellers with serious buyers in one trusted space. If you want to clear warehouse space, recover value from idle goods, or find affordable stock for your business, our platform is built to help you act quickly and efficiently.
+            </p>
+            <p>
+              Our marketplace allows businesses to showcase surplus goods to verified buyers, making the sale process straightforward and transparent. We support small batches to bulk inventory sales in Qatar, helping sellers to turn excess stock into cash, while enabling buyers to access high-quality products at competitive prices.
+            </p>
+          </>
+        }
+      />
 
       {/* Main Content Sections */}
-      <div className="container mx-auto px-4 lg:px-8 max-w-7xl py-12 md:py-16 space-y-12">
+      <div className="container mx-auto px-4 lg:px-8 max-w-7xl py-10 md:py-14 space-y-12">
+
+        {/* Trust Features Bar */}
+        <RegionalTrustBar />
+
+        {/* Shop By Category Section */}
+        <RegionalCategoryGrid />
+
+        {/* Top Liquidated Inventory Products */}
+        <CuratedProducts isRegional={true} />
+
+        {/* Buy Request Banner */}
+        <RegionalBuyRequestBanner countryName="Qatar" countrySlug="qatar" />
+
+        {/* Full Lots & Pallet Deals */}
+        <PalletDeals isRegional={true} />
+
+        {/* Sell CTA Banner */}
+        <RegionalSellCTA countryName="Qatar" countrySlug="qatar" />
+
+        {/* Dead Stock Buyers Section */}
+        <RegionalDeadStockSection countryName="Qatar" countrySlug="qatar" />
 
         {/* Section 1: Why Choose Surplus Market to Buy & Sell Excess Inventory in Qatar? */}
         <section className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200/80 shadow-xs">

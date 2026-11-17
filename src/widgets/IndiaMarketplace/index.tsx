@@ -7,18 +7,17 @@ import {
   CheckCircle2, 
   Plus, 
   Minus, 
-  ShoppingBag,
-  Store,
-  ShieldCheck,
-  Building2,
-  Boxes,
-  Globe,
-  Tag,
-  Sparkles,
-  TrendingUp,
-  Coins,
-  PackageCheck,
-  Factory
+  Store, 
+  ShieldCheck, 
+  Building2, 
+  Boxes, 
+  Globe, 
+  Tag, 
+  Sparkles, 
+  TrendingUp, 
+  Coins, 
+  PackageCheck, 
+  Factory 
 } from 'lucide-react';
 import { 
   INDIA_TRUST_POINTS, 
@@ -27,6 +26,14 @@ import {
   INDIA_PARTICIPANTS, 
   INDIA_FAQS 
 } from './indiaData';
+import RegionalHeroBanner from '../RegionalHeroBanner';
+import RegionalTrustBar from '../RegionalTrustBar';
+import RegionalCategoryGrid from '../RegionalCategoryGrid';
+import CuratedProducts from '../CuratedProducts';
+import RegionalBuyRequestBanner from '../RegionalBuyRequestBanner';
+import PalletDeals from '../PalletDeals';
+import RegionalSellCTA from '../RegionalSellCTA';
+import RegionalDeadStockSection from '../RegionalDeadStockSection';
 
 const TRUST_ICONS = [ShieldCheck, Building2, Boxes, Globe];
 const BUY_ICONS = [Tag, Sparkles, Boxes, Globe];
@@ -44,64 +51,44 @@ export default function IndiaMarketplaceWidget() {
     <div className="w-full flex flex-col items-center bg-[#f8fafc]">
       
       {/* Hero Header Section */}
-      <section className="relative w-full overflow-hidden bg-gradient-to-b from-[#051c14] via-[#082d20] to-[#0c402e] text-white py-12 sm:py-16 md:py-20 border-b border-emerald-900/40">
-        <div
-          className="absolute inset-0 opacity-[0.035] pointer-events-none"
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, #ffffff 1px, transparent 0)`,
-            backgroundSize: '32px 32px'
-          }}
-        />
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-[#14b875]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 -left-20 w-80 h-80 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="container mx-auto px-4 lg:px-8 max-w-7xl relative z-10">
-          
-          {/* Breadcrumbs */}
-          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-emerald-200/80 mb-5">
-            <Link href="/" className="hover:text-white transition-colors cursor-pointer flex items-center gap-1">
-              <span>Home</span>
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-            <span className="text-white font-semibold">India</span>
-          </nav>
-
-          {/* H1 Title & Intro Paragraph */}
-          <div className="max-w-4xl">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-5 leading-[1.18]">
-              Buy &amp; Sell Surplus Inventory in India with Surplus Market
-            </h1>
-            <p className="text-emerald-100/90 text-sm sm:text-base md:text-lg leading-relaxed mb-8">
-              Surplus India is a growing opportunity for businesses to unlock value from unused stock and slow-moving goods. The platform Surplus Market began as a portal to{' '}
-              <Link href="/qatar" className="text-emerald-300 hover:text-white underline font-semibold transition-colors">
-                buy excess inventory in Qatar
-              </Link>{' '}
-              and has since expanded to support Indian businesses seeking reliable, budget-friendly surplus deals. The B2B platform enables companies to buy and sell surplus goods online in a secure, professional environment focused on trust, speed, and scale. Surplus Market helps organizations reduce inventory pressure, improve cash flow, and access verified surplus opportunities across industries, making it a practical surplus website for Indian businesses.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href="/buy"
-                className="px-6 py-3 bg-[#14b875] hover:bg-[#119e64] text-[#051c14] font-extrabold text-sm rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                <span>Buy Surplus Inventory</span>
-              </Link>
-              <Link
-                href="/sell"
-                className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-sm rounded-xl transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <Store className="w-4 h-4" />
-                <span>Sell Surplus Stock</span>
-              </Link>
-            </div>
-          </div>
-
-        </div>
-      </section>
+      <RegionalHeroBanner
+        countryName="India"
+        countrySlug="india"
+        title="Buy & Sell Surplus Inventory in India with Surplus Market"
+        description={
+          <p>
+            Surplus India is a growing opportunity for businesses to unlock value from unused stock and slow-moving goods. The platform Surplus Market began as a portal to{' '}
+            <Link href="/qatar" className="text-[#0f7a61] hover:underline font-semibold transition-colors">
+              buy excess inventory in Qatar
+            </Link>{' '}
+            and has since expanded to support Indian businesses seeking reliable, budget-friendly surplus deals. The B2B platform enables companies to buy and sell surplus goods online in a secure, professional environment focused on trust, speed, and scale. Surplus Market helps organizations reduce inventory pressure, improve cash flow, and access verified surplus opportunities across industries, making it a practical surplus website for Indian businesses.
+          </p>
+        }
+      />
 
       {/* Main Content Sections */}
-      <div className="container mx-auto px-4 lg:px-8 max-w-7xl py-12 md:py-16 space-y-12">
+      <div className="container mx-auto px-4 lg:px-8 max-w-7xl py-10 md:py-14 space-y-12">
+
+        {/* Trust Features Bar */}
+        <RegionalTrustBar />
+
+        {/* Shop By Category Section */}
+        <RegionalCategoryGrid />
+
+        {/* Top Liquidated Inventory Products */}
+        <CuratedProducts isRegional={true} />
+
+        {/* Buy Request Banner */}
+        <RegionalBuyRequestBanner countryName="India" countrySlug="india" />
+
+        {/* Full Lots & Pallet Deals */}
+        <PalletDeals isRegional={true} />
+
+        {/* Sell CTA Banner */}
+        <RegionalSellCTA countryName="India" countrySlug="india" />
+
+        {/* Dead Stock Buyers Section */}
+        <RegionalDeadStockSection countryName="India" countrySlug="india" />
 
         {/* Section 1: Surplus Market – India’s Trusted Surplus Trading Platform */}
         <section className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-200/80 shadow-xs">

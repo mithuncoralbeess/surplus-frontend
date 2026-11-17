@@ -28,9 +28,10 @@ const getCachedTabProducts = (tab: string): ProductItem[] => {
 
 interface CuratedProductsProps {
   initialProducts?: ProductItem[];
+  isRegional?: boolean;
 }
 
-const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] }) => {
+const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [], isRegional = false }) => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('New Arrivals');
   const [products, setProducts] = useState<ProductItem[]>(initialProducts);
@@ -126,104 +127,92 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [] 
     };
   }, [activeTab]);
 
-  return (
-    <section className="w-full bg-[#fdfcf9] pt-20 pb-12 border-b border-gray-100">
-      <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
-
-        {/* Header Area */}
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="flex flex-col items-center text-center mb-12"
-        >
-          <div className="flex items-center text-primary-alt font-bold text-xs tracking-widest uppercase mb-4">
-            <Sparkles className="w-3.5 h-3.5 mr-1.5 rtl:mr-0 rtl:ml-1.5" />
+  const content = (
+    <>
+      {/* Header Area */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+          <span className="inline-block bg-[#e8f5f1] text-[#0f7a61] text-xs font-bold px-3 py-1 rounded-full mb-2">
             {t('curated.badge', 'Verified Surplus')}
-          </div>
-
-          <h2 className="h2 text-gray-900 tracking-tight mb-8">
+          </span>
+          <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-black text-[#0f172a] tracking-tight">
             {t('curated.title', 'Top Liquidated Inventory Products')}
           </h2>
+        </div>
 
-          {/* Tabs */}
-          <div className="w-full flex justify-center overflow-x-auto scrollbar-hide py-1">
-            <div className="inline-flex items-center bg-white border border-gray-100 rounded-full p-1 sm:p-1.5 shadow-sm whitespace-nowrap">
-              {TABS.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`
-                    px-3.5 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all cursor-pointer whitespace-nowrap shrink-0
-                    ${activeTab === tab
-                      ? 'bg-primary text-white shadow-md'
-                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
-                  `}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+        {/* Tabs */}
+        <div className="flex items-center bg-[#f1f5f9] border border-slate-200/60 rounded-xl p-1 self-start md:self-auto">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`
+                px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shrink-0
+                ${activeTab === tab
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 font-medium'}
+              `}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Product Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {loading ? (
+          Array.from({ length: 8 }).map((_, idx) => (
+            <ProductCard
+              key={`skeleton-${idx}`}
+              image=""
+              category=""
+              title=""
+              moq={0}
+              estQty={0}
+              price={0}
+              isLoading={true}
+            />
+          ))
+        ) : products.length > 0 ? (
+          products.slice(0, 8).map((product, idx) => (
+            <ProductCard
+              key={product.id}
+              {...product}
+              priority={idx < 4}
+              isLoading={false}
+            />
+          ))
+        ) : (
+          <div className="col-span-full py-20 flex flex-col items-center justify-center text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <PackageSearch className="w-16 h-16 text-gray-300 mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No {activeTab.toLowerCase()} products found</h3>
+            <p className="text-gray-500 text-sm max-w-sm">No products currently match this curation filter. Please check back later or explore our full marketplace catalog.</p>
           </div>
-        </motion.div>
+        )}
+      </div>
 
-        {/* Product Grid */}
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+      {/* View All Action */}
+      <div className="mt-12 sm:mt-14 flex justify-center">
+        <Link
+          href="/buy/product"
+          className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#0f7a61] hover:bg-[#0c6651] text-white rounded-xl font-bold text-sm transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
         >
-          {loading ? (
-            Array.from({ length: 8 }).map((_, idx) => (
-              <ProductCard
-                key={`skeleton-${idx}`}
-                image=""
-                category=""
-                title=""
-                moq={0}
-                estQty={0}
-                price={0}
-                isLoading={true}
-              />
-            ))
-          ) : products.length > 0 ? (
-            products.slice(0, 8).map((product, idx) => (
-              <ProductCard
-                key={product.id}
-                {...product}
-                priority={idx < 4}
-                isLoading={false}
-              />
-            ))
-          ) : (
-            <div className="col-span-full py-24 flex flex-col items-center justify-center text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
-              <PackageSearch className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No {activeTab.toLowerCase()} products found</h3>
-              <p className="text-gray-500 text-sm max-w-sm">No products currently match this curation filter. Please check back later or explore our full marketplace catalog.</p>
-            </div>
-          )}
-        </motion.div>
+          <span>{t('curated.viewAll', 'View All Inventory')}</span>
+          <ArrowRight className="w-4 h-4 rtl:rotate-180 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+        </Link>
+      </div>
+    </>
+  );
 
-        {/* View All Action */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-12 flex justify-center"
-        >
-          <Link
-            href="/buy/product"
-            className="inline-flex items-center gap-2 px-8 py-3.5 bg-primary hover:bg-primary-dark text-white rounded-full font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer group"
-          >
-            <span>{t('curated.viewAll', 'View All Inventory')}</span>
-            <ArrowRight className="w-4 h-4 rtl:rotate-180 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
-          </Link>
-        </motion.div>
+  if (isRegional) {
+    return <section className="w-full py-8 sm:py-12 md:py-16">{content}</section>;
+  }
 
+  return (
+    <section className="w-full bg-[#f8fafc] py-16 md:py-24 border-b border-gray-200/60">
+      <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
+        {content}
       </div>
     </section>
   );

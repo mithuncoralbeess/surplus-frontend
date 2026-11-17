@@ -256,7 +256,7 @@ const LotCard: React.FC<LotCardProps> = ({
   const lotLink = createLotUrl(title || lotIdText, lotIdText);
 
   return (
-    <div className="group relative flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full">
+    <div className="group relative flex flex-col bg-white border border-gray-200/90 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-shadow h-full">
       {/* Top Image Container */}
       <Link
         href={lotLink}
@@ -403,7 +403,7 @@ const LotCard: React.FC<LotCardProps> = ({
         <div className="grid grid-cols-2 gap-2 mt-auto">
           <Link
             href={lotLink}
-            className="border border-gray-200 text-gray-700 font-bold py-2.5 px-0 text-xs w-full rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
+            className="border border-slate-300 bg-white text-slate-800 font-bold py-2.5 px-0 text-xs sm:text-sm w-full rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors"
           >
             View Lot
           </Link>
@@ -411,7 +411,7 @@ const LotCard: React.FC<LotCardProps> = ({
           <button
             type="button"
             onClick={handleAddLot}
-            className={`font-bold py-2.5 px-0 text-xs w-full rounded-full flex items-center justify-center gap-1 cursor-pointer transition-all ${
+            className={`font-bold py-2.5 px-0 text-xs sm:text-sm w-full rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-all ${
               isAdded
                 ? '!bg-emerald-700 text-white'
                 : inCart
