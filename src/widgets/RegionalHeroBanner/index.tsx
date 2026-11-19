@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Loader2, AlertCircle, ShieldCheck, RefreshCw } from 'lucide-react';
 import { inquiryService } from '../../services/inquiryService';
 import { sanitizeInput } from '../../lib/security/sanitizer';
 
@@ -34,13 +34,34 @@ export default function RegionalHeroBanner({
   const [quantity, setQuantity] = useState('');
   const [targetPrice, setTargetPrice] = useState('');
   const [businessEmail, setBusinessEmail] = useState('');
+
+  // Anti-Spam Layer 1: Invisible Honeypot
   const [honeypot, setHoneypot] = useState('');
+
+  // Anti-Spam Layer 2: Time-to-Submit Nonce (detects instant bots)
   const [mountedAt] = useState(() => Date.now());
+
+  // Anti-Spam Layer 3: Dynamic Human Verification Challenge (arithmetic)
+  const [captchaNums, setCaptchaNums] = useState<{ n1: number; n2: number }>({ n1: 4, n2: 3 });
+  const [userCaptcha, setUserCaptcha] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
 
   const [errors, setErrors] = useState<QuoteFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quoteStatus, setQuoteStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [quoteMessage, setQuoteMessage] = useState('');
+
+  const generateNewCaptcha = () => {
+    const n1 = Math.floor(Math.random() * 8) + 2; // 2 to 9
+    const n2 = Math.floor(Math.random() * 8) + 1; // 1 to 8
+    setCaptchaNums({ n1, n2 });
+    setUserCaptcha('');
+    setCaptchaError('');
+  };
+
+  useEffect(() => {
+    generateNewCaptcha();
+  }, []);
 
   // 1. "What are you looking for?" - Prevent scripts and HTML in real-time
   const handleLookingForChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,8 +151,17 @@ export default function RegionalHeroBanner({
       newErrors.businessEmail = 'Script tags or HTML code are not allowed';
     }
 
+    // 5. Anti-Spam Security Math Check
+    const expectedSum = captchaNums.n1 + captchaNums.n2;
+    const providedSum = parseInt(userCaptcha.trim(), 10);
+    let hasCaptchaError = false;
+    if (isNaN(providedSum) || providedSum !== expectedSum) {
+      setCaptchaError(`Please solve: ${captchaNums.n1} + ${captchaNums.n2} = ?`);
+      hasCaptchaError = true;
+    }
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0 && !hasCaptchaError;
   };
 
   const handleQuoteSubmit = async (e: React.FormEvent) => {
@@ -142,8 +172,8 @@ export default function RegionalHeroBanner({
       return;
     }
 
-    // Bot trap: honeypot or instant submission (< 2 seconds)
-    if (honeypot.trim().length > 0 || Date.now() - mountedAt < 2000) {
+    // Bot trap: honeypot or instant submission (< 2.5 seconds)
+    if (honeypot.trim().length > 0 || Date.now() - mountedAt < 2500) {
       setIsSubmitting(true);
       setTimeout(() => {
         setIsSubmitting(false);
@@ -153,6 +183,7 @@ export default function RegionalHeroBanner({
         setTargetPrice('');
         setBusinessEmail('');
         setHoneypot('');
+        generateNewCaptcha();
         setErrors({});
       }, 500);
       return;
@@ -180,6 +211,8 @@ export default function RegionalHeroBanner({
         country: countryName,
         searchQuery: `${countryName} (${countrySlug})`,
         source: 'RegionalHeroBanner',
+        company_website_url: honeypot,
+        _formTime: mountedAt,
         enquiryType: `Regional Quote Request - ${countryName}`,
         subject: `[${countryName}] Quote Request: ${cleanItem} (Qty: ${cleanQty})`,
         message: `
@@ -206,14 +239,17 @@ Business Email: ${cleanEmail}
         setQuantity('');
         setTargetPrice('');
         setBusinessEmail('');
+        generateNewCaptcha();
         setErrors({});
       } else {
         setQuoteStatus('error');
         setQuoteMessage(res.message || 'Unable to submit quote request. Please try again.');
+        generateNewCaptcha();
       }
     } catch (err: any) {
       setQuoteStatus('error');
       setQuoteMessage(err?.message || 'A network error occurred. Please try again.');
+      generateNewCaptcha();
     } finally {
       setIsSubmitting(false);
     }
@@ -371,6 +407,60 @@ Business Email: ${cleanEmail}
                   />
                   {errors.businessEmail && (
                     <p className="text-xs text-red-500 mt-1 font-medium">{errors.businessEmail}</p>
+                  )}
+                </div>
+
+                {/* Anti-Spam Security Verification Challenge */}
+                <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 sm:p-3.5 transition-all">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-[#0f7a61]" />
+                      <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        Security Check <span className="text-red-500">*</span>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={generateNewCaptcha}
+                      className="text-[11px] text-slate-500 hover:text-[#0f7a61] flex items-center gap-1 font-semibold transition-colors"
+                      title="Generate new question"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      <span>New</span>
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2.5">
+                    <div className="inline-flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs font-black text-slate-800 select-none shadow-2xs shrink-0">
+                      <span>{captchaNums.n1}</span>
+                      <span>+</span>
+                      <span>{captchaNums.n2}</span>
+                      <span>=</span>
+                    </div>
+                    <div className="w-24">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={userCaptcha}
+                        onChange={(e) => {
+                          setUserCaptcha(e.target.value.replace(/[^0-9]/g, ''));
+                          if (captchaError) setCaptchaError('');
+                        }}
+                        placeholder="Answer"
+                        className={`w-full px-2.5 py-1.5 bg-white border rounded-lg text-xs font-bold text-slate-900 outline-none transition-all ${
+                          captchaError 
+                            ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500' 
+                            : 'border-gray-200 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61]'
+                        }`}
+                      />
+                    </div>
+                    <span className="text-[11px] text-slate-400 truncate">
+                      Real person check
+                    </span>
+                  </div>
+                  {captchaError && (
+                    <p className="text-red-500 text-xs mt-1.5 font-medium">{captchaError}</p>
                   )}
                 </div>
 

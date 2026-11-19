@@ -7,11 +7,31 @@ const BACKEND_BASE = (
   "https://dev.surplusmarket.com"
 ).replace(/\/$/, "");
 
-// In-memory sliding window rate-limiter: max 10 requests per IP per 10 minutes
+// In-memory sliding window rate-limiter: max 5 requests per IP per 10 minutes
 interface RateLimitRecord {
   timestamps: number[];
 }
 const rateLimitMap = new Map<string, RateLimitRecord>();
+
+// Cleanup stale records periodically
+if (typeof setInterval !== "undefined") {
+  const cleanupTimer = setInterval(() => {
+    const now = Date.now();
+    const windowMs = 10 * 60 * 1000;
+    for (const [ip, record] of rateLimitMap.entries()) {
+      const recent = record.timestamps.filter((t) => now - t < windowMs);
+      if (recent.length === 0) {
+        rateLimitMap.delete(ip);
+      } else {
+        record.timestamps = recent;
+      }
+    }
+  }, 15 * 60 * 1000);
+  
+  if (cleanupTimer.unref) {
+    cleanupTimer.unref();
+  }
+}
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -33,8 +53,9 @@ export async function POST(req: NextRequest) {
 
     const now = Date.now();
     const windowMs = 10 * 60 * 1000;
-    const maxRequests = 10;
+    const maxRequests = 5;
 
+    // 1. IP Sliding Window Rate Limiting
     let record = rateLimitMap.get(ip);
     if (!record) {
       record = { timestamps: [] };
@@ -43,7 +64,7 @@ export async function POST(req: NextRequest) {
     record.timestamps = record.timestamps.filter((t) => now - t < windowMs);
 
     if (record.timestamps.length >= maxRequests) {
-      console.warn(`[AntiSpam Regional] IP ${ip} exceeded rate limit. Dropping.`);
+      console.warn(`[AntiSpam Regional] IP ${ip} exceeded ${maxRequests} submissions/10min. Silently dropping.`);
       return NextResponse.json({
         success: true,
         message: "Thank you for your quote request. Our regional procurement desk will review it shortly.",
@@ -52,7 +73,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => ({}));
 
-    // Honeypot check
+    // 2. Honeypot check (filled exclusively by automated bots)
     const honeypotVal = String(
       body?.company_website_url || 
       body?.hp_contact_check || 
@@ -62,16 +83,74 @@ export async function POST(req: NextRequest) {
     ).trim();
 
     if (honeypotVal) {
-      console.warn(`[AntiSpam Regional] Bot honeypot triggered from ${ip}. Dropping.`);
+      console.warn(`[AntiSpam Regional] Bot honeypot triggered from ${ip} ("${honeypotVal}"). Silently dropping.`);
       return NextResponse.json({
         success: true,
         message: "Thank you for your quote request. Our regional procurement desk will review it shortly.",
       });
     }
 
+    // 3. Fast Submission Timing Check (bots submit instantly < 2000ms)
+    const formTime = Number(body?._formTime || 0);
+    if (formTime > 0 && now - formTime < 2000) {
+      console.warn(`[AntiSpam Regional] Fast submission detected from ${ip} (${now - formTime}ms). Silently dropping.`);
+      return NextResponse.json({
+        success: true,
+        message: "Thank you for your quote request. Our regional procurement desk will review it shortly.",
+      });
+    }
+
+    // 4. Content Spam Heuristics
+    const lookingFor = String(body?.lookingFor || body?.sourcingItem || "");
+    const email = String(body?.email || body?.businessEmail || "").trim().toLowerCase();
+    const message = String(body?.message || "");
+
+    const fullContent = `${lookingFor} ${message}`;
+    const urlMatches = fullContent.match(/https?:\/\/|www\./gi) || [];
+    if (urlMatches.length > 2) {
+      console.warn(`[AntiSpam Regional] Message with ${urlMatches.length} URLs detected from IP ${ip}. Dropping.`);
+      return NextResponse.json({
+        success: true,
+        message: "Thank you for your quote request. Our regional procurement desk will review it shortly.",
+      });
+    }
+
+    if (/\[url=|\<a\s+href=/i.test(fullContent)) {
+      console.warn(`[AntiSpam Regional] BBCode / HTML tags detected from IP ${ip}. Dropping.`);
+      return NextResponse.json({
+        success: true,
+        message: "Thank you for your quote request. Our regional procurement desk will review it shortly.",
+      });
+    }
+
+    const spamPatterns = [
+      /\bseo ranking\b/i,
+      /\bviagra\b/i,
+      /\bcasino online\b/i,
+      /\bcrypto investment\b/i,
+      /\bbacklinks? for your website\b/i,
+      /\bwhatsapp loan\b/i,
+      /\bsearch engine ranker\b/i,
+      /\bXRumer\b/i,
+    ];
+    if (spamPatterns.some((pattern) => pattern.test(fullContent))) {
+      console.warn(`[AntiSpam Regional] Spambot pattern matched from IP ${ip}. Dropping.`);
+      return NextResponse.json({
+        success: true,
+        message: "Thank you for your quote request. Our regional procurement desk will review it shortly.",
+      });
+    }
+
+    // Clean submission - register timestamp for rate limiting
     record.timestamps.push(now);
 
-    // Forward to backend Django Regional API
+    // Strip anti-spam internals before forwarding to Django
+    const cleanPayload = { ...body };
+    delete cleanPayload.company_website_url;
+    delete cleanPayload._formTime;
+    delete cleanPayload.hp_contact_check;
+
+    // 5. Forward to backend Django Regional API
     try {
       const backendRes = await fetch(`${BACKEND_BASE}/api/enquiries/regional/`, {
         method: "POST",
@@ -80,7 +159,7 @@ export async function POST(req: NextRequest) {
           Accept: "application/json",
           "X-Forwarded-For": ip,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(cleanPayload),
       });
 
       if (backendRes.ok) {
