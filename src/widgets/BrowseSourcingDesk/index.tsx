@@ -96,11 +96,16 @@ export default function BrowseSourcingDesk({
     setIsSubmitting(true);
 
     try {
-      const response = await inquiryService.submitContactForm({
+      const response = await inquiryService.submitSourcingEnquiry({
         fullName: fullName.trim(),
         name: fullName.trim(),
         email: email.trim() || 'sourcing-request@surplusmarket.com',
         phone: phone.trim() || undefined,
+        sourcingItem: targetItem,
+        quantity: quantity || '1',
+        notes: notes.trim(),
+        searchQuery: searchQuery || 'Browse Fast Sourcing',
+        source: 'BrowseSourcingDesk Widget',
         enquiryType: 'B2B Fast Sourcing Desk',
         subject: `Fast Sourcing Inquiry: ${targetItem} (Qty: ${quantity || '1'})`,
         message: `

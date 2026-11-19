@@ -65,6 +65,116 @@ export const inquiryService = {
     });
   },
 
+  async submitSourcingEnquiry(payload: {
+    fullName?: string;
+    name?: string;
+    email: string;
+    phone?: string;
+    sourcingItem?: string;
+    lookingFor?: string;
+    quantity?: string | number;
+    targetPrice?: string;
+    notes?: string;
+    message?: string;
+    searchQuery?: string;
+    country?: string;
+    source?: string;
+    metadata?: any;
+    [key: string]: any;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await apiClient('/api/enquiries/sourcing/', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      if (res.success || res.status === 200 || res.status === 201) {
+        return res;
+      }
+      if (res.status !== 404) {
+        return res;
+      }
+    } catch (e) {
+      // Proceed to fallback
+    }
+
+    // Fallback to contact-us submission
+    return this.submitContactForm({
+      fullName: payload.fullName || payload.name,
+      name: payload.name || payload.fullName,
+      email: payload.email,
+      phone: payload.phone,
+      enquiryType: payload.enquiryType || (payload.country ? `Regional Quote Request - ${payload.country}` : 'B2B Fast Sourcing Desk'),
+      subject: payload.subject || `Sourcing Request: ${payload.sourcingItem || payload.lookingFor || 'Item'} (Qty: ${payload.quantity || '1'})`,
+      message: payload.message || `
+[B2B SOURCING DESK INQUIRY]
+Item / Specs: ${payload.sourcingItem || payload.lookingFor}
+Quantity: ${payload.quantity || '1'}
+Target Price: ${payload.targetPrice || 'N/A'}
+Contact: ${payload.fullName || payload.name} (${payload.email}, ${payload.phone || 'N/A'})
+Notes: ${payload.notes || 'None'}
+Search Context: ${payload.searchQuery || payload.country || 'N/A'}
+      `.trim(),
+      metadata: payload.metadata || payload,
+    });
+  },
+
+  async submitRegionalEnquiry(payload: {
+    country: string;
+    countrySlug?: string;
+    fullName?: string;
+    name?: string;
+    email: string;
+    phone?: string;
+    lookingFor?: string;
+    sourcingItem?: string;
+    quantity?: string | number;
+    targetPrice?: string;
+    currency?: string;
+    notes?: string;
+    message?: string;
+    source?: string;
+    metadata?: any;
+    [key: string]: any;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await apiClient('/api/enquiries/regional/', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...payload,
+          countryName: payload.country,
+          businessEmail: payload.email,
+        }),
+      });
+      if (res.success || res.status === 200 || res.status === 201) {
+        return res;
+      }
+      if (res.status !== 404) {
+        return res;
+      }
+    } catch (e) {
+      // Proceed to fallback
+    }
+
+    // Fallback to contact-us submission
+    return this.submitContactForm({
+      fullName: payload.fullName || payload.name || payload.email.split('@')[0],
+      name: payload.name || payload.fullName || payload.email.split('@')[0],
+      email: payload.email,
+      phone: payload.phone,
+      enquiryType: `Regional Quote Request - ${payload.country}`,
+      subject: payload.subject || `[${payload.country}] Quote Request: ${payload.lookingFor || payload.sourcingItem} (Qty: ${payload.quantity || '1'})`,
+      message: payload.message || `
+[REGIONAL B2B QUOTE REQUEST]
+Country: ${payload.country} (${payload.countrySlug || ''})
+Item / Product: ${payload.lookingFor || payload.sourcingItem}
+Quantity: ${payload.quantity || '1'}
+Target Price: ${payload.targetPrice || 'Open for offers'}
+Business Email: ${payload.email}
+      `.trim(),
+      metadata: payload.metadata || payload,
+    });
+  },
+
   async submitPartnershipEnquiry(payload: PartnershipEnquiryPayload): Promise<ApiResponse> {
     return apiClient('/api/enquiries/partnership/', {
       method: 'POST',

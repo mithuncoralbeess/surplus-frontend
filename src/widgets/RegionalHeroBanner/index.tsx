@@ -23,6 +23,8 @@ export default function RegionalHeroBanner({
   const [quantity, setQuantity] = useState('');
   const [targetPrice, setTargetPrice] = useState('');
   const [businessEmail, setBusinessEmail] = useState('');
+  const [honeypot, setHoneypot] = useState('');
+  const [mountedAt] = useState(() => Date.now());
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quoteStatus, setQuoteStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -32,14 +34,37 @@ export default function RegionalHeroBanner({
     e.preventDefault();
     if (!lookingFor.trim() || !businessEmail.trim()) return;
 
+    // Bot trap: honeypot or instant submission
+    if (honeypot.trim().length > 0 || Date.now() - mountedAt < 2000) {
+      setIsSubmitting(true);
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setQuoteStatus('success');
+        setLookingFor('');
+        setQuantity('');
+        setTargetPrice('');
+        setBusinessEmail('');
+        setHoneypot('');
+      }, 500);
+      return;
+    }
+
     setIsSubmitting(true);
     setQuoteStatus('idle');
     setQuoteMessage('');
 
     try {
-      const res = await inquiryService.submitContactForm({
-        email: businessEmail.trim(),
+      const res = await inquiryService.submitRegionalEnquiry({
+        fullName: businessEmail.split('@')[0],
         name: businessEmail.split('@')[0],
+        email: businessEmail.trim(),
+        sourcingItem: lookingFor.trim(),
+        lookingFor: lookingFor.trim(),
+        quantity: quantity.trim() || '1',
+        targetPrice: targetPrice.trim(),
+        country: countryName,
+        searchQuery: `${countryName} (${countrySlug})`,
+        source: 'RegionalHeroBanner',
         enquiryType: `Regional Quote Request - ${countryName}`,
         subject: `[${countryName}] Quote Request: ${lookingFor.trim()} (Qty: ${quantity.trim() || '1'})`,
         message: `
@@ -134,7 +159,23 @@ Business Email: ${businessEmail.trim()}
                 </p>
               </div>
 
-              <form onSubmit={handleQuoteSubmit} className="space-y-3.5">
+              <form onSubmit={handleQuoteSubmit} className="space-y-3.5" noValidate>
+                {/* Anti-Spam Honeypot */}
+                <div 
+                  className="opacity-0 absolute -z-50 pointer-events-none h-0 w-0 overflow-hidden" 
+                  tabIndex={-1} 
+                  aria-hidden="true"
+                  style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}
+                >
+                  <input
+                    type="text"
+                    name="company_website_url"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+                </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     What are you looking for?

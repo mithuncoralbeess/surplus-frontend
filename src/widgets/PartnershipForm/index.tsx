@@ -68,6 +68,9 @@ const PartnershipForm = () => {
     message: ''
   });
   
+  const [honeypot, setHoneypot] = useState('');
+  const [mountedAt] = useState(() => Date.now());
+
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,6 +166,20 @@ const PartnershipForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Anti-Spam Bot Trap: Honeypot or instant submission
+    if (honeypot.trim().length > 0 || Date.now() - mountedAt < 2500) {
+      setIsSubmitting(true);
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setIsSuccess(true);
+        setFormData({ name: '', email: '', location: '', interest: '', subject: '', message: '' });
+        setHoneypot('');
+        setErrors({});
+        scrollToTop({ behavior: 'smooth' });
+      }, 500);
+      return;
+    }
+
     const result = formSchema.safeParse(formData);
     
     if (!result.success) {
@@ -285,7 +302,23 @@ const PartnershipForm = () => {
 
           {/* Right Side - Form */}
           <div className="lg:w-3/5 p-10 lg:p-12">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+              {/* Invisible Honeypot Trap */}
+              <div 
+                className="opacity-0 absolute -z-50 pointer-events-none h-0 w-0 overflow-hidden" 
+                tabIndex={-1} 
+                aria-hidden="true"
+                style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}
+              >
+                <input
+                  type="text"
+                  name="company_website_url"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
               {submitError && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium flex items-center justify-between">
                   <span>{submitError}</span>

@@ -15,7 +15,9 @@ import {
   CheckCircle2, 
   X,
   MapPin,
-  Building2
+  Building2,
+  ShieldCheck,
+  RefreshCw
 } from 'lucide-react';
 
 import { sanitizeInput } from '../../lib/security/sanitizer';
@@ -51,6 +53,14 @@ const contactFormSchema = z.object({
     .min(10, "Message must be at least 10 characters long")
     .max(3000, "Message cannot exceed 3000 characters")
     .refine((val) => !scriptCheckRegex.test(val), { message: "Message contains disallowed script or HTML tags" })
+    .refine((val) => {
+      // Disallow messages with > 2 external URLs (standard spambot pattern)
+      const linkMatches = val.match(/https?:\/\/|www\./gi) || [];
+      return linkMatches.length <= 2;
+    }, { message: "For security reasons, messages cannot contain multiple website links." })
+    .refine((val) => !/\[url=|\<a\s+href=/i.test(val), {
+      message: "BBCode or HTML links are not permitted.",
+    }),
 });
 
 type ContactFormData = z.infer<typeof contactFormSchema>;
@@ -104,10 +114,33 @@ export default function ContactForm() {
     message: ''
   });
 
+  // Anti-Spam Layer 1: Invisible Honeypot (traps automated crawlers)
+  const [honeypot, setHoneypot] = useState('');
+
+  // Anti-Spam Layer 2: Time-to-Submit Tracking (detects instant bot submits)
+  const [mountedAt] = useState(() => Date.now());
+
+  // Anti-Spam Layer 3: Dynamic Human Verification Challenge (arithmetic)
+  const [captchaNums, setCaptchaNums] = useState<{ n1: number; n2: number }>({ n1: 5, n2: 3 });
+  const [userCaptcha, setUserCaptcha] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
+
   const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const generateNewCaptcha = () => {
+    const n1 = Math.floor(Math.random() * 8) + 2; // 2 to 9
+    const n2 = Math.floor(Math.random() * 8) + 1; // 1 to 8
+    setCaptchaNums({ n1, n2 });
+    setUserCaptcha('');
+    setCaptchaError('');
+  };
+
+  useEffect(() => {
+    generateNewCaptcha();
+  }, []);
 
   useEffect(() => {
     if (isSuccess) {
@@ -142,6 +175,46 @@ export default function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 1. Check Honeypot Trap (If filled, it's an automated bot)
+    if (honeypot && honeypot.trim().length > 0) {
+      // Silent Drop / Ghosting: pretend to succeed so bot does not retry with alternate vectors
+      setIsSubmitting(true);
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setIsSuccess(true);
+        setFormData({ fullName: '', email: '', phone: '', enquiryType: '', message: '' });
+        setHoneypot('');
+        generateNewCaptcha();
+        scrollToTop({ behavior: 'smooth' });
+      }, 600);
+      return;
+    }
+
+    // 2. Check Submission Timing (Bots submit forms instantaneously in < 2500ms)
+    const elapsed = Date.now() - mountedAt;
+    if (elapsed < 2500) {
+      // Silent Drop / Ghosting
+      setIsSubmitting(true);
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setIsSuccess(true);
+        setFormData({ fullName: '', email: '', phone: '', enquiryType: '', message: '' });
+        setHoneypot('');
+        generateNewCaptcha();
+        scrollToTop({ behavior: 'smooth' });
+      }, 600);
+      return;
+    }
+
+    // 3. Human Security Verification Check
+    const expectedSum = captchaNums.n1 + captchaNums.n2;
+    const providedSum = parseInt(userCaptcha.trim(), 10);
+    if (isNaN(providedSum) || providedSum !== expectedSum) {
+      setCaptchaError(`Please solve the security check: ${captchaNums.n1} + ${captchaNums.n2} = ?`);
+      return;
+    }
+
+    // 4. Form Field Validation
     const result = contactFormSchema.safeParse(formData);
 
     if (!result.success) {
@@ -164,6 +237,8 @@ export default function ContactForm() {
       phone: sanitizeInput(result.data.phone),
       enquiryType: sanitizeInput(result.data.enquiryType),
       message: sanitizeInput(result.data.message),
+      company_website_url: honeypot, // Pass honeypot for server-side verification
+      _formTime: mountedAt,
     };
 
     const res = await inquiryService.submitContactForm(sanitizedPayload);
@@ -173,10 +248,12 @@ export default function ContactForm() {
       setIsSuccess(true);
       setFormData({ fullName: '', email: '', phone: '', enquiryType: '', message: '' });
       setErrors({});
+      generateNewCaptcha();
       scrollToTop({ behavior: 'smooth' });
     } else {
       setIsSubmitting(false);
       setSubmitError(res.message || 'Failed to send your message. Please try again.');
+      generateNewCaptcha();
       scrollToTop({ behavior: 'smooth' });
     }
   };
@@ -279,7 +356,26 @@ export default function ContactForm() {
 
           {/* Right Side - Form Panel */}
           <div className="lg:w-7/12 p-6 sm:p-8 lg:p-12">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+              {/* Invisible Honeypot field (Anti-Bot Trap: hidden offscreen, filled by bots) */}
+              <div 
+                className="opacity-0 absolute -z-50 pointer-events-none h-0 w-0 overflow-hidden" 
+                tabIndex={-1} 
+                aria-hidden="true"
+                style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}
+              >
+                <label htmlFor="company_website_url">Leave this field blank</label>
+                <input
+                  type="text"
+                  id="company_website_url"
+                  name="company_website_url"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
+
               {submitError && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium flex items-center justify-between">
                   <span>{submitError}</span>
@@ -398,6 +494,60 @@ export default function ContactForm() {
                 {errors.message && <p className="text-red-500 text-xs mt-1.5">{errors.message}</p>}
               </div>
 
+              {/* Anti-Spam Security Verification Challenge */}
+              <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 sm:p-4.5 transition-all">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-[#0a5c48]" />
+                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Security Verification <span className="text-red-500">*</span>
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={generateNewCaptcha}
+                    className="text-xs text-slate-500 hover:text-[#0a5c48] flex items-center gap-1 font-semibold transition-colors"
+                    title="Generate new question"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>New challenge</span>
+                  </button>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="inline-flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs select-none">
+                    <span className="text-xs font-medium text-slate-500">Calculate:</span>
+                    <span className="text-sm font-black text-slate-900 tracking-wider">
+                      {captchaNums.n1} + {captchaNums.n2} =
+                    </span>
+                  </div>
+                  <div className="relative flex-1 sm:max-w-[160px]">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={userCaptcha}
+                      onChange={(e) => {
+                        setUserCaptcha(e.target.value.replace(/[^0-9]/g, ''));
+                        if (captchaError) setCaptchaError('');
+                      }}
+                      placeholder="Your answer"
+                      className={`w-full rounded-xl border bg-white px-3.5 py-2 text-sm font-bold text-slate-900 outline-none transition-all ${
+                        captchaError 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500' 
+                          : 'border-gray-300 focus:border-[#0a5c48] focus:ring-1 focus:ring-[#0a5c48]'
+                      }`}
+                    />
+                  </div>
+                  <span className="text-[11px] text-slate-400">
+                    Proves you are a real person, not an automated bot.
+                  </span>
+                </div>
+                {captchaError && (
+                  <p className="text-red-500 text-xs mt-2 font-medium">{captchaError}</p>
+                )}
+              </div>
+
               {/* Submit Button */}
               <button
                 type="submit"
@@ -422,7 +572,7 @@ export default function ContactForm() {
                 <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-[#0a5c48] text-sm font-semibold flex items-center justify-between animate-in fade-in duration-200">
                   <div className="flex items-center gap-2.5">
                     <CheckCircle2 className="w-5 h-5 text-[#0a5c48] shrink-0" />
-                    <span>Message Sent Successfully!</span>
+                    <span>Message Sent Successfully! Our team will get back to you shortly.</span>
                   </div>
                   <button 
                     type="button" 
