@@ -16,7 +16,7 @@ export default function SellHeroBanner() {
     <section className="relative w-full bg-[#fbfaf6] text-slate-900 py-10 sm:py-14 md:py-16 lg:py-20 border-b border-gray-200/60 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          
+
           {/* Left Column: Breadcrumb, H1 Title, Paragraph, Action Buttons */}
           <div className="lg:col-span-7">
             {/* Breadcrumb: Home › Sell */}
@@ -29,8 +29,9 @@ export default function SellHeroBanner() {
             </nav>
 
             {/* H1 Title */}
-            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-[46px] font-black text-[#0f172a] tracking-tight leading-[1.15] mb-4 sm:mb-5">
-              Sell surplus stock to verified B2B buyers
+            <h1 className="h1 font-black text-[#0f172a] tracking-tight leading-[1.15] mb-4 sm:mb-5">
+              Sell surplus stock to <br />
+              verified B2B buyers
             </h1>
 
             {/* Description Paragraph */}
