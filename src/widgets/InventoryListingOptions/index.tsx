@@ -62,7 +62,7 @@ export default function InventoryListingOptions() {
   };
 
   return (
-    <section className="py-12 md:py-20 w-full relative">
+    <section id="listing-options" className="py-12 md:py-20 w-full relative scroll-mt-12">
       <div className="container mx-auto px-4 lg:px-8 max-w-7xl relative z-10">
 
         {/* Header Section */}

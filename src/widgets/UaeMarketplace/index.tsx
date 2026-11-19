@@ -6,8 +6,6 @@ import {
   ChevronRight, 
   ArrowRight, 
   CheckCircle2, 
-  Plus, 
-  Minus, 
   Tag, 
   TrendingUp, 
   Boxes, 
@@ -16,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { USER_TYPES, UAE_BENEFITS, UAE_FAQS } from './uaeData';
+import Accordion from '../../components/Accordion';
 import RegionalHeroBanner from '../RegionalHeroBanner';
 import RegionalTrustBar from '../RegionalTrustBar';
 import RegionalCategoryGrid from '../RegionalCategoryGrid';
@@ -28,12 +27,6 @@ import RegionalDeadStockSection from '../RegionalDeadStockSection';
 const BENEFIT_ICONS = [Tag, TrendingUp, Boxes, ShieldCheck, Globe];
 
 export default function UaeMarketplaceWidget() {
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-
-  const toggleFaq = (index: number) => {
-    setOpenFaq(openFaq === index ? null : index);
-  };
-
   return (
     <div className="w-full flex flex-col items-center bg-[#f8fafc]">
       
@@ -148,43 +141,14 @@ export default function UaeMarketplaceWidget() {
             FAQ – Excess Inventory Sale in UAE
           </h2>
 
-          <div className="space-y-3 sm:space-y-3.5">
-            {UAE_FAQS.map((faq, idx) => {
-              const isOpen = openFaq === idx;
-              return (
-                <div 
-                  key={idx}
-                  className={`border rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-200 ${
-                    isOpen 
-                      ? 'border-[#0f7a61] bg-[#e6f7ef]/20 shadow-2xs' 
-                      : 'border-gray-200/80 bg-gray-50/40 hover:border-gray-300'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleFaq(idx)}
-                    className="w-full flex items-center justify-between p-3.5 sm:p-5 text-left focus:outline-none cursor-pointer"
-                    aria-expanded={isOpen}
-                  >
-                    <span className="text-xs sm:text-sm md:text-base font-bold text-gray-900 pr-3 sm:pr-4">
-                      {faq.q}
-                    </span>
-                    <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-                      isOpen ? 'bg-[#0f7a61] text-white' : 'bg-gray-200/80 text-gray-600'
-                    }`}>
-                      {isOpen ? <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-                    </div>
-                  </button>
-                  
-                  {isOpen && (
-                    <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-0 text-xs sm:text-sm text-gray-600 leading-relaxed border-t border-[#0f7a61]/10 mt-1">
-                      <p className="pt-3 sm:pt-3.5">{faq.a}</p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <Accordion
+            items={UAE_FAQS.map((faq, idx) => ({
+              id: idx,
+              question: faq.q,
+              answer: faq.a,
+            }))}
+            defaultOpenIndex={0}
+          />
         </section>
 
         {/* Concluding CTA Section */}

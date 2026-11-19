@@ -1,147 +1,97 @@
 "use client";
 
 import React from 'react';
-import { motion, Variants } from '../../lib/motion';
-import { Boxes, UserPlus, MailCheck, PackagePlus, Eye, Send, Building, ClipboardCheck, LayoutDashboard } from 'lucide-react';
+import Link from 'next/link';
 
-const STEPS = [
-  {
-    id: "01",
-    icon: Boxes,
-    title: "Choose a method",
-    description: "Pick how you want to list - simple inventory listing (1-10 items) or lot inventory listing (>10 SKUs)."
-  },
-  {
-    id: "02",
-    icon: UserPlus,
-    title: "Seller signup",
-    description: "Just your name and email to create a draft seller profile."
-  },
-  {
-    id: "03",
-    icon: MailCheck,
-    title: "Verify email",
-    description: "Confirm the 6-digit code we send. Takes 30 seconds."
-  },
-  {
-    id: "04",
-    icon: PackagePlus,
-    title: "Add inventory",
-    description: "Enter item details, upload media, or drop your spreadsheet."
-  },
-  {
-    id: "05",
-    icon: Eye,
-    title: "Preview listing",
-    description: "Review the auto-drafted title, category, condition and specs."
-  },
-  {
-    id: "06",
-    icon: Send,
-    title: "Publish draft",
-    description: "Send the listing to Surplus Market for verification."
-  },
-  {
-    id: "07",
-    icon: Building,
-    title: "Company details",
-    description: "Add trade licence, contact and payout information."
-  },
-  {
-    id: "08",
-    icon: ClipboardCheck,
-    title: "Submit for review",
-    description: "Our compliance team verifies before it goes live."
-  },
-  {
-    id: "09",
-    icon: LayoutDashboard,
-    title: "Seller dashboard",
-    description: "Track offers, buyer interest and payouts in one place."
-  }
-];
-
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
+export default function SellValueProps() {
+  const handleScrollToListing = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const el = document.getElementById('listing-options');
+    if (el) {
+      e.preventDefault();
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }
-};
+  };
 
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: "easeOut" }
-  }
-};
-
-const SellValueProps = () => {
   return (
-    <section className="w-full py-12 md:py-20 relative overflow-hidden">
-      <div className="container mx-auto px-4 lg:px-8 max-w-7xl relative z-10">
-
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-10 sm:mb-16"
-        >
-          <div className="flex items-center gap-2 mb-3 sm:mb-4">
-            <span className="text-[11px] font-bold text-[#0a5c48] tracking-widest uppercase">
-              THE SELLER JOURNEY
-            </span>
-          </div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight mb-4 sm:mb-6 leading-tight max-w-2xl">
-            List first. Verify before publishing.
+    <section className="w-full bg-[#155e43] text-white py-14 sm:py-16 md:py-20 relative overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
+        
+        {/* Section Header */}
+        <div className="mb-10 sm:mb-12 max-w-3xl">
+          <span className="block text-xs font-bold text-white/80 tracking-widest uppercase mb-2.5 sm:mb-3">
+            THE SELLER JOURNEY
+          </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-[1.15] mb-4 sm:mb-5">
+            List. We handle the rest. Get paid.
           </h2>
-          <p className="text-sm sm:text-base md:text-lg text-gray-500 leading-relaxed max-w-3xl">
-            A guided 9-step flow - no long forms upfront, AI does the heavy lifting, and our team verifies every listing before it goes live.
+          <p className="text-sm sm:text-base md:text-[17px] text-white/85 leading-relaxed max-w-2xl">
+            No long forms upfront. AI drafts your listing, and our team verifies every one before it goes live.
           </p>
-        </motion.div>
+        </div>
 
-        {/* Grid */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6"
-        >
-          {STEPS.map((step, index) => {
-            const Icon = step.icon;
-            return (
-              <motion.div
-                key={index}
-                variants={itemVariants}
-                className="group p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-gray-200 bg-white shadow-sm hover:shadow-xl hover:shadow-black/[0.03] hover:border-[#0a5c48]/30 transition-all duration-300 flex flex-col"
-              >
-                <div className="flex justify-between items-start mb-5 sm:mb-6">
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#e0f0e9] flex items-center justify-center text-[#0a5c48] group-hover:scale-110 transition-transform duration-300">
-                    <Icon className="w-5 h-5" strokeWidth={2} />
-                  </div>
-                  <span className="text-sm font-semibold text-gray-400">{step.id}</span>
+        {/* 3 Step Cards Layout */}
+        <div className="space-y-5 sm:space-y-6">
+          {/* Row 1: Steps 1 & 2 (2 columns) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+            
+            {/* Step 1: List */}
+            <div className="bg-white/[0.08] border border-white/20 rounded-2xl sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-between hover:bg-white/[0.11] transition-colors">
+              <div>
+                <div className="w-9 h-9 rounded-full bg-white text-[#155e43] font-bold text-sm sm:text-base flex items-center justify-center shrink-0 mb-4 sm:mb-5 shadow-xs select-none">
+                  1
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
-                  {step.title}
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-2.5 tracking-tight">
+                  List
                 </h3>
-                <p className="text-xs sm:text-sm md:text-[15px] text-gray-500 leading-relaxed">
-                  {step.description}
+                <p className="text-white/85 text-sm sm:text-[15px] leading-relaxed">
+                  Open a form, add your items or drop a spreadsheet. AI drafts the title, category, condition and specs for you to review.
                 </p>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+              </div>
+            </div>
+
+            {/* Step 2: We verify & find buyers */}
+            <div className="bg-white/[0.08] border border-white/20 rounded-2xl sm:rounded-3xl p-6 sm:p-8 flex flex-col justify-between hover:bg-white/[0.11] transition-colors">
+              <div>
+                <div className="w-9 h-9 rounded-full bg-white text-[#155e43] font-bold text-sm sm:text-base flex items-center justify-center shrink-0 mb-4 sm:mb-5 shadow-xs select-none">
+                  2
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-2.5 tracking-tight">
+                  We verify &amp; find buyers
+                </h3>
+                <p className="text-white/85 text-sm sm:text-[15px] leading-relaxed">
+                  Our team verifies your listing, then negotiates with buyers from our global network. You never deal with them.
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Row 2: Step 3: Get paid (Full Width) */}
+          <div className="bg-white/[0.08] border border-white/20 rounded-2xl sm:rounded-3xl p-6 sm:p-8 hover:bg-white/[0.11] transition-colors">
+            <div className="w-9 h-9 rounded-full bg-white text-[#155e43] font-bold text-sm sm:text-base flex items-center justify-center shrink-0 mb-4 sm:mb-5 shadow-xs select-none">
+              3
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-2.5 tracking-tight">
+              Get paid
+            </h3>
+            <p className="text-white/85 text-sm sm:text-[15px] leading-relaxed max-w-3xl">
+              We collect payment and coordinate delivery. Track offers and payouts in your seller dashboard.
+            </p>
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <div className="mt-8 sm:mt-10">
+          <a
+            href="#listing-options"
+            onClick={handleScrollToListing}
+            className="px-7 py-3.5 bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm sm:text-base rounded-xl transition-all shadow-sm hover:shadow inline-flex items-center justify-center cursor-pointer"
+          >
+            Start your first listing
+          </a>
+        </div>
 
       </div>
     </section>
   );
-};
-
-export default SellValueProps;
+}

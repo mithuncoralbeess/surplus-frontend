@@ -1,10 +1,17 @@
 import React from 'react';
 import { Metadata } from 'next';
-import CommonBanner from '../../widgets/CommonBanner';
+import SellHeroBanner from '../../widgets/SellHeroBanner';
+import SellTrustBar from '../../widgets/SellTrustBar';
+import SellRegionalMarkets from '../../widgets/SellRegionalMarkets';
 import InventoryListingOptions from '../../widgets/InventoryListingOptions';
 import SellValueProps from '../../widgets/SellValueProps';
+import SellerStories from '../../widgets/SellerStories';
+import ManufacturerSurplus from '../../widgets/ManufacturerSurplus';
+import SellComparisonTable from '../../widgets/SellComparisonTable';
+import SellFAQ from '../../widgets/SellFAQ';
+import { SELL_FAQS } from '../../widgets/SellFAQ/faqData';
 import SellCTA from '../../widgets/SellCTA';
-import { BreadcrumbJsonLd } from '../../components/StructuredData';
+import { BreadcrumbJsonLd, FaqJsonLd } from '../../components/StructuredData';
 
 import { getPageMetadata } from '../../services/pageSeoService';
 
@@ -22,25 +29,28 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function SellPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center">
+    <main className="flex min-h-screen w-full flex-col items-center overflow-x-clip">
       <BreadcrumbJsonLd
         items={[
           { name: 'Home', url: '/' },
           { name: 'Sell Surplus', url: '/sell' },
         ]}
       />
-      <CommonBanner 
-        title="Turn excess inventory into recovered value."
-        subtitle="You never see or speak to buyers. Surplus Market negotiates, verifies, collects payment and coordinates delivery - you focus on your business."
-        align="center"
-        image="https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=2000&q=80"
-        breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Sell' }
-        ]}
+      <FaqJsonLd
+        faqs={SELL_FAQS.map((faq) => ({
+          question: faq.question,
+          answer: typeof faq.answer === 'string' ? faq.answer : '',
+        }))}
       />
+      <SellHeroBanner />
+      <SellTrustBar />
+      <SellRegionalMarkets />
       <InventoryListingOptions />
       <SellValueProps />
+      <SellerStories />
+      <ManufacturerSurplus />
+      <SellComparisonTable />
+      <SellFAQ />
       <SellCTA />
     </main>
   );
