@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { inquiryService } from '../../services/inquiryService';
+import { sanitizeInput } from '../../lib/security/sanitizer';
 
 export interface RegionalHeroBannerProps {
   countryName: string;
@@ -11,6 +12,16 @@ export interface RegionalHeroBannerProps {
   title: React.ReactNode;
   description: React.ReactNode;
 }
+
+interface QuoteFormErrors {
+  lookingFor?: string;
+  quantity?: string;
+  targetPrice?: string;
+  businessEmail?: string;
+}
+
+const scriptCheckRegex = /<[^>]*>|javascript:|on\w+\s*=/i;
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export default function RegionalHeroBanner({
   countryName,
@@ -26,15 +37,112 @@ export default function RegionalHeroBanner({
   const [honeypot, setHoneypot] = useState('');
   const [mountedAt] = useState(() => Date.now());
 
+  const [errors, setErrors] = useState<QuoteFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quoteStatus, setQuoteStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [quoteMessage, setQuoteMessage] = useState('');
 
+  // 1. "What are you looking for?" - Prevent scripts and HTML in real-time
+  const handleLookingForChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/<[^>]*>|javascript:|on\w+\s*=/gi, '');
+    setLookingFor(val);
+    if (errors.lookingFor) {
+      setErrors((prev) => ({ ...prev, lookingFor: undefined }));
+    }
+  };
+
+  // 2. "Quantity" - Strictly numeric: reject ANY characters, letters, or symbols
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/[^0-9]/g, '');
+    // Strip leading zeros if multi-digit (e.g. "05" -> "5")
+    if (val.length > 1 && val.startsWith('0')) {
+      val = val.replace(/^0+/, '');
+    }
+    setQuantity(val);
+    if (errors.quantity) {
+      setErrors((prev) => ({ ...prev, quantity: undefined }));
+    }
+  };
+
+  // 3. "Target price" - Strictly numeric with optional decimal: reject ANY characters or letters
+  const handleTargetPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/[^0-9.]/g, '');
+    const parts = val.split('.');
+    if (parts.length > 2) {
+      val = parts[0] + '.' + parts.slice(1).join('');
+    }
+    setTargetPrice(val);
+    if (errors.targetPrice) {
+      setErrors((prev) => ({ ...prev, targetPrice: undefined }));
+    }
+  };
+
+  // 4. "Business email" - Strip scripts and spaces in real-time
+  const handleBusinessEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/<[^>]*>|javascript:|on\w+\s*=/gi, '').trim();
+    setBusinessEmail(val);
+    if (errors.businessEmail) {
+      setErrors((prev) => ({ ...prev, businessEmail: undefined }));
+    }
+  };
+
+  // Comprehensive Form Validation
+  const validateForm = (): boolean => {
+    const newErrors: QuoteFormErrors = {};
+
+    // 1. Sourcing item validation
+    const trimmedItem = lookingFor.trim();
+    if (!trimmedItem) {
+      newErrors.lookingFor = 'Please enter what you are looking for';
+    } else if (trimmedItem.length < 2) {
+      newErrors.lookingFor = 'Item must be at least 2 characters';
+    } else if (trimmedItem.length > 150) {
+      newErrors.lookingFor = 'Item description cannot exceed 150 characters';
+    } else if (scriptCheckRegex.test(trimmedItem)) {
+      newErrors.lookingFor = 'Script tags or HTML code are not allowed';
+    }
+
+    // 2. Quantity validation (strictly numbers only)
+    const trimmedQty = quantity.trim();
+    if (!trimmedQty) {
+      newErrors.quantity = 'Quantity is required (numbers only)';
+    } else if (!/^[0-9]+$/.test(trimmedQty) || parseInt(trimmedQty, 10) <= 0) {
+      newErrors.quantity = 'Please enter a valid quantity greater than 0';
+    }
+
+    // 3. Target price validation (Mandatory, strictly numbers/decimals only)
+    const trimmedPrice = targetPrice.trim();
+    if (!trimmedPrice) {
+      newErrors.targetPrice = 'Target price is required (numbers only)';
+    } else if (!/^[0-9]+(\.[0-9]+)?$/.test(trimmedPrice) || parseFloat(trimmedPrice) <= 0) {
+      newErrors.targetPrice = 'Please enter a valid price greater than 0 (e.g. 500)';
+    } else if (scriptCheckRegex.test(trimmedPrice)) {
+      newErrors.targetPrice = 'Script tags or HTML code are not allowed';
+    }
+
+    // 4. Business Email validation
+    const trimmedEmail = businessEmail.trim();
+    if (!trimmedEmail) {
+      newErrors.businessEmail = 'Business email is required';
+    } else if (!emailRegex.test(trimmedEmail)) {
+      newErrors.businessEmail = 'Please enter a valid email address (e.g. name@company.com)';
+    } else if (scriptCheckRegex.test(trimmedEmail)) {
+      newErrors.businessEmail = 'Script tags or HTML code are not allowed';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleQuoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lookingFor.trim() || !businessEmail.trim()) return;
 
-    // Bot trap: honeypot or instant submission
+    // Run client-side validation
+    if (!validateForm()) {
+      return;
+    }
+
+    // Bot trap: honeypot or instant submission (< 2 seconds)
     if (honeypot.trim().length > 0 || Date.now() - mountedAt < 2000) {
       setIsSubmitting(true);
       setTimeout(() => {
@@ -45,6 +153,7 @@ export default function RegionalHeroBanner({
         setTargetPrice('');
         setBusinessEmail('');
         setHoneypot('');
+        setErrors({});
       }, 500);
       return;
     }
@@ -53,34 +162,40 @@ export default function RegionalHeroBanner({
     setQuoteStatus('idle');
     setQuoteMessage('');
 
+    // Sanitize all inputs to prevent XSS / script injections
+    const cleanItem = sanitizeInput(lookingFor);
+    const cleanQty = sanitizeInput(quantity);
+    const cleanPrice = sanitizeInput(targetPrice);
+    const cleanEmail = sanitizeInput(businessEmail);
+
     try {
       const res = await inquiryService.submitRegionalEnquiry({
-        fullName: businessEmail.split('@')[0],
-        name: businessEmail.split('@')[0],
-        email: businessEmail.trim(),
-        sourcingItem: lookingFor.trim(),
-        lookingFor: lookingFor.trim(),
-        quantity: quantity.trim() || '1',
-        targetPrice: targetPrice.trim(),
+        fullName: cleanEmail.split('@')[0],
+        name: cleanEmail.split('@')[0],
+        email: cleanEmail,
+        sourcingItem: cleanItem,
+        lookingFor: cleanItem,
+        quantity: cleanQty,
+        targetPrice: cleanPrice,
         country: countryName,
         searchQuery: `${countryName} (${countrySlug})`,
         source: 'RegionalHeroBanner',
         enquiryType: `Regional Quote Request - ${countryName}`,
-        subject: `[${countryName}] Quote Request: ${lookingFor.trim()} (Qty: ${quantity.trim() || '1'})`,
+        subject: `[${countryName}] Quote Request: ${cleanItem} (Qty: ${cleanQty})`,
         message: `
 [REGIONAL B2B QUOTE REQUEST]
 Country: ${countryName} (${countrySlug})
-Item / Product: ${lookingFor.trim()}
-Quantity: ${quantity.trim() || '1'}
-Target Price: ${targetPrice.trim() || 'Not specified (Open for offers)'}
-Business Email: ${businessEmail.trim()}
+Item / Product: ${cleanItem}
+Quantity: ${cleanQty}
+Target Price: ${cleanPrice || 'Not specified (Open for offers)'}
+Business Email: ${cleanEmail}
         `.trim(),
         metadata: {
           country: countryName,
           countrySlug,
-          lookingFor: lookingFor.trim(),
-          quantity: quantity.trim(),
-          targetPrice: targetPrice.trim(),
+          lookingFor: cleanItem,
+          quantity: cleanQty,
+          targetPrice: cleanPrice,
           source: 'RegionalHeroBanner',
         },
       });
@@ -91,6 +206,7 @@ Business Email: ${businessEmail.trim()}
         setQuantity('');
         setTargetPrice('');
         setBusinessEmail('');
+        setErrors({});
       } else {
         setQuoteStatus('error');
         setQuoteMessage(res.message || 'Unable to submit quote request. Please try again.');
@@ -101,6 +217,13 @@ Business Email: ${businessEmail.trim()}
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const getInputClass = (hasError: boolean) => {
+    const base = "w-full px-3.5 py-2.5 bg-white border rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-gray-400 focus:outline-none transition-all";
+    return hasError
+      ? `${base} border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500`
+      : `${base} border-gray-200 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61]`;
   };
 
   return (
@@ -176,65 +299,85 @@ Business Email: ${businessEmail.trim()}
                     autoComplete="off"
                   />
                 </div>
+
+                {/* What are you looking for? */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    What are you looking for?
+                    What are you looking for? <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    required
                     placeholder="e.g. HP DesignJet printers"
                     value={lookingFor}
-                    onChange={(e) => setLookingFor(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-gray-400 focus:outline-none focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] transition-all"
+                    onChange={handleLookingForChange}
+                    className={getInputClass(Boolean(errors.lookingFor))}
                   />
+                  {errors.lookingFor && (
+                    <p className="text-xs text-red-500 mt-1 font-medium">{errors.lookingFor}</p>
+                  )}
                 </div>
 
+                {/* Quantity & Target Price Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Quantity - strictly numbers only */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Quantity
+                      Quantity <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
-                      required
-                      placeholder="e.g. 20 units"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="e.g. 20"
                       value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-gray-400 focus:outline-none focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] transition-all"
+                      onChange={handleQuantityChange}
+                      className={getInputClass(Boolean(errors.quantity))}
                     />
+                    {errors.quantity && (
+                      <p className="text-xs text-red-500 mt-1 font-medium">{errors.quantity}</p>
+                    )}
                   </div>
+
+                  {/* Target Price - strictly numeric/decimal (Mandatory) */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Target price
+                      Target price <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
-                      placeholder="Optional"
+                      inputMode="decimal"
+                      placeholder="e.g. 500"
                       value={targetPrice}
-                      onChange={(e) => setTargetPrice(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-gray-400 focus:outline-none focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] transition-all"
+                      onChange={handleTargetPriceChange}
+                      className={getInputClass(Boolean(errors.targetPrice))}
                     />
+                    {errors.targetPrice && (
+                      <p className="text-xs text-red-500 mt-1 font-medium">{errors.targetPrice}</p>
+                    )}
                   </div>
                 </div>
 
+                {/* Business Email */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Business email
+                    Business email <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
-                    required
                     placeholder="you@company.com"
                     value={businessEmail}
-                    onChange={(e) => setBusinessEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-gray-400 focus:outline-none focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61] transition-all"
+                    onChange={handleBusinessEmailChange}
+                    className={getInputClass(Boolean(errors.businessEmail))}
                   />
+                  {errors.businessEmail && (
+                    <p className="text-xs text-red-500 mt-1 font-medium">{errors.businessEmail}</p>
+                  )}
                 </div>
 
                 {quoteStatus === 'error' && (
-                  <p className="text-xs text-rose-600 font-medium">
-                    {quoteMessage || 'Failed to submit quote request. Please try again.'}
+                  <p className="text-xs text-rose-600 font-medium flex items-center gap-1.5 bg-rose-50 p-2.5 rounded-lg border border-rose-200">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{quoteMessage || 'Failed to submit quote request. Please try again.'}</span>
                   </p>
                 )}
 
@@ -272,4 +415,3 @@ Business Email: ${businessEmail.trim()}
     </section>
   );
 }
-
