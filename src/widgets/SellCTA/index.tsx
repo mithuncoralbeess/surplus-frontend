@@ -6,6 +6,14 @@ import Link from 'next/link';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 const SellCTA = () => {
+  const handleScrollToListing = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const el = document.getElementById('listing-options');
+    if (el) {
+      e.preventDefault();
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <section className="w-full py-12 md:py-20 relative overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8 max-w-5xl relative z-10">
@@ -30,13 +38,14 @@ const SellCTA = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full">
-              <Link
-                href="/sell"
-                className="w-full sm:w-auto bg-white text-[#0a1e17] hover:bg-gray-50 px-8 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-[15px] transition-all flex items-center justify-center group"
+              <a
+                href="#listing-options"
+                onClick={handleScrollToListing}
+                className="w-full sm:w-auto bg-white text-[#0a1e17] hover:bg-gray-50 px-8 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-[15px] transition-all flex items-center justify-center group cursor-pointer"
               >
                 <span>Become a Seller</span>
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              </a>
               <Link
                 href="/contact"
                 className="w-full sm:w-auto bg-transparent border border-white/20 text-white hover:bg-white/10 px-8 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-[15px] transition-all text-center"

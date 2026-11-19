@@ -53,16 +53,21 @@ export default function SellComparisonTable() {
     <section className="w-full bg-[#faf8f5] py-14 sm:py-16 md:py-20 border-b border-gray-200/60 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         {/* Section Heading */}
-        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-black text-[#0f172a] tracking-tight leading-tight mb-8 sm:mb-10">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-black text-[#0f172a] tracking-tight leading-tight mb-4 sm:mb-6">
           Selling excess inventory: how the options compare
         </h2>
 
+        {/* Mobile Swipe Hint */}
+        <div className="flex items-center gap-1.5 text-xs text-stone-500 font-medium md:hidden mb-3 select-none">
+          <span>← Swipe horizontally to compare options →</span>
+        </div>
+
         {/* Responsive Table Card */}
-        <div className="w-full overflow-x-auto rounded-2xl border border-[#e5e0d5] bg-white shadow-xs">
+        <div className="w-full overflow-x-auto rounded-2xl border border-[#e5e0d5] bg-white shadow-xs scroll-smooth">
           <table className="w-full min-w-[760px] border-collapse text-left text-sm sm:text-[15px]">
             <thead>
               <tr className="border-b border-[#e5e0d5]">
-                <th className="w-[18%] bg-[#f4efe6] px-5 py-4 font-semibold text-slate-700"></th>
+                <th className="w-[18%] sticky left-0 z-20 bg-[#f4efe6] px-4 sm:px-5 py-4 font-semibold text-slate-700 shadow-[1px_0_3px_rgba(0,0,0,0.04)]"></th>
                 <th className="w-[26%] bg-[#e3efe7] px-5 sm:px-6 py-4.5 font-bold text-[#0f5c44]">
                   Sell on Surplus Market
                 </th>
@@ -80,8 +85,8 @@ export default function SellComparisonTable() {
             <tbody className="divide-y divide-[#ebe6dc]">
               {COMPARISON_ROWS.map((row) => (
                 <tr key={row.dimension} className="transition-colors hover:bg-stone-50/50">
-                  {/* Dimension Name */}
-                  <td className="px-5 py-4 sm:py-5 font-bold text-slate-900 bg-white align-top">
+                  {/* Dimension Name (Sticky Left on Mobile & Desktop) */}
+                  <td className="sticky left-0 z-10 bg-white px-4 sm:px-5 py-4 sm:py-5 font-bold text-slate-900 align-top shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]">
                     {row.dimension}
                   </td>
 

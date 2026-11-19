@@ -180,33 +180,33 @@ export default function SellerStories() {
                 </p>
 
                 {/* 3 Metric Stats */}
-                <div className="grid grid-cols-3 gap-2 items-baseline">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 items-baseline">
                   {/* Recovery */}
                   <div>
-                    <div className="text-2xl sm:text-[28px] font-black text-[#0f7a61] tracking-tight leading-none mb-1">
+                    <div className="text-xl sm:text-2xl lg:text-[28px] font-black text-[#0f7a61] tracking-tight leading-none mb-1">
                       {item.recoveryRate}
                     </div>
-                    <div className="text-xs text-slate-500 font-medium">
+                    <div className="text-[11px] sm:text-xs text-slate-500 font-medium">
                       recovery
                     </div>
                   </div>
 
                   {/* Days */}
                   <div>
-                    <div className="text-2xl sm:text-[28px] font-black text-slate-900 tracking-tight leading-none mb-1">
-                      {item.daysToSell} <span className="text-base sm:text-lg font-bold">days</span>
+                    <div className="text-xl sm:text-2xl lg:text-[28px] font-black text-slate-900 tracking-tight leading-none mb-1">
+                      {item.daysToSell} <span className="text-sm sm:text-base font-bold">days</span>
                     </div>
-                    <div className="text-xs text-slate-500 font-medium">
+                    <div className="text-[11px] sm:text-xs text-slate-500 font-medium">
                       to sell
                     </div>
                   </div>
 
                   {/* Units */}
                   <div>
-                    <div className="text-2xl sm:text-[28px] font-black text-slate-900 tracking-tight leading-none mb-1">
+                    <div className="text-xl sm:text-2xl lg:text-[28px] font-black text-slate-900 tracking-tight leading-none mb-1">
                       {item.unitsCount}
                     </div>
-                    <div className="text-xs text-slate-500 font-medium">
+                    <div className="text-[11px] sm:text-xs text-slate-500 font-medium">
                       units
                     </div>
                   </div>

@@ -29,7 +29,7 @@ export default function SellHeroBanner() {
             </nav>
 
             {/* H1 Title */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[46px] font-black text-[#0f172a] tracking-tight leading-[1.15] mb-4 sm:mb-5">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-[46px] font-black text-[#0f172a] tracking-tight leading-[1.15] mb-4 sm:mb-5">
               Sell surplus stock to verified B2B buyers
             </h1>
 

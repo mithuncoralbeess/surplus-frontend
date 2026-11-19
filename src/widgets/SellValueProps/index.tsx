@@ -21,7 +21,7 @@ export default function SellValueProps() {
           <span className="block text-xs font-bold text-white/80 tracking-widest uppercase mb-2.5 sm:mb-3">
             THE SELLER JOURNEY
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-[1.15] mb-4 sm:mb-5">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-[1.15] mb-4 sm:mb-5">
             List. We handle the rest. Get paid.
           </h2>
           <p className="text-sm sm:text-base md:text-[17px] text-white/85 leading-relaxed max-w-2xl">
@@ -85,7 +85,7 @@ export default function SellValueProps() {
           <a
             href="#listing-options"
             onClick={handleScrollToListing}
-            className="px-7 py-3.5 bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm sm:text-base rounded-xl transition-all shadow-sm hover:shadow inline-flex items-center justify-center cursor-pointer"
+            className="w-full sm:w-auto px-7 py-3.5 bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm sm:text-base rounded-xl transition-all shadow-sm hover:shadow inline-flex items-center justify-center cursor-pointer text-center"
           >
             Start your first listing
           </a>

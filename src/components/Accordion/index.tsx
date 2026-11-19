@@ -58,10 +58,10 @@ export default function Accordion({
             <button
               type="button"
               onClick={() => toggleItem(idx)}
-              className="w-full flex items-center justify-between p-4 sm:p-5 text-left focus:outline-none cursor-pointer group"
+              className="w-full flex items-center justify-between p-3.5 sm:p-5 text-left focus:outline-none cursor-pointer group"
               aria-expanded={isOpen}
             >
-              <span className="text-sm sm:text-base md:text-[17px] font-bold text-gray-900 pr-4 leading-snug">
+              <span className="text-sm sm:text-base md:text-[17px] font-bold text-gray-900 pr-3 sm:pr-4 leading-snug">
                 {item.question}
               </span>
               <div
@@ -80,7 +80,7 @@ export default function Accordion({
             </button>
 
             {isOpen && (
-              <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-0 text-sm sm:text-base text-gray-600 leading-relaxed border-t border-gray-100/90">
+              <div className="px-3.5 sm:px-5 pb-3.5 sm:pb-5 pt-0 text-sm sm:text-base text-gray-600 leading-relaxed border-t border-gray-100/90">
                 <div className="pt-3 sm:pt-3.5">
                   {typeof item.answer === 'string' ? (
                     <p>{item.answer}</p>
