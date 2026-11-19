@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from '../../lib/motion';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 const SellCTA = () => {
   const handleScrollToListing = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -30,30 +30,34 @@ const SellCTA = () => {
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent/10 blur-[80px] rounded-full pointer-events-none transform -translate-x-1/3 translate-y-1/3"></div>
 
           <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
+            {/* Title */}
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mb-4 sm:mb-6 leading-tight">
               Ready to clear out your warehouse?
             </h2>
+
+            {/* Description */}
             <p className="text-sm sm:text-base md:text-lg text-gray-300 mb-6 sm:mb-10 max-w-2xl leading-relaxed">
-              Join hundreds of manufacturers, liquidators, and retailers who use our AI-driven platform to recover capital from surplus inventory.
+              See what your aging stock is costing you, then list it with verified B2B buyers. No upfront fees.
             </p>
 
+            {/* Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full">
               <a
                 href="#listing-options"
                 onClick={handleScrollToListing}
-                className="w-full sm:w-auto bg-white text-[#0a1e17] hover:bg-gray-50 px-8 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-[15px] transition-all flex items-center justify-center group cursor-pointer"
+                className="w-full sm:w-auto bg-white text-[#0a1e17] hover:bg-gray-50 px-8 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-[15px] transition-all flex items-center justify-center cursor-pointer"
               >
-                <span>Become a Seller</span>
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                <span>List your surplus</span>
               </a>
               <Link
-                href="/contact"
+                href="/inventory-calculator"
                 className="w-full sm:w-auto bg-transparent border border-white/20 text-white hover:bg-white/10 px-8 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-[15px] transition-all text-center"
               >
-                Talk to Sales
+                Cost calculator
               </Link>
             </div>
 
+            {/* Footer Trust Badges */}
             <div className="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm text-gray-400 font-medium">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
@@ -61,11 +65,11 @@ const SellCTA = () => {
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
-                <span>Global buyer network</span>
+                <span>Every listing verified</span>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
-                <span>Logistics included</span>
+                <span>Identities never disclosed</span>
               </div>
             </div>
           </div>

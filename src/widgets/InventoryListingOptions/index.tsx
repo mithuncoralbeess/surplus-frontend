@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, Variants } from '../../lib/motion';
-import { LayoutList, FileSpreadsheet, ArrowRight, Sparkles } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { isProfileComplete } from '../../lib/profileUtils';
 
@@ -74,8 +73,8 @@ export default function InventoryListingOptions() {
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-              <span className="text-[11px] font-bold text-primary tracking-widest uppercase">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#155e43]"></div>
+              <span className="text-[11px] font-bold text-[#155e43] tracking-widest uppercase">
                 Getting Started
               </span>
             </div>
@@ -88,79 +87,148 @@ export default function InventoryListingOptions() {
           </motion.div>
         </div>
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+        {/* 2 Form Preview Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch">
 
-          {/* Simple Inventory Listing Card */}
+          {/* Card 1: Simple Inventory Listing */}
           <motion.div
             variants={cardVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
-            className="group relative overflow-hidden bg-gradient-to-b from-[#f5fbf8] to-white border border-gray-200 rounded-3xl p-6 sm:p-8 lg:p-10 transition-all duration-500 hover:shadow-2xl hover:shadow-[#0a5c48]/5 hover:border-[#0a5c48]/30 flex flex-col justify-between"
+            className="bg-white rounded-3xl p-6 sm:p-8 lg:p-9 border-2 border-[#155e43] shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
           >
-            {/* Background Glow */}
-            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-[#0a5c48]/5 rounded-full blur-3xl group-hover:bg-[#0a5c48]/10 transition-colors duration-500"></div>
-
-            <div className="absolute top-5 right-5 sm:top-6 sm:right-6 lg:top-8 lg:right-8 bg-[#0a5c48] text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
-              <Sparkles className="w-3 h-3" />
-              Recommended
-            </div>
-
             <div>
-              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#0a5c48] rounded-2xl flex items-center justify-center mb-6 sm:mb-8 shadow-lg shadow-[#0a5c48]/20 group-hover:scale-110 transition-transform duration-500">
-                <LayoutList className="text-white w-6 h-6 sm:w-7 sm:h-7" />
+              {/* Badges */}
+              <div className="flex items-center gap-2 mb-4 sm:mb-5">
+                <span className="bg-[#155e43] text-white text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  RECOMMENDED
+                </span>
+                <span className="bg-[#ece8df] text-stone-700 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  FORM
+                </span>
               </div>
 
-              <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-2 sm:mb-3 tracking-tight">
+              {/* Title & Description */}
+              <h3 className="text-2xl sm:text-[26px] font-extrabold text-[#0f172a] mb-2 tracking-tight">
                 Simple Inventory Listing
               </h3>
-              <p className="text-sm sm:text-[16px] text-gray-500 mb-8 sm:mb-10 leading-relaxed max-w-sm">
+              <p className="text-stone-600 text-sm sm:text-[15px] leading-relaxed mb-6">
                 Best for 1 to 10 items or small inventory. Quick and easy manual entry.
               </p>
+
+              {/* Form Preview Container */}
+              <div 
+                onClick={handleSimpleListingClick}
+                className="bg-[#f9f8f4] border border-[#e8e4db] rounded-2xl p-4 sm:p-5 mb-6 cursor-pointer hover:border-[#155e43]/40 transition-colors group select-none"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSimpleListingClick(); }}
+              >
+                <span className="text-[10px] sm:text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-3 block">
+                  PREVIEW OF THE FORM
+                </span>
+
+                <div className="space-y-2.5 text-xs sm:text-sm text-stone-500">
+                  {/* Item Name */}
+                  <div className="bg-white border border-[#e2ddd3] rounded-xl px-3.5 py-2.5 sm:py-3 shadow-2xs">
+                    Item name
+                  </div>
+
+                  {/* Quantity & Condition (2 cols) */}
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="bg-white border border-[#e2ddd3] rounded-xl px-3.5 py-2.5 sm:py-3 shadow-2xs">
+                      Quantity
+                    </div>
+                    <div className="bg-white border border-[#e2ddd3] rounded-xl px-3.5 py-2.5 sm:py-3 shadow-2xs">
+                      Condition
+                    </div>
+                  </div>
+
+                  {/* Photos and media */}
+                  <div className="bg-white border border-[#e2ddd3] rounded-xl px-3.5 py-2.5 sm:py-3 shadow-2xs">
+                    Photos and media
+                  </div>
+                </div>
+              </div>
             </div>
 
+            {/* Action Button */}
             <button
               onClick={handleSimpleListingClick}
-              className="w-full sm:w-auto inline-flex items-center justify-center bg-white border border-gray-200 text-gray-900 font-semibold px-6 py-3.5 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all group-hover:border-[#0a5c48]/30 group-hover:text-[#0a5c48] cursor-pointer"
+              className="w-full bg-[#155e43] hover:bg-[#104833] text-white font-bold py-3.5 px-6 rounded-xl text-center text-sm sm:text-base flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
             >
-              <span>Use Simple Inventory Listing</span>
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <span>Open Simple Listing Form</span>
+              <span className="font-bold">→</span>
             </button>
           </motion.div>
 
-          {/* Lot Inventory Listing Card */}
+          {/* Card 2: Lot Inventory Listing */}
           <motion.div
             variants={cardVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
             transition={{ delay: 0.15 }}
-            className="group relative overflow-hidden bg-gradient-to-b from-[#f5fbf8] to-white border border-gray-200 rounded-3xl p-6 sm:p-8 lg:p-10 transition-all duration-500 hover:shadow-2xl hover:shadow-[#0a5c48]/5 hover:border-[#0a5c48]/30 flex flex-col justify-between"
+            className="bg-white rounded-3xl p-6 sm:p-8 lg:p-9 border border-gray-300 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
           >
-            <div className="absolute top-5 right-5 sm:top-6 sm:right-6 lg:top-8 lg:right-8 bg-[#1e293b] text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">
-              &gt; 10 SKUS
-            </div>
-
             <div>
-              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#1e293b] rounded-2xl flex items-center justify-center mb-6 sm:mb-8 shadow-lg shadow-[#1e293b]/20 group-hover:scale-110 transition-transform duration-500">
-                <FileSpreadsheet className="text-white w-6 h-6 sm:w-7 sm:h-7" />
+              {/* Badges */}
+              <div className="flex items-center gap-2 mb-4 sm:mb-5">
+                <span className="bg-[#0f172a] text-white text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  &gt; 10 SKUS
+                </span>
+                <span className="bg-[#ece8df] text-stone-700 text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  FORM
+                </span>
               </div>
 
-              <h3 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-2 sm:mb-3 tracking-tight">
+              {/* Title & Description */}
+              <h3 className="text-2xl sm:text-[26px] font-extrabold text-[#0f172a] mb-2 tracking-tight">
                 Lot Inventory Listing
               </h3>
-              <p className="text-sm sm:text-[16px] text-gray-500 mb-8 sm:mb-10 leading-relaxed max-w-sm">
+              <p className="text-stone-600 text-sm sm:text-[15px] leading-relaxed mb-6">
                 Only for more than 10 SKUs via spreadsheet upload. Built for bulk processing.
               </p>
+
+              {/* Form Preview Container */}
+              <div 
+                onClick={handleLotListingClick}
+                className="bg-[#f9f8f4] border border-[#e8e4db] rounded-2xl p-4 sm:p-5 mb-6 cursor-pointer hover:border-gray-400 transition-colors group select-none"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleLotListingClick(); }}
+              >
+                <span className="text-[10px] sm:text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-3 block">
+                  PREVIEW OF THE FORM
+                </span>
+
+                <div className="space-y-2.5 text-xs sm:text-sm text-stone-500">
+                  {/* Lot Name */}
+                  <div className="bg-white border border-[#e2ddd3] rounded-xl px-3.5 py-2.5 sm:py-3 shadow-2xs">
+                    Lot name
+                  </div>
+
+                  {/* Drop your spreadsheet here (Dropzone Mockup) */}
+                  <div className="bg-white border border-dashed border-[#cfc9be] rounded-xl py-6 px-3 text-xs sm:text-sm text-stone-600 font-medium text-center flex items-center justify-center shadow-2xs">
+                    Drop your spreadsheet here
+                  </div>
+
+                  {/* Photos and media */}
+                  <div className="bg-white border border-[#e2ddd3] rounded-xl px-3.5 py-2.5 sm:py-3 shadow-2xs">
+                    Photos and media
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <button 
-              onClick={handleLotListingClick} 
-              className="w-full sm:w-auto inline-flex items-center justify-center bg-white border border-gray-200 text-gray-900 font-semibold px-6 py-3.5 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all group-hover:text-gray-900 cursor-pointer"
+            {/* Action Button */}
+            <button
+              onClick={handleLotListingClick}
+              className="w-full bg-[#0f172a] hover:bg-black text-white font-bold py-3.5 px-6 rounded-xl text-center text-sm sm:text-base flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
             >
-              <span>Use Lot Inventory Listing</span>
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <span>Open Lot Listing Form</span>
+              <span className="font-bold">→</span>
             </button>
           </motion.div>
 
