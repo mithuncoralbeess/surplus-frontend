@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { inquiryService } from '../../services/inquiryService';
@@ -46,6 +46,25 @@ export default function RegionalHeroBanner({
   const recaptchaRef = useRef<GoogleReCaptchaRef>(null);
   const [recaptchaToken, setRecaptchaToken] = useState<string>('');
   const [recaptchaError, setRecaptchaError] = useState<string>('');
+
+  // Progressive Reveal: Shows reCAPTCHA only when required fields are completed
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [hasRevealedCaptcha, setHasRevealedCaptcha] = useState(false);
+
+  const areRequiredFieldsCompleted = Boolean(
+    lookingFor.trim() &&
+    quantity.trim() &&
+    targetPrice.trim() &&
+    businessEmail.trim()
+  );
+
+  useEffect(() => {
+    if (areRequiredFieldsCompleted && !hasRevealedCaptcha) {
+      setHasRevealedCaptcha(true);
+    }
+  }, [areRequiredFieldsCompleted, hasRevealedCaptcha]);
+
+  const showCaptcha = hasRevealedCaptcha || hasAttemptedSubmit;
 
   const handleRecaptchaVerify = useCallback((token: string) => {
     setRecaptchaToken(token);
@@ -167,6 +186,7 @@ export default function RegionalHeroBanner({
 
   const handleQuoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setHasAttemptedSubmit(true);
 
     // Run client-side validation
     if (!validateForm()) {
@@ -418,28 +438,30 @@ Business Email: ${cleanEmail}
                   )}
                 </div>
 
-                {/* Google reCAPTCHA Verification */}
-                <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 sm:p-3.5 transition-all">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <ShieldCheck className="w-4 h-4 text-[#0f7a61]" />
-                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      Human Verification <span className="text-red-500">*</span>
-                    </span>
-                  </div>
+                {/* Google reCAPTCHA Verification (Progressive Reveal) */}
+                {showCaptcha && (
+                  <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 sm:p-3.5 transition-all duration-300 ease-out animate-fade-in">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <ShieldCheck className="w-4 h-4 text-[#0f7a61]" />
+                      <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        Human Verification <span className="text-red-500">*</span>
+                      </span>
+                    </div>
 
-                  <div className="flex justify-center sm:justify-start overflow-x-auto py-1">
-                    <GoogleReCaptcha
-                      ref={recaptchaRef}
-                      onVerify={handleRecaptchaVerify}
-                      onExpire={handleRecaptchaExpire}
-                      onError={handleRecaptchaError}
-                    />
-                  </div>
+                    <div className="flex justify-center sm:justify-start overflow-x-auto py-1">
+                      <GoogleReCaptcha
+                        ref={recaptchaRef}
+                        onVerify={handleRecaptchaVerify}
+                        onExpire={handleRecaptchaExpire}
+                        onError={handleRecaptchaError}
+                      />
+                    </div>
 
-                  {recaptchaError && (
-                    <p className="text-red-500 text-xs mt-1.5 font-medium">{recaptchaError}</p>
-                  )}
-                </div>
+                    {recaptchaError && (
+                      <p className="text-red-500 text-xs mt-1.5 font-medium">{recaptchaError}</p>
+                    )}
+                  </div>
+                )}
 
                 {quoteStatus === 'error' && (
                   <p className="text-xs text-rose-600 font-medium flex items-center gap-1.5 bg-rose-50 p-2.5 rounded-lg border border-rose-200">

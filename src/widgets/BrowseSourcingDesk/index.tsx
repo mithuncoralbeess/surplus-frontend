@@ -57,6 +57,24 @@ export default function BrowseSourcingDesk({
   const [recaptchaToken, setRecaptchaToken] = useState('');
   const [recaptchaError, setRecaptchaError] = useState('');
 
+  // Progressive Reveal: Shows reCAPTCHA only when required fields are completed
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [hasRevealedCaptcha, setHasRevealedCaptcha] = useState(false);
+
+  const areRequiredFieldsCompleted = Boolean(
+    (sourcingItem.trim() || searchQuery.trim()) &&
+    fullName.trim() &&
+    (email.trim() || phone.trim())
+  );
+
+  useEffect(() => {
+    if (areRequiredFieldsCompleted && !hasRevealedCaptcha) {
+      setHasRevealedCaptcha(true);
+    }
+  }, [areRequiredFieldsCompleted, hasRevealedCaptcha]);
+
+  const showCaptcha = hasRevealedCaptcha || hasAttemptedSubmit;
+
   const handleRecaptchaVerify = useCallback((token: string) => {
     setRecaptchaToken(token);
     setRecaptchaError('');
@@ -96,6 +114,7 @@ export default function BrowseSourcingDesk({
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setHasAttemptedSubmit(true);
     setSubmitError('');
     setRecaptchaError('');
 
@@ -439,28 +458,30 @@ Search Query Context: ${searchQuery || 'Direct Form'}
                       />
                     </div>
 
-                    {/* Google reCAPTCHA Verification */}
-                    <div className="bg-slate-50 border border-gray-200/90 rounded-2xl p-3.5 sm:p-4 transition-all">
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <ShieldCheck className="w-4 h-4 text-[#0f7a61]" />
-                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                          Human Verification <span className="text-red-500">*</span>
-                        </span>
-                      </div>
+                    {/* Google reCAPTCHA Verification (Progressive Reveal) */}
+                    {showCaptcha && (
+                      <div className="bg-slate-50 border border-gray-200/90 rounded-2xl p-3.5 sm:p-4 transition-all duration-300 ease-out animate-fade-in">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <ShieldCheck className="w-4 h-4 text-[#0f7a61]" />
+                          <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            Human Verification <span className="text-red-500">*</span>
+                          </span>
+                        </div>
 
-                      <div className="flex justify-center sm:justify-start overflow-x-auto py-1">
-                        <GoogleReCaptcha
-                          ref={recaptchaRef}
-                          onVerify={handleRecaptchaVerify}
-                          onExpire={handleRecaptchaExpire}
-                          onError={handleRecaptchaError}
-                        />
-                      </div>
+                        <div className="flex justify-center sm:justify-start overflow-x-auto py-1">
+                          <GoogleReCaptcha
+                            ref={recaptchaRef}
+                            onVerify={handleRecaptchaVerify}
+                            onExpire={handleRecaptchaExpire}
+                            onError={handleRecaptchaError}
+                          />
+                        </div>
 
-                      {recaptchaError && (
-                        <p className="text-red-500 text-xs mt-1.5 font-medium">{recaptchaError}</p>
-                      )}
-                    </div>
+                        {recaptchaError && (
+                          <p className="text-red-500 text-xs mt-1.5 font-medium">{recaptchaError}</p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Submit Button */}
                     <div className="pt-1">

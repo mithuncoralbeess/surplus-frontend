@@ -125,6 +125,26 @@ export default function ContactForm() {
   const [recaptchaToken, setRecaptchaToken] = useState<string>('');
   const [captchaError, setCaptchaError] = useState<string>('');
 
+  // Progressive Reveal: Shows reCAPTCHA only when required fields are completed
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [hasRevealedCaptcha, setHasRevealedCaptcha] = useState(false);
+
+  const areRequiredFieldsCompleted = Boolean(
+    formData.fullName.trim() &&
+    formData.email.trim() &&
+    formData.phone.trim() &&
+    formData.enquiryType.trim() &&
+    formData.message.trim()
+  );
+
+  useEffect(() => {
+    if (areRequiredFieldsCompleted && !hasRevealedCaptcha) {
+      setHasRevealedCaptcha(true);
+    }
+  }, [areRequiredFieldsCompleted, hasRevealedCaptcha]);
+
+  const showCaptcha = hasRevealedCaptcha || hasAttemptedSubmit;
+
   const handleRecaptchaVerify = useCallback((token: string) => {
     setRecaptchaToken(token);
     setCaptchaError('');
@@ -212,13 +232,9 @@ export default function ContactForm() {
       return;
     }
 
-    // 3. Human Security Verification Check (Google reCAPTCHA)
-    if (!recaptchaToken) {
-      setCaptchaError('Please check the "I\'m not a robot" box');
-      return;
-    }
+    setHasAttemptedSubmit(true);
 
-    // 4. Form Field Validation
+    // 3. Form Field Validation
     const result = contactFormSchema.safeParse(formData);
 
     if (!result.success) {
@@ -229,6 +245,12 @@ export default function ContactForm() {
         }
       });
       setErrors(formattedErrors);
+      return;
+    }
+
+    // 4. Human Security Verification Check (Google reCAPTCHA)
+    if (!recaptchaToken) {
+      setCaptchaError('Please check the "I\'m not a robot" box');
       return;
     }
 
@@ -502,28 +524,30 @@ export default function ContactForm() {
                 {errors.message && <p className="text-red-500 text-xs mt-1.5">{errors.message}</p>}
               </div>
 
-              {/* Anti-Spam Google reCAPTCHA Verification */}
-              <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 sm:p-4.5 transition-all">
-                <div className="flex items-center gap-2 mb-2.5">
-                  <ShieldCheck className="w-4 h-4 text-[#0a5c48]" />
-                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Human Verification <span className="text-red-500">*</span>
-                  </span>
-                </div>
+              {/* Anti-Spam Google reCAPTCHA Verification (Progressive Reveal) */}
+              {showCaptcha && (
+                <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 sm:p-4.5 transition-all duration-300 ease-out animate-fade-in">
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <ShieldCheck className="w-4 h-4 text-[#0a5c48]" />
+                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Human Verification <span className="text-red-500">*</span>
+                    </span>
+                  </div>
 
-                <div className="flex justify-center sm:justify-start overflow-x-auto py-1">
-                  <GoogleReCaptcha
-                    ref={recaptchaRef}
-                    onVerify={handleRecaptchaVerify}
-                    onExpire={handleRecaptchaExpire}
-                    onError={handleRecaptchaError}
-                  />
-                </div>
+                  <div className="flex justify-center sm:justify-start overflow-x-auto py-1">
+                    <GoogleReCaptcha
+                      ref={recaptchaRef}
+                      onVerify={handleRecaptchaVerify}
+                      onExpire={handleRecaptchaExpire}
+                      onError={handleRecaptchaError}
+                    />
+                  </div>
 
-                {captchaError && (
-                  <p className="text-red-500 text-xs mt-2 font-medium">{captchaError}</p>
-                )}
-              </div>
+                  {captchaError && (
+                    <p className="text-red-500 text-xs mt-2 font-medium">{captchaError}</p>
+                  )}
+                </div>
+              )}
 
               {/* Submit Button */}
               <button
