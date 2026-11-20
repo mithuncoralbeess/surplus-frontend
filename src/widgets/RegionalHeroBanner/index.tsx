@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Loader2, AlertCircle, ShieldCheck, RefreshCw } from 'lucide-react';
+import { CheckCircle2, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { inquiryService } from '../../services/inquiryService';
 import { sanitizeInput } from '../../lib/security/sanitizer';
+import GoogleReCaptcha, { GoogleReCaptchaRef } from '../../components/GoogleReCaptcha';
 
 export interface RegionalHeroBannerProps {
   countryName: string;
@@ -41,27 +42,15 @@ export default function RegionalHeroBanner({
   // Anti-Spam Layer 2: Time-to-Submit Nonce (detects instant bots)
   const [mountedAt] = useState(() => Date.now());
 
-  // Anti-Spam Layer 3: Dynamic Human Verification Challenge (arithmetic)
-  const [captchaNums, setCaptchaNums] = useState<{ n1: number; n2: number }>({ n1: 4, n2: 3 });
-  const [userCaptcha, setUserCaptcha] = useState('');
-  const [captchaError, setCaptchaError] = useState('');
+  // Anti-Spam Layer 3: Google reCAPTCHA
+  const recaptchaRef = useRef<GoogleReCaptchaRef>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string>('');
+  const [recaptchaError, setRecaptchaError] = useState<string>('');
 
   const [errors, setErrors] = useState<QuoteFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quoteStatus, setQuoteStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [quoteMessage, setQuoteMessage] = useState('');
-
-  const generateNewCaptcha = () => {
-    const n1 = Math.floor(Math.random() * 8) + 2; // 2 to 9
-    const n2 = Math.floor(Math.random() * 8) + 1; // 1 to 8
-    setCaptchaNums({ n1, n2 });
-    setUserCaptcha('');
-    setCaptchaError('');
-  };
-
-  useEffect(() => {
-    generateNewCaptcha();
-  }, []);
 
   // 1. "What are you looking for?" - Prevent scripts and HTML in real-time
   const handleLookingForChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,12 +140,10 @@ export default function RegionalHeroBanner({
       newErrors.businessEmail = 'Script tags or HTML code are not allowed';
     }
 
-    // 5. Anti-Spam Security Math Check
-    const expectedSum = captchaNums.n1 + captchaNums.n2;
-    const providedSum = parseInt(userCaptcha.trim(), 10);
+    // 5. Anti-Spam Google reCAPTCHA Verification
     let hasCaptchaError = false;
-    if (isNaN(providedSum) || providedSum !== expectedSum) {
-      setCaptchaError(`Please solve: ${captchaNums.n1} + ${captchaNums.n2} = ?`);
+    if (!recaptchaToken) {
+      setRecaptchaError('Please check the "I\'m not a robot" box');
       hasCaptchaError = true;
     }
 
@@ -183,7 +170,9 @@ export default function RegionalHeroBanner({
         setTargetPrice('');
         setBusinessEmail('');
         setHoneypot('');
-        generateNewCaptcha();
+        setRecaptchaToken('');
+        setRecaptchaError('');
+        recaptchaRef.current?.reset();
         setErrors({});
       }, 500);
       return;
@@ -213,6 +202,7 @@ export default function RegionalHeroBanner({
         source: 'RegionalHeroBanner',
         company_website_url: honeypot,
         _formTime: mountedAt,
+        recaptchaToken,
         enquiryType: `Regional Quote Request - ${countryName}`,
         subject: `[${countryName}] Quote Request: ${cleanItem} (Qty: ${cleanQty})`,
         message: `
@@ -239,17 +229,21 @@ Business Email: ${cleanEmail}
         setQuantity('');
         setTargetPrice('');
         setBusinessEmail('');
-        generateNewCaptcha();
+        setRecaptchaToken('');
+        setRecaptchaError('');
+        recaptchaRef.current?.reset();
         setErrors({});
       } else {
         setQuoteStatus('error');
         setQuoteMessage(res.message || 'Unable to submit quote request. Please try again.');
-        generateNewCaptcha();
+        setRecaptchaToken('');
+        recaptchaRef.current?.reset();
       }
     } catch (err: any) {
       setQuoteStatus('error');
       setQuoteMessage(err?.message || 'A network error occurred. Please try again.');
-      generateNewCaptcha();
+      setRecaptchaToken('');
+      recaptchaRef.current?.reset();
     } finally {
       setIsSubmitting(false);
     }
@@ -410,57 +404,34 @@ Business Email: ${cleanEmail}
                   )}
                 </div>
 
-                {/* Anti-Spam Security Verification Challenge */}
+                {/* Google reCAPTCHA Verification */}
                 <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 sm:p-3.5 transition-all">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-[#0f7a61]" />
-                      <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                        Security Check <span className="text-red-500">*</span>
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={generateNewCaptcha}
-                      className="text-[11px] text-slate-500 hover:text-[#0f7a61] flex items-center gap-1 font-semibold transition-colors"
-                      title="Generate new question"
-                    >
-                      <RefreshCw className="w-3 h-3" />
-                      <span>New</span>
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-2.5">
-                    <div className="inline-flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs font-black text-slate-800 select-none shadow-2xs shrink-0">
-                      <span>{captchaNums.n1}</span>
-                      <span>+</span>
-                      <span>{captchaNums.n2}</span>
-                      <span>=</span>
-                    </div>
-                    <div className="w-24">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={userCaptcha}
-                        onChange={(e) => {
-                          setUserCaptcha(e.target.value.replace(/[^0-9]/g, ''));
-                          if (captchaError) setCaptchaError('');
-                        }}
-                        placeholder="Answer"
-                        className={`w-full px-2.5 py-1.5 bg-white border rounded-lg text-xs font-bold text-slate-900 outline-none transition-all ${
-                          captchaError 
-                            ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500' 
-                            : 'border-gray-200 focus:border-[#0f7a61] focus:ring-1 focus:ring-[#0f7a61]'
-                        }`}
-                      />
-                    </div>
-                    <span className="text-[11px] text-slate-400 truncate">
-                      Real person check
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <ShieldCheck className="w-4 h-4 text-[#0f7a61]" />
+                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Human Verification <span className="text-red-500">*</span>
                     </span>
                   </div>
-                  {captchaError && (
-                    <p className="text-red-500 text-xs mt-1.5 font-medium">{captchaError}</p>
+
+                  <div className="flex justify-center sm:justify-start overflow-x-auto py-1">
+                    <GoogleReCaptcha
+                      ref={recaptchaRef}
+                      onVerify={(token) => {
+                        setRecaptchaToken(token);
+                        if (recaptchaError) setRecaptchaError('');
+                      }}
+                      onExpire={() => {
+                        setRecaptchaToken('');
+                        setRecaptchaError('Verification expired. Please check the box again.');
+                      }}
+                      onError={() => {
+                        setRecaptchaError('Google reCAPTCHA failed to load. Please check your connection.');
+                      }}
+                    />
+                  </div>
+
+                  {recaptchaError && (
+                    <p className="text-red-500 text-xs mt-1.5 font-medium">{recaptchaError}</p>
                   )}
                 </div>
 

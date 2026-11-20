@@ -100,7 +100,44 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 4. Content Spam Heuristics
+    // 4. Google reCAPTCHA Verification
+    const recaptchaToken = body?.recaptchaToken || body?.["g-recaptcha-response"];
+    const recaptchaSecret =
+      process.env.RECAPTCHA_SECRET_KEY ||
+      "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"; // Official Google test secret
+
+    if (!recaptchaToken) {
+      return NextResponse.json(
+        { success: false, message: "Please complete the reCAPTCHA verification." },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const verifyRes = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          secret: recaptchaSecret,
+          response: recaptchaToken,
+          remoteip: ip,
+        }),
+      });
+
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        console.warn(`[AntiSpam Regional] Google reCAPTCHA verification failed from IP ${ip}:`, verifyData["error-codes"]);
+        return NextResponse.json(
+          { success: false, message: "reCAPTCHA verification failed. Please try again." },
+          { status: 400 }
+        );
+      }
+    } catch (recaptchaErr) {
+      console.error("[AntiSpam Regional] Google reCAPTCHA network check failed:", recaptchaErr);
+      // In case of Google network glitch in development or isolated env, log and proceed gracefully
+    }
+
+    // 5. Content Spam Heuristics
     const lookingFor = String(body?.lookingFor || body?.sourcingItem || "");
     const email = String(body?.email || body?.businessEmail || "").trim().toLowerCase();
     const message = String(body?.message || "");
@@ -149,6 +186,8 @@ export async function POST(req: NextRequest) {
     delete cleanPayload.company_website_url;
     delete cleanPayload._formTime;
     delete cleanPayload.hp_contact_check;
+    delete cleanPayload.recaptchaToken;
+    delete cleanPayload["g-recaptcha-response"];
 
     // 5. Forward to backend Django Regional API
     try {
