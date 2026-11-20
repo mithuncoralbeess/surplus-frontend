@@ -58,6 +58,14 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
 
+  // Keep stable callback references so useEffect NEVER unmounts/re-mounts on parent re-renders
+  const onVerifyRef = useRef(onVerify);
+  onVerifyRef.current = onVerify;
+  const onExpireRef = useRef(onExpire);
+  onExpireRef.current = onExpire;
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
+
   const activeSiteKey =
     siteKey ||
     process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
@@ -100,25 +108,30 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
     let maxTimeout: NodeJS.Timeout | null = null;
 
     const renderWidget = () => {
-      if (!isMounted || !containerRef.current || !window.grecaptcha?.render) return;
-      if (widgetIdRef.current !== null) return; // Already rendered
+      if (!isMounted || !containerRef.current) return;
+      if (!window.grecaptcha?.render) return;
+      // If already rendered, do not attempt double render
+      if (widgetIdRef.current !== null) return;
 
       try {
-        // Crucial: Container must be completely empty before calling grecaptcha.render
+        // Clear container and append a dedicated, brand-new element
+        // so Google reCAPTCHA never encounters an already-used DOM element
         containerRef.current.innerHTML = '';
+        const targetSlot = document.createElement('div');
+        containerRef.current.appendChild(targetSlot);
 
-        const id = window.grecaptcha.render(containerRef.current, {
+        const id = window.grecaptcha.render(targetSlot, {
           sitekey: activeSiteKey,
           theme,
           size,
           callback: (token: string) => {
-            if (isMounted) onVerify(token);
+            if (isMounted) onVerifyRef.current?.(token);
           },
           'expired-callback': () => {
-            if (isMounted && onExpire) onExpire();
+            if (isMounted && onExpireRef.current) onExpireRef.current();
           },
           'error-callback': () => {
-            if (isMounted && onError) onError();
+            if (isMounted && onErrorRef.current) onErrorRef.current();
           },
         });
         widgetIdRef.current = id;
@@ -128,13 +141,16 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
         // Only set load error if widget couldn't be rendered at all
         if (isMounted && widgetIdRef.current === null) {
           setLoadError(true);
-          if (onError) onError();
+          if (onErrorRef.current) onErrorRef.current();
         }
       }
     };
 
     const tryInit = () => {
       if (typeof window !== 'undefined' && window.grecaptcha) {
+        if (widgetIdRef.current !== null) {
+          return true; // Already rendered successfully
+        }
         if (window.grecaptcha.render) {
           renderWidget();
           return true;
@@ -148,11 +164,16 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
       return false;
     };
 
+    // If already rendered, nothing to do
+    if (widgetIdRef.current !== null) {
+      return;
+    }
+
     // If grecaptcha is already available, render immediately
     if (!tryInit()) {
       // Ensure fallback script tag exists if layout script hasn't injected yet
       const scriptExists = document.querySelector<HTMLScriptElement>(
-        'script[src*="google.com/recaptcha/api.js"]'
+        'script[src*="google.com/recaptcha/api.js"], script[src*="recaptcha.net/recaptcha/api.js"]'
       );
       if (!scriptExists) {
         const script = document.createElement('script');
@@ -162,7 +183,7 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
         script.onerror = () => {
           if (isMounted) {
             setLoadError(true);
-            if (onError) onError();
+            if (onErrorRef.current) onErrorRef.current();
           }
         };
         document.head.appendChild(script);
@@ -181,21 +202,17 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
         if (pollInterval) clearInterval(pollInterval);
         if (isMounted && widgetIdRef.current === null && !window.grecaptcha?.render) {
           setLoadError(true);
-          if (onError) onError();
+          if (onErrorRef.current) onErrorRef.current();
         }
       }, 12000);
     }
 
     return () => {
       isMounted = false;
-      widgetIdRef.current = null;
       if (pollInterval) clearInterval(pollInterval);
       if (maxTimeout) clearTimeout(maxTimeout);
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
-      }
     };
-  }, [activeSiteKey, theme, size, retryKey, onVerify, onExpire, onError]);
+  }, [activeSiteKey, theme, size, retryKey]);
 
   return (
     <div className={`recaptcha-wrapper flex flex-col items-center sm:items-start my-1.5 ${className}`}>

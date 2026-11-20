@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { inquiryService } from '../../services/inquiryService';
@@ -46,6 +46,20 @@ export default function RegionalHeroBanner({
   const recaptchaRef = useRef<GoogleReCaptchaRef>(null);
   const [recaptchaToken, setRecaptchaToken] = useState<string>('');
   const [recaptchaError, setRecaptchaError] = useState<string>('');
+
+  const handleRecaptchaVerify = useCallback((token: string) => {
+    setRecaptchaToken(token);
+    setRecaptchaError('');
+  }, []);
+
+  const handleRecaptchaExpire = useCallback(() => {
+    setRecaptchaToken('');
+    setRecaptchaError('Verification expired. Please check the box again.');
+  }, []);
+
+  const handleRecaptchaError = useCallback(() => {
+    setRecaptchaToken('');
+  }, []);
 
   const [errors, setErrors] = useState<QuoteFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -416,17 +430,9 @@ Business Email: ${cleanEmail}
                   <div className="flex justify-center sm:justify-start overflow-x-auto py-1">
                     <GoogleReCaptcha
                       ref={recaptchaRef}
-                      onVerify={(token) => {
-                        setRecaptchaToken(token);
-                        if (recaptchaError) setRecaptchaError('');
-                      }}
-                      onExpire={() => {
-                        setRecaptchaToken('');
-                        setRecaptchaError('Verification expired. Please check the box again.');
-                      }}
-                      onError={() => {
-                        setRecaptchaToken('');
-                      }}
+                      onVerify={handleRecaptchaVerify}
+                      onExpire={handleRecaptchaExpire}
+                      onError={handleRecaptchaError}
                     />
                   </div>
 

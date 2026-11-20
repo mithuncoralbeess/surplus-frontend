@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { inquiryService } from '../../services/inquiryService';
 import { motion } from '../../lib/motion';
 import { z } from 'zod';
@@ -124,6 +124,20 @@ export default function ContactForm() {
   const recaptchaRef = useRef<GoogleReCaptchaRef>(null);
   const [recaptchaToken, setRecaptchaToken] = useState<string>('');
   const [captchaError, setCaptchaError] = useState<string>('');
+
+  const handleRecaptchaVerify = useCallback((token: string) => {
+    setRecaptchaToken(token);
+    setCaptchaError('');
+  }, []);
+
+  const handleRecaptchaExpire = useCallback(() => {
+    setRecaptchaToken('');
+    setCaptchaError('Verification expired. Please check the box again.');
+  }, []);
+
+  const handleRecaptchaError = useCallback(() => {
+    setRecaptchaToken('');
+  }, []);
 
   const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -500,17 +514,9 @@ export default function ContactForm() {
                 <div className="flex justify-center sm:justify-start overflow-x-auto py-1">
                   <GoogleReCaptcha
                     ref={recaptchaRef}
-                    onVerify={(token) => {
-                      setRecaptchaToken(token);
-                      if (captchaError) setCaptchaError('');
-                    }}
-                    onExpire={() => {
-                      setRecaptchaToken('');
-                      setCaptchaError('Verification expired. Please check the box again.');
-                    }}
-                    onError={() => {
-                      setRecaptchaToken('');
-                    }}
+                    onVerify={handleRecaptchaVerify}
+                    onExpire={handleRecaptchaExpire}
+                    onError={handleRecaptchaError}
                   />
                 </div>
 
