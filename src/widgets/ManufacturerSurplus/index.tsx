@@ -96,7 +96,7 @@ export default function ManufacturerSurplus() {
                 key={card.id}
                 className="bg-[#f8faf8] border border-gray-200/80 rounded-2xl p-5 sm:p-5.5 transition-all hover:bg-white hover:shadow-xs"
               >
-                <h3 className="h3 font-bold text-slate-900 text-base sm:text-[17px] mb-1.5 leading-snug">
+                <h3 className="font-bold text-[#0f172a] text-base sm:text-[17px] mb-1.5 leading-snug">
                   {card.title}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">

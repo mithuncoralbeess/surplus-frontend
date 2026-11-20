@@ -509,7 +509,7 @@ export default function ContactForm() {
                       setCaptchaError('Verification expired. Please check the box again.');
                     }}
                     onError={() => {
-                      setCaptchaError('Google reCAPTCHA failed to load. Please check your connection.');
+                      setRecaptchaToken('');
                     }}
                   />
                 </div>

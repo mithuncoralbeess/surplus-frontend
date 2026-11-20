@@ -78,7 +78,7 @@ export default function InventoryListingOptions() {
                 Getting Started
               </span>
             </div>
-            <h2 className="h2 font-extrabold text-gray-900 tracking-tight mb-3 sm:mb-5">
+            <h2 className="h2 font-extrabold text-[#0f172a] tracking-tight mb-3 sm:mb-5">
               How do you want to list your surplus?
             </h2>
             <p className="text-sm sm:text-base md:text-[17px] text-gray-500 leading-relaxed max-w-2xl">

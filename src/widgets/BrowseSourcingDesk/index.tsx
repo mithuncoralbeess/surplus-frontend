@@ -446,7 +446,7 @@ Search Query Context: ${searchQuery || 'Direct Form'}
                             setRecaptchaError('Verification expired. Please check the box again.');
                           }}
                           onError={() => {
-                            setRecaptchaError('Google reCAPTCHA failed to load. Please check your connection.');
+                            setRecaptchaToken('');
                           }}
                         />
                       </div>

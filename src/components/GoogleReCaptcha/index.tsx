@@ -59,11 +59,23 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
   const widgetIdRef = useRef<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   const activeSiteKey =
     siteKey ||
     process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
     DEFAULT_TEST_SITE_KEY;
+
+  const handleRetry = () => {
+    setLoadError(false);
+    setIsLoaded(false);
+    widgetIdRef.current = null;
+    const existing = document.querySelector<HTMLScriptElement>('script[src*="google.com/recaptcha/api.js"]');
+    if (existing && existing.parentNode) {
+      existing.parentNode.removeChild(existing);
+    }
+    setRetryKey((k) => k + 1);
+  };
 
   useImperativeHandle(ref, () => ({
     reset: () => {
@@ -106,13 +118,21 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
             if (isMounted && onExpire) onExpire();
           },
           'error-callback': () => {
-            if (isMounted && onError) onError();
+            if (isMounted) {
+              setLoadError(true);
+              if (onError) onError();
+            }
           },
         });
         widgetIdRef.current = id;
         setIsLoaded(true);
+        setLoadError(false);
       } catch (err) {
         console.warn('[Google reCAPTCHA] render failed:', err);
+        if (isMounted) {
+          setLoadError(true);
+          if (onError) onError();
+        }
       }
     };
 
@@ -123,7 +143,10 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
       } else {
         renderWidget();
       }
-      return;
+      return () => {
+        isMounted = false;
+        widgetIdRef.current = null;
+      };
     }
 
     // Initialize callback queue
@@ -154,6 +177,9 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
       'script[src*="google.com/recaptcha/api.js"]'
     );
 
+    let intervalId: NodeJS.Timeout | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
+
     if (!existingScript) {
       const script = document.createElement('script');
       script.src = 'https://www.google.com/recaptcha/api.js?onload=__onGoogleRecaptchaLoad&render=explicit';
@@ -166,30 +192,39 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
         }
       };
       document.head.appendChild(script);
+
+      timeoutId = setTimeout(() => {
+        if (isMounted && widgetIdRef.current === null && !window.grecaptcha?.render) {
+          setLoadError(true);
+          if (onError) onError();
+        }
+      }, 10000);
     } else {
       // Check periodically if script finishes loading
-      const interval = setInterval(() => {
+      intervalId = setInterval(() => {
         if (window.grecaptcha && window.grecaptcha.render) {
-          clearInterval(interval);
+          if (intervalId) clearInterval(intervalId);
+          if (timeoutId) clearTimeout(timeoutId);
           if (isMounted) renderWidget();
         }
       }, 150);
 
-      const timeout = setTimeout(() => {
-        clearInterval(interval);
-        if (isMounted && !isLoaded) setLoadError(true);
-      }, 8000);
-
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-      };
+      timeoutId = setTimeout(() => {
+        if (intervalId) clearInterval(intervalId);
+        if (isMounted && !isLoaded && widgetIdRef.current === null) {
+          setLoadError(true);
+          if (onError) onError();
+        }
+      }, 10000);
     }
 
     return () => {
       isMounted = false;
+      widgetIdRef.current = null;
+      if (intervalId) clearInterval(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [activeSiteKey, theme, size, onVerify, onExpire, onError]);
+  }, [activeSiteKey, theme, size, retryKey, onVerify, onExpire, onError]);
 
   return (
     <div className={`recaptcha-wrapper flex flex-col items-center sm:items-start my-1.5 ${className}`}>
@@ -198,9 +233,16 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
         className="min-h-[78px] min-w-[304px] flex items-center justify-center sm:justify-start" 
       />
       {loadError && (
-        <p className="text-xs text-amber-600 mt-1 font-medium">
-          Unable to load Google reCAPTCHA. Please check your network connection or ad-blocker.
-        </p>
+        <div className="flex items-center gap-2 mt-1.5 p-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
+          <span>Google reCAPTCHA could not be loaded. Please check your connection or ad-blocker.</span>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="px-2 py-0.5 bg-amber-200 hover:bg-amber-300 rounded text-amber-950 font-bold text-[11px] cursor-pointer shrink-0 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       )}
     </div>
   );
