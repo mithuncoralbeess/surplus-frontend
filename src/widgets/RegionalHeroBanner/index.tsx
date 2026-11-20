@@ -188,6 +188,21 @@ export default function RegionalHeroBanner({
     e.preventDefault();
     setHasAttemptedSubmit(true);
 
+    // Rate limit check: 1 submission per 10 minutes
+    try {
+      const lastSubmitTime = localStorage.getItem('sm_rate_limit_quote');
+      if (lastSubmitTime) {
+        const elapsed = Date.now() - parseInt(lastSubmitTime, 10);
+        const cooldownMs = 10 * 60 * 1000;
+        if (elapsed < cooldownMs) {
+          const remainingMinutes = Math.max(1, Math.ceil((cooldownMs - elapsed) / (60 * 1000)));
+          setQuoteStatus('error');
+          setQuoteMessage(`Submission limit reached: Only 1 submission allowed every 10 minutes. Please wait ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''} before submitting again.`);
+          return;
+        }
+      }
+    } catch {}
+
     // Run client-side validation
     if (!validateForm()) {
       return;
@@ -258,6 +273,9 @@ Business Email: ${cleanEmail}
       });
 
       if (res.success || res.status === 200 || res.status === 201) {
+        try {
+          localStorage.setItem('sm_rate_limit_quote', String(Date.now()));
+        } catch {}
         setQuoteStatus('success');
         setLookingFor('');
         setQuantity('');

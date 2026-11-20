@@ -118,6 +118,20 @@ export default function BrowseSourcingDesk({
     setSubmitError('');
     setRecaptchaError('');
 
+    // Rate limit check: 1 submission per 10 minutes
+    try {
+      const lastSubmitTime = localStorage.getItem('sm_rate_limit_sourcing');
+      if (lastSubmitTime) {
+        const elapsed = Date.now() - parseInt(lastSubmitTime, 10);
+        const cooldownMs = 10 * 60 * 1000;
+        if (elapsed < cooldownMs) {
+          const remainingMinutes = Math.max(1, Math.ceil((cooldownMs - elapsed) / (60 * 1000)));
+          setSubmitError(`Submission limit reached: Only 1 submission allowed every 10 minutes. Please wait ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''} before submitting again.`);
+          return;
+        }
+      }
+    } catch {}
+
     const targetItem = sourcingItem.trim() || searchQuery.trim();
     if (!targetItem) {
       setSubmitError('Please specify the product or specs you need.');
@@ -173,6 +187,9 @@ Search Query Context: ${searchQuery || 'Direct Form'}
       });
 
       if (response.success || response.status === 200 || response.status === 201) {
+        try {
+          localStorage.setItem('sm_rate_limit_sourcing', String(Date.now()));
+        } catch {}
         setIsSuccess(true);
         setRecaptchaToken('');
         setRecaptchaError('');

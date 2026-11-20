@@ -197,6 +197,20 @@ export default function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Rate limit check: 1 submission per 10 minutes
+    try {
+      const lastSubmitTime = localStorage.getItem('sm_rate_limit_contact');
+      if (lastSubmitTime) {
+        const elapsed = Date.now() - parseInt(lastSubmitTime, 10);
+        const cooldownMs = 10 * 60 * 1000;
+        if (elapsed < cooldownMs) {
+          const remainingMinutes = Math.max(1, Math.ceil((cooldownMs - elapsed) / (60 * 1000)));
+          setSubmitError(`Submission limit reached: Only 1 submission allowed every 10 minutes. Please wait ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''} before submitting again.`);
+          return;
+        }
+      }
+    } catch {}
+
     // 1. Check Honeypot Trap (If filled, it's an automated bot)
     if (honeypot && honeypot.trim().length > 0) {
       // Silent Drop / Ghosting: pretend to succeed so bot does not retry with alternate vectors
@@ -271,6 +285,9 @@ export default function ContactForm() {
     const res = await inquiryService.submitContactForm(sanitizedPayload);
 
     if (res.success) {
+      try {
+        localStorage.setItem('sm_rate_limit_contact', String(Date.now()));
+      } catch {}
       setIsSubmitting(false);
       setIsSuccess(true);
       setFormData({ fullName: '', email: '', phone: '', enquiryType: '', message: '' });

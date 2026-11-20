@@ -7,11 +7,31 @@ const BACKEND_BASE = (
   "https://dev.surplusmarket.com"
 ).replace(/\/$/, "");
 
-// In-memory sliding window rate-limiter: max 10 requests per IP per 10 minutes
+// In-memory sliding window rate-limiter: max 1 request per IP per 10 minutes
 interface RateLimitRecord {
   timestamps: number[];
 }
 const rateLimitMap = new Map<string, RateLimitRecord>();
+
+// Cleanup stale records periodically
+if (typeof setInterval !== "undefined") {
+  const cleanupTimer = setInterval(() => {
+    const now = Date.now();
+    const windowMs = 10 * 60 * 1000;
+    for (const [ip, record] of rateLimitMap.entries()) {
+      const recent = record.timestamps.filter((t) => now - t < windowMs);
+      if (recent.length === 0) {
+        rateLimitMap.delete(ip);
+      } else {
+        record.timestamps = recent;
+      }
+    }
+  }, 15 * 60 * 1000);
+  
+  if (cleanupTimer.unref) {
+    cleanupTimer.unref();
+  }
+}
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -33,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     const now = Date.now();
     const windowMs = 10 * 60 * 1000;
-    const maxRequests = 10;
+    const maxRequests = 1;
 
     let record = rateLimitMap.get(ip);
     if (!record) {
@@ -43,11 +63,17 @@ export async function POST(req: NextRequest) {
     record.timestamps = record.timestamps.filter((t) => now - t < windowMs);
 
     if (record.timestamps.length >= maxRequests) {
-      console.warn(`[AntiSpam Sourcing] IP ${ip} exceeded rate limit. Dropping.`);
-      return NextResponse.json({
-        success: true,
-        message: "Thank you for your sourcing request. Our procurement team will review it shortly.",
-      });
+      const oldest = record.timestamps[0];
+      const remainingMs = windowMs - (now - oldest);
+      const remainingMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
+      console.warn(`[AntiSpam Sourcing] IP ${ip} exceeded ${maxRequests} submission per 10min. Rate limited.`);
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Submission limit reached: Only 1 submission allowed every 10 minutes. Please wait ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''} before trying again.`,
+        },
+        { status: 429 }
+      );
     }
 
     const body = await req.json().catch(() => ({}));

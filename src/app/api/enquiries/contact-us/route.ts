@@ -7,7 +7,7 @@ const BACKEND_BASE = (
   "https://dev.surplusmarket.com"
 ).replace(/\/$/, "");
 
-// In-memory sliding window rate-limiter: max 5 requests per IP per 10 minutes
+// In-memory sliding window rate-limiter: max 1 request per IP per 10 minutes
 interface RateLimitRecord {
   timestamps: number[];
 }
@@ -53,9 +53,9 @@ export async function POST(req: NextRequest) {
 
     const now = Date.now();
     const windowMs = 10 * 60 * 1000; // 10 minutes
-    const maxRequests = 5;
+    const maxRequests = 1;
 
-    // 1. IP Sliding Window Rate Limiting
+    // 1. IP Sliding Window Rate Limiting (1 submission per 10 minutes)
     let record = rateLimitMap.get(ip);
     if (!record) {
       record = { timestamps: [] };
@@ -64,12 +64,17 @@ export async function POST(req: NextRequest) {
     record.timestamps = record.timestamps.filter((t) => now - t < windowMs);
 
     if (record.timestamps.length >= maxRequests) {
-      console.warn(`[AntiSpam RateLimit] IP ${ip} exceeded ${maxRequests} submissions/10min. Silently dropping.`);
-      // Return 200 silent ghosting so spam bots do not adapt or cycle IPs
-      return NextResponse.json({
-        success: true,
-        message: "Thank you for contacting Surplus Market. Our operations team will review your enquiry shortly.",
-      });
+      const oldest = record.timestamps[0];
+      const remainingMs = windowMs - (now - oldest);
+      const remainingMinutes = Math.max(1, Math.ceil(remainingMs / (60 * 1000)));
+      console.warn(`[AntiSpam RateLimit] IP ${ip} exceeded ${maxRequests} submission/10min. Rate limited.`);
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Submission limit reached: Only 1 submission allowed every 10 minutes. Please wait ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''} before trying again.`,
+        },
+        { status: 429 }
+      );
     }
 
     const body = await req.json().catch(() => ({}));
