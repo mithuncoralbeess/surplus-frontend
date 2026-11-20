@@ -134,15 +134,16 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
     };
 
     const tryInit = () => {
-      if (typeof window !== 'undefined' && window.grecaptcha?.render) {
-        if (window.grecaptcha.ready) {
+      if (typeof window !== 'undefined' && window.grecaptcha) {
+        if (window.grecaptcha.render) {
+          renderWidget();
+          return true;
+        } else if (window.grecaptcha.ready) {
           window.grecaptcha.ready(() => {
             if (isMounted) renderWidget();
           });
-        } else {
-          renderWidget();
+          return true;
         }
-        return true;
       }
       return false;
     };
