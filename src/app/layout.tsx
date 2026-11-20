@@ -159,6 +159,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         {/* End Google Tag Manager */}
 
+        {/* Google reCAPTCHA v2 API */}
+        <Script
+          src="https://www.google.com/recaptcha/api.js?render=explicit"
+          strategy="afterInteractive"
+        />
+
         <RootJsonLd />
 
         <AuthProvider>

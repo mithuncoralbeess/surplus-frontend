@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
+import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef, useCallback } from 'react';
 
 declare global {
   interface Window {
@@ -20,8 +20,6 @@ declare global {
       getResponse?: (opt_widget_id?: number) => string;
       ready?: (callback: () => void) => void;
     };
-    __onGoogleRecaptchaLoad?: () => void;
-    __googleRecaptchaQueue?: Array<() => void>;
   }
 }
 
@@ -57,7 +55,6 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<number | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
 
@@ -65,17 +62,6 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
     siteKey ||
     process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
     DEFAULT_TEST_SITE_KEY;
-
-  const handleRetry = () => {
-    setLoadError(false);
-    setIsLoaded(false);
-    widgetIdRef.current = null;
-    const existing = document.querySelector<HTMLScriptElement>('script[src*="google.com/recaptcha/api.js"]');
-    if (existing && existing.parentNode) {
-      existing.parentNode.removeChild(existing);
-    }
-    setRetryKey((k) => k + 1);
-  };
 
   useImperativeHandle(ref, () => ({
     reset: () => {
@@ -99,14 +85,28 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
     },
   }));
 
+  const handleRetry = useCallback(() => {
+    setLoadError(false);
+    widgetIdRef.current = null;
+    if (containerRef.current) {
+      containerRef.current.innerHTML = '';
+    }
+    setRetryKey((prev) => prev + 1);
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
+    let pollInterval: NodeJS.Timeout | null = null;
+    let maxTimeout: NodeJS.Timeout | null = null;
 
     const renderWidget = () => {
       if (!isMounted || !containerRef.current || !window.grecaptcha?.render) return;
       if (widgetIdRef.current !== null) return; // Already rendered
 
       try {
+        // Crucial: Container must be completely empty before calling grecaptcha.render
+        containerRef.current.innerHTML = '';
+
         const id = window.grecaptcha.render(containerRef.current, {
           sitekey: activeSiteKey,
           theme,
@@ -118,111 +118,81 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
             if (isMounted && onExpire) onExpire();
           },
           'error-callback': () => {
-            if (isMounted) {
-              setLoadError(true);
-              if (onError) onError();
-            }
+            if (isMounted && onError) onError();
           },
         });
         widgetIdRef.current = id;
-        setIsLoaded(true);
         setLoadError(false);
-      } catch (err) {
-        console.warn('[Google reCAPTCHA] render failed:', err);
-        if (isMounted) {
+      } catch (err: any) {
+        console.warn('[Google reCAPTCHA] render error:', err);
+        // Only set load error if widget couldn't be rendered at all
+        if (isMounted && widgetIdRef.current === null) {
           setLoadError(true);
           if (onError) onError();
         }
       }
     };
 
-    // Case 1: grecaptcha is already loaded on window
-    if (typeof window !== 'undefined' && window.grecaptcha && window.grecaptcha.render) {
-      if (window.grecaptcha.ready) {
-        window.grecaptcha.ready(renderWidget);
-      } else {
-        renderWidget();
+    const tryInit = () => {
+      if (typeof window !== 'undefined' && window.grecaptcha?.render) {
+        if (window.grecaptcha.ready) {
+          window.grecaptcha.ready(() => {
+            if (isMounted) renderWidget();
+          });
+        } else {
+          renderWidget();
+        }
+        return true;
       }
-      return () => {
-        isMounted = false;
-        widgetIdRef.current = null;
-      };
-    }
+      return false;
+    };
 
-    // Initialize callback queue
-    if (typeof window !== 'undefined') {
-      window.__googleRecaptchaQueue = window.__googleRecaptchaQueue || [];
-      window.__googleRecaptchaQueue.push(renderWidget);
-
-      if (!window.__onGoogleRecaptchaLoad) {
-        window.__onGoogleRecaptchaLoad = () => {
-          if (window.__googleRecaptchaQueue) {
-            while (window.__googleRecaptchaQueue.length > 0) {
-              const fn = window.__googleRecaptchaQueue.shift();
-              if (fn) {
-                if (window.grecaptcha?.ready) {
-                  window.grecaptcha.ready(fn);
-                } else {
-                  fn();
-                }
-              }
-            }
+    // If grecaptcha is already available, render immediately
+    if (!tryInit()) {
+      // Ensure fallback script tag exists if layout script hasn't injected yet
+      const scriptExists = document.querySelector<HTMLScriptElement>(
+        'script[src*="google.com/recaptcha/api.js"]'
+      );
+      if (!scriptExists) {
+        const script = document.createElement('script');
+        script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
+        script.async = true;
+        script.defer = true;
+        script.onerror = () => {
+          if (isMounted) {
+            setLoadError(true);
+            if (onError) onError();
           }
         };
+        document.head.appendChild(script);
       }
-    }
 
-    // Case 2: Check if script tag exists
-    const existingScript = document.querySelector<HTMLScriptElement>(
-      'script[src*="google.com/recaptcha/api.js"]'
-    );
-
-    let intervalId: NodeJS.Timeout | null = null;
-    let timeoutId: NodeJS.Timeout | null = null;
-
-    if (!existingScript) {
-      const script = document.createElement('script');
-      script.src = 'https://www.google.com/recaptcha/api.js?onload=__onGoogleRecaptchaLoad&render=explicit';
-      script.async = true;
-      script.defer = true;
-      script.onerror = () => {
-        if (isMounted) {
-          setLoadError(true);
-          if (onError) onError();
+      // Poll until grecaptcha.render becomes available
+      pollInterval = setInterval(() => {
+        if (tryInit()) {
+          if (pollInterval) clearInterval(pollInterval);
+          if (maxTimeout) clearTimeout(maxTimeout);
         }
-      };
-      document.head.appendChild(script);
+      }, 200);
 
-      timeoutId = setTimeout(() => {
+      // Max timeout of 12 seconds before flagging a load error
+      maxTimeout = setTimeout(() => {
+        if (pollInterval) clearInterval(pollInterval);
         if (isMounted && widgetIdRef.current === null && !window.grecaptcha?.render) {
           setLoadError(true);
           if (onError) onError();
         }
-      }, 10000);
-    } else {
-      // Check periodically if script finishes loading
-      intervalId = setInterval(() => {
-        if (window.grecaptcha && window.grecaptcha.render) {
-          if (intervalId) clearInterval(intervalId);
-          if (timeoutId) clearTimeout(timeoutId);
-          if (isMounted) renderWidget();
-        }
-      }, 150);
-
-      timeoutId = setTimeout(() => {
-        if (intervalId) clearInterval(intervalId);
-        if (isMounted && !isLoaded && widgetIdRef.current === null) {
-          setLoadError(true);
-          if (onError) onError();
-        }
-      }, 10000);
+      }, 12000);
     }
 
     return () => {
       isMounted = false;
       widgetIdRef.current = null;
-      if (intervalId) clearInterval(intervalId);
-      if (timeoutId) clearTimeout(timeoutId);
+      if (pollInterval) clearInterval(pollInterval);
+      if (maxTimeout) clearTimeout(maxTimeout);
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
     };
   }, [activeSiteKey, theme, size, retryKey, onVerify, onExpire, onError]);
 
