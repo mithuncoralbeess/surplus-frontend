@@ -69,7 +69,50 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Google reCAPTCHA Verification
+    const recaptchaToken = body?.recaptchaToken || body?.["g-recaptcha-response"];
+    const recaptchaSecret =
+      process.env.RECAPTCHA_SECRET_KEY ||
+      "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"; // Official Google test secret
+
+    if (!recaptchaToken) {
+      return NextResponse.json(
+        { success: false, message: "Please complete the reCAPTCHA verification." },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const verifyRes = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          secret: recaptchaSecret,
+          response: recaptchaToken,
+          remoteip: ip,
+        }),
+      });
+
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        console.warn(`[AntiSpam Sourcing] Google reCAPTCHA verification failed from IP ${ip}:`, verifyData["error-codes"]);
+        return NextResponse.json(
+          { success: false, message: "reCAPTCHA verification failed. Please try again." },
+          { status: 400 }
+        );
+      }
+    } catch (recaptchaErr) {
+      console.error("[AntiSpam Sourcing] Google reCAPTCHA check failed:", recaptchaErr);
+    }
+
     record.timestamps.push(now);
+
+    // Strip anti-spam internals before forwarding to Django
+    const cleanPayload = { ...body };
+    delete cleanPayload.company_website_url;
+    delete cleanPayload.hp_contact_check;
+    delete cleanPayload.recaptchaToken;
+    delete cleanPayload["g-recaptcha-response"];
 
     // Forward to backend Django Sourcing API
     try {
@@ -80,7 +123,7 @@ export async function POST(req: NextRequest) {
           Accept: "application/json",
           "X-Forwarded-For": ip,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(cleanPayload),
       });
 
       if (backendRes.ok) {

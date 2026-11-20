@@ -114,7 +114,7 @@ export default function SellerStories() {
           <span className="block text-xs font-bold text-[#0f7a61] uppercase tracking-wider mb-2">
             SELLER STORIES
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-black text-[#0f172a] tracking-tight leading-tight mb-2.5">
+          <h2 className="h2 font-black text-[#0f172a] tracking-tight leading-tight mb-2.5">
             How sellers turned excess stock into cash
           </h2>
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl">
@@ -172,7 +172,7 @@ export default function SellerStories() {
                 </div>
 
                 {/* Company Name & Location */}
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-0.5 tracking-tight">
+                <h3 className="h3 font-bold text-slate-900 mb-0.5 tracking-tight">
                   {item.companyName}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 mb-6">

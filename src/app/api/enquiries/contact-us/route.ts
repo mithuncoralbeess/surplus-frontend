@@ -101,7 +101,43 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 4. Content Spam Heuristics
+    // 4. Google reCAPTCHA Verification
+    const recaptchaToken = body?.recaptchaToken || body?.["g-recaptcha-response"];
+    const recaptchaSecret =
+      process.env.RECAPTCHA_SECRET_KEY ||
+      "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"; // Official Google test secret
+
+    if (!recaptchaToken) {
+      return NextResponse.json(
+        { success: false, message: "Please complete the reCAPTCHA verification." },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const verifyRes = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          secret: recaptchaSecret,
+          response: recaptchaToken,
+          remoteip: ip,
+        }),
+      });
+
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        console.warn(`[AntiSpam Contact] Google reCAPTCHA verification failed from IP ${ip}:`, verifyData["error-codes"]);
+        return NextResponse.json(
+          { success: false, message: "reCAPTCHA verification failed. Please try again." },
+          { status: 400 }
+        );
+      }
+    } catch (recaptchaErr) {
+      console.error("[AntiSpam Contact] Google reCAPTCHA check failed:", recaptchaErr);
+    }
+
+    // 5. Content Spam Heuristics
     const message = String(body?.message || "");
     const email = String(body?.email || "").trim().toLowerCase();
     const fullName = String(body?.fullName || body?.name || "").trim();

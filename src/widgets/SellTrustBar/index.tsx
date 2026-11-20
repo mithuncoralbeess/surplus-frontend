@@ -37,7 +37,7 @@ export default function SellTrustBar() {
                 <Check className="w-4 h-4" strokeWidth={2.5} />
               </div>
               <div>
-                <h4 className="font-bold text-slate-900 text-sm sm:text-[15px] leading-tight">
+                <h4 className="h4 font-bold text-slate-900 leading-tight">
                   {item.title}
                 </h4>
                 <p className="text-xs text-slate-500 mt-1 leading-snug">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { inquiryService } from '../../services/inquiryService';
 import { motion } from '../../lib/motion';
 import { z } from 'zod';
@@ -16,12 +16,12 @@ import {
   X,
   MapPin,
   Building2,
-  ShieldCheck,
-  RefreshCw
+  ShieldCheck
 } from 'lucide-react';
 
 import { sanitizeInput } from '../../lib/security/sanitizer';
 import { scrollToTop } from '../../lib/scroll';
+import GoogleReCaptcha, { GoogleReCaptchaRef } from '../../components/GoogleReCaptcha';
 
 const nameRegex = /^[a-zA-Z\s'\-]{2,50}$/;
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -120,27 +120,15 @@ export default function ContactForm() {
   // Anti-Spam Layer 2: Time-to-Submit Tracking (detects instant bot submits)
   const [mountedAt] = useState(() => Date.now());
 
-  // Anti-Spam Layer 3: Dynamic Human Verification Challenge (arithmetic)
-  const [captchaNums, setCaptchaNums] = useState<{ n1: number; n2: number }>({ n1: 5, n2: 3 });
-  const [userCaptcha, setUserCaptcha] = useState('');
-  const [captchaError, setCaptchaError] = useState('');
+  // Anti-Spam Layer 3: Google reCAPTCHA Verification
+  const recaptchaRef = useRef<GoogleReCaptchaRef>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string>('');
+  const [captchaError, setCaptchaError] = useState<string>('');
 
   const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
-
-  const generateNewCaptcha = () => {
-    const n1 = Math.floor(Math.random() * 8) + 2; // 2 to 9
-    const n2 = Math.floor(Math.random() * 8) + 1; // 1 to 8
-    setCaptchaNums({ n1, n2 });
-    setUserCaptcha('');
-    setCaptchaError('');
-  };
-
-  useEffect(() => {
-    generateNewCaptcha();
-  }, []);
 
   useEffect(() => {
     if (isSuccess) {
@@ -184,7 +172,9 @@ export default function ContactForm() {
         setIsSuccess(true);
         setFormData({ fullName: '', email: '', phone: '', enquiryType: '', message: '' });
         setHoneypot('');
-        generateNewCaptcha();
+        setRecaptchaToken('');
+        setCaptchaError('');
+        recaptchaRef.current?.reset();
         scrollToTop({ behavior: 'smooth' });
       }, 600);
       return;
@@ -200,17 +190,17 @@ export default function ContactForm() {
         setIsSuccess(true);
         setFormData({ fullName: '', email: '', phone: '', enquiryType: '', message: '' });
         setHoneypot('');
-        generateNewCaptcha();
+        setRecaptchaToken('');
+        setCaptchaError('');
+        recaptchaRef.current?.reset();
         scrollToTop({ behavior: 'smooth' });
       }, 600);
       return;
     }
 
-    // 3. Human Security Verification Check
-    const expectedSum = captchaNums.n1 + captchaNums.n2;
-    const providedSum = parseInt(userCaptcha.trim(), 10);
-    if (isNaN(providedSum) || providedSum !== expectedSum) {
-      setCaptchaError(`Please solve the security check: ${captchaNums.n1} + ${captchaNums.n2} = ?`);
+    // 3. Human Security Verification Check (Google reCAPTCHA)
+    if (!recaptchaToken) {
+      setCaptchaError('Please check the "I\'m not a robot" box');
       return;
     }
 
@@ -239,6 +229,7 @@ export default function ContactForm() {
       message: sanitizeInput(result.data.message),
       company_website_url: honeypot, // Pass honeypot for server-side verification
       _formTime: mountedAt,
+      recaptchaToken,
     };
 
     const res = await inquiryService.submitContactForm(sanitizedPayload);
@@ -248,12 +239,15 @@ export default function ContactForm() {
       setIsSuccess(true);
       setFormData({ fullName: '', email: '', phone: '', enquiryType: '', message: '' });
       setErrors({});
-      generateNewCaptcha();
+      setRecaptchaToken('');
+      setCaptchaError('');
+      recaptchaRef.current?.reset();
       scrollToTop({ behavior: 'smooth' });
     } else {
       setIsSubmitting(false);
       setSubmitError(res.message || 'Failed to send your message. Please try again.');
-      generateNewCaptcha();
+      setRecaptchaToken('');
+      recaptchaRef.current?.reset();
       scrollToTop({ behavior: 'smooth' });
     }
   };
@@ -494,55 +488,32 @@ export default function ContactForm() {
                 {errors.message && <p className="text-red-500 text-xs mt-1.5">{errors.message}</p>}
               </div>
 
-              {/* Anti-Spam Security Verification Challenge */}
+              {/* Anti-Spam Google reCAPTCHA Verification */}
               <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 sm:p-4.5 transition-all">
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-[#0a5c48]" />
-                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      Security Verification <span className="text-red-500">*</span>
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={generateNewCaptcha}
-                    className="text-xs text-slate-500 hover:text-[#0a5c48] flex items-center gap-1 font-semibold transition-colors"
-                    title="Generate new question"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>New challenge</span>
-                  </button>
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="inline-flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs select-none">
-                    <span className="text-xs font-medium text-slate-500">Calculate:</span>
-                    <span className="text-sm font-black text-slate-900 tracking-wider">
-                      {captchaNums.n1} + {captchaNums.n2} =
-                    </span>
-                  </div>
-                  <div className="relative flex-1 sm:max-w-[160px]">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={userCaptcha}
-                      onChange={(e) => {
-                        setUserCaptcha(e.target.value.replace(/[^0-9]/g, ''));
-                        if (captchaError) setCaptchaError('');
-                      }}
-                      placeholder="Your answer"
-                      className={`w-full rounded-xl border bg-white px-3.5 py-2 text-sm font-bold text-slate-900 outline-none transition-all ${
-                        captchaError 
-                          ? 'border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500' 
-                          : 'border-gray-300 focus:border-[#0a5c48] focus:ring-1 focus:ring-[#0a5c48]'
-                      }`}
-                    />
-                  </div>
-                  <span className="text-[11px] text-slate-400">
-                    Proves you are a real person, not an automated bot.
+                <div className="flex items-center gap-2 mb-2.5">
+                  <ShieldCheck className="w-4 h-4 text-[#0a5c48]" />
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Human Verification <span className="text-red-500">*</span>
                   </span>
                 </div>
+
+                <div className="flex justify-center sm:justify-start overflow-x-auto py-1">
+                  <GoogleReCaptcha
+                    ref={recaptchaRef}
+                    onVerify={(token) => {
+                      setRecaptchaToken(token);
+                      if (captchaError) setCaptchaError('');
+                    }}
+                    onExpire={() => {
+                      setRecaptchaToken('');
+                      setCaptchaError('Verification expired. Please check the box again.');
+                    }}
+                    onError={() => {
+                      setCaptchaError('Google reCAPTCHA failed to load. Please check your connection.');
+                    }}
+                  />
+                </div>
+
                 {captchaError && (
                   <p className="text-red-500 text-xs mt-2 font-medium">{captchaError}</p>
                 )}
