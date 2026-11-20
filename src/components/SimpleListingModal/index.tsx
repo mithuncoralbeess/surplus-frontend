@@ -136,14 +136,13 @@ const listingFormSchema = z.object({
     }, "Quantity must be between 1 and 10,000,000"),
 
   moq: z.string()
+    .min(1, "Minimum Order Quantity (MOQ) is required")
     .max(9, "MOQ exceeds allowable limit")
-    .refine(val => !val || /^[1-9]\d{0,7}$/.test(val), "Minimum Order Quantity must be a positive whole integer")
+    .refine(val => /^[1-9]\d{0,7}$/.test(val), "Minimum Order Quantity must be a positive whole integer")
     .refine(val => {
-      if (!val) return true;
       const num = parseInt(val, 10);
       return !isNaN(num) && num >= 1 && num <= 10000000;
-    }, "MOQ must be between 1 and 10,000,000")
-    .optional(),
+    }, "MOQ must be between 1 and 10,000,000"),
 
   currency: z.string()
     .min(1, "Currency is required")
@@ -731,6 +730,13 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       setFormErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors[field];
+        return newErrors;
+      });
+    }
+    if (field === 'quantity' && formErrors['moq'] && formErrors['moq'].includes('cannot exceed')) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors['moq'];
         return newErrors;
       });
     }
@@ -1894,16 +1900,13 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                       </div>
 
                       <div data-field="moq">
-                        <div className="flex items-center justify-between">
-                          <label className={labelClass}>Min. Order Quantity (MOQ)</label>
-                          <span className="text-[11px] text-gray-400 font-medium mb-1.5">Optional</span>
-                        </div>
+                        <label className={labelClass}>Min. Order Quantity (MOQ) *</label>
                         <input
                           type="number"
                           min="1"
                           max={formData.quantity ? formData.quantity : undefined}
                           className={inputClass}
-                          placeholder="e.g. 10 (defaults to 1)"
+                          placeholder="e.g. 10"
                           value={formData.moq}
                           onChange={e => handleInputChange('moq', e.target.value)}
                         />
