@@ -61,7 +61,7 @@ export default function Accordion({
               className="w-full flex items-center justify-between p-3.5 sm:p-5 text-left focus:outline-none cursor-pointer group"
               aria-expanded={isOpen}
             >
-              <span className="text-sm sm:text-base md:text-[17px] font-bold text-gray-900 pr-3 sm:pr-4 leading-snug">
+              <span className="text-sm sm:text-base md:text-[17px] font-bold !text-black text-black pr-3 sm:pr-4 leading-snug">
                 {item.question}
               </span>
               <div

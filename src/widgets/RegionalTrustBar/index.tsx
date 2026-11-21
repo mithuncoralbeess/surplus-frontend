@@ -40,7 +40,7 @@ export default function RegionalTrustBar() {
               <item.icon className="w-5 h-5" strokeWidth={2} />
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 text-sm sm:text-[15px] leading-tight">
+              <h4 className="font-bold !text-black text-black text-sm sm:text-[15px] leading-tight">
                 {item.title}
               </h4>
               <p className="text-xs text-slate-500 mt-0.5 leading-snug">

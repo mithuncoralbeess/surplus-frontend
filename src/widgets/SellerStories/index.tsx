@@ -172,7 +172,7 @@ export default function SellerStories() {
                 </div>
 
                 {/* Company Name & Location */}
-                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-0.5 tracking-tight">
+                <h3 className="text-lg sm:text-xl font-bold !text-black text-black mb-0.5 tracking-tight">
                   {item.companyName}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 mb-6">
