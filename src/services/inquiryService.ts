@@ -125,6 +125,8 @@ Search Context: ${payload.searchQuery || payload.country || 'N/A'}
     name?: string;
     email: string;
     phone?: string;
+    mobile?: string;
+    mobile_number?: string;
     lookingFor?: string;
     sourcingItem?: string;
     quantity?: string | number;
@@ -136,6 +138,7 @@ Search Context: ${payload.searchQuery || payload.country || 'N/A'}
     metadata?: any;
     [key: string]: any;
   }): Promise<ApiResponse> {
+    const userPhone = payload.phone || payload.mobile || payload.mobile_number || '';
     try {
       const res = await apiClient('/api/enquiries/regional/', {
         method: 'POST',
@@ -143,6 +146,9 @@ Search Context: ${payload.searchQuery || payload.country || 'N/A'}
           ...payload,
           countryName: payload.country,
           businessEmail: payload.email,
+          phone: userPhone,
+          mobile: userPhone,
+          mobile_number: userPhone,
         }),
       });
       if (res.success || res.status === 200 || res.status === 201) {
@@ -160,7 +166,9 @@ Search Context: ${payload.searchQuery || payload.country || 'N/A'}
       fullName: payload.fullName || payload.name || payload.email.split('@')[0],
       name: payload.name || payload.fullName || payload.email.split('@')[0],
       email: payload.email,
-      phone: payload.phone,
+      phone: userPhone,
+      mobile: userPhone,
+      contactNo: userPhone,
       enquiryType: `Regional Quote Request - ${payload.country}`,
       subject: payload.subject || `[${payload.country}] Quote Request: ${payload.lookingFor || payload.sourcingItem} (Qty: ${payload.quantity || '1'})`,
       message: payload.message || `
@@ -170,8 +178,13 @@ Item / Product: ${payload.lookingFor || payload.sourcingItem}
 Quantity: ${payload.quantity || '1'}
 Target Price: ${payload.targetPrice || 'Open for offers'}
 Business Email: ${payload.email}
+Mobile Number: ${userPhone || 'Not Provided'}
       `.trim(),
-      metadata: payload.metadata || payload,
+      metadata: {
+        ...(payload.metadata || {}),
+        phone: userPhone,
+        mobile: userPhone,
+      },
     });
   },
 

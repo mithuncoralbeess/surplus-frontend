@@ -304,6 +304,8 @@ Mobile Number: ${cleanPhone}
           targetPrice: cleanPrice,
           email: cleanEmail,
           phone: cleanPhone,
+          mobile: cleanPhone,
+          mobile_number: cleanPhone,
           source: 'RegionalHeroBanner',
         },
       });
