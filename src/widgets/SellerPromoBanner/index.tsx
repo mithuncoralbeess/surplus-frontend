@@ -30,7 +30,7 @@ const SellerPromoBanner = () => {
               </div>
 
               {/* Heading */}
-              <h2 className="h2 font-bold text-white mb-2 sm:mb-3 tracking-tight">
+              <h2 className="h2 font-bold !text-white text-white mb-2 sm:mb-3 tracking-tight">
                 Ready to Recover Value from Your Excess Inventory?
               </h2>
 

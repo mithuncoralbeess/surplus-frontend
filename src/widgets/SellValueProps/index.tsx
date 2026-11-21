@@ -21,7 +21,7 @@ export default function SellValueProps() {
           <span className="block text-xs font-bold text-white/80 tracking-widest uppercase mb-2.5 sm:mb-3">
             THE SELLER JOURNEY
           </span>
-          <h2 className="h2 font-black text-white tracking-tight leading-[1.15] mb-4 sm:mb-5">
+          <h2 className="h2 font-black !text-white text-white tracking-tight leading-[1.15] mb-4 sm:mb-5">
             List. We handle the rest. Get paid.
           </h2>
           <p className="text-sm sm:text-base md:text-[17px] text-white/85 leading-relaxed max-w-2xl">
@@ -40,7 +40,7 @@ export default function SellValueProps() {
                 <div className="w-9 h-9 rounded-full bg-white text-[#155e43] font-bold text-sm sm:text-base flex items-center justify-center shrink-0 mb-4 sm:mb-5 shadow-xs select-none">
                   1
                 </div>
-                <h3 className="h3 font-bold text-white mb-2 sm:mb-2.5 tracking-tight">
+                <h3 className="h3 font-bold !text-white text-white mb-2 sm:mb-2.5 tracking-tight">
                   List
                 </h3>
                 <p className="text-white/85 text-sm sm:text-[15px] leading-relaxed">
@@ -55,7 +55,7 @@ export default function SellValueProps() {
                 <div className="w-9 h-9 rounded-full bg-white text-[#155e43] font-bold text-sm sm:text-base flex items-center justify-center shrink-0 mb-4 sm:mb-5 shadow-xs select-none">
                   2
                 </div>
-                <h3 className="h3 font-bold text-white mb-2 sm:mb-2.5 tracking-tight">
+                <h3 className="h3 font-bold !text-white text-white mb-2 sm:mb-2.5 tracking-tight">
                   We verify &amp; find buyers
                 </h3>
                 <p className="text-white/85 text-sm sm:text-[15px] leading-relaxed">
@@ -71,7 +71,7 @@ export default function SellValueProps() {
             <div className="w-9 h-9 rounded-full bg-white text-[#155e43] font-bold text-sm sm:text-base flex items-center justify-center shrink-0 mb-4 sm:mb-5 shadow-xs select-none">
               3
             </div>
-            <h3 className="h3 font-bold text-white mb-2 sm:mb-2.5 tracking-tight">
+            <h3 className="h3 font-bold !text-white text-white mb-2 sm:mb-2.5 tracking-tight">
               Get paid
             </h3>
             <p className="text-white/85 text-sm sm:text-[15px] leading-relaxed max-w-3xl">

@@ -100,7 +100,7 @@ h6,
 }
 
 :where(h1, h2, h3, h4, h5, h6, .ttl, .h1, .h2, .h3, .h4, .h5, .h6) {
-  color: #ffffff;
+  color: inherit;
 }
 
 @each $heading, $sizes in $heading-font-sizes {

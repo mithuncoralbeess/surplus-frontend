@@ -93,7 +93,7 @@ const Footer = () => {
         {/* Newsletter Section */}
         <div className="py-12 border-b border-gray-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2">
+            <h2 className="text-2xl font-bold !text-white text-white mb-2">
               {t('footer.newsletterTitle', 'Never miss a deal! Subscribe to Surplus Newsletter.')}
             </h2>
             <p className="text-[15px] text-gray-300">
@@ -165,7 +165,7 @@ const Footer = () => {
             
             {/* Column 1 */}
             <div>
-              <h4 className="text-[11px] font-bold text-white tracking-widest uppercase mb-6">
+              <h4 className="text-[11px] font-bold !text-white text-white tracking-widest uppercase mb-6">
                 {t('footer.categories', 'Marketplace')}
               </h4>
               <ul className="flex flex-col gap-4 text-[14px]">
@@ -177,7 +177,7 @@ const Footer = () => {
 
             {/* Column 2 */}
             <div>
-              <h4 className="text-[11px] font-bold text-white tracking-widest uppercase mb-6">
+              <h4 className="text-[11px] font-bold !text-white text-white tracking-widest uppercase mb-6">
                 {t('footer.quickLinks', 'Company')}
               </h4>
               <ul className="flex flex-col gap-4 text-[14px]">
@@ -191,7 +191,7 @@ const Footer = () => {
 
             {/* Column 3 */}
             <div>
-              <h4 className="text-[11px] font-bold text-white tracking-widest uppercase mb-6">
+              <h4 className="text-[11px] font-bold !text-white text-white tracking-widest uppercase mb-6">
                 Resource
               </h4>
               <ul className="flex flex-col gap-4 text-[14px]">
@@ -206,7 +206,7 @@ const Footer = () => {
 
             {/* Column 4 */}
             <div>
-              <h4 className="text-[11px] font-bold text-white tracking-widest uppercase mb-6">
+              <h4 className="text-[11px] font-bold !text-white text-white tracking-widest uppercase mb-6">
                 Legal
               </h4>
               <ul className="flex flex-col gap-4 text-[14px]">
@@ -219,7 +219,7 @@ const Footer = () => {
 
             {/* Column 5 */}
             <div>
-              <h4 className="text-[11px] font-bold text-white tracking-widest uppercase mb-6">
+              <h4 className="text-[11px] font-bold !text-white text-white tracking-widest uppercase mb-6">
                 {t('common.region', 'Regions')}
               </h4>
               <ul className="flex flex-col gap-4 text-[14px]">

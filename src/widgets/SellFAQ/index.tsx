@@ -10,7 +10,7 @@ export default function SellFAQ() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
         {/* Section Heading */}
         <div className="text-center md:text-left mb-8 sm:mb-10">
-          <h2 className="h2 font-extrabold text-[#0f172a] tracking-tight leading-tight mb-3">
+          <h2 className="h2 font-extrabold text-gray-900 tracking-tight leading-tight mb-3">
             Frequently Asked Questions
           </h2>
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-2xl">

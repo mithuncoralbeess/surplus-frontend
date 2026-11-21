@@ -16,7 +16,7 @@ export default function SellRegionalMarkets() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         {/* Header Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 mb-6 sm:mb-8">
-          <h2 className="h2 font-black text-white tracking-tight">
+          <h2 className="h2 font-black !text-white text-white tracking-tight">
             Selling across the Gulf and India
           </h2>
           <span className="text-xs sm:text-sm text-emerald-100/75 font-medium">
