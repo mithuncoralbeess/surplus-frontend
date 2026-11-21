@@ -54,7 +54,12 @@ export default function IndiaMarketplaceWidget() {
       <RegionalHeroBanner
         countryName="India"
         countrySlug="india"
-        title="Buy & Sell Surplus Inventory in India with Surplus Market"
+        title={
+          <>
+            Buy &amp; Sell Surplus Inventory in <br />
+            India with Surplus Market
+          </>
+        }
         description={
           <p>
             Surplus India is a growing opportunity for businesses to unlock value from unused stock and slow-moving goods. The platform Surplus Market began as a portal to{' '}

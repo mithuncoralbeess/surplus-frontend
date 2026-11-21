@@ -39,7 +39,12 @@ export default function SaudiArabiaMarketplaceWidget() {
       <RegionalHeroBanner
         countryName="Saudi Arabia"
         countrySlug="saudi-arabia"
-        title="Buy & Sell Excess Inventory in Saudi Arabia with Surplus Market"
+        title={
+          <>
+            Buy &amp; Sell Excess Inventory in <br />
+            Saudi Arabia with Surplus Market
+          </>
+        }
         description="Managing unsold goods and unused stock can be challenging for businesses in Saudi Arabia. Surplus Market makes the process easier by connecting sellers with genuine buyers who are looking for discounted, ready-to-purchase items. Our platform works across industries, enabling businesses of any size to clear storage space, recover capital, and keep stock moving. You can list your products quickly and start receiving interest from surplus buyers without dealing with complicated processes."
       />
 

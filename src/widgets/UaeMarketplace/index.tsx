@@ -34,7 +34,12 @@ export default function UaeMarketplaceWidget() {
       <RegionalHeroBanner
         countryName="UAE"
         countrySlug="uae"
-        title="Buy & Sell Excess Inventory in UAE with Surplus Market"
+        title={
+          <>
+            Buy &amp; Sell Excess Inventory in <br />
+            UAE with Surplus Market
+          </>
+        }
         description="Entering the thriving world of surplus trade in the UAE? Surplus Market connects buyers and sellers through a dynamic, transparent platform built for excess inventory sale in UAE. Explore export-grade merchandise, surplus goods, and liquidation deals that meet your needs with fast, reliable, and hassle-free access."
       />
 

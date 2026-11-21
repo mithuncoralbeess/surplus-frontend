@@ -45,7 +45,12 @@ export default function QatarMarketplaceWidget() {
       <RegionalHeroBanner
         countryName="Qatar"
         countrySlug="qatar"
-        title="Buy & Sell Excess Inventory in Qatar With Surplus Market"
+        title={
+          <>
+            Buy &amp; Sell Excess Inventory in <br />
+            Qatar with Surplus Market
+          </>
+        }
         description={
           <>
             <p>
