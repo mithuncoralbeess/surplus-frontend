@@ -12,7 +12,7 @@ export default function SustainabilityGoals() {
             <Globe className="h-3.5 w-3.5 text-[#0a5c48]" />
             <span>International & National Goals</span>
           </div>
-          <h2 className="h2 text-slate-900">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold !text-black text-black tracking-tight">
             How We Align with Global and National Sustainability Goals
           </h2>
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal max-w-2xl mx-auto">
@@ -32,7 +32,7 @@ export default function SustainabilityGoals() {
                 United Nations SDG
               </span>
             </div>
-            <h3 className="h4 text-slate-900">
+            <h3 className="text-lg sm:text-xl font-bold !text-black text-black leading-snug tracking-tight">
               Goal 12
             </h3>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
@@ -50,7 +50,7 @@ export default function SustainabilityGoals() {
                 United Nations SDG
               </span>
             </div>
-            <h3 className="h4 text-slate-900">
+            <h3 className="text-lg sm:text-xl font-bold !text-black text-black leading-snug tracking-tight">
               Goal 12.5
             </h3>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
@@ -68,7 +68,7 @@ export default function SustainabilityGoals() {
                 United Nations SDG
               </span>
             </div>
-            <h3 className="h4 text-slate-900">
+            <h3 className="text-lg sm:text-xl font-bold !text-black text-black leading-snug tracking-tight">
               Goal 12.7
             </h3>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
@@ -86,7 +86,7 @@ export default function SustainabilityGoals() {
                 United Nations SDG
               </span>
             </div>
-            <h3 className="h4 text-slate-900">
+            <h3 className="text-lg sm:text-xl font-bold !text-black text-black leading-snug tracking-tight">
               Goal 9
             </h3>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
@@ -104,7 +104,7 @@ export default function SustainabilityGoals() {
                 United Nations SDG
               </span>
             </div>
-            <h3 className="h4 text-slate-900">
+            <h3 className="text-lg sm:text-xl font-bold !text-black text-black leading-snug tracking-tight">
               Goal 9.4
             </h3>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
@@ -119,7 +119,7 @@ export default function SustainabilityGoals() {
             <Award className="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
           <div className="space-y-1.5">
-            <h3 className="h3 text-slate-900">
+            <h3 className="text-xl sm:text-2xl font-bold !text-black text-black tracking-tight">
               Qatar National Vision 2030
             </h3>
             <p className="text-sm sm:text-base text-slate-600 max-w-4xl leading-relaxed font-normal">

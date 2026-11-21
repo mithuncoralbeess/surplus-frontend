@@ -114,7 +114,7 @@ export default function SellerStories() {
           <span className="block text-xs font-bold text-[#0f7a61] uppercase tracking-wider mb-2">
             SELLER STORIES
           </span>
-          <h2 className="h2 font-black text-gray-900 tracking-tight leading-tight mb-2.5">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black !text-black text-black tracking-tight leading-tight mb-2.5">
             How sellers turned excess stock into cash
           </h2>
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl">

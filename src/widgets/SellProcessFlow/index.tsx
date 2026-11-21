@@ -47,7 +47,7 @@ const SellProcessFlow = () => {
             </span>
             <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
           </div>
-          <h2 className="h2 font-extrabold text-[#0f172a] tracking-tight mb-6 leading-[1.1]">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold !text-black text-black tracking-tight mb-6 leading-[1.1]">
             From Pallet to Profit in Days
           </h2>
         </motion.div>
@@ -79,7 +79,7 @@ const SellProcessFlow = () => {
                     </div>
                   </div>
                   
-                  <h3 className="h3 font-bold text-[#0f172a] mb-3">
+                  <h3 className="text-lg sm:text-xl font-bold !text-black text-black mb-3">
                     {step.title.split('. ')[1]}
                   </h3>
                   <p className="text-[15px] text-gray-500 leading-relaxed max-w-[240px]">

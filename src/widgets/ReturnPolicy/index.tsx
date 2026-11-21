@@ -253,7 +253,7 @@ export default function ReturnPolicyWidget() {
 
             {/* Contact Box */}
             <div className="bg-[#0a1e17] text-white rounded-2xl p-8 shadow-md relative overflow-hidden">
-              <h3 className="text-xl font-bold mb-4">Questions About Returns?</h3>
+              <h3 className="text-xl font-bold mb-4 !text-white text-white">Questions About Returns?</h3>
               <p className="text-white/80 text-sm mb-6">
                 If you have any questions about our Return Policy or need help requesting an RMA number:
               </p>

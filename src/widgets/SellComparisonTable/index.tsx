@@ -53,7 +53,7 @@ export default function SellComparisonTable() {
     <section className="w-full bg-[#faf8f5] py-14 sm:py-16 md:py-20 border-b border-gray-200/60 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         {/* Section Heading */}
-        <h2 className="h2 font-black text-gray-900 tracking-tight leading-tight mb-4 sm:mb-6">
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black !text-black text-black tracking-tight leading-tight mb-4 sm:mb-6">
           Selling excess inventory: how the options compare
         </h2>
 

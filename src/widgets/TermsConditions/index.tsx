@@ -1,15 +1,15 @@
 import React from 'react';
 import CommonBanner from '../CommonBanner';
-import { 
-  FileText, 
-  UserCheck, 
-  ShieldCheck, 
-  AlertCircle, 
-  Receipt, 
-  Ban, 
-  Globe, 
-  Mail, 
-  Phone, 
+import {
+  FileText,
+  UserCheck,
+  ShieldCheck,
+  AlertCircle,
+  Receipt,
+  Ban,
+  Globe,
+  Mail,
+  Phone,
   CheckCircle2,
   Lock,
   Scale,
@@ -19,7 +19,7 @@ import {
 export default function TermsConditionsWidget() {
   return (
     <div className="w-full flex flex-col items-center bg-gray-50/50">
-      <CommonBanner 
+      <CommonBanner
         title="Terms & Conditions"
         subtitle="Please review the rules, listing requirements, and legal responsibilities governing buyers and sellers on Surplus Market."
         align="center"
@@ -32,9 +32,9 @@ export default function TermsConditionsWidget() {
 
       <section className="w-full py-10 sm:py-16">
         <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
-          
+
           <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200 shadow-sm space-y-10 sm:space-y-12">
-            
+
             {/* Overview Box */}
             <div className="bg-[#e0f0e9]/50 border border-[#0a5c48]/20 rounded-2xl p-6 sm:p-8">
               <div className="flex items-center gap-3 mb-3 text-[#0a5c48]">
@@ -147,7 +147,7 @@ export default function TermsConditionsWidget() {
               <h2 className="text-2xl font-extrabold text-gray-900 pb-2 border-b border-gray-200 flex items-center gap-3">
                 <Ban className="w-6 h-6 text-[#0a5c48]" /> 5. Prohibited Conduct & User Compliance
               </h2>
-              
+
               <div className="space-y-4 pt-2">
                 <div className="p-5 bg-gray-50 border border-gray-200 rounded-2xl">
                   <h3 className="font-bold text-gray-900 mb-2">Legal Compliance</h3>
@@ -187,11 +187,11 @@ export default function TermsConditionsWidget() {
 
             {/* Contact Support Box */}
             <div className="bg-[#0a1e17] text-white rounded-2xl p-8 shadow-md relative overflow-hidden">
-              <h3 className="text-xl font-bold mb-4">Have Questions About Our Terms?</h3>
+              <h3 className="text-xl font-bold mb-4 !text-white text-white">Have Questions About Our Terms?</h3>
               <p className="text-white/80 text-sm mb-6">
                 If you need clarification on listing rules, reference numbers, or trading guidelines, reach out to our team:
               </p>
-              
+
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-[#0a5c48] bg-white rounded-full p-0.5 shrink-0" />

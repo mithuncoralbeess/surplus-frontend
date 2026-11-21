@@ -11,7 +11,7 @@ export default function SustainabilityWhyMatters() {
             <span>Our Values</span>
           </div>
 
-          <h2 className="h2 text-slate-900">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold !text-black text-black tracking-tight">
             Why Sustainability Matters to Us
           </h2>
 

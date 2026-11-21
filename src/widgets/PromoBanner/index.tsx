@@ -30,7 +30,7 @@ const PromoBanner = () => {
               </div>
 
               {/* Heading */}
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 tracking-tight">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold !text-black text-black mb-2 sm:mb-3 tracking-tight">
                 Top Surplus Wholesale & Overstock Deals – Save Up to 80%
               </h2>
 

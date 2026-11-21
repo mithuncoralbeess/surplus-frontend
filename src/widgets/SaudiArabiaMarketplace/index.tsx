@@ -2,16 +2,16 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { 
-  ChevronRight, 
-  ArrowRight, 
-  CheckCircle2, 
-  Plus, 
-  Minus, 
-  UserPlus, 
-  PackagePlus, 
-  MessageSquareCheck, 
-  CheckCircle 
+import {
+  ChevronRight,
+  ArrowRight,
+  CheckCircle2,
+  Plus,
+  Minus,
+  UserPlus,
+  PackagePlus,
+  MessageSquareCheck,
+  CheckCircle
 } from 'lucide-react';
 import { SAUDI_BENEFITS_LIST, SAUDI_STEPS, SAUDI_FAQS } from './saudiData';
 import RegionalHeroBanner from '../RegionalHeroBanner';
@@ -34,7 +34,7 @@ export default function SaudiArabiaMarketplaceWidget() {
 
   return (
     <div className="w-full flex flex-col items-center bg-[#f8fafc]">
-      
+
       {/* Hero Header Section */}
       <RegionalHeroBanner
         countryName="Saudi Arabia"
@@ -74,7 +74,7 @@ export default function SaudiArabiaMarketplaceWidget() {
 
         {/* Section 1: Why Choose Surplus Market for Excess Inventory in Saudi Arabia? */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-3.5 sm:mb-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-3.5 sm:mb-4">
             Why Choose Surplus Market for Excess Inventory in Saudi Arabia?
           </h2>
           <div className="space-y-3 sm:space-y-4 text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed font-normal">
@@ -89,7 +89,7 @@ export default function SaudiArabiaMarketplaceWidget() {
 
         {/* Section 2: Buy & Sell Excess Inventory in Saudi Arabia at Discount Prices */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-3.5 sm:mb-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-3.5 sm:mb-4">
             Buy &amp; Sell Excess Inventory in Saudi Arabia at Discount Prices
           </h2>
           <div className="space-y-3 sm:space-y-4 text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed font-normal">
@@ -104,7 +104,7 @@ export default function SaudiArabiaMarketplaceWidget() {
 
         {/* Section 3: Benefits of Selling Excess Stock in Saudi Arabia Through Surplus Market */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-2.5 sm:mb-3">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-2.5 sm:mb-3">
             Benefits of Selling Excess Stock in Saudi Arabia Through Surplus Market
           </h2>
           <p className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed mb-3 sm:mb-4">
@@ -120,7 +120,7 @@ export default function SaudiArabiaMarketplaceWidget() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
             {SAUDI_BENEFITS_LIST.map((benefit, idx) => (
-              <div 
+              <div
                 key={idx}
                 className="bg-gray-50/70 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 hover:border-emerald-200 transition-all flex items-start gap-3.5 group"
               >
@@ -137,7 +137,7 @@ export default function SaudiArabiaMarketplaceWidget() {
 
         {/* Section 4: How to Get Started with Surplus Market */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-2.5 sm:mb-3">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-2.5 sm:mb-3">
             How to Get Started with Surplus Market
           </h2>
           <p className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed mb-6 sm:mb-8">
@@ -148,7 +148,7 @@ export default function SaudiArabiaMarketplaceWidget() {
             {SAUDI_STEPS.map((item, idx) => {
               const StepIcon = STEP_ICONS[idx % STEP_ICONS.length];
               return (
-                <div 
+                <div
                   key={idx}
                   className="bg-gray-50/70 rounded-xl sm:rounded-2xl p-5 sm:p-6 border border-gray-100 hover:border-emerald-200 transition-all flex flex-col justify-between"
                 >
@@ -161,7 +161,7 @@ export default function SaudiArabiaMarketplaceWidget() {
                         <StepIcon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                       </div>
                     </div>
-                    <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1.5 sm:mb-2">
+                    <h3 className="text-sm sm:text-base font-bold !text-black text-black mb-1.5 sm:mb-2">
                       {item.title}
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
@@ -192,7 +192,7 @@ export default function SaudiArabiaMarketplaceWidget() {
 
         {/* Section 5: FAQ – Excess Inventory Sale in Saudi Arabia */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-6 sm:mb-8">
             FAQ – Excess Inventory Sale in Saudi Arabia
           </h2>
 
@@ -200,13 +200,12 @@ export default function SaudiArabiaMarketplaceWidget() {
             {SAUDI_FAQS.map((faq, idx) => {
               const isOpen = openFaq === idx;
               return (
-                <div 
+                <div
                   key={idx}
-                  className={`border rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-200 ${
-                    isOpen 
-                      ? 'border-[#0f7a61] bg-[#e6f7ef]/20 shadow-2xs' 
-                      : 'border-gray-200/80 bg-gray-50/40 hover:border-gray-300'
-                  }`}
+                  className={`border rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-200 ${isOpen
+                    ? 'border-[#0f7a61] bg-[#e6f7ef]/20 shadow-2xs'
+                    : 'border-gray-200/80 bg-gray-50/40 hover:border-gray-300'
+                    }`}
                 >
                   <button
                     type="button"
@@ -217,13 +216,12 @@ export default function SaudiArabiaMarketplaceWidget() {
                     <span className="text-xs sm:text-sm md:text-base font-bold text-gray-900 pr-3 sm:pr-4">
                       {faq.q}
                     </span>
-                    <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-                      isOpen ? 'bg-[#0f7a61] text-white' : 'bg-gray-200/80 text-gray-600'
-                    }`}>
+                    <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shrink-0 transition-colors ${isOpen ? 'bg-[#0f7a61] text-white' : 'bg-gray-200/80 text-gray-600'
+                      }`}>
                       {isOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
                     </div>
                   </button>
-                  
+
                   {isOpen && (
                     <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-0 text-xs sm:text-sm text-gray-600 leading-relaxed border-t border-[#0f7a61]/10 mt-1">
                       <p className="pt-3 sm:pt-3.5">{faq.a}</p>

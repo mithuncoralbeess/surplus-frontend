@@ -20,7 +20,7 @@ const getCachedTabLots = (tab: string): LotItem[] => {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    } catch {}
+    } catch { }
   }
   return [];
 };
@@ -74,8 +74,8 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [], isRegional 
       activeTab === 'New Arrivals'
         ? 'new_arrivals'
         : activeTab === 'Best Deals'
-        ? 'featured'
-        : 'all';
+          ? 'featured'
+          : 'all';
 
     catalogService
       .getLots({ collection: collectionParam, limit: 12 })
@@ -118,7 +118,7 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [], isRegional 
             setTimeout(() => {
               try {
                 sessionStorage.setItem(`surplus_pallet_deals_v3_${activeTab}`, JSON.stringify(displayLots));
-              } catch {}
+              } catch { }
             }, 0);
           }
         }
@@ -146,7 +146,7 @@ const PalletDeals: React.FC<PalletDealsProps> = ({ initialLots = [], isRegional 
       {/* Header Area */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[34px] font-black text-[#0f172a] tracking-tight mb-2">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[34px] font-black !text-black text-black tracking-tight mb-2">
             {t('palletDeals.title', 'Full Lots & Pallet Deals')}
           </h2>
           <p className="text-xs sm:text-sm md:text-base text-slate-500 max-w-2xl leading-relaxed">

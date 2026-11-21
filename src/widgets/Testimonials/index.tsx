@@ -66,7 +66,7 @@ const Testimonials = () => {
 
   return (
     <section className="w-full bg-[#f8fcf9] pt-24 pb-8 border-b border-gray-100 relative overflow-hidden">
-      
+
       {/* Decorative Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none" aria-hidden="true">
         <div
@@ -80,9 +80,9 @@ const Testimonials = () => {
       </div>
 
       <div className="container mx-auto px-4 lg:px-8 max-w-7xl relative z-10">
-        
+
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
@@ -96,7 +96,7 @@ const Testimonials = () => {
             </span>
             <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
           </div>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-4">
+          <h2 className="text-3xl md:text-4xl font-extrabold !text-black text-black tracking-tight mb-4">
             See how businesses are <span className="text-[#185545]">growing with us.</span>
           </h2>
           <p className="text-[16px] text-gray-600">
@@ -105,7 +105,7 @@ const Testimonials = () => {
         </motion.div>
 
         {/* Testimonials Grid Carousel (Zero Swiper bundle overhead) */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
@@ -120,8 +120,8 @@ const Testimonials = () => {
                   idx === 1
                     ? 'hidden sm:block h-full'
                     : idx === 2
-                    ? 'hidden lg:block h-full'
-                    : 'block h-full'
+                      ? 'hidden lg:block h-full'
+                      : 'block h-full'
                 }
               >
                 <TestimonialCard {...testimonial} />
@@ -139,9 +139,8 @@ const Testimonials = () => {
                 aria-selected={activeIndex === idx}
                 aria-label={`Show testimonial slide ${idx + 1}`}
                 onClick={() => setActiveIndex(idx)}
-                className={`h-2.5 rounded-full transition-all cursor-pointer ${
-                  activeIndex === idx ? 'w-6 bg-[#185545]' : 'w-2.5 bg-slate-300 hover:bg-slate-400'
-                }`}
+                className={`h-2.5 rounded-full transition-all cursor-pointer ${activeIndex === idx ? 'w-6 bg-[#185545]' : 'w-2.5 bg-slate-300 hover:bg-slate-400'
+                  }`}
               />
             ))}
           </div>

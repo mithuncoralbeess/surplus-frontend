@@ -430,7 +430,7 @@ export default function BlogListing({ initialPosts }: BlogListingProps) {
         {/* Newsletter CTA Box */}
         <div className="bg-[#0a1e17] rounded-3xl p-8 sm:p-12 text-white text-center relative overflow-hidden shadow-xl">
           <div className="max-w-2xl mx-auto relative z-10">
-            <h3 className="text-2xl sm:text-3xl font-extrabold mb-3">Stay Ahead of Global Surplus Trends</h3>
+            <h3 className="text-2xl sm:text-3xl font-extrabold !text-white text-white mb-3">Stay Ahead of Global Surplus Trends</h3>
             <p className="text-white/70 text-sm sm:text-base mb-8 leading-relaxed">
               Get expert market insights, wholesale liquidation pricing intelligence, and secondary supply chain reports delivered to your inbox bi-weekly.
             </p>

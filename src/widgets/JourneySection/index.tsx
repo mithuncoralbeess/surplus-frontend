@@ -85,7 +85,7 @@ const JourneySection = () => {
               Buyer & Seller
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-[1.1] mb-6">
+          <h2 className="text-4xl md:text-5xl font-extrabold !text-black text-black tracking-tight leading-[1.1] mb-6">
             One platform. Two journeys.<br />
             <span className="text-primary">Intelligence at every step.</span>
           </h2>
@@ -114,7 +114,7 @@ const JourneySection = () => {
             </div>
 
             {/* Title */}
-            <h3 className="text-xl font-bold text-gray-900 mb-0.5">Buyer Journey</h3>
+            <h3 className="text-xl font-bold !text-black text-black mb-0.5">Buyer Journey</h3>
             <p className="text-[13px] text-gray-600 mb-4 font-medium">Search. RFQ. Compare. Close.</p>
 
             {/* Steps */}
@@ -161,7 +161,7 @@ const JourneySection = () => {
             </div>
 
             {/* Title */}
-            <h3 className="text-xl font-bold text-gray-900 mb-0.5">Seller Journey</h3>
+            <h3 className="text-xl font-bold !text-black text-black mb-0.5">Seller Journey</h3>
             <p className="text-[13px] text-gray-600 mb-4 font-medium">Upload. Enrich. Verify. Recover.</p>
 
             {/* Steps */}

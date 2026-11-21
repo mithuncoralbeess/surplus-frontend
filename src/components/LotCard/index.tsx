@@ -324,7 +324,7 @@ const LotCard: React.FC<LotCardProps> = ({
 
         {/* Title */}
         <Link href={lotLink}>
-          <h3 className="font-bold text-gray-900 text-[15px] leading-tight mb-2 line-clamp-2 cursor-pointer hover:text-[#0f7a61] transition-colors">
+          <h3 className="font-bold !text-black text-black text-[15px] leading-tight mb-2 line-clamp-2 cursor-pointer hover:text-[#0f7a61] transition-colors">
             {title}
           </h3>
         </Link>

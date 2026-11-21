@@ -196,7 +196,7 @@ export default function PrivacyPolicyWidget() {
 
             {/* Contact Us Block */}
             <div className="bg-[#0a1e17] text-white rounded-2xl p-8 shadow-md relative overflow-hidden">
-              <h3 className="text-xl font-bold mb-4">Contact Us</h3>
+              <h3 className="text-xl font-bold mb-4 !text-white text-white">Contact Us</h3>
               <p className="text-white/80 text-sm mb-6">
                 If you have any questions about our Privacy Policy, please contact us:
               </p>

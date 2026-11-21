@@ -97,7 +97,7 @@ export default function IndiaMarketplaceWidget() {
 
         {/* Section 1: Surplus Market – India’s Trusted Surplus Trading Platform */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-3.5 sm:mb-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-3.5 sm:mb-4">
             Surplus Market – India’s Trusted Surplus Trading Platform
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed font-normal mb-6 sm:mb-8">
@@ -126,7 +126,7 @@ export default function IndiaMarketplaceWidget() {
                     </div>
                     <div className="flex items-center gap-1.5 text-sm sm:text-base font-bold text-gray-900 mb-1.5">
                       <span className="text-emerald-600 text-xs sm:text-sm">✔️</span>
-                      <h3 className="leading-snug">{pt.title}</h3>
+                      <h3 className="leading-snug !text-black text-black">{pt.title}</h3>
                     </div>
                     <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                       {pt.desc}
@@ -140,7 +140,7 @@ export default function IndiaMarketplaceWidget() {
 
         {/* Section 2: Buy Surplus Goods Online in India With Surplus Market */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-3.5 sm:mb-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-3.5 sm:mb-4">
             Buy Surplus Goods Online in India With Surplus Market
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed font-normal mb-6 sm:mb-8">
@@ -165,7 +165,7 @@ export default function IndiaMarketplaceWidget() {
                     </div>
                     <div className="flex items-center gap-1.5 text-sm sm:text-base font-bold text-gray-900 mb-1.5">
                       <span className="text-emerald-600 text-xs sm:text-sm">✔️</span>
-                      <h3 className="leading-snug">{pt.title}</h3>
+                      <h3 className="leading-snug !text-black text-black">{pt.title}</h3>
                     </div>
                     <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                       {pt.desc}
@@ -179,7 +179,7 @@ export default function IndiaMarketplaceWidget() {
 
         {/* Section 3: Sell Excess Inventory & Overstock Items in India */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-3.5 sm:mb-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-3.5 sm:mb-4">
             Sell Excess Inventory &amp; Overstock Items in India
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed font-normal mb-6 sm:mb-8">
@@ -204,7 +204,7 @@ export default function IndiaMarketplaceWidget() {
                     </div>
                     <div className="flex items-center gap-1.5 text-sm sm:text-base font-bold text-gray-900 mb-1.5">
                       <span className="text-emerald-600 text-xs sm:text-sm">✔️</span>
-                      <h3 className="leading-snug">{pt.title}</h3>
+                      <h3 className="leading-snug !text-black text-black">{pt.title}</h3>
                     </div>
                     <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                       {pt.desc}
@@ -218,7 +218,7 @@ export default function IndiaMarketplaceWidget() {
 
         {/* Section 4: Who Can Buy & Sell Surplus Inventory in India? */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-3.5 sm:mb-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-3.5 sm:mb-4">
             Who Can Buy &amp; Sell Surplus Inventory in India?
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed font-normal mb-6 sm:mb-8">
@@ -243,7 +243,7 @@ export default function IndiaMarketplaceWidget() {
                     </div>
                     <div className="flex items-center gap-1.5 text-sm sm:text-base font-bold text-gray-900 mb-1.5">
                       <span className="text-emerald-600 text-xs sm:text-sm">✔️</span>
-                      <h3 className="leading-snug">{pt.title}</h3>
+                      <h3 className="leading-snug !text-black text-black">{pt.title}</h3>
                     </div>
                     <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                       {pt.desc}

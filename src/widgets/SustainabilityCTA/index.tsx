@@ -7,7 +7,7 @@ export default function SustainabilityCTA() {
     <section className="w-full py-10 sm:py-14 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <div className="relative rounded-3xl bg-[#0a5c48] border border-emerald-800 p-8 sm:p-12 lg:p-14 text-center text-white shadow-2xs overflow-hidden space-y-5">
-          
+
           {/* Subtle glow */}
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-emerald-950/40 blur-3xl pointer-events-none" />
@@ -18,7 +18,7 @@ export default function SustainabilityCTA() {
               <span>Get Involved</span>
             </div>
 
-            <h2 className="h2 text-white max-w-3xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold !text-white text-white max-w-3xl mx-auto">
               Join Us in Making a Difference
             </h2>
 

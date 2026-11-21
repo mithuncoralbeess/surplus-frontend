@@ -55,7 +55,7 @@ export default function RegionalDeadStockSection({
       <span className="block text-[11px] sm:text-xs md:text-[14px] font-black tracking-wider text-[#0f7a61] uppercase mb-2 sm:mb-3">
         {displayEyebrow}
       </span>
-      <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[36px] font-black text-[#0f172a] tracking-tight leading-[1.25] mb-3.5 sm:mb-5 max-w-5xl break-words">
+      <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[36px] font-black !text-black text-black tracking-tight leading-[1.25] mb-3.5 sm:mb-5 max-w-5xl break-words">
         {displayTitle}
       </h2>
       <p className="text-sm sm:text-base md:text-lg lg:text-[18px] text-slate-600 leading-relaxed font-normal max-w-5xl">

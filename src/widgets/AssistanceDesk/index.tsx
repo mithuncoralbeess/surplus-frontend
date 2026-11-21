@@ -181,7 +181,7 @@ export default function AssistanceDesk() {
             <Sparkles className="h-3.5 w-3.5" />
             <span>Dedicated Customer &amp; Enterprise Support</span>
           </div>
-          <h1 className="h1 text-gray-900">
+          <h1 className="text-3xl sm:text-4xl font-black !text-black text-black">
             How can we assist you?
           </h1>
           <p className="text-sm sm:text-base text-gray-500 leading-relaxed">
@@ -303,7 +303,7 @@ export default function AssistanceDesk() {
               {activeTab === 'request-product' && (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <h2 className="h3 text-gray-900">
+                    <h2 className="text-xl sm:text-2xl font-bold !text-black text-black">
                       Request a Product
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -473,7 +473,7 @@ export default function AssistanceDesk() {
               {activeTab === 'report-issue' && (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <h2 className="h3 text-gray-900">
+                    <h2 className="text-xl sm:text-2xl font-bold !text-black text-black">
                       Report an Issue
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -618,7 +618,7 @@ export default function AssistanceDesk() {
               {activeTab === 'suggest-feature' && (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <h2 className="h3 text-gray-900">
+                    <h2 className="text-xl sm:text-2xl font-bold !text-black text-black">
                       Suggest a Feature
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -769,7 +769,7 @@ export default function AssistanceDesk() {
 
                   {/* Heading & Subtitle */}
                   <div className="space-y-3">
-                    <h2 className="h2 text-gray-900">
+                    <h2 className="text-2xl sm:text-3xl font-extrabold !text-black text-black">
                       Need Help with Your Order?
                     </h2>
                     <p className="text-sm sm:text-base text-gray-600 leading-relaxed max-w-md mx-auto font-normal">

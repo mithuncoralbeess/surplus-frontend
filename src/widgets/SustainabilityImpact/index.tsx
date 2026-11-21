@@ -12,7 +12,7 @@ export default function SustainabilityImpact() {
             <Recycle className="h-3.5 w-3.5 text-[#0a5c48]" />
             <span>Measurable Action</span>
           </div>
-          <h2 className="h2 text-slate-900">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold !text-black text-black tracking-tight">
             Our Impact: Turning Surplus into Sustainable Success
           </h2>
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
@@ -27,7 +27,7 @@ export default function SustainabilityImpact() {
             <div className="w-11 h-11 rounded-2xl bg-emerald-50/70 border border-emerald-100 text-[#0a5c48] flex items-center justify-center">
               <Trash2 className="w-5 h-5" />
             </div>
-            <h3 className="h4 text-slate-900">
+            <h3 className="text-lg sm:text-xl font-bold !text-black text-black leading-snug tracking-tight">
               Preventing Waste
             </h3>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
@@ -40,7 +40,7 @@ export default function SustainabilityImpact() {
             <div className="w-11 h-11 rounded-2xl bg-emerald-50/70 border border-emerald-100 text-[#0a5c48] flex items-center justify-center">
               <Building2 className="w-5 h-5" />
             </div>
-            <h3 className="h4 text-slate-900">
+            <h3 className="text-lg sm:text-xl font-bold !text-black text-black leading-snug tracking-tight">
               Empowering Businesses
             </h3>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
@@ -53,7 +53,7 @@ export default function SustainabilityImpact() {
             <div className="w-11 h-11 rounded-2xl bg-emerald-50/70 border border-emerald-100 text-[#0a5c48] flex items-center justify-center">
               <Recycle className="w-5 h-5" />
             </div>
-            <h3 className="h4 text-slate-900">
+            <h3 className="text-lg sm:text-xl font-bold !text-black text-black leading-snug tracking-tight">
               Fostering a Circular Economy
             </h3>
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">

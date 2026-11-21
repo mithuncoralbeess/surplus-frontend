@@ -5,13 +5,13 @@ import { inquiryService } from '../../services/inquiryService';
 import { searchRealLocation, RealLocationSuggestion } from '../../services/locationService';
 import { motion } from '../../lib/motion';
 import { z } from 'zod';
-import { 
-  CheckCircle2, 
-  User, 
-  Mail, 
-  MapPin, 
-  HelpCircle, 
-  MessageSquare, 
+import {
+  CheckCircle2,
+  User,
+  Mail,
+  MapPin,
+  HelpCircle,
+  MessageSquare,
   Send,
   Loader2,
   X
@@ -67,7 +67,7 @@ const PartnershipForm = () => {
     subject: '',
     message: ''
   });
-  
+
   const [honeypot, setHoneypot] = useState('');
   const [mountedAt] = useState(() => Date.now());
 
@@ -165,7 +165,7 @@ const PartnershipForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Anti-Spam Bot Trap: Honeypot or instant submission
     if (honeypot.trim().length > 0 || Date.now() - mountedAt < 2500) {
       setIsSubmitting(true);
@@ -181,7 +181,7 @@ const PartnershipForm = () => {
     }
 
     const result = formSchema.safeParse(formData);
-    
+
     if (!result.success) {
       const formattedErrors: Partial<Record<keyof FormData, string>> = {};
       result.error.issues.forEach(issue => {
@@ -222,22 +222,22 @@ const PartnershipForm = () => {
 
   const getInputClass = (fieldName: keyof FormData) => {
     const baseClass = "pl-10 w-full rounded-xl border bg-white px-4 py-3 text-sm focus:ring-1 outline-none transition-all";
-    return errors[fieldName] 
+    return errors[fieldName]
       ? `${baseClass} border-red-500 focus:border-red-500 focus:ring-red-500`
       : `${baseClass} border-gray-300 focus:border-[#0a5c48] focus:ring-[#0a5c48]`;
   };
-  
+
   const getSelectClass = (fieldName: keyof FormData) => {
     const baseClass = "pl-10 w-full rounded-xl border bg-white px-4 py-3 text-sm focus:ring-1 outline-none transition-all appearance-none cursor-pointer";
     const textClass = formData[fieldName] ? "text-gray-900" : "text-gray-500";
-    return errors[fieldName] 
+    return errors[fieldName]
       ? `${baseClass} ${textClass} border-red-500 focus:border-red-500 focus:ring-red-500`
       : `${baseClass} ${textClass} border-gray-300 focus:border-[#0a5c48] focus:ring-[#0a5c48]`;
   };
 
   const getTextareaClass = (fieldName: keyof FormData) => {
     const baseClass = "w-full rounded-xl border bg-white px-4 py-3 text-sm focus:ring-1 outline-none transition-all resize-none";
-    return errors[fieldName] 
+    return errors[fieldName]
       ? `${baseClass} border-red-500 focus:border-red-500 focus:ring-red-500`
       : `${baseClass} border-gray-300 focus:border-[#0a5c48] focus:ring-[#0a5c48]`;
   };
@@ -246,26 +246,26 @@ const PartnershipForm = () => {
     <section className="w-full py-16 bg-gray-50 relative overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8 max-w-6xl relative z-10">
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col lg:flex-row">
-          
+
           {/* Left Side - Dark Info Panel */}
           <div className="lg:w-2/5 bg-[#0a1e17] text-white p-10 lg:p-12 relative overflow-hidden flex flex-col justify-between">
             {/* Decorative background element */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[80px] rounded-full pointer-events-none transform translate-x-1/2 -translate-y-1/2"></div>
-            
+
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full mb-6">
                 <CheckCircle2 className="w-4 h-4 text-[#0a5c48] bg-white rounded-full" />
                 <span className="text-xs font-semibold tracking-wide text-white/90">Collaboration Gateway</span>
               </div>
-              
-              <h2 className="text-3xl font-bold mb-4 leading-tight">
+
+              <h2 className="text-3xl font-bold mb-4 leading-tight !text-white text-white">
                 Tell us how you work and how we can collaborate
               </h2>
-              
+
               <p className="text-white/70 text-sm mb-8 leading-relaxed">
                 Whether you're a referral agent, logistics provider, liquidation partner, or corporate enterprise, we create custom collaboration models that align incentives and accelerate growth.
               </p>
-              
+
               <div className="space-y-6">
                 <div className="flex gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#0a5c48] shrink-0 mt-0.5" />
@@ -274,7 +274,7 @@ const PartnershipForm = () => {
                     <p className="text-white/70 text-sm">Dedicated partnership desk reviews within 24-48 hours.</p>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#0a5c48] shrink-0 mt-0.5" />
                   <div>
@@ -282,7 +282,7 @@ const PartnershipForm = () => {
                     <p className="text-white/70 text-sm">Transparent revenue sharing, finder fees, and service contracts.</p>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#0a5c48] shrink-0 mt-0.5" />
                   <div>
@@ -292,7 +292,7 @@ const PartnershipForm = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="relative z-10 mt-12 pt-6 border-t border-white/10">
               <p className="text-sm text-white/60">
                 Direct Desk: <a href="mailto:partnerships@surplusmarket.com" className="text-[#0f7a61] hover:text-[#129c7c] transition-colors font-medium">partnerships@surplusmarket.com</a>
@@ -304,9 +304,9 @@ const PartnershipForm = () => {
           <div className="lg:w-3/5 p-10 lg:p-12">
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               {/* Invisible Honeypot Trap */}
-              <div 
-                className="opacity-0 absolute -z-50 pointer-events-none h-0 w-0 overflow-hidden" 
-                tabIndex={-1} 
+              <div
+                className="opacity-0 absolute -z-50 pointer-events-none h-0 w-0 overflow-hidden"
+                tabIndex={-1}
                 aria-hidden="true"
                 style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}
               >
@@ -556,9 +556,9 @@ const PartnershipForm = () => {
                     <CheckCircle2 className="w-5 h-5 text-[#0a5c48] shrink-0" />
                     <span>Enquiry Submitted Successfully!</span>
                   </div>
-                  <button 
-                    type="button" 
-                    onClick={() => setIsSuccess(false)} 
+                  <button
+                    type="button"
+                    onClick={() => setIsSuccess(false)}
                     className="text-[#0a5c48]/60 hover:text-[#0a5c48]"
                   >
                     <X className="w-4 h-4" />

@@ -46,7 +46,7 @@ export default function SustainabilityHero() {
           </div>
 
           {/* Heading */}
-          <h1 className="h1 text-slate-900 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold !text-black text-black tracking-tight leading-tight">
             Reducing Waste, Boosting Impact: <br />
             <span className="text-[#0a5c48]">Building a Sustainable Future Together</span>
           </h1>

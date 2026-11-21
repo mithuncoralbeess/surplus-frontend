@@ -15,7 +15,7 @@ export default function SustainabilityMission() {
               <span>Our Mission</span>
             </div>
 
-            <h2 className="h2 text-slate-900">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold !text-black text-black tracking-tight">
               Our Mission for a <span className="text-[#0a5c48]">Sustainable Future</span>
             </h2>
           </div>
@@ -34,7 +34,7 @@ export default function SustainabilityMission() {
                 <ShieldCheck className="w-4 h-4" />
               </span>
               <div>
-                <h3 className="h6 text-slate-900">Responsibility First</h3>
+                <h3 className="text-base sm:text-lg font-bold !text-black text-black">Responsibility First</h3>
                 <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                   Sustainability is our foundational obligation.
                 </p>
@@ -46,7 +46,7 @@ export default function SustainabilityMission() {
                 <TrendingUp className="w-4 h-4" />
               </span>
               <div>
-                <h3 className="h6 text-slate-900">Turn Excess into Value</h3>
+                <h3 className="text-base sm:text-lg font-bold !text-black text-black">Turn Excess into Value</h3>
                 <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                   Transforming surplus inventory into recovered capital.
                 </p>
@@ -58,7 +58,7 @@ export default function SustainabilityMission() {
                 <Recycle className="w-4 h-4" />
               </span>
               <div>
-                <h3 className="h6 text-slate-900">Zero-Waste Vision</h3>
+                <h3 className="text-base sm:text-lg font-bold !text-black text-black">Zero-Waste Vision</h3>
                 <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                   Valuing every asset so nothing of utility is wasted.
                 </p>

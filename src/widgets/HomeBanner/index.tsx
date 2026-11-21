@@ -127,7 +127,7 @@ const HomeBanner = () => {
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[2.9rem] xl:text-[3.4rem] font-extrabold text-gray-900 tracking-tight leading-[1.12]">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[2.9rem] xl:text-[3.4rem] font-extrabold !text-black text-black tracking-tight leading-[1.12]">
               {t('hero.titlePrefix', 'Buy, Liquidate & Source')}{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0a5c48] via-[#0f7a61] to-[#14b875]">
                 {t('hero.titleHighlight', 'Surplus Inventory')}

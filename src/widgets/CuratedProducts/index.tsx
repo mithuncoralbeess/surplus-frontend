@@ -135,7 +135,7 @@ const CuratedProducts: React.FC<CuratedProductsProps> = ({ initialProducts = [],
           <span className="inline-block bg-[#e8f5f1] text-[#0f7a61] text-xs font-bold px-3 py-1 rounded-full mb-2">
             {t('curated.badge', 'Verified Surplus')}
           </span>
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[34px] font-black text-[#0f172a] tracking-tight">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[34px] font-black !text-black text-black tracking-tight">
             {t('curated.title', 'Top Liquidated Inventory Products')}
           </h2>
         </div>

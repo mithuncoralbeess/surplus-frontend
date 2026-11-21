@@ -5,14 +5,14 @@ export default function SustainabilityProblem() {
   return (
     <section className="w-full py-10 sm:py-14 bg-white border-b border-slate-100">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-        
+
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-3 mb-10">
           <div className="inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-amber-50/60 px-3.5 py-1 text-xs font-semibold text-amber-800">
             <AlertCircle className="h-3.5 w-3.5 text-amber-700" />
             <span>Global Challenge</span>
           </div>
-          <h2 className="h2 text-slate-900">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold !text-black text-black tracking-tight">
             The Problem with Surplus Waste
           </h2>
         </div>

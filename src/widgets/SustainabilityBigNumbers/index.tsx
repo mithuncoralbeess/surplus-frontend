@@ -12,7 +12,7 @@ export default function SustainabilityBigNumbers() {
             <TrendingUp className="h-3.5 w-3.5 text-[#0a5c48]" />
             <span>Proven Results</span>
           </div>
-          <h2 className="h2 text-slate-900">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold !text-black text-black tracking-tight">
             Big Numbers, Big Impact
           </h2>
         </div>

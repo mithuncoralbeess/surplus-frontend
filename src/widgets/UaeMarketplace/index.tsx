@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { 
-  ChevronRight, 
-  ArrowRight, 
-  CheckCircle2, 
-  Tag, 
-  TrendingUp, 
-  Boxes, 
-  ShieldCheck, 
+import {
+  ChevronRight,
+  ArrowRight,
+  CheckCircle2,
+  Tag,
+  TrendingUp,
+  Boxes,
+  ShieldCheck,
   Globe
 } from 'lucide-react';
 
@@ -29,7 +29,7 @@ const BENEFIT_ICONS = [Tag, TrendingUp, Boxes, ShieldCheck, Globe];
 export default function UaeMarketplaceWidget() {
   return (
     <div className="w-full flex flex-col items-center bg-[#f8fafc]">
-      
+
       {/* Hero Header Section */}
       <RegionalHeroBanner
         countryName="UAE"
@@ -69,7 +69,7 @@ export default function UaeMarketplaceWidget() {
 
         {/* Section 1: Why Surplus Market for UAE? */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-3.5 sm:mb-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-3.5 sm:mb-4">
             Why Surplus Market for UAE?
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed font-normal">
@@ -79,7 +79,7 @@ export default function UaeMarketplaceWidget() {
 
         {/* Section 2: Who Can Use the Surplus Market? */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-2.5 sm:mb-3">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-2.5 sm:mb-3">
             Who Can Use the Surplus Market?
           </h2>
           <p className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed mb-3 sm:mb-4">
@@ -91,7 +91,7 @@ export default function UaeMarketplaceWidget() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
             {USER_TYPES.map((userType, idx) => (
-              <div 
+              <div
                 key={idx}
                 className="bg-gray-50/70 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 hover:border-emerald-200 transition-all flex items-start gap-3.5 group"
               >
@@ -108,7 +108,7 @@ export default function UaeMarketplaceWidget() {
 
         {/* Section 3: Benefits of Buying Excess Inventory in UAE */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-2.5 sm:mb-3">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-2.5 sm:mb-3">
             Benefits of Buying Excess Inventory in UAE
           </h2>
           <p className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed mb-6 sm:mb-8">
@@ -119,7 +119,7 @@ export default function UaeMarketplaceWidget() {
             {UAE_BENEFITS.map((benefit, idx) => {
               const IconComp = BENEFIT_ICONS[idx % BENEFIT_ICONS.length];
               return (
-                <div 
+                <div
                   key={idx}
                   className="bg-gray-50/70 border border-gray-100 hover:border-emerald-200 rounded-xl sm:rounded-2xl p-5 sm:p-6 transition-all hover:bg-white hover:shadow-md flex flex-col justify-between"
                 >
@@ -127,7 +127,7 @@ export default function UaeMarketplaceWidget() {
                     <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center border ${benefit.color} mb-3 sm:mb-4`}>
                       <IconComp className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1 sm:mb-1.5">
+                    <h3 className="text-sm sm:text-base font-bold !text-black text-black mb-1 sm:mb-1.5">
                       {benefit.title}
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
@@ -142,7 +142,7 @@ export default function UaeMarketplaceWidget() {
 
         {/* Section 4: FAQ – Excess Inventory Sale in UAE */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-6 sm:mb-8">
             FAQ – Excess Inventory Sale in UAE
           </h2>
 
@@ -165,15 +165,15 @@ export default function UaeMarketplaceWidget() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
-            <Link 
-              href="/register" 
+            <Link
+              href="/register"
               className="w-full sm:w-auto text-center px-6 py-3.5 bg-[#14b875] hover:bg-[#119e64] text-[#051c14] font-extrabold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Join Surplus Market</span>
               <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </Link>
-            <Link 
-              href="/buy" 
+            <Link
+              href="/buy"
               className="w-full sm:w-auto text-center px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-sm rounded-xl transition-all cursor-pointer"
             >
               Browse Inventory
