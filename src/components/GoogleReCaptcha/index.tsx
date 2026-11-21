@@ -131,7 +131,14 @@ const GoogleReCaptcha = forwardRef<GoogleReCaptchaRef, GoogleReCaptchaProps>(fun
             if (isMounted && onExpireRef.current) onExpireRef.current();
           },
           'error-callback': () => {
-            if (isMounted && onErrorRef.current) onErrorRef.current();
+            if (isMounted) {
+              try {
+                if (widgetIdRef.current !== null && window.grecaptcha?.reset) {
+                  window.grecaptcha.reset(widgetIdRef.current);
+                }
+              } catch {}
+              if (onErrorRef.current) onErrorRef.current();
+            }
           },
         });
         widgetIdRef.current = id;
