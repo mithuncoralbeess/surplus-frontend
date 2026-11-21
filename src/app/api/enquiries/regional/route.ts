@@ -146,7 +146,15 @@ export async function POST(req: NextRequest) {
     // 5. Content Spam Heuristics
     const lookingFor = String(body?.lookingFor || body?.sourcingItem || "");
     const email = String(body?.email || body?.businessEmail || "").trim().toLowerCase();
+    const phone = String(body?.phone || body?.mobile || body?.mobile_number || "").trim();
     const message = String(body?.message || "");
+
+    if (!phone) {
+      return NextResponse.json(
+        { success: false, message: "Mobile number is required." },
+        { status: 400 }
+      );
+    }
 
     const fullContent = `${lookingFor} ${message}`;
     const urlMatches = fullContent.match(/https?:\/\/|www\./gi) || [];

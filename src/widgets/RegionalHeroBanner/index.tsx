@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Loader2, AlertCircle, ShieldCheck, Phone } from 'lucide-react';
 import { inquiryService } from '../../services/inquiryService';
 import { sanitizeInput } from '../../lib/security/sanitizer';
 import GoogleReCaptcha, { GoogleReCaptchaRef } from '../../components/GoogleReCaptcha';
@@ -19,10 +19,12 @@ interface QuoteFormErrors {
   quantity?: string;
   targetPrice?: string;
   businessEmail?: string;
+  phone?: string;
 }
 
 const scriptCheckRegex = /<[^>]*>|javascript:|on\w+\s*=/i;
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const phoneRegex = /^\+?[0-9\s\-().]{7,20}$/;
 
 export default function RegionalHeroBanner({
   countryName,
@@ -35,6 +37,7 @@ export default function RegionalHeroBanner({
   const [quantity, setQuantity] = useState('');
   const [targetPrice, setTargetPrice] = useState('');
   const [businessEmail, setBusinessEmail] = useState('');
+  const [phone, setPhone] = useState('');
 
   // Anti-Spam Layer 1: Invisible Honeypot
   const [honeypot, setHoneypot] = useState('');
@@ -55,7 +58,8 @@ export default function RegionalHeroBanner({
     lookingFor.trim() &&
     quantity.trim() &&
     targetPrice.trim() &&
-    businessEmail.trim()
+    businessEmail.trim() &&
+    phone.trim()
   );
 
   useEffect(() => {
@@ -129,6 +133,15 @@ export default function RegionalHeroBanner({
     }
   };
 
+  // 5. "Mobile number" - Strictly numeric, spaces, plus, dashes, parentheses
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/[^0-9+\s\-().]/g, '');
+    setPhone(val);
+    if (errors.phone) {
+      setErrors((prev) => ({ ...prev, phone: undefined }));
+    }
+  };
+
   // Comprehensive Form Validation
   const validateForm = (): boolean => {
     const newErrors: QuoteFormErrors = {};
@@ -173,7 +186,22 @@ export default function RegionalHeroBanner({
       newErrors.businessEmail = 'Script tags or HTML code are not allowed';
     }
 
-    // 5. Anti-Spam Google reCAPTCHA Verification
+    // 5. Mobile number validation (Mandatory)
+    const trimmedPhone = phone.trim();
+    const phoneDigits = trimmedPhone.replace(/[^0-9]/g, '');
+    if (!trimmedPhone) {
+      newErrors.phone = 'Mobile number is required';
+    } else if (phoneDigits.length < 7) {
+      newErrors.phone = 'Please enter a valid mobile number (min. 7 digits)';
+    } else if (phoneDigits.length > 16) {
+      newErrors.phone = 'Mobile number cannot exceed 16 digits';
+    } else if (!phoneRegex.test(trimmedPhone)) {
+      newErrors.phone = 'Mobile number can only contain digits, spaces, and +';
+    } else if (scriptCheckRegex.test(trimmedPhone)) {
+      newErrors.phone = 'Script tags or HTML code are not allowed';
+    }
+
+    // 6. Anti-Spam Google reCAPTCHA Verification
     let hasCaptchaError = false;
     if (!recaptchaToken) {
       setRecaptchaError('Please check the "I\'m not a robot" box');
@@ -218,6 +246,7 @@ export default function RegionalHeroBanner({
         setQuantity('');
         setTargetPrice('');
         setBusinessEmail('');
+        setPhone('');
         setHoneypot('');
         setRecaptchaToken('');
         setRecaptchaError('');
@@ -236,12 +265,16 @@ export default function RegionalHeroBanner({
     const cleanQty = sanitizeInput(quantity);
     const cleanPrice = sanitizeInput(targetPrice);
     const cleanEmail = sanitizeInput(businessEmail);
+    const cleanPhone = sanitizeInput(phone);
 
     try {
       const res = await inquiryService.submitRegionalEnquiry({
         fullName: cleanEmail.split('@')[0],
         name: cleanEmail.split('@')[0],
         email: cleanEmail,
+        phone: cleanPhone,
+        mobile: cleanPhone,
+        mobile_number: cleanPhone,
         sourcingItem: cleanItem,
         lookingFor: cleanItem,
         quantity: cleanQty,
@@ -261,6 +294,7 @@ Item / Product: ${cleanItem}
 Quantity: ${cleanQty}
 Target Price: ${cleanPrice || 'Not specified (Open for offers)'}
 Business Email: ${cleanEmail}
+Mobile Number: ${cleanPhone}
         `.trim(),
         metadata: {
           country: countryName,
@@ -268,6 +302,8 @@ Business Email: ${cleanEmail}
           lookingFor: cleanItem,
           quantity: cleanQty,
           targetPrice: cleanPrice,
+          email: cleanEmail,
+          phone: cleanPhone,
           source: 'RegionalHeroBanner',
         },
       });
@@ -281,6 +317,7 @@ Business Email: ${cleanEmail}
         setQuantity('');
         setTargetPrice('');
         setBusinessEmail('');
+        setPhone('');
         setRecaptchaToken('');
         setRecaptchaError('');
         recaptchaRef.current?.reset();
@@ -453,6 +490,36 @@ Business Email: ${cleanEmail}
                   />
                   {errors.businessEmail && (
                     <p className="text-xs text-red-500 mt-1 font-medium">{errors.businessEmail}</p>
+                  )}
+                </div>
+
+                {/* Mobile Number (Mandatory) */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Mobile number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                      <Phone className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <input
+                      type="tel"
+                      placeholder={
+                        countrySlug === 'india' 
+                          ? '+91 98765 43210' 
+                          : countrySlug === 'qatar' 
+                            ? '+974 3026 9988' 
+                            : countrySlug === 'saudi-arabia'
+                              ? '+966 50 123 4567'
+                              : '+971 50 123 4567'
+                      }
+                      value={phone}
+                      onChange={handlePhoneChange}
+                      className={`${getInputClass(Boolean(errors.phone))} pl-10`}
+                    />
+                  </div>
+                  {errors.phone && (
+                    <p className="text-xs text-red-500 mt-1 font-medium">{errors.phone}</p>
                   )}
                 </div>
 
