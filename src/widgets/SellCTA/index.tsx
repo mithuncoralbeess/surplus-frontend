@@ -31,7 +31,7 @@ const SellCTA = () => {
 
           <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
             {/* Title */}
-            <h2 className="h2 font-extrabold !text-white text-white tracking-tight mb-4 sm:mb-6 leading-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold !text-white text-white tracking-tight mb-4 sm:mb-6 leading-tight">
               Ready to clear out your warehouse?
             </h2>
 
