@@ -149,10 +149,9 @@ const Footer = () => {
               <Image 
                 src="/surplus_main_logo.png" 
                 alt="Surplus Market" 
-                width={160} 
-                height={36} 
-                className="object-contain brightness-0 invert"
-                style={{ width: "auto", height: "auto" }}
+                width={140} 
+                height={32} 
+                className="object-contain brightness-0 invert w-[130px] sm:w-[145px] h-auto"
               />
             </Link>
             <p className="text-[14px] leading-relaxed text-gray-400">
