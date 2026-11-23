@@ -114,11 +114,6 @@ export default function SellComparisonTable() {
             </tbody>
           </table>
         </div>
-
-        {/* Footer Disclaimer */}
-        <p className="mt-4 sm:mt-5 text-xs text-stone-500 font-normal">
-          Directional comparison. Confirm claims with the commercial team before publishing.
-        </p>
       </div>
     </section>
   );
