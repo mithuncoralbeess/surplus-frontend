@@ -213,7 +213,7 @@ export default function SaudiArabiaMarketplaceWidget() {
                     className="w-full flex items-center justify-between p-3.5 sm:p-5 text-left focus:outline-none cursor-pointer"
                     aria-expanded={isOpen}
                   >
-                    <span className="text-xs sm:text-sm md:text-base font-bold text-gray-900 pr-3 sm:pr-4">
+                    <span className="text-xs sm:text-sm md:text-base font-bold !text-black text-black pr-3 sm:pr-4">
                       {faq.q}
                     </span>
                     <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shrink-0 transition-colors ${isOpen ? 'bg-[#0f7a61] text-white' : 'bg-gray-200/80 text-gray-600'

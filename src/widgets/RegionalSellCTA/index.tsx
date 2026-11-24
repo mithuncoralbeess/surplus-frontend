@@ -19,7 +19,7 @@ export default function RegionalSellCTA({
         
         {/* Left Column: Title & Description */}
         <div className="max-w-2xl">
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[32px] font-black text-[#081a36] tracking-tight leading-tight mb-2.5 sm:mb-3">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[32px] font-black !text-black text-black tracking-tight leading-tight mb-2.5 sm:mb-3">
             Sitting on excess stock in {countryFormatted}?
           </h2>
           <p className="text-slate-600 text-xs sm:text-sm md:text-base leading-relaxed">

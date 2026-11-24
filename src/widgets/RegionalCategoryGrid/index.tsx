@@ -70,7 +70,7 @@ export default function RegionalCategoryGrid() {
           SHOP BY CATEGORY
         </span>
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 sm:gap-3">
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[34px] font-black text-[#0f172a] tracking-tight">
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-[34px] font-black !text-black text-black tracking-tight">
             Find surplus stock in your industry
           </h2>
           <Link
@@ -95,7 +95,7 @@ export default function RegionalCategoryGrid() {
               <span className="inline-flex items-center justify-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg bg-[#e8f5f1] text-[#0f7a61] font-bold text-[10px] sm:text-xs mb-2 sm:mb-3 group-hover:bg-[#0f7a61] group-hover:text-white transition-colors">
                 {cat.abbr}
               </span>
-              <h3 className="text-xs sm:text-sm md:text-base font-bold text-slate-900 group-hover:text-[#0f7a61] transition-colors leading-snug line-clamp-2">
+              <h3 className="text-xs sm:text-sm md:text-base font-bold !text-black text-black group-hover:text-[#0f7a61] transition-colors leading-snug line-clamp-2">
                 {cat.name}
               </h3>
             </div>

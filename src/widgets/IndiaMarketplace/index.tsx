@@ -257,7 +257,7 @@ export default function IndiaMarketplaceWidget() {
 
         {/* Section 5: FAQs */}
         <section className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-gray-200/80 shadow-xs">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold !text-black text-black tracking-tight mb-6 sm:mb-8">
             FAQs
           </h2>
 
@@ -279,7 +279,7 @@ export default function IndiaMarketplaceWidget() {
                     className="w-full flex items-center justify-between p-3.5 sm:p-5 text-left focus:outline-none cursor-pointer"
                     aria-expanded={isOpen}
                   >
-                    <span className="text-xs sm:text-sm md:text-base font-bold text-gray-900 pr-3 sm:pr-4">
+                    <span className="text-xs sm:text-sm md:text-base font-bold !text-black text-black pr-3 sm:pr-4">
                       {faq.q}
                     </span>
                     <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shrink-0 transition-colors ${

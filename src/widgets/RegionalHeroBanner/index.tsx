@@ -365,7 +365,7 @@ Mobile Number: ${cleanPhone}
             </nav>
 
             {/* H1 Title */}
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[46px] font-black text-[#0f172a] tracking-tight leading-[1.2] sm:leading-[1.15] mb-4 sm:mb-5 break-words">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[46px] font-black !text-black text-black tracking-tight leading-[1.2] sm:leading-[1.15] mb-4 sm:mb-5 break-words">
               {title}
             </h1>
 
@@ -395,7 +395,7 @@ Mobile Number: ${cleanPhone}
           <div className="lg:col-span-5 w-full">
             <div id="quote-form" className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-7 md:p-8 border border-gray-100 shadow-xl shadow-slate-200/60 relative scroll-mt-24">
               <div className="mb-4">
-                <h3 className="text-lg sm:text-xl md:text-2xl font-black text-slate-900 tracking-tight">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-black !text-black text-black tracking-tight">
                   Request a quote
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mt-1">
