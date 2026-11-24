@@ -159,10 +159,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         {/* End Google Tag Manager */}
 
-        {/* Google reCAPTCHA v2 API */}
+        {/* Google reCAPTCHA v2 API (deferred so it never blocks page hydration or first input) */}
         <Script
           src="https://www.google.com/recaptcha/api.js?render=explicit"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
 
         <RootJsonLd />

@@ -47,11 +47,13 @@ import {
   UploadCloud,
   FileSpreadsheet
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useNotifications } from '../../context/NotificationContext';
 import Link from 'next/link';
-import SimpleListingModal from '../../components/SimpleListingModal';
-import LotImportModal from '../../components/LotImportModal';
+
+const SimpleListingModal = dynamic(() => import('../../components/SimpleListingModal'), { ssr: false });
+const LotImportModal = dynamic(() => import('../../components/LotImportModal'), { ssr: false });
 import AuthModal from '../../components/AuthModal';
 import { isProfileComplete } from '../../lib/profileUtils';
 import { useAppSelector, useAppDispatch } from '../../store';

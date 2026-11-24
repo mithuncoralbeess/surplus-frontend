@@ -67,7 +67,18 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   skipTrailingSlashRedirect: true,
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion', 'country-state-city', 'react-select'],
+    optimizePackageImports: [
+      'lucide-react',
+      'framer-motion',
+      'country-state-city',
+      'react-select',
+      '@reduxjs/toolkit',
+      'react-redux',
+      'intl-tel-input',
+      'react-phone-number-input',
+      'swiper',
+      'zod',
+    ],
   },
   async redirects() {
     return [
@@ -295,6 +306,15 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      {
+        source: '/:all*(svg|jpg|jpeg|png|webp|avif|ico|woff|woff2)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
       {
         source: '/:path*',
         headers: securityHeaders,

@@ -7,7 +7,6 @@ import { X, UploadCloud, FileSpreadsheet, ChevronRight, Check, ArrowLeft, Downlo
 import { z } from 'zod';
 import { validateManifestUpload } from '../../lib/security/fileUploadValidator';
 import { sanitizeInput } from '../../lib/security/sanitizer';
-import * as XLSX from 'xlsx';
 import { authService } from '../../services/authService';
 import AuthModal from '../AuthModal';
 import { isProfileComplete } from '../../lib/profileUtils';
@@ -815,11 +814,12 @@ const LotImportModal: React.FC<LotImportModalProps> = ({ isOpen, onClose }) => {
       }
 
       const reader = new FileReader();
-      reader.onload = (evt) => {
+      reader.onload = async (evt) => {
         try {
           const buffer = evt.target?.result;
           if (!buffer) return;
 
+          const XLSX = await import('xlsx');
           const workbook = XLSX.read(buffer, { type: 'array' });
 
           // 1. Target specifically the 'Inventory' tab (case-insensitive check) or the sole sheet for CSV files
