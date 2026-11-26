@@ -107,7 +107,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
             </div>
 
             <h1 
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight mb-4 sm:mb-6"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold !text-black text-black tracking-tight leading-tight mb-4 sm:mb-6"
               itemProp="headline"
             >
               {post.title}
@@ -139,7 +139,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
                   </div>
                 )}
                 <div>
-                  <span className="block text-sm font-bold text-gray-900" itemProp="name">{post.author.name}</span>
+                  <span className="block text-sm font-bold !text-black text-black" itemProp="name">{post.author.name}</span>
                   <span className="block text-xs text-gray-500 font-medium" itemProp="jobTitle">{post.author.role}</span>
                 </div>
               </div>
@@ -188,7 +188,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
         {/* Key Takeaways Card */}
         {post.keyTakeaways && post.keyTakeaways.length > 0 && (
           <div className="bg-[#e0f0e9]/50 border border-[#0a5c48]/30 rounded-2xl p-6 sm:p-8 mb-12 shadow-sm">
-            <h3 className="text-[25px] font-bold text-gray-900 mb-4 flex items-center gap-2 leading-tight">
+            <h3 className="text-[25px] font-bold !text-black text-black mb-4 flex items-center gap-2 leading-tight">
               <Sparkles className="w-6 h-6 text-[#0a5c48]" /> Key Executive Takeaways
             </h3>
             <ul className="space-y-3">
@@ -210,12 +210,12 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
             itemProp="articleBody"
             suppressHydrationWarning
             className="max-w-none text-gray-800 mb-16 space-y-6
-              [&_h1]:text-[28px] [&_h1]:font-bold [&_h1]:text-gray-900 [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:leading-snug [&>h1:first-child]:hidden
-              [&_h2]:text-[25px] [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:leading-snug
-              [&_h3]:text-[25px] [&_h3]:font-bold [&_h3]:text-gray-900 [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:leading-snug
-              [&_h4]:text-[25px] [&_h4]:font-bold [&_h4]:text-gray-900 [&_h4]:mt-6 [&_h4]:mb-3 [&_h4]:leading-snug
-              [&_h5]:text-[25px] [&_h5]:font-bold [&_h5]:text-gray-900 [&_h5]:mt-4 [&_h5]:mb-2 [&_h5]:leading-snug
-              [&_h6]:text-[25px] [&_h6]:font-bold [&_h6]:text-gray-900 [&_h6]:mt-4 [&_h6]:mb-2 [&_h6]:leading-snug
+              [&_h1]:text-[28px] [&_h1]:font-bold [&_h1]:!text-black [&_h1]:text-black [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:leading-snug [&>h1:first-child]:hidden
+              [&_h2]:text-[25px] [&_h2]:font-bold [&_h2]:!text-black [&_h2]:text-black [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:leading-snug
+              [&_h3]:text-[25px] [&_h3]:font-bold [&_h3]:!text-black [&_h3]:text-black [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:leading-snug
+              [&_h4]:text-[25px] [&_h4]:font-bold [&_h4]:!text-black [&_h4]:text-black [&_h4]:mt-6 [&_h4]:mb-3 [&_h4]:leading-snug
+              [&_h5]:text-[25px] [&_h5]:font-bold [&_h5]:!text-black [&_h5]:text-black [&_h5]:mt-4 [&_h5]:mb-2 [&_h5]:leading-snug
+              [&_h6]:text-[25px] [&_h6]:font-bold [&_h6]:!text-black [&_h6]:text-black [&_h6]:mt-4 [&_h6]:mb-2 [&_h6]:leading-snug
               [&_p]:text-[16px] [&_p]:text-gray-700 [&_p]:leading-relaxed [&_p]:mb-5
               [&_a]:text-[16px] [&_a]:text-[#0a5c48] [&_a]:font-semibold [&_a]:underline [&_a]:hover:text-[#084838]
               [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-6 [&_ul]:space-y-2
@@ -247,7 +247,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
                 <HelpCircle className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-[25px] font-bold text-gray-900 leading-tight">Frequently Asked Questions</h3>
+                <h3 className="text-[25px] font-bold !text-black text-black leading-tight">Frequently Asked Questions</h3>
                 <p className="text-[16px] text-gray-500 font-medium mt-0.5">Key questions addressed in this article & category</p>
               </div>
             </div>
@@ -268,7 +268,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
                       onClick={() => toggleFaq(idx)}
                       className="w-full flex items-center justify-between p-5 text-left focus:outline-none cursor-pointer"
                     >
-                      <span className="text-[16px] font-bold text-gray-900 pr-4">
+                      <span className="text-[16px] font-bold !text-black text-black pr-4">
                         {faq.question}
                       </span>
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${
@@ -314,7 +314,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
           )}
           <div>
             <span className="text-xs font-bold text-[#0a5c48] uppercase tracking-wider block mb-1">Written By</span>
-            <h4 className="text-[25px] font-bold text-gray-900 mb-1 leading-snug">{post.author.name}</h4>
+            <h4 className="text-[25px] font-bold !text-black text-black mb-1 leading-snug">{post.author.name}</h4>
             <p className="text-xs font-semibold text-gray-500 mb-3">{post.author.role}</p>
             <p className="text-[16px] text-gray-600 leading-relaxed">
               Specializing in supply chain optimization, secondary B2B market trends, and circular economy liquidations across the GCC and international markets.
@@ -326,7 +326,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
         {related.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-[25px] font-bold text-gray-900 leading-tight">Related Insights & Articles</h3>
+              <h3 className="text-[25px] font-bold !text-black text-black leading-tight">Related Insights & Articles</h3>
               <Link href="/blog" className="text-xs font-bold text-[#0a5c48] hover:underline flex items-center gap-1">
                 View All <ChevronRight className="w-4 h-4" />
               </Link>
@@ -354,7 +354,7 @@ export default function BlogDetail({ post, relatedPosts = [] }: BlogDetailProps)
                     <span className="text-[10px] font-bold text-[#0a5c48] uppercase tracking-wider block mb-1">
                       {rel.category}
                     </span>
-                    <h4 className="text-[16px] font-bold text-gray-900 group-hover:text-[#0a5c48] transition-colors line-clamp-2 mb-2">
+                    <h4 className="text-[16px] font-bold !text-black text-black group-hover:text-[#0a5c48] transition-colors line-clamp-2 mb-2">
                       {rel.title}
                     </h4>
                     <span className="text-xs text-gray-400 font-medium">{rel.readTime}</span>
