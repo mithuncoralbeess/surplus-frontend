@@ -13,6 +13,7 @@ import {
 import Select from 'react-select';
 import { z } from 'zod';
 import { validateImageUpload, validateFileUpload } from '../../lib/security/fileUploadValidator';
+import { compressImage, compressImages } from '../../lib/imageCompressor';
 import { sanitizeInput } from '../../lib/security/sanitizer';
 import { authService } from '../../services/authService';
 import { useNotifications } from '../../context/NotificationContext';
@@ -649,6 +650,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
   useEffect(() => {
     if (isOpen) {
       setIsSuccess(false);
+      setSubmitError('');
 
       const prevBodyOverflow = document.body.style.overflow;
       const prevHtmlOverflow = document.documentElement.style.overflow;
@@ -1000,15 +1002,20 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       data.append('reason_to_sell', sanitizeInput(formData.reasonToSell));
       data.append('warranty', formData.hasWarranty ? sanitizeInput(formData.warranty || 'Yes') : 'No');
       if (formData.hasWarranty && formData.warrantyDocument) {
-        data.append('warranty_document', formData.warrantyDocument);
+        const compressedWarranty = await compressImage(formData.warrantyDocument);
+        data.append('warranty_document', compressedWarranty);
       }
       data.append('certificate', formData.certificate ? 'true' : 'false');
       if (formData.certificate && formData.certificateDocument) {
-        data.append('certificate_document', formData.certificateDocument);
+        const compressedCert = await compressImage(formData.certificateDocument);
+        data.append('certificate_document', compressedCert);
       }
 
       if (formData.images && formData.images.length > 0) {
-        formData.images.forEach(image => {
+        // Automatically compress camera/phone photos to max 1920px & optimize to ~200KB-350KB
+        // to prevent HTTP 413 (Payload Too Large) and 502 (Bad Gateway / timeout)
+        const compressedImages = await compressImages(formData.images);
+        compressedImages.forEach(image => {
           data.append('images', image);
         });
       }
@@ -1023,6 +1030,7 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
       if (response.ok) {
         setIsSubmitting(false);
         setIsSuccess(true);
+        setIsReviewMode(false);
 
         // Dispatch real-time toast alert
         showToast({
@@ -1084,14 +1092,20 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
           const errData = await response.json();
           errorMessage = errData.message || JSON.stringify(errData) || errorMessage;
         } catch {
-          errorMessage = `Server Error (${response.status}): ${response.statusText}`;
+          if (response.status === 413) {
+            errorMessage = 'Payload Too Large (413): The photos exceed the server limit. Photos are now automatically compressed to resolve this.';
+          } else if (response.status === 502 || response.status === 504) {
+            errorMessage = 'Server Timeout (502): The server gateway timed out during large media upload. Please try again with compressed photos.';
+          } else {
+            errorMessage = `Server Error (${response.status}): ${response.statusText}`;
+          }
         }
         setSubmitError(errorMessage);
         setIsSubmitting(false);
 
         showToast({
           type: 'error',
-          title: 'Submission Failed',
+          title: response.status === 413 ? 'Photo Upload Limit Exceeded' : (response.status === 502 ? 'Server Gateway Timeout' : 'Submission Failed'),
           message: errorMessage
         });
       }
@@ -1149,16 +1163,29 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                 <p className="text-gray-600 text-base mb-8 max-w-md">
                   Your surplus inventory listing has been received. Our marketplace team will verify the specifications and publish it shortly.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleResetForm();
-                    onClose();
-                  }}
-                  className="px-8 py-3 bg-[#0a5c48] hover:bg-[#084838] text-white rounded-full font-bold text-sm transition-all shadow-md cursor-pointer"
-                >
-                  Done
-                </button>
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleResetForm();
+                      setIsSuccess(false);
+                      setIsReviewMode(false);
+                    }}
+                    className="px-6 py-3 bg-[#e0f0e9] hover:bg-[#cbe8dc] text-[#0a5c48] rounded-full font-bold text-sm transition-all shadow-xs cursor-pointer"
+                  >
+                    + Submit Another Item
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleResetForm();
+                      onClose();
+                    }}
+                    className="px-8 py-3 bg-[#0a5c48] hover:bg-[#084838] text-white rounded-full font-bold text-sm transition-all shadow-md cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
               </div>
             ) : isReviewMode ? (
               <div className="flex flex-col flex-1 h-full min-h-0 overflow-hidden">
@@ -2125,6 +2152,9 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                                     type="file"
                                     accept=".pdf,image/png,image/jpeg,image/webp"
                                     className="hidden"
+                                    onClick={(e) => {
+                                      (e.target as HTMLInputElement).value = '';
+                                    }}
                                     onChange={(e) => {
                                       const file = e.target.files?.[0];
                                       if (file) {
@@ -2225,6 +2255,9 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                                   type="file"
                                   accept=".pdf,image/png,image/jpeg,image/webp"
                                   className="hidden"
+                                  onClick={(e) => {
+                                    (e.target as HTMLInputElement).value = '';
+                                  }}
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
@@ -2285,7 +2318,10 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                             multiple
                             accept="image/png, image/jpeg, image/webp, image/gif"
                             className="hidden"
-                            onChange={(e) => {
+                            onClick={(e) => {
+                              (e.target as HTMLInputElement).value = '';
+                            }}
+                            onChange={async (e) => {
                               if (e.target.files && e.target.files.length > 0) {
                                 const filesArray = Array.from(e.target.files);
                                 const validFiles: File[] = [];
@@ -2308,9 +2344,10 @@ export default function SimpleListingModal({ isOpen, onClose }: SimpleListingMod
                                     delete copy.imagesUploaded;
                                     return copy;
                                   });
+                                  const compressedFiles = await compressImages(validFiles);
                                   setFormData(prev => ({
                                     ...prev,
-                                    images: [...(prev.images || []), ...validFiles],
+                                    images: [...(prev.images || []), ...compressedFiles],
                                     imagesUploaded: true
                                   }));
                                 }
