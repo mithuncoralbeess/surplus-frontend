@@ -189,9 +189,20 @@ Mobile Number: ${userPhone || 'Not Provided'}
   },
 
   async submitPartnershipEnquiry(payload: PartnershipEnquiryPayload): Promise<ApiResponse> {
+    const userPhone = payload.phone || payload.mobile || payload.mobile_number || '';
+    const formattedCollaborationDetails = userPhone
+      ? `Contact Phone: ${userPhone}\n\n${payload.message || payload.collaboration_details || ''}`.trim()
+      : (payload.message || payload.collaboration_details || '');
+
     return apiClient('/api/enquiries/partnership/', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        phone: userPhone,
+        mobile_number: userPhone,
+        collaboration_details: formattedCollaborationDetails,
+        message: formattedCollaborationDetails,
+      }),
     });
   },
 

@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   User,
   Mail,
+  Phone,
   MapPin,
   HelpCircle,
   MessageSquare,
@@ -22,6 +23,7 @@ import { scrollToTop } from '../../lib/scroll';
 
 const nameRegex = /^[a-zA-Z\s'\-]{2,50}$/;
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const phoneRegex = /^\+?[0-9\s]{6,20}$/;
 const scriptCheckRegex = /<[^>]*>|javascript:|on\w+\s*=/i;
 
 const formSchema = z.object({
@@ -36,6 +38,11 @@ const formSchema = z.object({
     .min(5, "Email is required")
     .max(254, "Email address cannot exceed 254 characters")
     .regex(emailRegex, "Please enter a valid email address (e.g. name@domain.com)"),
+  phone: z
+    .string()
+    .min(6, "Phone number must be at least 6 characters")
+    .max(25, "Phone number cannot exceed 25 characters")
+    .regex(phoneRegex, "Phone number can only contain + and digits (e.g. +974 3026 9988)"),
   location: z
     .string()
     .min(2, "Please provide your business location")
@@ -62,6 +69,7 @@ const PartnershipForm = () => {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
+    phone: '',
     location: '',
     interest: '',
     subject: '',
@@ -152,6 +160,9 @@ const PartnershipForm = () => {
     if (e.target.name === 'name') {
       // Disallow numbers, scripts, and special symbols in real-time
       val = val.replace(/[^a-zA-Z\s'\-]/g, '');
+    } else if (e.target.name === 'phone') {
+      // Disallow non-digits and non-plus signs in real-time
+      val = val.replace(/[^0-9+\s]/g, '');
     } else if (['location', 'subject', 'message'].includes(e.target.name)) {
       // Disallow HTML tags, script blocks, and inline script handlers in real-time
       val = val.replace(/<[^>]*>|javascript:|on\w+\s*=/gi, '');
@@ -172,7 +183,7 @@ const PartnershipForm = () => {
       setTimeout(() => {
         setIsSubmitting(false);
         setIsSuccess(true);
-        setFormData({ name: '', email: '', location: '', interest: '', subject: '', message: '' });
+        setFormData({ name: '', email: '', phone: '', location: '', interest: '', subject: '', message: '' });
         setHoneypot('');
         setErrors({});
         scrollToTop({ behavior: 'smooth' });
@@ -199,6 +210,7 @@ const PartnershipForm = () => {
     const sanitizedPayload = {
       name: sanitizeInput(result.data.name),
       email: sanitizeInput(result.data.email.trim()),
+      phone: sanitizeInput(result.data.phone.trim()),
       location: sanitizeInput(result.data.location),
       interest: sanitizeInput(result.data.interest),
       subject: sanitizeInput(result.data.subject),
@@ -210,7 +222,7 @@ const PartnershipForm = () => {
     if (res.success) {
       setIsSubmitting(false);
       setIsSuccess(true);
-      setFormData({ name: '', email: '', location: '', interest: '', subject: '', message: '' });
+      setFormData({ name: '', email: '', phone: '', location: '', interest: '', subject: '', message: '' });
       setErrors({});
       scrollToTop({ behavior: 'smooth' });
     } else {
@@ -295,7 +307,7 @@ const PartnershipForm = () => {
 
             <div className="relative z-10 mt-12 pt-6 border-t border-white/10">
               <p className="text-sm text-white/60">
-                Direct Desk: <a href="mailto:partnerships@surplusmarket.com" className="text-[#0f7a61] hover:text-[#129c7c] transition-colors font-medium">partnerships@surplusmarket.com</a>
+                Direct Desk: <a href="mailto:contact@surplusmarket.com" className="text-[#0f7a61] hover:text-[#129c7c] transition-colors font-medium">contact@surplusmarket.com</a>
               </p>
             </div>
           </div>
@@ -371,6 +383,28 @@ const PartnershipForm = () => {
                     />
                   </div>
                   {errors.email && <p className="text-red-500 text-xs mt-1.5">{errors.email}</p>}
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-bold text-gray-900 mb-2">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Phone className={`h-5 w-5 ${errors.phone ? 'text-red-400' : 'text-gray-400'}`} />
+                    </div>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="+974 3026 9988"
+                      className={getInputClass('phone')}
+                    />
+                  </div>
+                  {errors.phone && <p className="text-red-500 text-xs mt-1.5">{errors.phone}</p>}
                 </div>
 
                 {/* Business Location */}
@@ -489,28 +523,28 @@ const PartnershipForm = () => {
                   </div>
                   {errors.interest && <p className="text-red-500 text-xs mt-1.5">{errors.interest}</p>}
                 </div>
-              </div>
 
-              {/* Subject */}
-              <div>
-                <label htmlFor="subject" className="block text-sm font-bold text-gray-900 mb-2">
-                  Subject <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <MessageSquare className={`h-5 w-5 ${errors.subject ? 'text-red-400' : 'text-gray-400'}`} />
+                {/* Subject */}
+                <div>
+                  <label htmlFor="subject" className="block text-sm font-bold text-gray-900 mb-2">
+                    Subject <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <MessageSquare className={`h-5 w-5 ${errors.subject ? 'text-red-400' : 'text-gray-400'}`} />
+                    </div>
+                    <input
+                      type="text"
+                      id="subject"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      placeholder="What would you like to discuss?"
+                      className={getInputClass('subject')}
+                    />
                   </div>
-                  <input
-                    type="text"
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    placeholder="What would you like to discuss?"
-                    className={getInputClass('subject')}
-                  />
+                  {errors.subject && <p className="text-red-500 text-xs mt-1.5">{errors.subject}</p>}
                 </div>
-                {errors.subject && <p className="text-red-500 text-xs mt-1.5">{errors.subject}</p>}
               </div>
 
               {/* Message */}
